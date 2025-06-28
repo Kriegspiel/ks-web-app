@@ -28,12 +28,18 @@ export const gameApi = {
 
   // Make a move
   makeMove: async (gameId, player, moveUci, questionType = 'COMMON') => {
+    const params = {
+      player,
+      question_type: questionType
+    };
+    
+    // Only include move_uci for COMMON questions
+    if (questionType === 'COMMON' && moveUci) {
+      params.move_uci = moveUci;
+    }
+    
     const response = await api.post(`/games/${gameId}/move`, {}, {
-      params: {
-        player,
-        move_uci: moveUci,
-        question_type: questionType
-      }
+      params
     });
     return response.data;
   },

@@ -73,7 +73,7 @@ const ChessBoard = ({ onSquareClick, highlightedSquares = [], boardFen = null })
   // Convert piece letter to Unicode symbol
   const getPieceSymbol = (piece) => {
     const symbols = {
-      'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
+      'K': '♚', 'Q': '♛', 'R': '♜', 'B': '♝', 'N': '♞', 'P': '♟',
       'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
     };
     return symbols[piece] || '';
@@ -112,7 +112,9 @@ const ChessBoard = ({ onSquareClick, highlightedSquares = [], boardFen = null })
               >
                 <span className="square-label">{square}</span>
                 {pieceSymbol && (
-                  <span className="piece">{pieceSymbol}</span>
+                  <span className={`piece ${piece && piece === piece.toUpperCase() ? 'white' : 'black'}`}>
+                    {pieceSymbol}
+                  </span>
                 )}
               </div>
             );

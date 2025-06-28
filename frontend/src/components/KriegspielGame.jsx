@@ -41,7 +41,15 @@ const KriegspielGame = () => {
   };
 
   const makeMove = async () => {
-    if (!gameId || !moveInput) return;
+    if (!gameId) return;
+    
+    // For ASK_ANY questions, we don't need a move
+    if (questionType === 'ASK_ANY') {
+      return askAnyCaptures();
+    }
+    
+    // For COMMON questions, we need a move
+    if (!moveInput) return;
 
     try {
       setLoading(true);
@@ -101,10 +109,11 @@ const KriegspielGame = () => {
       setLoading(true);
       setError(null);
 
-      // Use a dummy move for ASK_ANY questions
-      const result = await gameApi.makeMove(gameId, currentPlayer, 'e2e4', 'ASK_ANY');
+      // No move needed for ASK_ANY questions
+      const result = await gameApi.makeMove(gameId, currentPlayer, null, 'ASK_ANY');
 
-      const logEntry = `${currentPlayer}: ASK_ANY -> ${result.announcement || 'No response'}`;
+      const hasAny = result.has_any ? 'HAS_ANY' : 'NO_ANY';
+      const logEntry = `${currentPlayer}: ASK_ANY -> ${result.announcement || hasAny}`;
       setGameLog(prev => [...prev, logEntry]);
 
       await loadGameState(gameId);
@@ -215,9 +224,9 @@ const KriegspielGame = () => {
             <div className="action-buttons">
               <button
                 onClick={makeMove}
-                disabled={loading || !moveInput || !gameId}
+                disabled={loading || !gameId || (questionType === 'COMMON' && !moveInput)}
               >
-                {loading ? 'Making Move...' : 'Make Move'}
+                {loading ? 'Processing...' : (questionType === 'ASK_ANY' ? 'Ask Any?' : 'Make Move')}
               </button>
 
               <button
