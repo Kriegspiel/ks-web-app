@@ -89,17 +89,42 @@ const KriegspielGame = () => {
   };
 
   const handleSquareClick = (square) => {
+    // 1. If no origin selected, select this square as origin
     if (!fromSquare) {
       setFromSquare(square);
-    } else if (!toSquare) {
+      return;
+    }
+    
+    // 2. If clicking on the origin square, deselect it and reset
+    if (square === fromSquare) {
+      // 5. But if destination is already selected, do nothing
+      if (toSquare) {
+        return;
+      }
+      setFromSquare('');
+      setMoveInput('');
+      return;
+    }
+    
+    // 3. If no destination selected, select this square as destination
+    if (!toSquare) {
       setToSquare(square);
       setMoveInput(`${fromSquare}${square}`);
-    } else {
-      // Reset if both squares are already selected
-      setFromSquare(square);
+      return;
+    }
+    
+    // 4. If clicking on the destination square, deselect it
+    if (square === toSquare) {
       setToSquare('');
       setMoveInput('');
+      return;
     }
+    
+    // If clicking on any other square when both origin and destination are selected,
+    // start over with new origin
+    setFromSquare(square);
+    setToSquare('');
+    setMoveInput('');
   };
 
   const askAnyCaptures = async () => {
