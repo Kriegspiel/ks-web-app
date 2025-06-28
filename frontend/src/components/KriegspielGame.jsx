@@ -46,9 +46,9 @@ const KriegspielGame = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const result = await gameApi.makeMove(gameId, currentPlayer, moveInput, questionType);
-      
+
       // Add to game log
       let logEntry = `${currentPlayer}: ${moveInput} -> ${result.legal ? 'Legal' : 'Illegal'}`;
       if (result.announcement) {
@@ -57,22 +57,22 @@ const KriegspielGame = () => {
       if (result.special_case) {
         logEntry += ` [${result.special_case}]`;
       }
-      
+
       setGameLog(prev => [...prev, logEntry]);
-      
+
       // If move was legal and it's the opponent's turn, switch players
       if (result.legal) {
         setCurrentPlayer(prev => prev === 'white' ? 'black' : 'white');
       }
-      
+
       // Reload game state
       await loadGameState(gameId);
-      
+
       // Clear move input
       setMoveInput('');
       setFromSquare('');
       setToSquare('');
-      
+
     } catch (err) {
       setError(`Failed to make move: ${err.message}`);
     } finally {
@@ -100,15 +100,15 @@ const KriegspielGame = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Use a dummy move for ASK_ANY questions
       const result = await gameApi.makeMove(gameId, currentPlayer, 'e2e4', 'ASK_ANY');
-      
+
       const logEntry = `${currentPlayer}: ASK_ANY -> ${result.announcement || 'No response'}`;
       setGameLog(prev => [...prev, logEntry]);
-      
+
       await loadGameState(gameId);
-      
+
     } catch (err) {
       setError(`Failed to ask about captures: ${err.message}`);
     } finally {
@@ -142,7 +142,7 @@ const KriegspielGame = () => {
       const interval = setInterval(() => {
         loadGameStateWrapper(gameId);
       }, 2000); // Refresh game state every 2 seconds
-      
+
       return () => clearInterval(interval);
     }
   }, [gameId, currentPlayer]);
@@ -154,15 +154,16 @@ const KriegspielGame = () => {
   return (
     <div className="kriegspiel-game">
       <h1>Kriegspiel Chess</h1>
-      
+
       <div className="game-container">
         <div className="game-board">
-          <ChessBoard 
+          <ChessBoard
             onSquareClick={handleSquareClick}
             highlightedSquares={highlightedSquares}
+            boardFen={gameState?.board_fen}
           />
         </div>
-        
+
         <div className="game-controls">
           <div className="game-info">
             {gameState && (
@@ -179,7 +180,7 @@ const KriegspielGame = () => {
 
           <div className="move-controls">
             <h3>Make a Move</h3>
-            
+
             <div className="move-input-section">
               <label>
                 Move (UCI format):
@@ -191,11 +192,11 @@ const KriegspielGame = () => {
                   disabled={loading}
                 />
               </label>
-              
+
               <label>
                 Question Type:
-                <select 
-                  value={questionType} 
+                <select
+                  value={questionType}
                   onChange={(e) => setQuestionType(e.target.value)}
                   disabled={loading}
                 >
@@ -212,15 +213,15 @@ const KriegspielGame = () => {
             </div>
 
             <div className="action-buttons">
-              <button 
-                onClick={makeMove} 
+              <button
+                onClick={makeMove}
                 disabled={loading || !moveInput || !gameId}
               >
                 {loading ? 'Making Move...' : 'Make Move'}
               </button>
-              
-              <button 
-                onClick={askAnyCaptures} 
+
+              <button
+                onClick={askAnyCaptures}
                 disabled={loading || !gameId}
               >
                 Ask: Any Captures?
@@ -234,7 +235,7 @@ const KriegspielGame = () => {
               {loading ? 'Creating...' : 'New Game'}
             </button>
             <button onClick={resetGame}>Reset</button>
-            <button 
+            <button
               onClick={() => setCurrentPlayer(prev => prev === 'white' ? 'black' : 'white')}
               disabled={!gameId}
             >
