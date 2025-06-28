@@ -1,0 +1,12 @@
+# Project configuration for formatting and linting tools
+# This is not a installable package, just configuration
+
+[tool.black]
+line-length = 128
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+^/ks-game/  # Exclude the ks-game submodule
+'''
