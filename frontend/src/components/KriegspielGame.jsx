@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import ChessBoard from './ChessBoard';
 import { gameApi } from '../services/api';
 import './KriegspielGame.css';
 
 const KriegspielGame = () => {
+  const { gameId: urlGameId } = useParams();
+  const navigate = useNavigate();
   const [gameState, setGameState] = useState(null);
-  const [gameId, setGameId] = useState(null);
+  const [gameId, setGameId] = useState(urlGameId || null);
   const [currentPlayer, setCurrentPlayer] = useState('white');
   const [moveInput, setMoveInput] = useState('');
   const [questionType, setQuestionType] = useState('COMMON');
@@ -21,6 +24,8 @@ const KriegspielGame = () => {
       setError(null);
       const game = await gameApi.createGame(true);
       setGameId(game.game_id);
+      // Navigate to the new game URL
+      navigate(`/game/${game.game_id}`);
       await loadGameState(game.game_id);
       setGameLog([`New game created: ${game.game_id}`]);
     } catch (err) {
@@ -159,7 +164,18 @@ const KriegspielGame = () => {
     setError(null);
     setFromSquare('');
     setToSquare('');
+    // Navigate back to home
+    navigate('/');
   };
+
+  // Load game from URL parameter on component mount
+  useEffect(() => {
+    if (urlGameId && urlGameId !== gameId) {
+      setGameId(urlGameId);
+      loadGameState(urlGameId);
+      setGameLog([`Loaded game: ${urlGameId}`]);
+    }
+  }, [urlGameId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const loadGameStateWrapper = async (id) => {
@@ -204,6 +220,7 @@ const KriegspielGame = () => {
               <>
                 <h3>Game Status</h3>
                 <p><strong>Game ID:</strong> {gameId}</p>
+                <p><strong>Game URL:</strong> <a href={window.location.href} target="_blank" rel="noopener noreferrer">{window.location.href}</a></p>
                 <p><strong>Current Turn:</strong> {gameState.turn}</p>
                 <p><strong>Your Color:</strong> {currentPlayer}</p>
                 <p><strong>Game Over:</strong> {gameState.is_game_over ? 'Yes' : 'No'}</p>
