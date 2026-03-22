@@ -1,0 +1,84 @@
+services:
+  mongo:
+    image: mongo:7
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval \"db.adminCommand({ ping: 1 }).ok\" | grep 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mongo-init:
+    image: mongo:7
+    depends_on:
+      mongo:
+        condition: service_healthy
+    volumes:
+      - ./backend/src/mongo/init-replica.sh:/init-replica.sh:ro
+    command: ["bash", "/init-replica.sh"]
+    environment:
+      MONGO_HOST: mongo
+
+  app:
+    build:
+      context: ./backend/src
+      dockerfile: ./app/Dockerfile
+    env_file:
+      - ./.env
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/kriegspiel?replicaSet=rs0}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      SITE_ORIGIN: ${SITE_ORIGIN:-http://localhost:5173}
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+    expose:
+      - "8000"
+    ports:
+      - "18000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - app_static:/app/static
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "18080:80"
+    volumes:
+      - ./backend/src/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./backend/src/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./frontend/dist:/usr/share/nginx/html:ro
+
+  mongo-express:
+    image: mongo-express:1.0.2
+    profiles: ["dev"]
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_URL: mongodb://mongo:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: ${ME_USERNAME:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_PASSWORD:-admin}
+
+  certbot:
+    image: certbot/certbot:latest
+    profiles: ["production"]
+    entrypoint: ["/bin/sh", "-c", "echo certbot placeholder; sleep infinity"]
+
+volumes:
+  mongo_data:
+  app_static:
