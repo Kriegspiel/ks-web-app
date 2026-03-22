@@ -34,7 +34,7 @@ package managers and tools:
 
 - **Repository**: git@github.com:Kriegspiel/ks-v2.git
 - **Main Branch**: main
-- **License**: MIT License (Copyright 2025 Kriegspiel)
+- **License**: BSD 3-Clause License (Copyright 2025 Kriegspiel)
 
 ## Development Workflow
 
