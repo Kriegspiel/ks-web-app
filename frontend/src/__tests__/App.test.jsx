@@ -34,12 +34,14 @@ function renderRoute(path) {
 }
 
 describe("App routes", () => {
-  it("renders_login_for_unauthenticated_user", async () => {
+  it("shows_guest_header_links_on_login", async () => {
     mockApi.me.mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
 
     renderRoute("/auth/login")
 
     await screen.findByRole("heading", { name: "Login" })
+    expect(screen.getAllByRole("link", { name: "Login" }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole("link", { name: "Register" }).length).toBeGreaterThan(0)
   })
 
   it("redirects_protected_lobby_route_to_login_when_unauthenticated", async () => {
@@ -56,7 +58,18 @@ describe("App routes", () => {
     renderRoute("/auth/login")
 
     await screen.findByRole("heading", { name: "Lobby" })
-    expect(screen.getByText(/signed in as fil/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/signed in as fil/i).length).toBeGreaterThan(0)
+    expect(screen.getByRole("button", { name: "Logout" })).toBeInTheDocument()
+  })
+
+  it("shows_inline_validation_message_for_empty_register_form", async () => {
+    mockApi.me.mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
+
+    renderRoute("/auth/register")
+
+    fireEvent.click(await screen.findByRole("button", { name: "Register" }))
+    await screen.findByText("Username is required.")
+    expect(mockApi.register).not.toHaveBeenCalled()
   })
 
   it("register_requires_username_email_password_and_redirects_to_lobby", async () => {
@@ -99,7 +112,23 @@ describe("App routes", () => {
     await screen.findByText("Invalid username or password")
   })
 
-  it("logs_out_from_lobby_and_returns_to_login", async () => {
+  it("redirects_back_to_requested_game_after_login", async () => {
+    mockApi.me.mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
+    mockApi.login.mockResolvedValueOnce({ ok: true })
+    mockApi.me.mockResolvedValueOnce({ username: "fil" })
+
+    renderRoute("/game/abc-123")
+
+    await screen.findByRole("heading", { name: "Login" })
+    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "fil" } })
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret123" } })
+    fireEvent.click(screen.getByRole("button", { name: "Login" }))
+
+    await screen.findByRole("heading", { name: "Game" })
+    expect(screen.getByText("gameId: abc-123")).toBeInTheDocument()
+  })
+
+  it("logs_out_from_header_and_returns_to_login", async () => {
     mockApi.me.mockResolvedValueOnce({ username: "fil" })
     mockApi.logout.mockResolvedValueOnce({})
 
