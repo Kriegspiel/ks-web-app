@@ -1,3 +1,40 @@
+.app-layout {
+  min-height: 100vh;
+}
+
+.app-header {
+  border-bottom: 1px solid #dbe3ef;
+  background: #ffffff;
+}
+
+.app-header__inner {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.app-header__brand {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.app-header__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.header-user {
+  color: #334155;
+  font-size: 0.95rem;
+}
+
 .page-shell {
   max-width: 32rem;
   margin: 0 auto;
@@ -34,7 +71,8 @@
 }
 
 .auth-form button,
-.page-shell button {
+.page-shell button,
+.header-logout-button {
   margin-top: 0.5rem;
   width: fit-content;
   border: 0;
@@ -46,7 +84,8 @@
 }
 
 .auth-form button:disabled,
-.page-shell button:disabled {
+.page-shell button:disabled,
+.header-logout-button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
@@ -54,4 +93,17 @@
 .auth-error {
   color: #b91c1c !important;
   margin: 0.25rem 0 !important;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #0f172a;
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .app-header__inner {
+    align-items: flex-start;
+  }
 }
