@@ -121,11 +121,26 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  ops-scripts:
+    name: ops-scripts-quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run slice 740 script gates
+        run: ./scripts/test-step-740.sh
+
   deploy:
     name: deploy-main
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [backend, frontend]
+    needs: [backend, frontend, ops-scripts]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
