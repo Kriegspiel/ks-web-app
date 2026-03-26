@@ -1,6 +1,6 @@
 services:
   mongo:
-    image: mongo:7
+    image: mongo:7.0.21
     command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     volumes:
       - mongo_data:/data/db
@@ -11,7 +11,7 @@ services:
       retries: 20
 
   mongo-init:
-    image: mongo:7
+    image: mongo:7.0.21
     depends_on:
       mongo:
         condition: service_healthy
@@ -20,6 +20,14 @@ services:
     command: ["bash", "/init-replica.sh"]
     environment:
       MONGO_HOST: mongo
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: artifacts
+    volumes:
+      - frontend_dist:/frontend-dist
 
   app:
     build:
@@ -45,20 +53,20 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
-    volumes:
-      - app_static:/app/static
 
   nginx:
-    image: nginx:1.27-alpine
+    build:
+      context: ./backend/src/nginx
+      dockerfile: Dockerfile
     depends_on:
+      frontend:
+        condition: service_completed_successfully
       app:
         condition: service_healthy
     ports:
       - "18080:80"
     volumes:
-      - ./backend/src/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./backend/src/nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./frontend/dist:/usr/share/nginx/html:ro
+      - frontend_dist:/usr/share/nginx/html:ro
 
   mongo-express:
     image: mongo-express:1.0.2
@@ -75,10 +83,10 @@ services:
       ME_CONFIG_BASICAUTH_PASSWORD: ${ME_PASSWORD:-admin}
 
   certbot:
-    image: certbot/certbot:latest
-    profiles: ["production"]
+    image: certbot/certbot:v3.1.0
+    profiles: ["prod"]
     entrypoint: ["/bin/sh", "-c", "echo certbot placeholder; sleep infinity"]
 
 volumes:
   mongo_data:
-  app_static:
+  frontend_dist:
