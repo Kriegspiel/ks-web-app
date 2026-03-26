@@ -1,100 +1,85 @@
 .chess-board {
-  position: relative;
-  display: inline-block;
-  border: 2px solid #8B4513;
-  margin: 20px;
+  width: min(88vw, 36rem);
 }
 
 .board-grid {
   display: grid;
-  grid-template-columns: repeat(8, 60px);
-  grid-template-rows: repeat(8, 60px);
-  gap: 0;
+  grid-template-columns: repeat(8, 1fr);
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 2px solid #2e2e2e;
 }
 
 .square {
-  width: 60px;
-  height: 60px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: none;
+  margin: 0;
+  padding: 0;
+  font-size: clamp(1.2rem, 3.8vw, 2rem);
   cursor: pointer;
-  position: relative;
-  user-select: none;
-  transition: background-color 0.2s ease;
 }
 
 .square.light {
-  background-color: #f0d9b5;
+  background: #f0d9b5;
 }
 
 .square.dark {
-  background-color: #b58863;
+  background: #b58863;
 }
 
-.square:hover {
-  filter: brightness(1.1);
+.square:hover:not(:disabled) {
+  filter: brightness(1.08);
 }
 
-.square.highlighted {
-  background-color: #ffff00 !important;
-  box-shadow: inset 0 0 0 3px #ff6600;
+.square:disabled {
+  cursor: not-allowed;
 }
 
-.square-label {
-  font-size: 10px;
-  color: rgba(0, 0, 0, 0.4);
+.square--highlighted {
+  box-shadow: inset 0 0 0 0.24rem rgba(255, 205, 0, 0.95);
+}
+
+.square--phantom::after {
+  content: "";
   position: absolute;
-  top: 2px;
-  left: 2px;
-  font-weight: bold;
+  width: 42%;
+  height: 42%;
+  border-radius: 999px;
+  background: rgba(86, 156, 255, 0.55);
 }
 
 .piece {
-  font-size: 36px;
-  user-select: none;
-  z-index: 10;
   position: relative;
+  z-index: 2;
+  line-height: 1;
 }
 
 .piece.white {
   color: #ffffff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.55);
 }
 
 .piece.black {
-  color: #000000;
+  color: #121212;
 }
 
-.file-labels {
-  display: grid;
-  grid-template-columns: repeat(8, 60px);
-  gap: 0;
-  margin-top: 5px;
-}
-
-.file-label {
-  text-align: center;
-  font-weight: bold;
-  font-size: 14px;
-  color: #333;
-}
-
-.rank-labels {
+.coord {
   position: absolute;
-  left: -25px;
-  top: 0;
-  display: grid;
-  grid-template-rows: repeat(8, 60px);
-  gap: 0;
+  font-size: clamp(0.42rem, 1.2vw, 0.62rem);
+  font-weight: 700;
+  opacity: 0.7;
+  pointer-events: none;
 }
 
-.rank-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 14px;
-  color: #333;
-  width: 20px;
-  height: 60px;
+.coord.file {
+  right: 0.22rem;
+  bottom: 0.14rem;
+}
+
+.coord.rank {
+  left: 0.22rem;
+  top: 0.14rem;
 }
