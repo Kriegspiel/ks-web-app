@@ -32,7 +32,7 @@ function normalizeError(error, fallback) {
 
 export async function register(payload) {
   try {
-    const response = await api.post("/auth/register", payload)
+    const response = await api.post("/api/auth/register", payload)
     return response.data
   } catch (error) {
     throw normalizeError(error, "Unable to register right now.")
@@ -41,7 +41,7 @@ export async function register(payload) {
 
 export async function login(payload) {
   try {
-    const response = await api.post("/auth/login", payload)
+    const response = await api.post("/api/auth/login", payload)
     return response.data
   } catch (error) {
     throw normalizeError(error, "Unable to login right now.")
@@ -50,7 +50,7 @@ export async function login(payload) {
 
 export async function logout() {
   try {
-    await api.post("/auth/logout")
+    await api.post("/api/auth/logout")
   } catch (error) {
     throw normalizeError(error, "Unable to logout right now.")
   }
@@ -58,7 +58,7 @@ export async function logout() {
 
 export async function me() {
   try {
-    const response = await api.get("/auth/me")
+    const response = await api.get("/api/auth/me")
     return response.data
   } catch (error) {
     throw normalizeError(error, "Unable to fetch your session.")

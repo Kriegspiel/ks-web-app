@@ -37,7 +37,7 @@ describe("auth helpers", () => {
     const payload = { username: "new-user", email: "new@example.com", password: "secret123" }
     const result = await register(payload)
 
-    expect(postSpy).toHaveBeenCalledWith("/auth/register", payload)
+    expect(postSpy).toHaveBeenCalledWith("/api/auth/register", payload)
     expect(result).toEqual({ user_id: "u1" })
   })
 
@@ -47,7 +47,7 @@ describe("auth helpers", () => {
     const payload = { username: "new-user", password: "secret123" }
     const result = await login(payload)
 
-    expect(postSpy).toHaveBeenCalledWith("/auth/login", payload)
+    expect(postSpy).toHaveBeenCalledWith("/api/auth/login", payload)
     expect(result).toEqual({ ok: true })
   })
 
@@ -56,7 +56,7 @@ describe("auth helpers", () => {
 
     await logout()
 
-    expect(postSpy).toHaveBeenCalledWith("/auth/logout")
+    expect(postSpy).toHaveBeenCalledWith("/api/auth/logout")
   })
 
   it("me_gets_auth_me", async () => {
@@ -64,7 +64,7 @@ describe("auth helpers", () => {
 
     const result = await me()
 
-    expect(getSpy).toHaveBeenCalledWith("/auth/me")
+    expect(getSpy).toHaveBeenCalledWith("/api/auth/me")
     expect(result).toEqual({ username: "test" })
   })
 
