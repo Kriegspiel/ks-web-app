@@ -1,5 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import api, { login, logout, me, register } from "../services/api"
+import api, {
+  createGame,
+  getGame,
+  getMyGames,
+  getOpenGames,
+  joinGame,
+  login,
+  logout,
+  me,
+  register,
+} from "../services/api"
 
 describe("api client", () => {
   it("api_client_uses_relative_base_url", () => {
@@ -58,14 +68,43 @@ describe("auth helpers", () => {
     expect(result).toEqual({ username: "test" })
   })
 
-  it("normalizes_409_and_detail_message", async () => {
+  it("normalizes_nested_game_error_shape", async () => {
     vi.spyOn(api, "post").mockRejectedValue({
-      response: { status: 409, data: { detail: "Username already exists" } },
+      response: { status: 409, data: { error: { code: "GAME_ALREADY_JOINED", message: "You already joined this game." } } },
     })
 
-    await expect(register({ username: "taken", email: "taken@example.com", password: "secret123" })).rejects.toEqual({
+    await expect(joinGame("ABC123")).rejects.toEqual({
       status: 409,
-      message: "Username already exists",
+      code: "GAME_ALREADY_JOINED",
+      message: "You already joined this game.",
     })
+  })
+})
+
+describe("game helpers", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("create_game_posts_to_api_game_create", async () => {
+    const payload = { rule_variant: "berkeley_any", play_as: "random", time_control: "rapid" }
+    const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { game_id: "g1" } })
+
+    const result = await createGame(payload)
+
+    expect(postSpy).toHaveBeenCalledWith("/api/game/create", payload)
+    expect(result).toEqual({ game_id: "g1" })
+  })
+
+  it("open_mine_and_get_game_use_expected_endpoints", async () => {
+    const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: { games: [] } })
+
+    await getOpenGames()
+    await getMyGames()
+    await getGame("g-123")
+
+    expect(getSpy).toHaveBeenNthCalledWith(1, "/api/game/open")
+    expect(getSpy).toHaveBeenNthCalledWith(2, "/api/game/mine")
+    expect(getSpy).toHaveBeenNthCalledWith(3, "/api/game/g-123")
   })
 })

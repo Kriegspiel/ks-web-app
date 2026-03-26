@@ -8,6 +8,11 @@ const mockApi = vi.hoisted(() => ({
   login: vi.fn(),
   logout: vi.fn(),
   register: vi.fn(),
+  createGame: vi.fn(),
+  joinGame: vi.fn(),
+  getOpenGames: vi.fn(),
+  getMyGames: vi.fn(),
+  getGame: vi.fn(),
 }))
 
 vi.mock("../services/api", () => mockApi)
@@ -17,10 +22,10 @@ afterEach(() => {
 })
 
 beforeEach(() => {
-  mockApi.me.mockReset()
-  mockApi.login.mockReset()
-  mockApi.logout.mockReset()
-  mockApi.register.mockReset()
+  Object.values(mockApi).forEach((fn) => fn.mockReset())
+  mockApi.getOpenGames.mockResolvedValue({ games: [] })
+  mockApi.getMyGames.mockResolvedValue({ games: [] })
+  mockApi.getGame.mockResolvedValue({ state: "waiting" })
 })
 
 function renderRoute(path) {
