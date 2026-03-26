@@ -58,6 +58,8 @@ services:
     build:
       context: ./backend/src/nginx
       dockerfile: Dockerfile
+      args:
+        NGINX_PROFILE: ${NGINX_PROFILE:-dev}
     depends_on:
       frontend:
         condition: service_completed_successfully
