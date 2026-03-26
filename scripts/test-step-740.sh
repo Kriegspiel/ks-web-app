@@ -16,6 +16,9 @@ echo "[740] help checks"
 ./scripts/health-check.sh --help >/dev/null
 
 echo "[740] ensure stack running"
+if [[ ! -f .env ]]; then
+  cp .env.example .env
+fi
 docker compose up -d mongo app frontend nginx
 
 echo "[740] backup"
