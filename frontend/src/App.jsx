@@ -8,6 +8,7 @@ import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
 import GamePage from "./pages/GamePage"
 import RulesPage from "./pages/RulesPage"
+import ReviewPage from "./pages/Review"
 import "./App.css"
 
 function LoadingPage() {
@@ -114,6 +115,14 @@ export function AppRoutes() {
           element={(
             <RequireAuth>
               <GamePage />
+            </RequireAuth>
+          )}
+        />
+        <Route
+          path="/game/:gameId/review"
+          element={(
+            <RequireAuth>
+              <ReviewPage />
             </RequireAuth>
           )}
         />
