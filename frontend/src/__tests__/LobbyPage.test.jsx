@@ -54,6 +54,7 @@ describe("LobbyPage", () => {
     await screen.findByText("Join code:")
     expect(screen.getByText("ABCD23")).toBeInTheDocument()
     expect(screen.getByText("Waiting for opponent…")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "http://localhost:3000/join/ABCD23" })).toHaveAttribute("href", "http://localhost:3000/join/ABCD23")
     expect(mockApi.createGame).toHaveBeenCalledTimes(1)
   })
 

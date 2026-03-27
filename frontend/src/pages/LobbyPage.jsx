@@ -142,6 +142,15 @@ export default function LobbyPage() {
     }
   }, [waitingGameId, createResult?.state, navigate])
 
+  const shareJoinUrl = useMemo(() => {
+    if (!createResult?.game_code) {
+      return ""
+    }
+
+    const origin = typeof window !== "undefined" && window.location?.origin ? window.location.origin : ""
+    return `${origin}/join/${createResult.game_code}`
+  }, [createResult?.game_code])
+
   const openGamesByCode = useMemo(() => {
     const map = new Map()
     for (const game of openGames) {
@@ -228,6 +237,7 @@ export default function LobbyPage() {
         {createResult ? (
           <div className="lobby-created-game" role="status" aria-live="polite">
             <p><strong>Join code:</strong> <code>{createResult.game_code}</code></p>
+            <p><strong>Share link:</strong> <a href={shareJoinUrl}>{shareJoinUrl}</a></p>
             <p><strong>State:</strong> {waitingGameId ? "Waiting for opponent…" : createResult.state}</p>
           </div>
         ) : null}

@@ -4,6 +4,7 @@ import { AuthProvider } from "./context/AuthContext"
 import { useAuth } from "./hooks/useAuth"
 import HomePage from "./pages/HomePage"
 import LobbyPage from "./pages/LobbyPage"
+import JoinPage from "./pages/JoinPage"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
 import GamePage from "./pages/GamePage"
@@ -114,6 +115,7 @@ export function AppRoutes() {
             </RequireAuth>
           )}
         />
+        <Route path="/join/:gameCode" element={<JoinPage />} />
         <Route
           path="/game/:gameId"
           element={(
