@@ -1,0 +1,119 @@
+name: security-ci
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  PYTHONHASHSEED: "0"
+  TEST_RANDOM_SEED: "820"
+  TZ: UTC
+
+jobs:
+  security-tests:
+    name: security-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27018:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' || exit 1"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: |
+            backend/src/app/requirements.txt
+            backend/src/app/requirements-dev.txt
+
+      - name: Install backend dependencies
+        working-directory: backend/src
+        run: pip install -r app/requirements-dev.txt
+
+      - name: Run security tests lane
+        run: ./scripts/regression/security-tests.sh
+
+  authz-regression:
+    name: authz-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27018:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' || exit 1"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: |
+            backend/src/app/requirements.txt
+            backend/src/app/requirements-dev.txt
+
+      - name: Install backend dependencies
+        working-directory: backend/src
+        run: pip install -r app/requirements-dev.txt
+
+      - name: Run authz regression subset
+        run: ./scripts/regression/authz-regression.sh
+
+  dependency-audit:
+    name: dependency-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install pip-audit
+        run: python -m pip install pip-audit
+
+      - name: Run dependency audit gate
+        run: ./scripts/regression/dependency-audit.sh
