@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useParams } from "react-router-dom"
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom"
 import AppHeader from "./components/AppHeader"
 import { AuthProvider } from "./context/AuthContext"
 import { useAuth } from "./hooks/useAuth"
@@ -6,6 +6,7 @@ import HomePage from "./pages/HomePage"
 import LobbyPage from "./pages/LobbyPage"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
+import GamePage from "./pages/GamePage"
 import "./App.css"
 
 function LoadingPage() {
@@ -77,17 +78,6 @@ function RedirectIfAuthenticated({ children }) {
   return children
 }
 
-function GamePlaceholder() {
-  const { gameId } = useParams()
-
-  return (
-    <main className="page-shell">
-      <h1>Game</h1>
-      <p>gameId: {gameId}</p>
-    </main>
-  )
-}
-
 export function AppRoutes() {
   return (
     <Routes>
@@ -121,7 +111,7 @@ export function AppRoutes() {
           path="/game/:gameId"
           element={(
             <RequireAuth>
-              <GamePlaceholder />
+              <GamePage />
             </RequireAuth>
           )}
         />
