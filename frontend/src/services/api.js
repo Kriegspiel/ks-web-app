@@ -156,4 +156,47 @@ export async function resignGame(gameId) {
   }
 }
 
+
+export const userApi = {
+  async getProfile(username) {
+    try {
+      const response = await api.get(`/api/user/${encodeURIComponent(username)}`)
+      return response.data
+    } catch (error) {
+      throw normalizeError(error, "Unable to load profile right now.")
+    }
+  },
+
+  async getGameHistory(username, page = 1, perPage = 20) {
+    try {
+      const response = await api.get(`/api/user/${encodeURIComponent(username)}/games`, {
+        params: { page, per_page: perPage },
+      })
+      return response.data
+    } catch (error) {
+      throw normalizeError(error, "Unable to load game history right now.")
+    }
+  },
+
+  async updateSettings(settings) {
+    try {
+      const response = await api.patch("/api/user/settings", settings)
+      return response.data
+    } catch (error) {
+      throw normalizeError(error, "Unable to save settings right now.")
+    }
+  },
+
+  async getLeaderboard(page = 1, perPage = 20) {
+    try {
+      const response = await api.get("/api/leaderboard", {
+        params: { page, per_page: perPage },
+      })
+      return response.data
+    } catch (error) {
+      throw normalizeError(error, "Unable to load leaderboard right now.")
+    }
+  },
+}
+
 export default api
