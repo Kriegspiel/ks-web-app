@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import ChessBoard from "../components/ChessBoard"
+import PhantomTray from "../components/PhantomTray"
+import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
 import { askAny, getGameState, resignGame, submitMove } from "../services/api"
 import "./GamePage.css"
 
@@ -28,6 +30,18 @@ export default function GamePage() {
   const [submittingAction, setSubmittingAction] = useState(false)
   const [fromSquare, setFromSquare] = useState("")
   const [toSquare, setToSquare] = useState("")
+
+  const occupiedSquares = useMemo(() => occupiedSquaresFromFen(gameState?.your_fen), [gameState?.your_fen])
+
+  const {
+    phantomSquares,
+    trayCounts,
+    selectedPiece,
+    selectPiece,
+    placeAt,
+    removeAt,
+    clearAll,
+  } = usePhantoms({ gameId, occupiedSquares })
 
   const pollState = useCallback(async ({ silent = false } = {}) => {
     if (!gameId) {
@@ -84,6 +98,15 @@ export default function GamePage() {
   function handleSquareClick(square) {
     setActionError("")
 
+    if (selectedPiece) {
+      placeAt(square)
+      return
+    }
+
+    if (!canMove) {
+      return
+    }
+
     if (!fromSquare) {
       setFromSquare(square)
       return
@@ -107,6 +130,14 @@ export default function GamePage() {
 
     setFromSquare(square)
     setToSquare("")
+  }
+
+  function handleSquareRightClick(square) {
+    const removed = removeAt(square)
+    if (removed && (square === fromSquare || square === toSquare)) {
+      setFromSquare("")
+      setToSquare("")
+    }
   }
 
   async function handleMoveSubmit() {
@@ -166,6 +197,7 @@ export default function GamePage() {
   }
 
   const highlightedSquares = [fromSquare, toSquare].filter(Boolean)
+  const opponentColor = gameState?.your_color === "black" ? "white" : "black"
 
   return (
     <main className="page-shell game-page" aria-live="polite">
@@ -186,10 +218,22 @@ export default function GamePage() {
               boardFen={gameState.your_fen}
               orientation={gameState.your_color}
               highlightedSquares={highlightedSquares}
-              disabled={!canMove}
+              phantomSquares={phantomSquares}
+              disabled={false}
               onSquareClick={handleSquareClick}
+              onSquareRightClick={handleSquareRightClick}
             />
             <p className="game-page__meta">Selected move: <code>{selectedMove || "—"}</code></p>
+          </section>
+
+          <section className="game-card" aria-label="Phantom controls">
+            <PhantomTray
+              selectedPiece={selectedPiece}
+              trayCounts={trayCounts}
+              pieceColor={opponentColor}
+              onSelectPiece={selectPiece}
+              onClear={clearAll}
+            />
           </section>
 
           <section className="game-card" aria-label="Game status">
