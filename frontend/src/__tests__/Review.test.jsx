@@ -86,10 +86,14 @@ describe("ReviewPage", () => {
 
     fireEvent.keyDown(window, { key: "ArrowRight" })
     fireEvent.keyDown(window, { key: "ArrowRight" })
-    expect(screen.getByText("Ply 2 / 2")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText("Ply 2 / 2")).toBeInTheDocument()
+    })
 
     fireEvent.keyDown(window, { key: "ArrowLeft" })
-    expect(screen.getByText("Ply 1 / 2")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText("Ply 1 / 2")).toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByLabelText("Black"))
     const board = document.querySelector(".chess-board")
