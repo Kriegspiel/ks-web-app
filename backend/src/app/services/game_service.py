@@ -111,6 +111,15 @@ class GameService:
             )
         return replay
 
+    @staticmethod
+    def _outcome_replay_fen(outcome: dict[str, Any]) -> dict[str, str] | None:
+        full = outcome.get("full_fen")
+        white = outcome.get("white_fen")
+        black = outcome.get("black_fen")
+        if not full or not white or not black:
+            return None
+        return {"full": full, "white": white, "black": black}
+
     @classmethod
     def _to_transcript_move(cls, move: dict[str, Any], *, replay_fen: dict[str, str] | None = None) -> dict[str, Any]:
         stored_replay = move.get("replay_fen")
@@ -495,11 +504,7 @@ class GameService:
             "capture_square": outcome["capture_square"],
             "move_done": outcome["move_done"],
             "timestamp": now,
-            "replay_fen": {
-                "full": outcome["full_fen"],
-                "white": outcome["white_fen"],
-                "black": outcome["black_fen"],
-            },
+            "replay_fen": self._outcome_replay_fen(outcome),
         }
 
         time_control = self._active_time_control(game=game, now=now)
@@ -592,11 +597,7 @@ class GameService:
             "capture_square": outcome["capture_square"],
             "move_done": outcome["move_done"],
             "timestamp": now,
-            "replay_fen": {
-                "full": outcome["full_fen"],
-                "white": outcome["white_fen"],
-                "black": outcome["black_fen"],
-            },
+            "replay_fen": self._outcome_replay_fen(outcome),
         }
 
         time_control = self._active_time_control(game=game, now=now)
