@@ -292,11 +292,48 @@ jobs:
       - name: Run recovery smoke lane
         run: ./scripts/regression/recovery-smoke.sh
 
+
+  docs-lint:
+    name: docs-lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run docs lint lane
+        run: ./scripts/regression/docs-lint.sh
+
+  docs-link-check:
+    name: docs-link-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run docs link-check lane
+        run: ./scripts/regression/docs-link-check.sh
+
+  docs-quickstart-verify:
+    name: docs-quickstart-verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run docs quickstart verify lane
+        run: ./scripts/regression/docs-quickstart-verify.sh
+
   deploy:
     name: deploy-main
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [lint, backend-regression, frontend-regression, integration-smoke, ops-scripts, resilience-tests, frontend-error-ux, recovery-smoke]
+    needs: [lint, backend-regression, frontend-regression, integration-smoke, ops-scripts, resilience-tests, frontend-error-ux, recovery-smoke, docs-lint, docs-link-check, docs-quickstart-verify]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
