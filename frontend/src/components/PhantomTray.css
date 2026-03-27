@@ -1,0 +1,52 @@
+.phantom-tray {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.phantom-tray__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.phantom-tray__hint {
+  margin: 0;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.phantom-tray__pieces {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6.4rem, 1fr));
+  gap: 0.5rem;
+}
+
+.phantom-piece {
+  border: 1px solid #cdd8ea;
+  border-radius: 0.5rem;
+  background: #f8fbff;
+  min-height: 3.4rem;
+  display: grid;
+  place-items: center;
+  gap: 0.1rem;
+}
+
+.phantom-piece--selected {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.phantom-piece:disabled {
+  opacity: 0.5;
+}
+
+.phantom-piece__symbol {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.phantom-piece__label {
+  font-size: 0.74rem;
+  font-weight: 600;
+}

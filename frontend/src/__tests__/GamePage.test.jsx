@@ -39,6 +39,7 @@ function sleep(ms) {
 }
 
 beforeEach(() => {
+  window.localStorage.clear()
   mockNavigate.mockReset()
   Object.values(mockApi).forEach((fn) => fn.mockReset())
   mockApi.getGameState.mockResolvedValue(activeState)
@@ -75,6 +76,29 @@ describe("GamePage", () => {
       expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
       expect(mockApi.getGameState).toHaveBeenCalledTimes(2)
     })
+  })
+
+  it("supports_phantom_place_remove_and_keeps_api_payload_clean", async () => {
+    render(<GamePage />)
+
+    await screen.findByText(/Game ID:/i)
+
+    fireEvent.click(screen.getByRole("button", { name: /Q × 1/i }))
+    fireEvent.click(screen.getByRole("button", { name: "Square d5" }))
+
+    expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--phantom")
+
+    fireEvent.click(screen.getByRole("button", { name: /Q × 0/i }))
+    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+    fireEvent.click(screen.getByRole("button", { name: "Submit move" }))
+
+    await waitFor(() => {
+      expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
+    })
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Square d5" }))
+    expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--phantom")
   })
 
   it("disables_ask_any_when_not_allowed", async () => {

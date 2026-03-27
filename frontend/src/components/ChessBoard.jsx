@@ -9,6 +9,7 @@ function ChessBoard({
   phantomSquares = [],
   disabled = false,
   onSquareClick,
+  onSquareRightClick,
 }) {
   const board = parseFenBoard(boardFen)
   const files = orientation === "black" ? [...FILES].reverse() : FILES
@@ -48,6 +49,10 @@ function ChessBoard({
                   if (!disabled) {
                     onSquareClick?.(square)
                   }
+                }}
+                onContextMenu={(event) => {
+                  event.preventDefault()
+                  onSquareRightClick?.(square)
                 }}
                 aria-label={`Square ${square}`}
               >
