@@ -2,14 +2,13 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-VENV_PYTHON="$ROOT_DIR/backend/.venv/bin/python"
+VENV_DIR="$ROOT_DIR/backend/.venv"
+VENV_PYTHON="$VENV_DIR/bin/python"
 
 if [ ! -x "$VENV_PYTHON" ]; then
-  echo "backend virtualenv python not found: $VENV_PYTHON" >&2
-  exit 1
+  python3 -m venv "$VENV_DIR"
 fi
 
-"$VENV_PYTHON" -m ensurepip --upgrade >/dev/null 2>&1 || true
 "$VENV_PYTHON" -m pip install --disable-pip-version-check pip-audit >/dev/null
 
 cd "$ROOT_DIR/frontend"
