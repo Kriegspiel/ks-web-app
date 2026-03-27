@@ -54,3 +54,16 @@ Operational validation helpers:
 - `./scripts/regression/docs-link-check.sh`
 - `./scripts/regression/docs-quickstart-verify.sh`
 - `./scripts/test-step-840.sh`
+
+## Step 800 Slice 850 Launch Readiness / Rollback Gates
+
+- `./scripts/regression/release-regression.sh`
+  - Aggregates release-blocking regression/documentation lanes (810/830/840 scope)
+- `./scripts/regression/release-security-gates.sh`
+  - Aggregates security lanes (820 scope)
+- `./scripts/regression/release-smoke.sh`
+  - Boots compose stack and requires 3 consecutive post-deploy smoke checks
+- `./scripts/regression/rollback-drill.sh`
+  - Executes timed rollback validation and fails if `RollbackSeconds > 600`
+- `./scripts/test-step-850.sh`
+  - Full slice 850 packet runner
