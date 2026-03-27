@@ -46,6 +46,11 @@
   font-size: clamp(1.75rem, 4vw, 2.5rem);
 }
 
+.page-shell h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+}
+
 .page-shell p {
   margin: 0.5rem 0;
   color: #334155;
@@ -55,6 +60,28 @@
   display: flex;
   gap: 1rem;
   margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.home-card,
+.rules-card {
+  margin-top: 1rem;
+  padding: 0.875rem;
+  border-radius: 0.65rem;
+  border: 1px solid #dbe3ef;
+  background: #f8fafc;
+}
+
+.status-pill {
+  display: inline-flex;
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  color: #14532d;
+  background: #dcfce7;
+  border: 1px solid #86efac;
 }
 
 .auth-form {

@@ -7,6 +7,7 @@ import LobbyPage from "./pages/LobbyPage"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
 import GamePage from "./pages/GamePage"
+import RulesPage from "./pages/RulesPage"
 import "./App.css"
 
 function LoadingPage() {
@@ -83,6 +84,7 @@ export function AppRoutes() {
     <Routes>
       <Route element={<AppLayout />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/rules" element={<RulesPage />} />
         <Route
           path="/auth/login"
           element={(

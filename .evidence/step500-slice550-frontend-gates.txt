@@ -1,0 +1,70 @@
+# Slice 550 gates
+2026-03-26T20:48:25-04:00
+
+$ cd frontend && CI=1 npm run test -- Home
+
+> frontend@0.0.0 test
+> vitest Home
+
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90m/home/fil/dev/kriegspiel/ks-v2/frontend[39m
+
+ [32m✓[39m src/__tests__/HomePage.test.jsx [2m([22m[2m3 tests[22m[2m)[22m[90m 270[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+[2m   Start at [22m 20:48:26
+[2m   Duration [22m 1.93s[2m (transform 237ms, setup 127ms, collect 328ms, tests 270ms, environment 685ms, prepare 110ms)[22m
+
+
+$ cd frontend && CI=1 npm run test -- Nav
+
+> frontend@0.0.0 test
+> vitest Nav
+
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90m/home/fil/dev/kriegspiel/ks-v2/frontend[39m
+
+ [32m✓[39m src/__tests__/Nav.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[90m 259[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m   Start at [22m 20:48:30
+[2m   Duration [22m 1.87s[2m (transform 195ms, setup 117ms, collect 295ms, tests 259ms, environment 684ms, prepare 107ms)[22m
+
+
+$ cd frontend && npm run lint
+
+> frontend@0.0.0 lint
+> eslint .
+
+
+$ cd frontend && npm run test:e2e -- --grep "home to active game navigation"
+npm ERR! Missing script: "test:e2e"
+npm ERR! 
+npm ERR! To see a list of scripts, run:
+npm ERR!   npm run
+
+npm ERR! A complete log of this run can be found in:
+npm ERR!     /home/fil/.npm/_logs/2026-03-27T00_48_34_867Z-debug-0.log
+
+$ cd frontend && CI=1 npm run test -- App Home Nav Lobby
+
+> frontend@0.0.0 test
+> vitest App Home Nav Lobby
+
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90m/home/fil/dev/kriegspiel/ks-v2/frontend[39m
+
+ [32m✓[39m src/__tests__/HomePage.test.jsx [2m([22m[2m3 tests[22m[2m)[22m[33m 358[2mms[22m[39m
+ [32m✓[39m src/__tests__/LobbyPage.test.jsx [2m([22m[2m5 tests[22m[2m)[22m[33m 659[2mms[22m[39m
+   [33m[2m✓[22m[39m LobbyPage[2m > [22mcreates_waiting_game_and_shows_join_code [33m327[2mms[22m[39m
+ [32m✓[39m src/__tests__/App.test.jsx [2m([22m[2m8 tests[22m[2m)[22m[33m 1001[2mms[22m[39m
+   [33m[2m✓[22m[39m App routes[2m > [22mshows_guest_header_links_on_login [33m318[2mms[22m[39m
+ [32m✓[39m src/__tests__/Nav.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[90m 262[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+[2m      Tests [22m [1m[32m18 passed[39m[22m[90m (18)[39m
+[2m   Start at [22m 20:48:53
+[2m   Duration [22m 4.39s[2m (transform 649ms, setup 690ms, collect 1.65s, tests 2.28s, environment 3.90s, prepare 570ms)[22m
+
