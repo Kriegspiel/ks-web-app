@@ -110,4 +110,40 @@ export async function getGame(gameId) {
   }
 }
 
+export async function getGameState(gameId) {
+  try {
+    const response = await api.get(`/api/game/${encodeURIComponent(gameId)}/state`)
+    return response.data
+  } catch (error) {
+    throw normalizeError(error, "Unable to load game state right now.")
+  }
+}
+
+export async function submitMove(gameId, uci) {
+  try {
+    const response = await api.post(`/api/game/${encodeURIComponent(gameId)}/move`, { uci })
+    return response.data
+  } catch (error) {
+    throw normalizeError(error, "Unable to submit move right now.")
+  }
+}
+
+export async function askAny(gameId) {
+  try {
+    const response = await api.post(`/api/game/${encodeURIComponent(gameId)}/ask-any`)
+    return response.data
+  } catch (error) {
+    throw normalizeError(error, "Unable to ask any-captures right now.")
+  }
+}
+
+export async function resignGame(gameId) {
+  try {
+    const response = await api.post(`/api/game/${encodeURIComponent(gameId)}/resign`)
+    return response.data
+  } catch (error) {
+    throw normalizeError(error, "Unable to resign this game right now.")
+  }
+}
+
 export default api

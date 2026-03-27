@@ -13,6 +13,10 @@ const mockApi = vi.hoisted(() => ({
   getOpenGames: vi.fn(),
   getMyGames: vi.fn(),
   getGame: vi.fn(),
+  getGameState: vi.fn(),
+  submitMove: vi.fn(),
+  askAny: vi.fn(),
+  resignGame: vi.fn(),
 }))
 
 vi.mock("../services/api", () => mockApi)
@@ -26,6 +30,17 @@ beforeEach(() => {
   mockApi.getOpenGames.mockResolvedValue({ games: [] })
   mockApi.getMyGames.mockResolvedValue({ games: [] })
   mockApi.getGame.mockResolvedValue({ state: "waiting" })
+  mockApi.getGameState.mockResolvedValue({
+    game_id: "abc-123",
+    state: "active",
+    turn: "white",
+    move_number: 1,
+    your_color: "white",
+    your_fen: "8/8/8/8/8/8/8/8",
+    referee_log: [],
+    possible_actions: ["move", "ask_any"],
+    clock: { white_remaining: 600, black_remaining: 600, active_color: "white" },
+  })
 })
 
 function renderRoute(path) {
@@ -130,7 +145,7 @@ describe("App routes", () => {
     fireEvent.click(screen.getByRole("button", { name: "Login" }))
 
     await screen.findByRole("heading", { name: "Game" })
-    expect(screen.getByText("gameId: abc-123")).toBeInTheDocument()
+    expect(screen.getByText(/Game ID:/i)).toBeInTheDocument()
   })
 
   it("logs_out_from_header_and_returns_to_login", async () => {

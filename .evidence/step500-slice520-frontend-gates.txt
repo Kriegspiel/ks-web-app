@@ -1,0 +1,29 @@
+Step 500 / Slice 520 gate evidence (rpi-server-02)
+Date: 2026-03-26 EDT
+
+1) Packet command (adapted for Vitest single-run mode):
+   cd frontend && npm run test -- --run Game
+   Result: PASS
+   - Files: 1 passed
+   - Tests: 4 passed, 0 failed, 0 skipped
+
+2) Packet command (adapted for Vitest single-run mode):
+   cd frontend && npm run test -- --run api
+   Result: PASS
+   - Files: 1 passed
+   - Tests: 11 passed, 0 failed, 0 skipped
+
+3) Packet command:
+   cd frontend && npm run lint
+   Result: PASS
+
+4) Packet command:
+   cd frontend && npm run test:e2e -- --grep "game polling"
+   Result: BLOCKED
+   - npm ERR! Missing script: "test:e2e"
+
+Additional impacted-suite confirmation:
+   cd frontend && npm run test -- --run App Lobby Game api
+   Result: PASS
+   - Files: 4 passed
+   - Tests: 28 passed, 0 failed, 0 skipped

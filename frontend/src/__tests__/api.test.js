@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import api, {
+  askAny,
   createGame,
   getGame,
+  getGameState,
   getMyGames,
   getOpenGames,
   joinGame,
@@ -9,6 +11,8 @@ import api, {
   logout,
   me,
   register,
+  resignGame,
+  submitMove,
 } from "../services/api"
 
 describe("api client", () => {
@@ -102,9 +106,23 @@ describe("game helpers", () => {
     await getOpenGames()
     await getMyGames()
     await getGame("g-123")
+    await getGameState("g-123")
 
     expect(getSpy).toHaveBeenNthCalledWith(1, "/api/game/open")
     expect(getSpy).toHaveBeenNthCalledWith(2, "/api/game/mine")
     expect(getSpy).toHaveBeenNthCalledWith(3, "/api/game/g-123")
+    expect(getSpy).toHaveBeenNthCalledWith(4, "/api/game/g-123/state")
+  })
+
+  it("move_ask_any_resign_use_expected_endpoints", async () => {
+    const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { ok: true } })
+
+    await submitMove("g-123", "e2e4")
+    await askAny("g-123")
+    await resignGame("g-123")
+
+    expect(postSpy).toHaveBeenNthCalledWith(1, "/api/game/g-123/move", { uci: "e2e4" })
+    expect(postSpy).toHaveBeenNthCalledWith(2, "/api/game/g-123/ask-any")
+    expect(postSpy).toHaveBeenNthCalledWith(3, "/api/game/g-123/resign")
   })
 })

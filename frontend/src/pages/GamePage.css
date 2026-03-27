@@ -1,0 +1,39 @@
+.game-page {
+  max-width: 72rem;
+}
+
+.game-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.game-page__meta {
+  color: #475569;
+}
+
+.game-layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+}
+
+.game-card {
+  border: 1px solid #dbe3ef;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  background: #fff;
+}
+
+.game-status-list,
+.game-log-list {
+  margin: 0.75rem 0;
+  padding-left: 1.2rem;
+}
+
+.game-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
