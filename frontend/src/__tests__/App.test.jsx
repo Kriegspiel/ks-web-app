@@ -160,4 +160,42 @@ describe("App routes", () => {
     await screen.findByRole("heading", { name: "Login" })
     expect(mockApi.logout).toHaveBeenCalledTimes(1)
   })
+
+  it("join_route_redirects_to_login_when_unauthenticated", async () => {
+    mockApi.me.mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
+    mockApi.joinGame.mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
+
+    renderRoute("/join/ABCD23")
+
+    await screen.findByRole("heading", { name: "Login" })
+  })
+
+  it("join_route_auto_joins_after_login", async () => {
+    mockApi.me
+      .mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
+      .mockResolvedValueOnce({ username: "fil" })
+    mockApi.login.mockResolvedValueOnce({ ok: true })
+    mockApi.joinGame.mockResolvedValueOnce({ game_id: "join-1" })
+    mockApi.getGameState.mockResolvedValue({
+      game_id: "join-1",
+      state: "active",
+      turn: "white",
+      move_number: 1,
+      your_color: "white",
+      your_fen: "8/8/8/8/8/8/8/8",
+      referee_log: [],
+      possible_actions: ["move", "ask_any"],
+      clock: { white_remaining: 600, black_remaining: 600, active_color: "white" },
+    })
+
+    renderRoute("/join/ABCD23")
+
+    await screen.findByRole("heading", { name: "Login" })
+    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "fil" } })
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret123" } })
+    fireEvent.click(screen.getByRole("button", { name: "Login" }))
+
+    await screen.findByRole("heading", { name: "Game" })
+    expect(mockApi.joinGame).toHaveBeenCalledWith("ABCD23")
+  })
 })
