@@ -146,8 +146,7 @@ class GameService:
                 "game_id": str(game["_id"]),
                 "rule_variant": game.get("rule_variant", "berkeley_any"),
                 "moves": [
-                    self._to_transcript_move(move, replay_fen=replay_fens[index])
-                    for index, move in enumerate(raw_moves)
+                    self._to_transcript_move(move, replay_fen=replay_fens[index]) for index, move in enumerate(raw_moves)
                 ],
             }
         )

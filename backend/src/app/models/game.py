@@ -156,8 +156,6 @@ class TranscriptAnswer(BaseModel):
     special: str | None = None
 
 
-
-
 class ReplayFen(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
