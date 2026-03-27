@@ -110,6 +110,16 @@ export async function getGame(gameId) {
   }
 }
 
+
+export async function getGameTranscript(gameId) {
+  try {
+    const response = await api.get(`/api/game/${encodeURIComponent(gameId)}/moves`)
+    return response.data
+  } catch (error) {
+    throw normalizeError(error, "Unable to load game transcript right now.")
+  }
+}
+
 export async function getGameState(gameId) {
   try {
     const response = await api.get(`/api/game/${encodeURIComponent(gameId)}/state`)
