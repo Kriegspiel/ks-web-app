@@ -29,3 +29,26 @@ Operational validation helpers:
 
 - `./scripts/regression/post-deploy-smoke.sh` (`BASE_URL` defaults to `http://localhost`)
 - `./scripts/regression/rollback-validation.sh`
+
+
+## Step 800 Slice 830 Resilience / Recovery Lanes
+
+- 
+  - Deterministic backend failure/race subset ()
+- 
+  - Frontend API failure/error/retry UX lane
+- 
+  - Focused backend recovery smoke checks for outage/guarded recovery paths
+- 
+  - Packet runner executing all three slice-830 lanes
+
+## Step 800 Slice 830 Resilience / Recovery Lanes
+
+- scripts/regression/resilience-tests.sh
+  - Deterministic backend failure/race subset (TEST_RANDOM_SEED=830)
+- scripts/regression/frontend-error-ux.sh
+  - Frontend API failure/error/retry UX lane
+- scripts/regression/recovery-smoke.sh
+  - Focused backend recovery smoke checks for outage/guarded recovery paths
+- scripts/test-step-830.sh
+  - Packet runner executing all three slice-830 lanes
