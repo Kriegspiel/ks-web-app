@@ -13,6 +13,7 @@ import api, {
   register,
   resignGame,
   submitMove,
+  userApi,
 } from "../services/api"
 
 describe("api client", () => {
@@ -124,5 +125,34 @@ describe("game helpers", () => {
     expect(postSpy).toHaveBeenNthCalledWith(1, "/api/game/g-123/move", { uci: "e2e4" })
     expect(postSpy).toHaveBeenNthCalledWith(2, "/api/game/g-123/ask-any")
     expect(postSpy).toHaveBeenNthCalledWith(3, "/api/game/g-123/resign")
+  })
+})
+
+
+describe("user helpers", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("profile_history_and_leaderboard_use_expected_endpoints", async () => {
+    const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: {} })
+
+    await userApi.getProfile("fil")
+    await userApi.getGameHistory("fil", 2, 30)
+    await userApi.getLeaderboard(3, 10)
+
+    expect(getSpy).toHaveBeenNthCalledWith(1, "/api/user/fil")
+    expect(getSpy).toHaveBeenNthCalledWith(2, "/api/user/fil/games", { params: { page: 2, per_page: 30 } })
+    expect(getSpy).toHaveBeenNthCalledWith(3, "/api/leaderboard", { params: { page: 3, per_page: 10 } })
+  })
+
+  it("update_settings_patches_expected_endpoint", async () => {
+    const patchSpy = vi.spyOn(api, "patch").mockResolvedValue({ data: { board_theme: "wood" } })
+
+    const payload = { board_theme: "wood" }
+    const result = await userApi.updateSettings(payload)
+
+    expect(patchSpy).toHaveBeenCalledWith("/api/user/settings", payload)
+    expect(result).toEqual({ board_theme: "wood" })
   })
 })

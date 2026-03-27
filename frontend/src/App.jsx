@@ -9,6 +9,10 @@ import RegisterPage from "./pages/RegisterPage"
 import GamePage from "./pages/GamePage"
 import RulesPage from "./pages/RulesPage"
 import ReviewPage from "./pages/Review"
+import ProfilePage from "./pages/Profile"
+import GameHistoryPage from "./pages/GameHistory"
+import LeaderboardPage from "./pages/Leaderboard"
+import SettingsPage from "./pages/Settings"
 import "./App.css"
 
 function LoadingPage() {
@@ -123,6 +127,17 @@ export function AppRoutes() {
           element={(
             <RequireAuth>
               <ReviewPage />
+            </RequireAuth>
+          )}
+        />
+        <Route path="/user/:username" element={<ProfilePage />} />
+        <Route path="/user/:username/games" element={<GameHistoryPage />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route
+          path="/settings"
+          element={(
+            <RequireAuth>
+              <SettingsPage />
             </RequireAuth>
           )}
         />

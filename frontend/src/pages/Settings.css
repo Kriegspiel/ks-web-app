@@ -1,0 +1,10 @@
+.settings-page { max-width: 34rem; }
+.settings-form { display: grid; gap: 0.6rem; margin-top: 1rem; }
+.settings-form select {
+  padding: 0.5rem 0.625rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background: #fff;
+}
+.settings-toggle { display: flex; align-items: center; gap: 0.5rem; }
+.settings-success { color: #166534; }
