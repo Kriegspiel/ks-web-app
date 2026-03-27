@@ -1,0 +1,37 @@
+.promotion-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.65);
+}
+
+.promotion-modal {
+  width: min(90vw, 24rem);
+  background: #fff;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #dbe3ef;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.28);
+}
+
+.promotion-modal h2 {
+  margin-top: 0;
+}
+
+.promotion-modal__choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.promotion-modal__choices button {
+  padding: 0.55rem 0.6rem;
+}
+
+.promotion-modal__cancel {
+  width: 100%;
+}

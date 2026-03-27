@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import ChessBoard from "../components/ChessBoard"
 import PhantomTray from "../components/PhantomTray"
+import PromotionModal from "../components/PromotionModal"
 import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
 import { askAny, getGameState, resignGame, submitMove } from "../services/api"
 import "./GamePage.css"
@@ -19,6 +20,61 @@ function formatClock(seconds) {
   return `${minutes}:${String(remain).padStart(2, "0")}`
 }
 
+function pieceAtSquare(fen, square) {
+  if (!fen || !square) {
+    return ""
+  }
+
+  const [placement = ""] = fen.split(" ")
+  const ranks = placement.split("/")
+  if (ranks.length !== 8) {
+    return ""
+  }
+
+  const file = square[0]
+  const rank = Number.parseInt(square[1], 10)
+  const fileIndex = file.charCodeAt(0) - 97
+  if (fileIndex < 0 || fileIndex > 7 || Number.isNaN(rank) || rank < 1 || rank > 8) {
+    return ""
+  }
+
+  const row = ranks[8 - rank]
+  let cursor = 0
+  for (const token of row) {
+    if (/\d/.test(token)) {
+      cursor += Number.parseInt(token, 10)
+      continue
+    }
+
+    if (cursor === fileIndex) {
+      return token
+    }
+
+    cursor += 1
+  }
+
+  return ""
+}
+
+function isPromotionCandidate({ fen, fromSquare, toSquare, color }) {
+  if (!fen || !fromSquare || !toSquare || !color) {
+    return false
+  }
+
+  const piece = pieceAtSquare(fen, fromSquare)
+  if (!piece) {
+    return false
+  }
+
+  const isPawn = color === "white" ? piece === "P" : piece === "p"
+  if (!isPawn) {
+    return false
+  }
+
+  const targetRank = toSquare[1]
+  return color === "white" ? targetRank === "8" : targetRank === "1"
+}
+
 export default function GamePage() {
   const { gameId } = useParams()
   const navigate = useNavigate()
@@ -30,6 +86,8 @@ export default function GamePage() {
   const [submittingAction, setSubmittingAction] = useState(false)
   const [fromSquare, setFromSquare] = useState("")
   const [toSquare, setToSquare] = useState("")
+  const [lastMoveSquares, setLastMoveSquares] = useState([])
+  const [showPromotionModal, setShowPromotionModal] = useState(false)
 
   const occupiedSquares = useMemo(() => occupiedSquaresFromFen(gameState?.your_fen), [gameState?.your_fen])
 
@@ -88,15 +146,35 @@ export default function GamePage() {
   const canAskAny = gameState?.state === "active" && possibleActions.includes("ask_any") && !submittingAction
   const canResign = gameState?.state === "active" && !submittingAction
 
-  const selectedMove = useMemo(() => {
+  const selectedMoveBase = useMemo(() => {
     if (!fromSquare || !toSquare) {
       return ""
     }
     return `${fromSquare}${toSquare}`
   }, [fromSquare, toSquare])
 
+  const pendingPromotion = useMemo(() => {
+    if (!selectedMoveBase || !gameState?.your_fen || !gameState?.your_color) {
+      return false
+    }
+
+    return isPromotionCandidate({
+      fen: gameState.your_fen,
+      fromSquare,
+      toSquare,
+      color: gameState.your_color,
+    })
+  }, [fromSquare, gameState?.your_color, gameState?.your_fen, selectedMoveBase, toSquare])
+
+  function resetPendingMove() {
+    setFromSquare("")
+    setToSquare("")
+    setShowPromotionModal(false)
+  }
+
   function handleSquareClick(square) {
     setActionError("")
+    setShowPromotionModal(false)
 
     if (selectedPiece) {
       placeAt(square)
@@ -113,8 +191,7 @@ export default function GamePage() {
     }
 
     if (square === fromSquare) {
-      setFromSquare("")
-      setToSquare("")
+      resetPendingMove()
       return
     }
 
@@ -125,39 +202,69 @@ export default function GamePage() {
 
     if (square === toSquare) {
       setToSquare("")
+      setShowPromotionModal(false)
       return
     }
 
     setFromSquare(square)
     setToSquare("")
+    setShowPromotionModal(false)
   }
 
   function handleSquareRightClick(square) {
     const removed = removeAt(square)
     if (removed && (square === fromSquare || square === toSquare)) {
-      setFromSquare("")
-      setToSquare("")
+      resetPendingMove()
     }
   }
 
-  async function handleMoveSubmit() {
-    if (!selectedMove || !gameId || !canMove) {
-      return
-    }
-
+  async function submitMoveWithUci(uci) {
     setSubmittingAction(true)
     setActionError("")
 
     try {
-      await submitMove(gameId, selectedMove)
-      setFromSquare("")
-      setToSquare("")
+      const result = await submitMove(gameId, uci)
+      if (result?.move_done === false) {
+        setActionError("Illegal move. Try a different move.")
+        setToSquare("")
+        return
+      }
+
+      setLastMoveSquares([uci.slice(0, 2), uci.slice(2, 4)])
+      resetPendingMove()
       await pollState({ silent: true })
     } catch (requestError) {
       setActionError(requestError?.message ?? "Unable to submit move right now.")
     } finally {
       setSubmittingAction(false)
     }
+  }
+
+  async function handleMoveSubmit() {
+    if (!selectedMoveBase || !gameId || !canMove) {
+      return
+    }
+
+    if (pendingPromotion) {
+      setShowPromotionModal(true)
+      return
+    }
+
+    await submitMoveWithUci(selectedMoveBase)
+  }
+
+  async function handlePromotionSelect(suffix) {
+    if (!selectedMoveBase) {
+      return
+    }
+
+    setShowPromotionModal(false)
+    await submitMoveWithUci(`${selectedMoveBase}${suffix}`)
+  }
+
+  function handlePromotionCancel() {
+    setActionError("Promotion canceled. Select a move again.")
+    resetPendingMove()
   }
 
   async function handleAskAny() {
@@ -196,8 +303,21 @@ export default function GamePage() {
     }
   }
 
+  const selectedMove = useMemo(() => {
+    if (!selectedMoveBase) {
+      return ""
+    }
+
+    if (pendingPromotion) {
+      return `${selectedMoveBase}?`
+    }
+
+    return selectedMoveBase
+  }, [pendingPromotion, selectedMoveBase])
+
   const highlightedSquares = [fromSquare, toSquare].filter(Boolean)
   const opponentColor = gameState?.your_color === "black" ? "white" : "black"
+  const waitingForOpponent = gameState?.state === "active" && !possibleActions.includes("move")
 
   return (
     <main className="page-shell game-page" aria-live="polite">
@@ -207,79 +327,84 @@ export default function GamePage() {
       </div>
 
       <p className="game-page__meta">Game ID: <code>{gameId}</code></p>
-
-      {loading ? <p>Loading game state…</p> : null}
+      {loading ? <p className="game-page__notice">Loading game state…</p> : null}
+      {submittingAction ? <p className="game-page__notice">Submitting action…</p> : null}
+      {waitingForOpponent ? <p className="game-page__notice">Waiting for opponent move…</p> : null}
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
 
       {gameState ? (
-        <div className="game-layout">
-          <section className="game-card" aria-label="Board">
-            <ChessBoard
-              boardFen={gameState.your_fen}
-              orientation={gameState.your_color}
-              highlightedSquares={highlightedSquares}
-              phantomSquares={phantomSquares}
-              disabled={false}
-              onSquareClick={handleSquareClick}
-              onSquareRightClick={handleSquareRightClick}
-            />
-            <p className="game-page__meta">Selected move: <code>{selectedMove || "—"}</code></p>
-          </section>
+        <>
+          <div className="game-layout">
+            <section className="game-card" aria-label="Board">
+              <ChessBoard
+                boardFen={gameState.your_fen}
+                orientation={gameState.your_color}
+                highlightedSquares={highlightedSquares}
+                lastMoveSquares={lastMoveSquares}
+                phantomSquares={phantomSquares}
+                disabled={false}
+                onSquareClick={handleSquareClick}
+                onSquareRightClick={handleSquareRightClick}
+              />
+              <p className="game-page__meta">Selected move: <code>{selectedMove || "—"}</code></p>
+            </section>
 
-          <section className="game-card" aria-label="Phantom controls">
-            <PhantomTray
-              selectedPiece={selectedPiece}
-              trayCounts={trayCounts}
-              pieceColor={opponentColor}
-              onSelectPiece={selectPiece}
-              onClear={clearAll}
-            />
-          </section>
+            <section className="game-card" aria-label="Phantom controls">
+              <PhantomTray
+                selectedPiece={selectedPiece}
+                trayCounts={trayCounts}
+                pieceColor={opponentColor}
+                onSelectPiece={selectPiece}
+                onClear={clearAll}
+              />
+            </section>
 
-          <section className="game-card" aria-label="Game status">
-            <h2>Status</h2>
-            <ul className="game-status-list">
-              <li><strong>State:</strong> {gameState.state}</li>
-              <li><strong>Your color:</strong> {gameState.your_color}</li>
-              <li><strong>Turn:</strong> {gameState.turn ?? "—"}</li>
-              <li><strong>Move number:</strong> {gameState.move_number}</li>
-              <li><strong>White clock:</strong> {formatClock(gameState.clock?.white_remaining)}</li>
-              <li><strong>Black clock:</strong> {formatClock(gameState.clock?.black_remaining)}</li>
-            </ul>
+            <section className="game-card" aria-label="Game status">
+              <h2>Status</h2>
+              <ul className="game-status-list">
+                <li><strong>State:</strong> {gameState.state}</li>
+                <li><strong>Your color:</strong> {gameState.your_color}</li>
+                <li className={canMove ? "game-status-list__turn game-status-list__turn--active" : "game-status-list__turn"}>
+                  <strong>Turn:</strong> {gameState.turn ?? "—"}
+                </li>
+                <li><strong>Move number:</strong> {gameState.move_number}</li>
+                <li><strong>White clock:</strong> {formatClock(gameState.clock?.white_remaining)}</li>
+                <li><strong>Black clock:</strong> {formatClock(gameState.clock?.black_remaining)}</li>
+              </ul>
 
-            <div className="game-actions" aria-label="Game actions">
-              <button type="button" onClick={handleMoveSubmit} disabled={!canMove || !selectedMove}>
-                Submit move
-              </button>
-              <button type="button" onClick={handleAskAny} disabled={!canAskAny}>
-                Ask any captures?
-              </button>
-              <button type="button" onClick={handleResign} disabled={!canResign}>
-                Resign
-              </button>
-            </div>
+              <div className="game-actions" aria-label="Game actions">
+                <button type="button" onClick={handleMoveSubmit} disabled={!canMove || !selectedMoveBase}>
+                  Submit move
+                </button>
+                <button type="button" onClick={handleAskAny} disabled={!canAskAny}>
+                  Ask any captures?
+                </button>
+                <button type="button" onClick={handleResign} disabled={!canResign}>
+                  Resign
+                </button>
+              </div>
 
-            {actionError ? <p className="auth-error" role="alert">{actionError}</p> : null}
-            {gameState.result ? <p><strong>Result:</strong> {JSON.stringify(gameState.result)}</p> : null}
-          </section>
+              {actionError ? <p className="auth-error" role="alert">{actionError}</p> : null}
 
-          <section className="game-card" aria-label="Referee log">
-            <h2>Referee log</h2>
-            {gameState.referee_log?.length ? (
-              <ol className="game-log-list">
-                {gameState.referee_log.map((entry, index) => (
-                  <li key={`ref-log-${index}`}>
-                    <span>{entry.announcement}</span>
-                    {entry.capture_square ? <span> · capture {entry.capture_square}</span> : null}
-                    {entry.special_announcement ? <span> · {entry.special_announcement}</span> : null}
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p>No announcements yet.</p>
-            )}
-          </section>
-        </div>
+              {gameState.referee_log?.length ? (
+                <div>
+                  <h3>Referee log</h3>
+                  <ul className="game-log-list">
+                    {gameState.referee_log.map((entry, index) => (
+                      <li key={`${entry.announcement ?? "entry"}-${index}`}>{entry.announcement}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </section>
+          </div>
+
+          <PromotionModal
+            open={showPromotionModal}
+            onSelect={handlePromotionSelect}
+            onCancel={handlePromotionCancel}
+          />
+        </>
       ) : null}
     </main>
   )

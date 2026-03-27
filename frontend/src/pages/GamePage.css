@@ -37,3 +37,13 @@
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+
+.game-page__notice {
+  margin: 0.35rem 0;
+  color: #334155;
+}
+
+.game-status-list__turn--active {
+  color: #047857;
+  font-weight: 600;
+}
