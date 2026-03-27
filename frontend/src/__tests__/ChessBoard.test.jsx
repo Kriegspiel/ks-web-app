@@ -53,16 +53,18 @@ describe("ChessBoard", () => {
     expect(corners[63].getAttribute("data-square")).toBe("a8")
   })
 
-  it("renders_highlight_and_phantom_overlays_as_distinct_classes", () => {
+  it("renders_highlight_last_move_and_phantom_overlays_as_distinct_classes", () => {
     render(
       <ChessBoard
         boardFen="8/8/8/8/8/8/8/8"
         highlightedSquares={["e4"]}
+        lastMoveSquares={["e2", "e4"]}
         phantomSquares={["d5"]}
       />,
     )
 
     expect(screen.getByLabelText("Square e4")).toHaveClass("square--highlighted")
+    expect(screen.getByLabelText("Square e2")).toHaveClass("square--last-move")
     expect(screen.getByLabelText("Square d5")).toHaveClass("square--phantom")
   })
 })

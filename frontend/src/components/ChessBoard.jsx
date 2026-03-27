@@ -6,6 +6,7 @@ function ChessBoard({
   boardFen,
   orientation = "white",
   highlightedSquares = [],
+  lastMoveSquares = [],
   phantomSquares = [],
   disabled = false,
   onSquareClick,
@@ -29,6 +30,7 @@ function ChessBoard({
             const piece = board[rankIndex]?.[fileIndex]
             const isLight = (fileIndex + rankIndex) % 2 === 0
             const highlighted = highlightedSquares.includes(square)
+            const lastMove = lastMoveSquares.includes(square)
             const phantom = phantomSquares.includes(square)
 
             return (
@@ -39,6 +41,7 @@ function ChessBoard({
                   "square",
                   isLight ? "light" : "dark",
                   highlighted ? "square--highlighted" : "",
+                  lastMove ? "square--last-move" : "",
                   phantom ? "square--phantom" : "",
                 ]
                   .filter(Boolean)

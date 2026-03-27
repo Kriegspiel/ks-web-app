@@ -76,6 +76,71 @@ describe("GamePage", () => {
       expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
       expect(mockApi.getGameState).toHaveBeenCalledTimes(2)
     })
+
+    expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--last-move")
+    expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--last-move")
+  })
+
+  it("gates_promotion_with_modal_and_appends_suffix", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      your_fen: "8/P7/8/8/8/8/8/8",
+    })
+
+    render(<GamePage />)
+    await screen.findByText(/Game ID:/i)
+
+    fireEvent.click(screen.getByRole("button", { name: "Square a7" }))
+    fireEvent.click(screen.getByRole("button", { name: "Square a8" }))
+    fireEvent.click(screen.getByRole("button", { name: "Submit move" }))
+
+    expect(screen.getByRole("dialog", { name: "Choose promotion piece" })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Knight" }))
+
+    await waitFor(() => {
+      expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "a7a8n")
+    })
+  })
+
+  it("promotion_cancel_resets_pending_move", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      your_fen: "8/P7/8/8/8/8/8/8",
+    })
+
+    render(<GamePage />)
+    await screen.findByText(/Game ID:/i)
+
+    fireEvent.click(screen.getByRole("button", { name: "Square a7" }))
+    fireEvent.click(screen.getByRole("button", { name: "Square a8" }))
+    fireEvent.click(screen.getByRole("button", { name: "Submit move" }))
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
+
+    expect(screen.queryByRole("dialog", { name: "Choose promotion piece" })).not.toBeInTheDocument()
+    expect(screen.getByText(/Selected move:/i)).toHaveTextContent("—")
+    expect(mockApi.submitMove).not.toHaveBeenCalled()
+  })
+
+  it("shows_illegal_move_feedback_and_waiting_notice", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({ ...activeState, possible_actions: ["ask_any"], turn: "black" })
+
+    render(<GamePage />)
+    await screen.findByText(/Waiting for opponent move…/i)
+
+    cleanup()
+    mockApi.getGameState.mockResolvedValue(activeState)
+    mockApi.submitMove.mockResolvedValueOnce({ move_done: false })
+
+    render(<GamePage />)
+    await screen.findByText(/Game ID:/i)
+
+    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+    fireEvent.click(screen.getByRole("button", { name: "Submit move" }))
+
+    await screen.findByText("Illegal move. Try a different move.")
   })
 
   it("supports_phantom_place_remove_and_keeps_api_payload_clean", async () => {
