@@ -72,8 +72,7 @@ from fastapi import FastAPI
 from kriegspiel.move import KriegspielMove
 from kriegspiel.berkeley import BerkeleyGame
 
-from models import Game, GameHistory
-from kriegspiel_wrapper import ExtendedBerkeleyGame
+from app.models.game import GameStateResponse
 ```
 
 ### Import Guidelines
