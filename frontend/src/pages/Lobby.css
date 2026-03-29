@@ -1,51 +1,47 @@
 .lobby-page {
-  max-width: 56rem;
-}
-
-.lobby-card {
-  border: 1px solid #dbe3ef;
-  border-radius: 0.75rem;
-  padding: 1rem;
-  margin-top: 1rem;
-  background: #fff;
+  max-width: var(--page-width);
 }
 
 .lobby-card h2 {
   margin-top: 0;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
 }
 
 .lobby-join-form {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+  margin-top: 0.9rem;
+}
+
+.lobby-join-form label {
+  grid-column: 1 / -1;
+  font-weight: 600;
 }
 
 .lobby-join-form input {
-  padding: 0.5rem 0.625rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.5rem;
   min-width: 10rem;
   text-transform: uppercase;
 }
 
 .lobby-list {
   list-style: none;
-  margin: 0.75rem 0 0;
+  margin: 1rem 0 0;
   padding: 0;
   display: grid;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .lobby-list li {
   display: flex;
   justify-content: space-between;
   gap: 0.75rem;
-  border: 1px solid #e5eaf2;
-  border-radius: 0.5rem;
-  padding: 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 0.95rem;
   align-items: center;
+  background: rgba(248, 250, 252, 0.72);
 }
 
 .lobby-list button {
@@ -53,16 +49,21 @@
 }
 
 .lobby-meta {
-  color: #64748b;
-  font-size: 0.9rem;
+  color: var(--muted-soft);
+  font-size: 0.92rem;
 }
 
 .lobby-created-game code {
   font-size: 1.1rem;
 }
 
-.lobby-hint {
-  margin-top: 1rem;
-  color: #64748b;
-  font-size: 0.9rem;
+@media (max-width: 700px) {
+  .lobby-join-form {
+    grid-template-columns: 1fr;
+  }
+
+  .lobby-list li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }

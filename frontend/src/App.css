@@ -3,14 +3,18 @@
 }
 
 .app-header {
-  border-bottom: 1px solid #dbe3ef;
-  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+  background: rgba(248, 250, 252, 0.88);
+  border-bottom: 1px solid rgba(219, 227, 239, 0.9);
 }
 
 .app-header__inner {
-  max-width: 52rem;
+  width: min(calc(100% - 2rem), var(--page-width));
   margin: 0 auto;
-  padding: 0.75rem 1rem;
+  padding: 0.9rem 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -20,56 +24,133 @@
 
 .app-header__brand {
   font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.03em;
   text-decoration: none;
 }
 
 .app-header__nav {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: flex-end;
+  gap: 0.5rem;
   flex-wrap: wrap;
 }
 
+.app-header__nav a,
+.header-logout-button {
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--muted);
+  border: 1px solid transparent;
+  background: transparent;
+  margin-top: 0;
+  min-height: auto;
+}
+
+.app-header__nav a:hover,
+.app-header__nav a:focus-visible,
+.header-logout-button:hover:not(:disabled),
+.header-logout-button:focus-visible {
+  color: var(--text);
+  background: rgba(226, 232, 240, 0.7);
+  box-shadow: none;
+  transform: none;
+}
+
+.app-header__nav a[aria-current="page"] {
+  background: var(--surface-strong);
+  border-color: var(--border);
+  color: var(--text);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
 .header-user {
-  color: #334155;
+  margin-right: 0.25rem;
+  color: var(--muted-soft);
   font-size: 0.95rem;
 }
 
 .page-shell {
-  max-width: 32rem;
+  width: min(calc(100% - 2rem), var(--content-width));
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 2.5rem 0 4rem;
+  position: relative;
 }
 
-.page-shell h1 {
-  margin: 0 0 0.75rem;
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
+.page-shell > :first-child {
+  margin-top: 0;
 }
 
-.page-shell h2 {
-  margin: 0 0 0.75rem;
-  font-size: 1.1rem;
-}
-
-.page-shell p {
-  margin: 0.5rem 0;
-  color: #334155;
+.page-shell > h1 + p {
+  font-size: 1.05rem;
+  max-width: 42rem;
 }
 
 .inline-links {
   display: flex;
-  gap: 1rem;
-  margin-top: 0.75rem;
+  gap: 0.75rem;
+  margin-top: 1.35rem;
   flex-wrap: wrap;
 }
 
+.inline-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.8rem;
+  padding: 0.72rem 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.96);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.inline-links a:first-child {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.inline-links a:first-child:hover,
+.inline-links a:first-child:focus-visible {
+  background: #1e293b;
+  border-color: #1e293b;
+}
+
 .home-card,
-.rules-card {
+.rules-card,
+.lobby-card,
+.game-card,
+.profile-card,
+.review-page__board-column,
+.review-page__log-column,
+.leaderboard-table,
+.history-table,
+.settings-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.home-card,
+.rules-card,
+.lobby-card,
+.game-card,
+.profile-card,
+.review-page__board-column,
+.review-page__log-column {
+  padding: 1.2rem 1.25rem;
+}
+
+.home-card,
+.rules-card,
+.lobby-card,
+.profile-card {
   margin-top: 1rem;
-  padding: 0.875rem;
-  border-radius: 0.65rem;
-  border: 1px solid #dbe3ef;
-  background: #f8fafc;
 }
 
 .status-pill {
@@ -77,60 +158,105 @@
   margin-left: 0.5rem;
   font-size: 0.75rem;
   line-height: 1;
-  padding: 0.2rem 0.45rem;
+  padding: 0.24rem 0.5rem;
   border-radius: 999px;
-  color: #14532d;
-  background: #dcfce7;
-  border: 1px solid #86efac;
+  color: var(--success);
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+}
+
+.auth-form,
+.settings-form {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
 }
 
 .auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin: 1rem 0;
-}
-
-.auth-form input {
-  padding: 0.5rem 0.625rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.5rem;
+  padding: 1.2rem 1.25rem;
 }
 
 .auth-form button,
-.page-shell button,
+.page-shell > button,
 .header-logout-button {
-  margin-top: 0.5rem;
   width: fit-content;
-  border: 0;
-  background: #0f172a;
-  color: #fff;
-  padding: 0.5rem 0.875rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-}
-
-.auth-form button:disabled,
-.page-shell button:disabled,
-.header-logout-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
 }
 
 .auth-error {
-  color: #b91c1c !important;
+  color: var(--danger) !important;
   margin: 0.25rem 0 !important;
+  padding: 0.8rem 0.9rem;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  border-radius: 0.85rem;
 }
 
-a:focus-visible,
-button:focus-visible,
-input:focus-visible {
-  outline: 2px solid #0f172a;
-  outline-offset: 2px;
+.surface-note,
+.page-note,
+.game-page__notice,
+.review-page__notice,
+.settings-success,
+.lobby-hint {
+  margin-top: 0.85rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--muted);
 }
 
-@media (max-width: 640px) {
+.settings-success {
+  color: var(--success);
+  border-color: var(--success-border);
+  background: var(--success-bg);
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.pagination-controls span {
+  color: var(--muted-soft);
+}
+
+@media (max-width: 900px) {
+  .page-shell {
+    width: min(calc(100% - 1.5rem), var(--content-width));
+  }
+}
+
+@media (max-width: 700px) {
   .app-header__inner {
     align-items: flex-start;
+  }
+
+  .app-header__nav {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .header-user {
+    width: 100%;
+    margin-bottom: 0.2rem;
+  }
+
+  .page-shell {
+    padding-top: 1.5rem;
+  }
+
+  .home-card,
+  .rules-card,
+  .lobby-card,
+  .game-card,
+  .profile-card,
+  .review-page__board-column,
+  .review-page__log-column,
+  .auth-form,
+  .settings-form {
+    padding: 1rem;
   }
 }
