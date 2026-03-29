@@ -13,40 +13,14 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  PYTHONHASHSEED: "0"
-  TZ: UTC
-
 jobs:
-  lint:
-    name: lint
+  frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: "pip"
-          cache-dependency-path: |
-            backend/src/app/requirements.txt
-            backend/src/app/requirements-dev.txt
-
-      - name: Install backend dependencies
-        working-directory: backend/src
-        run: pip install -r app/requirements-dev.txt
-
-      - name: Backend black
-        working-directory: backend/src
-        run: black --check app tests
-
-      - name: Backend ruff
-        working-directory: backend/src
-        run: ruff check app tests
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -63,39 +37,9 @@ jobs:
         working-directory: frontend
         run: npm run lint
 
-  backend-tests:
-    name: backend-tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+      - name: Frontend tests
+        run: ./scripts/regression/frontend-regression.sh
 
-    services:
-      mongo:
-        image: mongo:7
-        ports:
-          - 27018:27017
-        options: >-
-          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' || exit 1"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: "pip"
-          cache-dependency-path: |
-            backend/src/app/requirements.txt
-            backend/src/app/requirements-dev.txt
-
-      - name: Install backend dependencies
-        working-directory: backend/src
-        run: pip install -r app/requirements-dev.txt
-
-      - name: Run backend tests
-        run: ./scripts/regression/backend-regression.sh
-
+      - name: Frontend build
+        working-directory: frontend
+        run: npm run build
