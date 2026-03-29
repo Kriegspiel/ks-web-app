@@ -147,6 +147,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByText(/Game ID:/i)
+    await screen.findByRole("button", { name: /Q × 1/i })
 
     fireEvent.click(screen.getByRole("button", { name: /Q × 1/i }))
     fireEvent.click(screen.getByRole("button", { name: "Square d5" }))
