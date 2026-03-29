@@ -73,7 +73,7 @@
 }
 
 .page-shell {
-  width: min(calc(100% - 2rem), var(--content-width));
+  width: min(calc(100% - 2rem), var(--page-width));
   margin: 0 auto;
   padding: 2.5rem 0 4rem;
   position: relative;
@@ -225,7 +225,7 @@
 
 @media (max-width: 900px) {
   .page-shell {
-    width: min(calc(100% - 1.5rem), var(--content-width));
+    width: min(calc(100% - 1.5rem), var(--page-width));
   }
 }
 
