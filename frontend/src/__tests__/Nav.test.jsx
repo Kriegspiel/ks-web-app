@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import AppHeader from "../components/AppHeader"
+import { ThemeProvider } from "../context/ThemeContext"
 
 const mockAuth = vi.hoisted(() => ({
   isAuthenticated: false,
@@ -37,11 +38,15 @@ afterEach(() => {
 describe("Nav", () => {
   it("shows_guest_nav_links", () => {
     render(
-      <MemoryRouter>
-        <AppHeader />
-      </MemoryRouter>,
+      <ThemeProvider>
+        <MemoryRouter>
+          <AppHeader />
+        </MemoryRouter>
+      </ThemeProvider>,
     )
 
+    expect(screen.getByRole("link", { name: "Kriegspiel" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /switch to dark theme/i })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Home" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Rules" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Login" })).toBeInTheDocument()
@@ -57,14 +62,33 @@ describe("Nav", () => {
     })
 
     render(
-      <MemoryRouter>
-        <AppHeader />
-      </MemoryRouter>,
+      <ThemeProvider>
+        <MemoryRouter>
+          <AppHeader />
+        </MemoryRouter>
+      </ThemeProvider>,
     )
 
     await waitFor(() => {
       expect(screen.getByRole("link", { name: "Lobby" })).toBeInTheDocument()
       expect(screen.getByRole("link", { name: /Active game \(KSP550\)/i })).toHaveAttribute("href", "/game/game-99")
     })
+  })
+})
+
+describe("theme toggle", () => {
+  it("toggles_aria_label_when_pressed", () => {
+    render(
+      <ThemeProvider>
+        <MemoryRouter>
+          <AppHeader />
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    const toggle = screen.getByRole("button", { name: /switch to dark theme/i })
+    fireEvent.click(toggle)
+
+    expect(screen.getByRole("button", { name: /switch to light theme/i })).toHaveAttribute("aria-pressed", "true")
   })
 })

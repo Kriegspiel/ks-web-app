@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
+import ThemeToggle from "./ThemeToggle"
 import { getMyGames } from "../services/api"
 
 const ACTIVE_STATES = new Set(["active"])
@@ -103,9 +104,12 @@ export default function AppHeader() {
   return (
     <header className="app-header">
       <div className="app-header__inner">
-        <Link className="app-header__brand" to="/" aria-current={location.pathname === "/" ? "page" : undefined}>
-          Kriegspiel
-        </Link>
+        <div className="app-header__brand-group">
+          <Link className="app-header__brand" to="/" aria-current={location.pathname === "/" ? "page" : undefined}>
+            Kriegspiel
+          </Link>
+          <ThemeToggle />
+        </div>
         <nav className="app-header__nav" aria-label="Primary navigation">
           <AuthLinks />
         </nav>
