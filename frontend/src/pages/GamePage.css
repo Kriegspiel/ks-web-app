@@ -1,5 +1,5 @@
 .game-page {
-  max-width: 72rem;
+  max-width: var(--page-width);
 }
 
 .game-page__header {
@@ -10,40 +10,42 @@
 }
 
 .game-page__meta {
-  color: #475569;
+  color: var(--muted-soft);
 }
 
 .game-layout {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
-}
-
-.game-card {
-  border: 1px solid #dbe3ef;
-  border-radius: 0.75rem;
-  padding: 1rem;
-  background: #fff;
+  grid-template-columns: minmax(0, 1.3fr) minmax(18rem, 0.8fr) minmax(18rem, 0.9fr);
+  align-items: start;
 }
 
 .game-status-list,
 .game-log-list {
-  margin: 0.75rem 0;
+  margin: 0.9rem 0 0;
   padding-left: 1.2rem;
 }
 
 .game-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.6rem;
   flex-wrap: wrap;
-}
-
-.game-page__notice {
-  margin: 0.35rem 0;
-  color: #334155;
+  margin-top: 1rem;
 }
 
 .game-status-list__turn--active {
   color: #047857;
   font-weight: 600;
+}
+
+@media (max-width: 1120px) {
+  .game-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .game-layout {
+    grid-template-columns: 1fr;
+  }
 }

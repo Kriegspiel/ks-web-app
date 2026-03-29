@@ -7,7 +7,10 @@
   grid-template-columns: repeat(8, 1fr);
   width: 100%;
   aspect-ratio: 1 / 1;
-  border: 2px solid #2e2e2e;
+  border: 1px solid var(--border-strong);
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
 }
 
 .square {
@@ -23,15 +26,15 @@
 }
 
 .square.light {
-  background: #f0d9b5;
+  background: #f2e8d7;
 }
 
 .square.dark {
-  background: #b58863;
+  background: #ad8a64;
 }
 
 .square:hover:not(:disabled) {
-  filter: brightness(1.08);
+  filter: brightness(1.05);
 }
 
 .square:disabled {
@@ -74,7 +77,7 @@
   position: absolute;
   font-size: clamp(0.42rem, 1.2vw, 0.62rem);
   font-weight: 700;
-  opacity: 0.7;
+  opacity: 0.72;
   pointer-events: none;
 }
 

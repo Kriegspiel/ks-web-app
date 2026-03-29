@@ -1,21 +1,63 @@
-.profile-page { max-width: 56rem; }
-.profile-card {
-  border: 1px solid #dbe3ef;
-  border-radius: 0.75rem;
-  background: #fff;
-  padding: 1rem;
-  margin-top: 1rem;
+.profile-page {
+  max-width: var(--content-width);
 }
+
 .profile-stats-grid {
   display: grid;
   gap: 0.75rem;
   grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
 }
-.profile-stats-grid dt { color: #64748b; font-size: 0.85rem; }
-.profile-stats-grid dd { margin: 0.25rem 0 0; font-weight: 700; }
-.profile-recent-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
-.profile-recent-list li {
-  display: flex; justify-content: space-between; gap: 0.75rem; align-items: center;
-  border: 1px solid #e5eaf2; border-radius: 0.5rem; padding: 0.5rem 0.625rem;
+
+.profile-stats-grid > div {
+  padding: 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(248, 250, 252, 0.72);
 }
-.profile-all-games-link { display: inline-block; margin-top: 0.75rem; }
+
+.profile-stats-grid dt {
+  color: var(--muted-soft);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.profile-stats-grid dd {
+  margin: 0.3rem 0 0;
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+}
+
+.profile-recent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.profile-recent-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 0.8rem;
+  background: rgba(248, 250, 252, 0.72);
+}
+
+.profile-all-games-link {
+  display: inline-block;
+  margin-top: 0.9rem;
+  font-weight: 600;
+}
+
+@media (max-width: 700px) {
+  .profile-recent-list li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

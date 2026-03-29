@@ -1,5 +1,26 @@
-.leaderboard-page { max-width: 56rem; }
-.leaderboard-table-wrap { overflow-x: auto; margin-top: 1rem; }
-.leaderboard-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #dbe3ef; border-radius: 0.75rem; }
-.leaderboard-table th, .leaderboard-table td { text-align: left; padding: 0.6rem; border-bottom: 1px solid #e5eaf2; }
-.leaderboard-table thead th { background: #f8fafc; }
+.leaderboard-page {
+  max-width: var(--page-width);
+}
+
+.leaderboard-table-wrap {
+  overflow-x: auto;
+  margin-top: 1rem;
+  border-radius: var(--radius);
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  text-align: left;
+  padding: 0.8rem;
+  border-bottom: 1px solid #e5eaf2;
+}
+
+.leaderboard-table thead th {
+  background: rgba(248, 250, 252, 0.92);
+}
