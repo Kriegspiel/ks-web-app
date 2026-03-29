@@ -1,5 +1,15 @@
 import footerMarkdown from "../../../content/site/footer/README.md?raw"
 
+const PUBLIC_SITE_ORIGIN = "https://kriegspiel.org"
+
+function normalizeFooterHref(href) {
+  if (/^(?:[a-z]+:)?\/\//i.test(href) || /^[a-z]+:/i.test(href)) {
+    return href
+  }
+
+  return new URL(href, `${PUBLIC_SITE_ORIGIN}/`).toString()
+}
+
 function parseFooterMarkdown(markdown) {
   const groups = []
   let currentGroup = null
@@ -23,7 +33,10 @@ function parseFooterMarkdown(markdown) {
 
     const linkMatch = line.match(/^-\s+\[(.+?)\]\((.+?)\)$/)
     if (linkMatch) {
-      currentGroup.links.push({ label: linkMatch[1], href: linkMatch[2] })
+      currentGroup.links.push({
+        label: linkMatch[1],
+        href: normalizeFooterHref(linkMatch[2]),
+      })
     }
   }
 

@@ -183,6 +183,9 @@ describe("App routes", () => {
     expect(screen.getByRole("heading", { name: "Policy" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Development" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Social" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Leaderboard" })).toHaveAttribute("href", "https://kriegspiel.org/leaderboard")
+    expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "https://kriegspiel.org/about")
+    expect(screen.getByRole("link", { name: "Play online" })).toHaveAttribute("href", "https://app.kriegspiel.org/")
     expect(screen.getByRole("link", { name: "hi@kriegspiel.org" })).toHaveAttribute("href", "mailto:hi@kriegspiel.org")
   })
 
