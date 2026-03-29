@@ -102,13 +102,13 @@
   padding: 0;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: var(--surface-strong);
-  box-shadow: var(--shadow-soft);
+  background: var(--toggle-bg);
+  box-shadow: var(--toggle-shadow);
 }
 
 .theme-toggle:hover,
 .theme-toggle:focus-visible {
-  background: var(--surface);
+  background: var(--toggle-bg-hover);
 }
 
 .theme-toggle__logo {

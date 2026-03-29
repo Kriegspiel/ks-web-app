@@ -25,8 +25,11 @@
   --radius-sm: 12px;
   --page-width: 72rem;
   --content-width: 56rem;
-  --logo-filter: drop-shadow(0 0 0.55rem rgba(255, 255, 255, 0.42));
-  --logo-opacity: 0.92;
+  --logo-filter: drop-shadow(0 0 0.5rem rgba(255, 255, 255, 0.32));
+  --logo-opacity: 0.9;
+  --toggle-bg: color-mix(in srgb, var(--bg) 78%, white 22%);
+  --toggle-bg-hover: color-mix(in srgb, var(--bg) 70%, white 30%);
+  --toggle-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
 :root[data-theme="dark"] {
@@ -53,6 +56,9 @@
   --shadow-soft: 0 10px 24px rgba(2, 6, 23, 0.32);
   --logo-filter: drop-shadow(0 0 0.72rem rgba(0, 0, 0, 0.45)) brightness(0.92) contrast(1.08);
   --logo-opacity: 0.88;
+  --toggle-bg: var(--surface-strong);
+  --toggle-bg-hover: var(--surface);
+  --toggle-shadow: var(--shadow-soft);
 }
 
 * {
