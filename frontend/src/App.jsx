@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom"
 import AppHeader from "./components/AppHeader"
+import AppFooter from "./components/AppFooter"
 import { AuthProvider } from "./context/AuthContext"
 import { useAuth } from "./hooks/useAuth"
 import HomePage from "./pages/HomePage"
@@ -30,6 +31,7 @@ function AppLayout() {
     <div className="app-layout">
       <AppHeader />
       <Outlet />
+      <AppFooter />
     </div>
   )
 }

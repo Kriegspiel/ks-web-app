@@ -88,7 +88,7 @@ describe("GamePage", () => {
     })
 
     render(<GamePage />)
-    await screen.findByText(/Game ID:/i)
+    await screen.findByRole("button", { name: "Square a7" })
 
     fireEvent.click(screen.getByRole("button", { name: "Square a7" }))
     fireEvent.click(screen.getByRole("button", { name: "Square a8" }))
@@ -110,7 +110,7 @@ describe("GamePage", () => {
     })
 
     render(<GamePage />)
-    await screen.findByText(/Game ID:/i)
+    await screen.findByRole("button", { name: "Square a7" })
 
     fireEvent.click(screen.getByRole("button", { name: "Square a7" }))
     fireEvent.click(screen.getByRole("button", { name: "Square a8" }))
