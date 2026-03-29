@@ -63,6 +63,14 @@ npm ci
 npm run dev
 ```
 
+## Key Docs and Roadmap
+
+- Deployment + recovery runbook: `docs/runbooks/deployment-runbook.md`
+- Release readiness checklist: `docs/release/release-readiness-checklist.md`
+- Final release evidence bundle: `docs/release/step-800-final-evidence-bundle.md`
+- Known spec gaps: `docs/quality/spec-implementation-divergence.md`
+- Current roadmap slices: `docs/quality/step-800-slice-810.md` through `docs/quality/step-800-slice-850.md`
+
 ## Test and Quality Commands
 
 ### Core CI lanes
