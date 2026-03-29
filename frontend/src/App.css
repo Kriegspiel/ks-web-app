@@ -10,7 +10,7 @@
 
 .app-footer {
   border-top: 1px solid var(--border);
-  background: var(--surface-alt);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
 }
 
 .app-footer__inner {
@@ -64,7 +64,7 @@
   top: 0;
   z-index: 10;
   backdrop-filter: blur(10px);
-  background: var(--surface-alt);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
   border-bottom: 1px solid var(--border);
 }
 
@@ -104,11 +104,12 @@
   border: 1px solid var(--border);
   background: var(--toggle-bg);
   box-shadow: var(--toggle-shadow);
+  cursor: default;
 }
 
 .theme-toggle:hover,
 .theme-toggle:focus-visible {
-  background: var(--toggle-bg-hover);
+  background: var(--toggle-bg);
 }
 
 .theme-toggle__logo {
@@ -206,8 +207,19 @@
 
 .inline-links a:first-child:hover,
 .inline-links a:first-child:focus-visible {
-  background: #1e293b;
-  border-color: #1e293b;
+  background: #2f241c;
+  border-color: #2f241c;
+}
+
+:root[data-theme="dark"] .inline-links a:first-child {
+  color: #100d0a;
+}
+
+:root[data-theme="dark"] .inline-links a:first-child:hover,
+:root[data-theme="dark"] .inline-links a:first-child:focus-visible {
+  background: #e6dacd;
+  border-color: #e6dacd;
+  color: #100d0a;
 }
 
 .home-card,
@@ -316,54 +328,5 @@
 @media (max-width: 900px) {
   .page-shell {
     width: min(calc(100% - 1.5rem), var(--page-width));
-  }
-}
-
-@media (max-width: 700px) {
-  .app-header__inner {
-    align-items: flex-start;
-  }
-
-  .app-header__brand-group {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .app-header__nav {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .header-user {
-    width: 100%;
-    margin-bottom: 0.2rem;
-  }
-
-  .page-shell {
-    padding-top: 1.5rem;
-  }
-
-  .home-card,
-  .rules-card,
-  .lobby-card,
-  .game-card,
-  .profile-card,
-  .review-page__board-column,
-  .review-page__log-column,
-  .auth-form,
-  .settings-form {
-    padding: 1rem;
-  }
-}
-
-@media (max-width: 520px) {
-  .theme-toggle {
-    width: 2.55rem;
-    height: 2.55rem;
-  }
-
-  .theme-toggle__logo {
-    width: 1.5rem;
-    height: 1.5rem;
   }
 }
