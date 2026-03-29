@@ -25,11 +25,11 @@
   --radius-sm: 12px;
   --page-width: 72rem;
   --content-width: 56rem;
-  --logo-filter: drop-shadow(0 0 0.5rem rgba(255, 255, 255, 0.32));
-  --logo-opacity: 0.9;
-  --toggle-bg: color-mix(in srgb, var(--bg) 78%, white 22%);
-  --toggle-bg-hover: color-mix(in srgb, var(--bg) 70%, white 30%);
-  --toggle-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  --logo-filter: drop-shadow(0 0 0.4rem rgba(255, 255, 255, 0.2));
+  --logo-opacity: 0.88;
+  --toggle-bg: color-mix(in srgb, var(--bg) 92%, white 8%);
+  --toggle-bg-hover: color-mix(in srgb, var(--bg) 88%, white 12%);
+  --toggle-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
 }
 
 :root[data-theme="dark"] {
