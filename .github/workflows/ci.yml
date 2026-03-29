@@ -22,6 +22,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Checkout shared content
+        uses: actions/checkout@v4
+        with:
+          repository: Kriegspiel/content
+          path: content
+
+      - name: Link shared content at workspace sibling path
+        run: ln -sfn "$GITHUB_WORKSPACE/content" "$GITHUB_WORKSPACE/../content"
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
