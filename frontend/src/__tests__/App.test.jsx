@@ -144,7 +144,7 @@ describe("App routes", () => {
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret123" } })
     fireEvent.click(screen.getByRole("button", { name: "Login" }))
 
-    await screen.findByRole("heading", { name: "Game" })
+    await screen.findByRole("heading", { name: "Game", level: 1 })
     expect(screen.getByText(/Game ID:/i)).toBeInTheDocument()
   })
 
@@ -168,6 +168,22 @@ describe("App routes", () => {
     renderRoute("/join/ABCD23")
 
     await screen.findByRole("heading", { name: "Login" })
+  })
+
+
+  it("renders_shared_footer_links", async () => {
+    mockApi.me.mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
+
+    renderRoute("/")
+
+    await screen.findByRole("heading", { name: "Home" })
+    expect(screen.getByRole("heading", { name: "Game" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Rules" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Comm" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Policy" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Dev" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Social" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "hi@kriegspiel.org" })).toHaveAttribute("href", "mailto:hi@kriegspiel.org")
   })
 
   it("join_route_auto_joins_after_login", async () => {
@@ -195,7 +211,7 @@ describe("App routes", () => {
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret123" } })
     fireEvent.click(screen.getByRole("button", { name: "Login" }))
 
-    await screen.findByRole("heading", { name: "Game" })
+    await screen.findByRole("heading", { name: "Game", level: 1 })
     expect(mockApi.joinGame).toHaveBeenCalledWith("ABCD23")
   })
 })
