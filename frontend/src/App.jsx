@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "rea
 import AppHeader from "./components/AppHeader"
 import AppFooter from "./components/AppFooter"
 import { AuthProvider } from "./context/AuthContext"
+import { ThemeProvider } from "./context/ThemeContext"
 import { useAuth } from "./hooks/useAuth"
 import HomePage from "./pages/HomePage"
 import LobbyPage from "./pages/LobbyPage"
@@ -151,7 +152,11 @@ export function AppRoutes() {
 }
 
 export function AppProviders({ children }) {
-  return <AuthProvider>{children}</AuthProvider>
+  return (
+    <ThemeProvider>
+      <AuthProvider>{children}</AuthProvider>
+    </ThemeProvider>
+  )
 }
 
 export default function App() {
