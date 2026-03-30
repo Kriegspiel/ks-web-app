@@ -3,12 +3,12 @@
   "short_name": "Kriegspiel",
   "icons": [
     {
-      "src": "/favicon-192.png",
+      "src": "/favicon-192.png?v=ks-org-20260329",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/favicon-512.png",
+      "src": "/favicon-512.png?v=ks-org-20260329",
       "sizes": "512x512",
       "type": "image/png"
     }
