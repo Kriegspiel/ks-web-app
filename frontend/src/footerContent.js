@@ -1,5 +1,20 @@
 import footerMarkdown from "../../../content/site/footer/README.md?raw"
 
+const absoluteFooterLinks = new Map([
+  ["/rules/berkeley", "https://kriegspiel.org/rules/berkeley"],
+  ["/rules/wild16", "https://kriegspiel.org/rules/wild16"],
+  ["/rules/comparison/", "https://kriegspiel.org/rules/comparison/"],
+  ["/blog", "https://kriegspiel.org/blog"],
+  ["/changelog", "https://kriegspiel.org/changelog"],
+  ["/about", "https://kriegspiel.org/about"],
+  ["/privacy", "https://kriegspiel.org/privacy"],
+  ["/terms", "https://kriegspiel.org/terms"],
+])
+
+function normalizeFooterHref(href) {
+  return absoluteFooterLinks.get(href) ?? href
+}
+
 function parseFooterMarkdown(markdown) {
   const groups = []
   let currentGroup = null
@@ -23,7 +38,7 @@ function parseFooterMarkdown(markdown) {
 
     const linkMatch = line.match(/^-\s+\[(.+?)\]\((.+?)\)$/)
     if (linkMatch) {
-      currentGroup.links.push({ label: linkMatch[1], href: linkMatch[2] })
+      currentGroup.links.push({ label: linkMatch[1], href: normalizeFooterHref(linkMatch[2]) })
     }
   }
 
