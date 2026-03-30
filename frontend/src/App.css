@@ -103,13 +103,17 @@
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--toggle-bg);
-  box-shadow: var(--toggle-shadow);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
   cursor: default;
+  flex: 0 0 auto;
+  transition: none;
 }
 
 .theme-toggle:hover,
 .theme-toggle:focus-visible {
   background: var(--toggle-bg);
+  transform: none;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
 }
 
 .theme-toggle__logo {

@@ -27,8 +27,7 @@
   --content-width: 56rem;
   --logo-filter: drop-shadow(0 0 0.65rem rgba(255, 255, 255, 0.42));
   --logo-opacity: 0.92;
-  --toggle-bg: #111111;
-  --toggle-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  --toggle-bg: rgba(255, 252, 247, 0.95);
 }
 
 :root[data-theme="dark"] {
@@ -55,8 +54,7 @@
   --shadow-soft: 0 10px 24px rgba(0, 0, 0, 0.28);
   --logo-filter: drop-shadow(0 0 0.75rem rgba(0, 0, 0, 0.45)) brightness(0.92) contrast(1.08);
   --logo-opacity: 0.88;
-  --toggle-bg: var(--surface-strong);
-  --toggle-shadow: var(--shadow-soft);
+  --toggle-bg: #1c1712;
 }
 
 * {
