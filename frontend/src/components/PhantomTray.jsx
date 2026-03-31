@@ -32,7 +32,7 @@ export default function PhantomTray({
               onClick={() => onSelectPiece?.(piece)}
               disabled={count <= 0 && selectedPiece !== piece}
             >
-              <span className="phantom-piece__symbol" aria-hidden="true">{PIECE_SYMBOLS[symbolKey]}</span>
+              <span className={`phantom-piece__symbol ${pieceColor === "white" ? "phantom-piece__symbol--white" : "phantom-piece__symbol--black"}`} data-piece={PIECE_SYMBOLS[symbolKey]} aria-hidden="true">{PIECE_SYMBOLS[symbolKey]}</span>
               <span className="phantom-piece__label">{piece.toUpperCase()} × {count}</span>
             </button>
           )

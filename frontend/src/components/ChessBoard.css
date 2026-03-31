@@ -1,5 +1,6 @@
 .chess-board {
-  width: min(92vw, 38rem);
+  width: min(100%, 38rem);
+  margin-inline: auto;
 }
 
 .board-grid {
@@ -93,11 +94,31 @@
   -webkit-font-smoothing: antialiased;
 }
 
+.piece::before {
+  content: attr(data-piece);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+}
+
 .piece.white {
-  color: #fffdf8;
+  color: #fffaf1;
+  -webkit-text-stroke: 0.28px rgba(104, 74, 40, 0.34);
   text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.72),
     0 2px 0 rgba(94, 68, 36, 0.48),
-    0 4px 10px rgba(15, 23, 42, 0.26);
+    0 5px 12px rgba(15, 23, 42, 0.24);
+}
+
+.piece.white::before {
+  color: rgba(248, 239, 225, 0.88);
+  transform: translateY(0.4px) scale(0.94);
+  filter: blur(0.02em);
+  opacity: 0.92;
 }
 
 .piece.black {
@@ -136,7 +157,7 @@
 
 @media (max-width: 640px) {
   .chess-board {
-    width: min(96vw, 30rem);
+    width: min(100%, 30rem);
   }
 
   .board-grid {
