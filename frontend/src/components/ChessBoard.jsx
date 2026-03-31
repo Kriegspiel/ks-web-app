@@ -62,7 +62,7 @@ function ChessBoard({
                 {showFileLabelOnSquare(file, rank) && <span className="coord file">{file}</span>}
                 {showRankLabelOnSquare(file) && <span className="coord rank">{rank}</span>}
                 {piece && (
-                  <span className={`piece ${piece === piece.toUpperCase() ? "white" : "black"}`}>
+                  <span className={`piece ${piece === piece.toUpperCase() ? "white" : "black"}`} data-piece={PIECE_SYMBOLS[piece]}>
                     {PIECE_SYMBOLS[piece]}
                   </span>
                 )}

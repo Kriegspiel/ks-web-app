@@ -25,6 +25,8 @@
   --radius-sm: 12px;
   --page-width: 72rem;
   --content-width: 56rem;
+  --page-gutter: 1rem;
+  --page-gutter-mobile: 0.875rem;
   --logo-filter: drop-shadow(0 0 0.65rem rgba(255, 255, 255, 0.42));
   --logo-opacity: 0.92;
   --toggle-bg: rgba(255, 252, 247, 0.95);
