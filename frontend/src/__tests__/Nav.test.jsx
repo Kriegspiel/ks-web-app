@@ -48,7 +48,6 @@ describe("Nav", () => {
     expect(screen.getByRole("link", { name: "Kriegspiel" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /toggle color theme/i })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Home" })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Rules" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Login" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Register" })).toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Lobby" })).not.toBeInTheDocument()

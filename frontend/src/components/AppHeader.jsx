@@ -74,7 +74,6 @@ function AuthLinks() {
       <>
         <span className="header-user" aria-live="polite">Signed in as {user?.username ?? user?.email ?? "player"}</span>
         <Link to="/" aria-current={location.pathname === "/" ? "page" : undefined}>Home</Link>
-        <Link to="/rules" aria-current={location.pathname === "/rules" ? "page" : undefined}>Rules</Link>
         <Link to="/lobby" aria-current={location.pathname === "/lobby" ? "page" : undefined}>Lobby</Link>
         {activeGamePath ? (
           <Link to={activeGamePath} aria-current={location.pathname === activeGamePath ? "page" : undefined}>
@@ -91,7 +90,6 @@ function AuthLinks() {
   return (
     <>
       <Link to="/" aria-current={location.pathname === "/" ? "page" : undefined}>Home</Link>
-      <Link to="/rules" aria-current={location.pathname === "/rules" ? "page" : undefined}>Rules</Link>
       <Link to="/auth/login" aria-current={location.pathname === "/auth/login" ? "page" : undefined}>Login</Link>
       <Link to="/auth/register" aria-current={location.pathname === "/auth/register" ? "page" : undefined}>Register</Link>
     </>
