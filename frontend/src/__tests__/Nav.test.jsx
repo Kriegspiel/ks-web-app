@@ -46,7 +46,7 @@ describe("Nav", () => {
     )
 
     expect(screen.getByRole("link", { name: "Kriegspiel" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /switch to dark theme/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /toggle color theme/i })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Home" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Rules" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Login" })).toBeInTheDocument()
@@ -86,9 +86,9 @@ describe("theme toggle", () => {
       </ThemeProvider>,
     )
 
-    const toggle = screen.getByRole("button", { name: /switch to dark theme/i })
+    const toggle = screen.getByRole("button", { name: /toggle color theme/i })
     fireEvent.click(toggle)
 
-    expect(screen.getByRole("button", { name: /switch to light theme/i })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: /toggle color theme/i })).toHaveAttribute("aria-pressed", "true")
   })
 })
