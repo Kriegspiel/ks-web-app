@@ -1,19 +1,47 @@
+import wK from "../assets/chess/cburnett/wK.svg"
+import wQ from "../assets/chess/cburnett/wQ.svg"
+import wR from "../assets/chess/cburnett/wR.svg"
+import wB from "../assets/chess/cburnett/wB.svg"
+import wN from "../assets/chess/cburnett/wN.svg"
+import wP from "../assets/chess/cburnett/wP.svg"
+import bK from "../assets/chess/cburnett/bK.svg"
+import bQ from "../assets/chess/cburnett/bQ.svg"
+import bR from "../assets/chess/cburnett/bR.svg"
+import bB from "../assets/chess/cburnett/bB.svg"
+import bN from "../assets/chess/cburnett/bN.svg"
+import bP from "../assets/chess/cburnett/bP.svg"
+
 export const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"]
 export const RANKS = [8, 7, 6, 5, 4, 3, 2, 1]
 
-export const PIECE_SYMBOLS = {
-  K: "♔",
-  Q: "♕",
-  R: "♖",
-  B: "♗",
-  N: "♘",
-  P: "♙",
-  k: "♚",
-  q: "♛",
-  r: "♜",
-  b: "♝",
-  n: "♞",
-  p: "♟",
+export const PIECE_LABELS = {
+  K: "White king",
+  Q: "White queen",
+  R: "White rook",
+  B: "White bishop",
+  N: "White knight",
+  P: "White pawn",
+  k: "Black king",
+  q: "Black queen",
+  r: "Black rook",
+  b: "Black bishop",
+  n: "Black knight",
+  p: "Black pawn",
+}
+
+export const PIECE_ASSETS = {
+  K: wK,
+  Q: wQ,
+  R: wR,
+  B: wB,
+  N: wN,
+  P: wP,
+  k: bK,
+  q: bQ,
+  r: bR,
+  b: bB,
+  n: bN,
+  p: bP,
 }
 
 export function parseFenBoard(fen) {

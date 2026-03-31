@@ -1,6 +1,7 @@
+
 import React from "react"
 import "./ChessBoard.css"
-import { FILES, PIECE_SYMBOLS, RANKS, parseFenBoard } from "./chessboard"
+import { FILES, PIECE_ASSETS, PIECE_LABELS, RANKS, parseFenBoard } from "./chessboard"
 
 function ChessBoard({
   boardFen,
@@ -62,8 +63,8 @@ function ChessBoard({
                 {showFileLabelOnSquare(file, rank) && <span className="coord file">{file}</span>}
                 {showRankLabelOnSquare(file) && <span className="coord rank">{rank}</span>}
                 {piece && (
-                  <span className={`piece ${piece === piece.toUpperCase() ? "white" : "black"}`} data-piece={PIECE_SYMBOLS[piece]}>
-                    {PIECE_SYMBOLS[piece]}
+                  <span className={`piece ${piece === piece.toUpperCase() ? "white" : "black"}`}>
+                    <img className="piece__image" src={PIECE_ASSETS[piece]} alt={PIECE_LABELS[piece]} draggable="false" />
                   </span>
                 )}
               </button>
