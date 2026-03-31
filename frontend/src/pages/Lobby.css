@@ -1,69 +1,17 @@
-.lobby-page {
-  max-width: var(--page-width);
-}
-
-.lobby-card h2 {
-  margin-top: 0;
-  margin-bottom: 0.35rem;
-}
-
-.lobby-join-form {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.75rem;
-  align-items: end;
-  margin-top: 0.9rem;
-}
-
-.lobby-join-form label {
-  grid-column: 1 / -1;
-  font-weight: 600;
-}
-
-.lobby-join-form input {
-  min-width: 10rem;
-  text-transform: uppercase;
-}
-
-.lobby-list {
-  list-style: none;
-  margin: 1rem 0 0;
-  padding: 0;
-  display: grid;
-  gap: 0.75rem;
-}
-
-.lobby-list li {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 0.85rem 0.95rem;
-  align-items: center;
-  background: rgba(248, 250, 252, 0.72);
-}
-
-.lobby-list button {
-  margin-top: 0;
-}
-
-.lobby-meta {
-  color: var(--muted-soft);
-  font-size: 0.92rem;
-}
-
-.lobby-created-game code {
-  font-size: 1.1rem;
-}
-
-@media (max-width: 700px) {
-  .lobby-join-form {
-    grid-template-columns: 1fr;
-  }
-
-  .lobby-list li {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-}
+.lobby-page { max-width: var(--page-width); }
+.lobby-card h2 { margin-top: 0; margin-bottom: 0.35rem; }
+.lobby-create-form, .lobby-join-form { display: grid; gap: 0.75rem; margin-top: 0.9rem; }
+.lobby-join-form { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+.lobby-join-form label, .lobby-bot-picker label { font-weight: 600; }
+.lobby-join-form input { min-width: 10rem; text-transform: uppercase; }
+.lobby-opponent-picker { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.8rem 0.9rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+.lobby-opponent-picker legend { padding: 0 0.35rem; font-weight: 700; }
+.lobby-opponent-picker label { display: inline-flex; align-items: center; gap: 0.45rem; }
+.lobby-bot-picker { display: grid; gap: 0.45rem; }
+.lobby-bot-picker select { max-width: 22rem; }
+.lobby-list { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.75rem; }
+.lobby-list li { display: flex; justify-content: space-between; gap: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.85rem 0.95rem; align-items: center; background: rgba(248, 250, 252, 0.72); }
+.lobby-list button { margin-top: 0; }
+.lobby-meta { color: var(--muted-soft); font-size: 0.92rem; }
+.lobby-created-game code { font-size: 1.1rem; }
+@media (max-width: 700px) { .lobby-join-form { grid-template-columns: 1fr; } .lobby-list li { align-items: flex-start; flex-direction: column; } }
