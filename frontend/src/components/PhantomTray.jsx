@@ -1,4 +1,5 @@
-import { PIECE_SYMBOLS } from "./chessboard"
+
+import { PIECE_ASSETS } from "./chessboard"
 import "./PhantomTray.css"
 
 const PIECE_ORDER = ["q", "r", "b", "n", "p", "k"]
@@ -21,7 +22,7 @@ export default function PhantomTray({
 
       <div className="phantom-tray__pieces" role="list">
         {PIECE_ORDER.map((piece) => {
-          const symbolKey = pieceColor === "white" ? piece.toUpperCase() : piece
+          const pieceKey = pieceColor === "white" ? piece.toUpperCase() : piece
           const count = trayCounts?.[piece] ?? 0
           return (
             <button
@@ -32,7 +33,9 @@ export default function PhantomTray({
               onClick={() => onSelectPiece?.(piece)}
               disabled={count <= 0 && selectedPiece !== piece}
             >
-              <span className={`phantom-piece__symbol ${pieceColor === "white" ? "phantom-piece__symbol--white" : "phantom-piece__symbol--black"}`} data-piece={PIECE_SYMBOLS[symbolKey]} aria-hidden="true">{PIECE_SYMBOLS[symbolKey]}</span>
+              <span className={`phantom-piece__symbol ${pieceColor === "white" ? "phantom-piece__symbol--white" : "phantom-piece__symbol--black"}`} aria-hidden="true">
+                <img className="phantom-piece__image" src={PIECE_ASSETS[pieceKey]} alt="" draggable="false" />
+              </span>
               <span className="phantom-piece__label">{piece.toUpperCase()} × {count}</span>
             </button>
           )
