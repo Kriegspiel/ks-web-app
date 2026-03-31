@@ -1,16 +1,22 @@
 .chess-board {
-  width: min(88vw, 36rem);
+  width: min(92vw, 38rem);
 }
 
 .board-grid {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   width: 100%;
   aspect-ratio: 1 / 1;
-  border: 1px solid var(--border-strong);
-  border-radius: 1rem;
+  padding: 0;
+  gap: 0;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  border-radius: 1.1rem;
   overflow: hidden;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  background: #7b5a3d;
+  box-shadow:
+    0 20px 42px rgba(15, 23, 42, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .square {
@@ -18,23 +24,37 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  appearance: none;
+  -webkit-appearance: none;
   border: none;
+  border-radius: 0;
   margin: 0;
   padding: 0;
-  font-size: clamp(1.2rem, 3.8vw, 2rem);
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   cursor: pointer;
+  transition:
+    filter 140ms ease,
+    transform 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .square.light {
-  background: #f2e8d7;
+  background: linear-gradient(180deg, #f3e7d4 0%, #e7d6bb 100%);
 }
 
 .square.dark {
-  background: #ad8a64;
+  background: linear-gradient(180deg, #b3875f 0%, #936942 100%);
 }
 
 .square:hover:not(:disabled) {
-  filter: brightness(1.05);
+  filter: brightness(1.06) saturate(1.02);
+}
+
+.square:active:not(:disabled) {
+  transform: scale(0.985);
 }
 
 .square:disabled {
@@ -42,11 +62,11 @@
 }
 
 .square--highlighted {
-  box-shadow: inset 0 0 0 0.24rem rgba(255, 205, 0, 0.95);
+  box-shadow: inset 0 0 0 0.24rem rgba(255, 205, 0, 0.96);
 }
 
 .square--last-move {
-  box-shadow: inset 0 0 0 0.2rem rgba(45, 212, 191, 0.9);
+  box-shadow: inset 0 0 0 0.22rem rgba(45, 212, 191, 0.92);
 }
 
 .square--phantom::after {
@@ -61,23 +81,38 @@
 .piece {
   position: relative;
   z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Noto Sans Symbols 2", "Segoe UI Symbol", "Apple Symbols", "Arial Unicode MS", serif;
+  font-size: clamp(1.72rem, 7vw, 3.2rem);
+  font-weight: 700;
   line-height: 1;
+  transform: translateY(-1px) scale(1.08);
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
 }
 
 .piece.white {
-  color: #ffffff;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.55);
+  color: #fffdf8;
+  text-shadow:
+    0 2px 0 rgba(94, 68, 36, 0.48),
+    0 4px 10px rgba(15, 23, 42, 0.26);
 }
 
 .piece.black {
-  color: #121212;
+  color: #181410;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.16),
+    0 3px 8px rgba(15, 23, 42, 0.12);
 }
 
 .coord {
   position: absolute;
-  font-size: clamp(0.42rem, 1.2vw, 0.62rem);
-  font-weight: 700;
-  opacity: 0.72;
+  font-size: clamp(0.44rem, 1.25vw, 0.64rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  opacity: 0.82;
   pointer-events: none;
 }
 
@@ -89,4 +124,31 @@
 .coord.rank {
   left: 0.22rem;
   top: 0.14rem;
+}
+
+.square.light .coord {
+  color: rgba(88, 59, 27, 0.82);
+}
+
+.square.dark .coord {
+  color: rgba(255, 244, 224, 0.84);
+}
+
+@media (max-width: 640px) {
+  .chess-board {
+    width: min(96vw, 30rem);
+  }
+
+  .board-grid {
+    border-radius: 0.95rem;
+    box-shadow:
+      0 16px 30px rgba(15, 23, 42, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  }
+
+  .piece {
+    font-size: clamp(2rem, 9vw, 3rem);
+    transform: translateY(-1px) scale(1.1);
+  }
 }
