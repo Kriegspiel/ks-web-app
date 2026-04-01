@@ -4,6 +4,7 @@ import ChessBoard from "../components/ChessBoard"
 import PromotionModal from "../components/PromotionModal"
 import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
 import { askAny, getGameState, resignGame, submitMove } from "../services/api"
+import { PIECE_ASSETS } from "../components/chessboard"
 import "./GamePage.css"
 
 const POLL_INTERVAL_MS = 2000
@@ -17,8 +18,8 @@ const PHANTOM_LABELS = {
   p: "Pawn",
   k: "King",
 }
-const PHANTOM_MENU_WIDTH = 208
-const PHANTOM_MENU_GAP = 8
+const PHANTOM_MENU_WIDTH = 164
+const PHANTOM_MENU_GAP = 6
 
 function formatClock(seconds) {
   if (typeof seconds !== "number" || Number.isNaN(seconds)) {
@@ -616,41 +617,40 @@ export default function GamePage() {
                       <button type="button" className="phantom-menu__close" onClick={closePhantomMenu} aria-label="Close phantom menu">×</button>
                     </div>
 
-                    {phantomMenu.mode === "phantom-actions" ? (
-                      <>
-                        <p className="phantom-menu__hint">Phantom: {PHANTOM_LABELS[phantomOnMenuSquare] ?? "Unknown"}</p>
-                        <div className="phantom-menu__actions">
-                          <button type="button" onClick={() => setPhantomMenu({ ...phantomMenu, mode: "add-piece" })}>Change piece</button>
-                          <button type="button" onClick={() => beginMovePhantom(phantomMenu.square)}>Move phantom</button>
-                          <button type="button" className="phantom-menu__danger" onClick={handleMenuDeletePhantom}>Delete phantom</button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <p className="phantom-menu__hint">Add or replace a phantom piece.</p>
-                        <div className="phantom-menu__piece-grid">
-                          {PHANTOM_PIECES.map((piece) => {
-                            const disabled = !phantomMenu.availablePieces.includes(piece)
-                            return (
-                              <button
-                                type="button"
-                                key={piece}
-                                disabled={disabled}
-                                onClick={() => handleMenuChoosePiece(piece)}
-                              >
-                                <span>{PHANTOM_LABELS[piece]}</span>
-                                <small>{trayCounts[piece]} left</small>
-                              </button>
-                            )
-                          })}
-                        </div>
-                        {phantomOnMenuSquare ? (
-                          <button type="button" className="phantom-menu__secondary" onClick={() => setPhantomMenu({ ...phantomMenu, mode: "phantom-actions" })}>
-                            Back
+                    <div className="phantom-menu__intro">
+                      <strong>{phantomMenu.square}</strong>
+                      <span>Add a phantom piece.</span>
+                    </div>
+
+                    <div className="phantom-menu__piece-grid">
+                      {PHANTOM_PIECES.map((piece) => {
+                        const disabled = !phantomMenu.availablePieces.includes(piece)
+                        const pieceKey = piece
+                        return (
+                          <button
+                            type="button"
+                            key={piece}
+                            className="phantom-menu__piece-button"
+                            disabled={disabled}
+                            onClick={() => handleMenuChoosePiece(piece)}
+                            aria-label={`${PHANTOM_LABELS[piece]} (${trayCounts[piece]} left)`}
+                            title={`${PHANTOM_LABELS[piece]} · ${trayCounts[piece]} left`}
+                          >
+                            <span className="phantom-menu__piece-symbol" aria-hidden="true">
+                              <img src={PIECE_ASSETS[pieceKey]} alt="" draggable="false" />
+                            </span>
+                            <small>{trayCounts[piece]}</small>
                           </button>
-                        ) : null}
-                      </>
-                    )}
+                        )
+                      })}
+                    </div>
+
+                    {phantomOnMenuSquare ? (
+                      <div className="phantom-menu__footer">
+                        <button type="button" className="phantom-menu__secondary phantom-menu__danger" onClick={handleMenuDeletePhantom}>Remove</button>
+                        <button type="button" className="phantom-menu__secondary" onClick={() => beginMovePhantom(phantomMenu.square)}>Right-drag to move</button>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
