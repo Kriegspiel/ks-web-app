@@ -81,6 +81,39 @@ describe("GamePage", () => {
     expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--last-move")
   })
 
+  it("supports_left_button_drag_for_normal_moves", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      your_fen: "8/8/8/8/8/8/4P3/4K3",
+    })
+
+    render(<GamePage />)
+
+    const source = await screen.findByRole("button", { name: "Square e2" })
+    const target = screen.getByRole("button", { name: "Square e4" })
+
+    const originalElementFromPoint = document.elementFromPoint
+    document.elementFromPoint = vi.fn(() => target)
+
+    fireEvent.pointerDown(source, { button: 0, buttons: 1, pointerId: 7, pointerType: "mouse" })
+    fireEvent.pointerEnter(target, { button: 0, buttons: 1, pointerId: 7, pointerType: "mouse" })
+    fireEvent.pointerMove(source, { button: 0, buttons: 1, pointerId: 7, pointerType: "mouse", clientX: 280, clientY: 320 })
+    fireEvent.pointerUp(source, { button: 0, buttons: 0, pointerId: 7, pointerType: "mouse", clientX: 280, clientY: 320 })
+    fireEvent.click(target)
+
+    document.elementFromPoint = originalElementFromPoint
+
+    await waitFor(() => {
+      expect(screen.getByText(/Selected move:/i).textContent).toContain("e2e4")
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "Submit move" }))
+
+    await waitFor(() => {
+      expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
+    })
+  })
+
   it("gates_promotion_with_modal_and_appends_suffix", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
@@ -134,7 +167,7 @@ describe("GamePage", () => {
     expect(within(menu).getAllByText("d5")).toHaveLength(1)
   })
 
-  it.skip("supports_right_button_drag_for_phantoms_without_opening_the_menu", async () => {
+  it("supports_right_button_drag_for_phantoms_without_opening_the_menu", async () => {
     render(<GamePage />)
 
     const source = await screen.findByRole("button", { name: "Square d5" })
@@ -150,13 +183,15 @@ describe("GamePage", () => {
     fireEvent.pointerDown(source, { button: 2, buttons: 2, pointerId: 9, pointerType: "mouse" })
     fireEvent.pointerEnter(target, { button: 2, buttons: 2, pointerId: 9, pointerType: "mouse" })
     fireEvent.pointerMove(source, { button: 2, buttons: 2, pointerId: 9, pointerType: "mouse", clientX: 290, clientY: 330 })
-    fireEvent.pointerUp(target, { button: 2, buttons: 0, pointerId: 9, pointerType: "mouse", clientX: 290, clientY: 330 })
+    fireEvent.pointerUp(source, { button: 2, buttons: 0, pointerId: 9, pointerType: "mouse", clientX: 290, clientY: 330 })
     fireEvent.contextMenu(target)
 
     document.elementFromPoint = originalElementFromPoint
 
-    expect(target).toHaveClass("square--phantom")
-    expect(source).not.toHaveClass("square--phantom")
+    await waitFor(() => {
+      expect(target).toHaveClass("square--phantom")
+      expect(source).not.toHaveClass("square--phantom")
+    })
     expect(screen.queryByRole("dialog", { name: /Phantom options for e4/i })).not.toBeInTheDocument()
   })
 

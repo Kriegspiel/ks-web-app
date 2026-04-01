@@ -36,10 +36,7 @@
   width: 100%;
   aspect-ratio: 1 / 1;
   cursor: pointer;
-  transition:
-    filter 140ms ease,
-    transform 140ms ease,
-    box-shadow 140ms ease;
+  transition: box-shadow 140ms ease;
 }
 
 .square.light {
@@ -48,14 +45,6 @@
 
 .square.dark {
   background: linear-gradient(180deg, #b3875f 0%, #936942 100%);
-}
-
-.square:hover:not(:disabled) {
-  filter: brightness(1.06) saturate(1.02);
-}
-
-.square:active:not(:disabled) {
-  transform: scale(0.985);
 }
 
 .square:disabled {
