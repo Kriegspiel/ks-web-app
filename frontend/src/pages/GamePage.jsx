@@ -7,7 +7,7 @@ import { askAny, getGameState, resignGame, submitMove } from "../services/api"
 import { PIECE_ASSETS } from "../components/chessboard"
 import "./GamePage.css"
 
-const POLL_INTERVAL_MS = 2000
+const POLL_INTERVAL_MS = 500
 const LONG_PRESS_MS = 450
 const PHANTOM_PIECES = ["q", "r", "b", "n", "p", "k"]
 const PHANTOM_LABELS = {
@@ -20,6 +20,101 @@ const PHANTOM_LABELS = {
 }
 const PHANTOM_MENU_WIDTH = 164
 const PHANTOM_MENU_GAP = 6
+
+function normalizeLogColor(value) {
+  if (typeof value !== "string") {
+    return null
+  }
+
+  const normalized = value.trim().toLowerCase()
+  if (normalized.startsWith("w")) {
+    return "white"
+  }
+  if (normalized.startsWith("b")) {
+    return "black"
+  }
+  return null
+}
+
+function getLogEntryText(entry) {
+  if (!entry || typeof entry !== "object") {
+    return ""
+  }
+
+  const candidates = [entry.announcement, entry.message, entry.text, entry.response, entry.referee_response, entry.description, entry.detail, entry.summary]
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim()
+    }
+  }
+
+  return ""
+}
+
+function getLogEntryColor(entry, fallbackIndex = 0) {
+  if (!entry || typeof entry !== "object") {
+    return fallbackIndex % 2 === 0 ? "white" : "black"
+  }
+
+  const explicitColor = [entry.color, entry.player_color, entry.actor_color, entry.side, entry.turn_color, entry.perspective, entry.recipient, entry.player]
+    .map(normalizeLogColor)
+    .find(Boolean)
+  if (explicitColor) {
+    return explicitColor
+  }
+
+  const text = getLogEntryText(entry).toLowerCase()
+  if (text.startsWith("white") || text.includes(" white ")) {
+    return "white"
+  }
+  if (text.startsWith("black") || text.includes(" black ")) {
+    return "black"
+  }
+
+  return fallbackIndex % 2 === 0 ? "white" : "black"
+}
+
+function getLogEntryTurn(entry, fallbackTurn = 1) {
+  if (!entry || typeof entry !== "object") {
+    return fallbackTurn
+  }
+
+  const numericCandidates = [entry.turn, entry.move_number, entry.fullmove_number, entry.fullmove, entry.turn_number]
+  for (const candidate of numericCandidates) {
+    const value = Number.parseInt(candidate, 10)
+    if (Number.isFinite(value) && value > 0) {
+      return value
+    }
+  }
+
+  const ply = Number.parseInt(entry.ply, 10)
+  if (Number.isFinite(ply) && ply > 0) {
+    return Math.ceil(ply / 2)
+  }
+
+  return fallbackTurn
+}
+
+function groupRefereeLog(entries = []) {
+  const turns = new Map()
+
+  entries.forEach((entry, index) => {
+    const turn = getLogEntryTurn(entry, Math.floor(index / 2) + 1)
+    const color = getLogEntryColor(entry, index)
+    const text = getLogEntryText(entry)
+    if (!text) {
+      return
+    }
+
+    if (!turns.has(turn)) {
+      turns.set(turn, { turn, white: [], black: [] })
+    }
+
+    turns.get(turn)[color].push(text)
+  })
+
+  return Array.from(turns.values()).sort((left, right) => left.turn - right.turn)
+}
 
 function formatClock(seconds) {
   if (typeof seconds !== "number" || Number.isNaN(seconds)) {
@@ -272,6 +367,7 @@ export default function GamePage() {
   const highlightedSquares = [fromSquare, toSquare, movingPhantomFrom, dragHoverSquare, draggingMoveFrom, moveDragHoverSquare].filter(Boolean)
   const waitingForOpponent = gameState?.state === "active" && !possibleActions.includes("move")
   const activeClockColor = gameState?.clock?.active_color ?? gameState?.turn
+  const groupedRefereeLog = useMemo(() => groupRefereeLog(gameState?.referee_log ?? []), [gameState?.referee_log])
 
   function closePhantomMenu() {
     setPhantomMenu(null)
@@ -359,7 +455,24 @@ export default function GamePage() {
     clearDragPreview()
   }
 
-  function finishMoveDrag(targetSquare) {
+  async function commitMove(from, to) {
+    if (!from || !to || !gameId || !canMove) {
+      return
+    }
+
+    setFromSquare(from)
+    setToSquare(to)
+    setShowPromotionModal(false)
+
+    if (isPromotionCandidate({ fen: gameState?.your_fen, fromSquare: from, toSquare: to, color: gameState?.your_color })) {
+      setShowPromotionModal(true)
+      return
+    }
+
+    await submitMoveWithUci(`${from}${to}`)
+  }
+
+  async function finishMoveDrag(targetSquare) {
     const sourceSquare = draggingMoveFromRef.current
     if (!sourceSquare) {
       return
@@ -380,12 +493,10 @@ export default function GamePage() {
       return
     }
 
-    setFromSquare(sourceSquare)
-    setToSquare(destination)
-    setShowPromotionModal(false)
+    void commitMove(sourceSquare, destination)
   }
 
-  function handleSquareClick(square) {
+  async function handleSquareClick(square) {
     if (suppressClickRef.current) {
       suppressClickRef.current = false
       return
@@ -408,6 +519,9 @@ export default function GamePage() {
     }
 
     if (!fromSquare) {
+      if (!squareHasOwnPiece(gameState?.your_fen, square, gameState?.your_color)) {
+        return
+      }
       setFromSquare(square)
       return
     }
@@ -417,20 +531,14 @@ export default function GamePage() {
       return
     }
 
-    if (!toSquare) {
-      setToSquare(square)
-      return
-    }
-
-    if (square === toSquare) {
+    if (squareHasOwnPiece(gameState?.your_fen, square, gameState?.your_color)) {
+      setFromSquare(square)
       setToSquare("")
       setShowPromotionModal(false)
       return
     }
 
-    setFromSquare(square)
-    setToSquare("")
-    setShowPromotionModal(false)
+    await commitMove(fromSquare, square)
   }
 
   function handleSquareRightClick(square) {
@@ -579,19 +687,6 @@ export default function GamePage() {
     } finally {
       setSubmittingAction(false)
     }
-  }
-
-  async function handleMoveSubmit() {
-    if (!selectedMoveBase || !gameId || !canMove) {
-      return
-    }
-
-    if (pendingPromotion) {
-      setShowPromotionModal(true)
-      return
-    }
-
-    await submitMoveWithUci(selectedMoveBase)
   }
 
   async function handlePromotionSelect(suffix) {
@@ -771,45 +866,74 @@ export default function GamePage() {
 
               <div className="game-board-meta">
                 <p className="game-page__meta">Selected move: <code>{selectedMove || "—"}</code></p>
-                <p className="game-page__meta">Moves: click or left-drag your pieces. Phantoms: left-drag to move, right-click to remove, long-press or right-click empty squares to add.</p>
+                <p className="game-page__meta">Moves commit immediately when you click or left-drag a real piece. Phantoms: left-drag to move, right-click to remove, long-press or right-click empty squares to add.</p>
               </div>
             </section>
 
-            <section className="game-card" aria-label="Game status">
+            <section className="game-card game-card--status" aria-label="Game status">
+              <div className="game-actions" aria-label="Game actions">
+                <button type="button" onClick={handleAskAny} disabled={!canAskAny}>
+                  Any pawn captures?
+                </button>
+              </div>
+
               <h2>Status</h2>
               <ul className="game-status-list">
                 <li><strong>State:</strong> {gameState.state}</li>
                 <li><strong>Your color:</strong> {gameState.your_color}</li>
-                <li className={canMove ? "game-status-list__turn game-status-list__turn--active" : "game-status-list__turn"}>
-                  <strong>Turn:</strong> {gameState.turn ?? "—"}
-                </li>
+                <li className={canMove ? "game-status-list__turn game-status-list__turn--active" : "game-status-list__turn"}><strong>Turn:</strong> {gameState.turn ?? "—"}</li>
                 <li><strong>Move number:</strong> {gameState.move_number}</li>
               </ul>
 
-              <div className="game-actions" aria-label="Game actions">
-                <button type="button" onClick={handleMoveSubmit} disabled={!canMove || !selectedMoveBase}>
-                  Submit move
-                </button>
-                <button type="button" onClick={handleAskAny} disabled={!canAskAny}>
-                  Ask any captures?
-                </button>
-                <button type="button" onClick={handleResign} disabled={!canResign}>
-                  Resign
-                </button>
-              </div>
-
               {actionError ? <p className="auth-error" role="alert">{actionError}</p> : null}
 
-              {gameState.referee_log?.length ? (
-                <div>
+              <div className="game-referee-log">
+                <div className="game-referee-log__header">
                   <h3>Referee log</h3>
-                  <ul className="game-log-list">
-                    {gameState.referee_log.map((entry, index) => (
-                      <li key={`${entry.announcement ?? "entry"}-${index}`}>{entry.announcement}</li>
-                    ))}
-                  </ul>
                 </div>
-              ) : null}
+
+                {groupedRefereeLog.length ? (
+                  <div className="game-referee-log__scroll" role="log" aria-label="Referee log by turn">
+                    {groupedRefereeLog.map((turnEntry) => (
+                      <section key={`turn-${turnEntry.turn}`} className="game-referee-turn">
+                        <div className="game-referee-turn__title">Turn {turnEntry.turn}</div>
+                        <div className="game-referee-turn__grid">
+                          <div className="game-referee-column">
+                            <div className="game-referee-column__label">White</div>
+                            {turnEntry.white.length ? (
+                              <ul className="game-referee-column__list">
+                                {turnEntry.white.map((entry, index) => (
+                                  <li key={`turn-${turnEntry.turn}-white-${index}`}>{entry}</li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="game-referee-column__empty">—</p>
+                            )}
+                          </div>
+                          <div className="game-referee-column">
+                            <div className="game-referee-column__label">Black</div>
+                            {turnEntry.black.length ? (
+                              <ul className="game-referee-column__list">
+                                {turnEntry.black.map((entry, index) => (
+                                  <li key={`turn-${turnEntry.turn}-black-${index}`}>{entry}</li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="game-referee-column__empty">—</p>
+                            )}
+                          </div>
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="game-referee-column__empty">No referee responses yet.</p>
+                )}
+              </div>
+
+              <button type="button" className="game-danger-button" onClick={handleResign} disabled={!canResign}>
+                Resign
+              </button>
             </section>
           </div>
 

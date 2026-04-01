@@ -43,6 +43,12 @@
 .square:focus-visible,
 .square:active {
   transform: none;
+  box-shadow: none;
+}
+
+.square:hover .piece__image,
+.square:focus-visible .piece__image {
+  filter: brightness(1.04) saturate(1.03);
 }
 
 

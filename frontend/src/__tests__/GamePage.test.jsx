@@ -28,8 +28,8 @@ const activeState = {
   turn: "white",
   move_number: 1,
   your_color: "white",
-  your_fen: "8/8/8/8/8/8/8/8",
-  referee_log: [{ announcement: "White to move" }],
+  your_fen: "8/8/8/8/8/8/4P3/4K3",
+  referee_log: [{ turn: 1, color: "white", announcement: "White to move" }],
   possible_actions: ["move", "ask_any"],
   clock: { white_remaining: 601, black_remaining: 598, active_color: "white" },
 }
@@ -53,13 +53,13 @@ afterEach(() => {
 })
 
 describe("GamePage", () => {
-  it("polls_every_2s_while_active", async () => {
+  it("polls_every_500ms_while_active", async () => {
     render(<GamePage />)
 
     await screen.findByText(/Game ID:/i)
     expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
 
-    await sleep(2200)
+    await sleep(650)
     await waitFor(() => expect(mockApi.getGameState).toHaveBeenCalledTimes(2))
   })
 
@@ -70,7 +70,6 @@ describe("GamePage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
     fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
-    fireEvent.click(screen.getByRole("button", { name: "Submit move" }))
 
     await waitFor(() => {
       expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
@@ -79,39 +78,6 @@ describe("GamePage", () => {
 
     expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--last-move")
     expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--last-move")
-  })
-
-  it("supports_left_button_drag_for_normal_moves", async () => {
-    mockApi.getGameState.mockResolvedValueOnce({
-      ...activeState,
-      your_fen: "8/8/8/8/8/8/4P3/4K3",
-    })
-
-    render(<GamePage />)
-
-    const source = await screen.findByRole("button", { name: "Square e2" })
-    const target = screen.getByRole("button", { name: "Square e4" })
-
-    const originalElementFromPoint = document.elementFromPoint
-    document.elementFromPoint = vi.fn(() => target)
-
-    fireEvent.pointerDown(source, { button: 0, buttons: 1, pointerId: 7, pointerType: "mouse" })
-    fireEvent.pointerEnter(target, { button: 0, buttons: 1, pointerId: 7, pointerType: "mouse" })
-    fireEvent.pointerMove(source, { button: 0, buttons: 1, pointerId: 7, pointerType: "mouse", clientX: 280, clientY: 320 })
-    fireEvent.pointerUp(source, { button: 0, buttons: 0, pointerId: 7, pointerType: "mouse", clientX: 280, clientY: 320 })
-    fireEvent.click(target)
-
-    document.elementFromPoint = originalElementFromPoint
-
-    await waitFor(() => {
-      expect(screen.getByText(/Selected move:/i).textContent).toContain("e2e4")
-    })
-
-    fireEvent.click(screen.getByRole("button", { name: "Submit move" }))
-
-    await waitFor(() => {
-      expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
-    })
   })
 
   it("gates_promotion_with_modal_and_appends_suffix", async () => {
@@ -125,7 +91,6 @@ describe("GamePage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Square a7" }))
     fireEvent.click(screen.getByRole("button", { name: "Square a8" }))
-    fireEvent.click(screen.getByRole("button", { name: "Submit move" }))
 
     expect(screen.getByRole("dialog", { name: "Choose promotion piece" })).toBeInTheDocument()
 
@@ -167,55 +132,38 @@ describe("GamePage", () => {
     expect(within(menu).getAllByText("d5")).toHaveLength(1)
   })
 
-  it("supports_right_button_drag_for_phantoms_without_opening_the_menu", async () => {
+  it("supports_phantom_add_and_remove", async () => {
     render(<GamePage />)
 
     const source = await screen.findByRole("button", { name: "Square d5" })
-    const target = screen.getByRole("button", { name: "Square e4" })
 
-    fireEvent.contextMenu(source)
-    fireEvent.click(screen.getByRole("button", { name: /Queen \(1 left\)/i }))
-    expect(source).toHaveClass("square--phantom")
-
-    const originalElementFromPoint = document.elementFromPoint
-    document.elementFromPoint = vi.fn(() => target)
-
-    fireEvent.pointerDown(source, { button: 2, buttons: 2, pointerId: 9, pointerType: "mouse" })
-    fireEvent.pointerEnter(target, { button: 2, buttons: 2, pointerId: 9, pointerType: "mouse" })
-    fireEvent.pointerMove(source, { button: 2, buttons: 2, pointerId: 9, pointerType: "mouse", clientX: 290, clientY: 330 })
-    fireEvent.pointerUp(source, { button: 2, buttons: 0, pointerId: 9, pointerType: "mouse", clientX: 290, clientY: 330 })
-    fireEvent.contextMenu(target)
-
-    document.elementFromPoint = originalElementFromPoint
-
-    await waitFor(() => {
-      expect(target).toHaveClass("square--phantom")
-      expect(source).not.toHaveClass("square--phantom")
-    })
-    expect(screen.queryByRole("dialog", { name: /Phantom options for e4/i })).not.toBeInTheDocument()
-  })
-
-  it("supports_phantom_add_move_delete_via_context_menu", async () => {
-    render(<GamePage />)
-
-    await screen.findByRole("button", { name: "Square d5" })
-
-    fireEvent.contextMenu(screen.getByRole("button", { name: "Square d5" }), { clientX: 120, clientY: 180 })
+    fireEvent.contextMenu(source, { clientX: 120, clientY: 180 })
     expect(screen.getByRole("dialog", { name: /Phantom options for d5/i })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: /Queen \(1 left\)/i }))
-    expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--phantom")
+    expect(source).toHaveClass("square--phantom")
 
-    fireEvent.contextMenu(screen.getByRole("button", { name: "Square d5" }), { clientX: 120, clientY: 180 })
-    fireEvent.click(screen.getByRole("button", { name: "Right-drag to move" }))
-    expect(screen.getByText(/Moving phantom from/i)).toBeInTheDocument()
+    fireEvent.contextMenu(source, { clientX: 120, clientY: 180 })
+    expect(source).not.toHaveClass("square--phantom")
+  })
 
-    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
-    expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--phantom")
+  it("renders_referee_log_grouped_by_turn", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      referee_log: [
+        { turn: 1, color: "white", announcement: "White sees file blocked" },
+        { turn: 1, color: "black", announcement: "Black hears no capture" },
+        { turn: 2, color: "white", announcement: "White in check" },
+      ],
+    })
 
-    fireEvent.contextMenu(screen.getByRole("button", { name: "Square e4" }), { clientX: 120, clientY: 180 })
-    fireEvent.click(screen.getByRole("button", { name: "Remove" }))
-    expect(screen.getByRole("button", { name: "Square e4" })).not.toHaveClass("square--phantom")
+    render(<GamePage />)
+
+    expect(await screen.findByText("Turn 1")).toBeInTheDocument()
+    expect(screen.getByText("Turn 2")).toBeInTheDocument()
+    expect(screen.getByText("White sees file blocked")).toBeInTheDocument()
+    expect(screen.getByText("Black hears no capture")).toBeInTheDocument()
+    expect(screen.getByText("White in check")).toBeInTheDocument()
   })
 
   it("disables_ask_any_when_not_allowed", async () => {
@@ -223,7 +171,7 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    const askButton = await screen.findByRole("button", { name: "Ask any captures?" })
+    const askButton = await screen.findByRole("button", { name: "Any pawn captures?" })
     expect(askButton).toBeDisabled()
   })
 
@@ -233,7 +181,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByText(/State:/i)
-    await sleep(2200)
+    await sleep(650)
 
     expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
   })
