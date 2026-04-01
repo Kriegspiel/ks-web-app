@@ -91,6 +91,15 @@ function isTouchLikePointer(event) {
   return event?.pointerType === "touch" || event?.pointerType === "pen"
 }
 
+function squareHasOwnPiece(fen, square, color) {
+  const piece = pieceAtSquare(fen, square)
+  if (!piece || !color) {
+    return false
+  }
+
+  return color === "white" ? piece === piece.toUpperCase() : piece === piece.toLowerCase()
+}
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max)
 }
@@ -151,12 +160,17 @@ export default function GamePage() {
   const [movingPhantomFrom, setMovingPhantomFrom] = useState("")
   const [draggingPhantomFrom, setDraggingPhantomFrom] = useState("")
   const [dragHoverSquare, setDragHoverSquare] = useState("")
+  const [draggingMoveFrom, setDraggingMoveFrom] = useState("")
+  const [moveDragHoverSquare, setMoveDragHoverSquare] = useState("")
 
   const longPressTimerRef = useRef(null)
   const longPressPointerRef = useRef(null)
   const boardShellRef = useRef(null)
   const dragPointerIdRef = useRef(null)
   const draggingPhantomFromRef = useRef("")
+  const moveDragPointerIdRef = useRef(null)
+  const draggingMoveFromRef = useRef("")
+  const suppressClickRef = useRef(false)
   const suppressContextMenuRef = useRef(false)
 
   const occupiedSquares = useMemo(() => occupiedSquaresFromFen(gameState?.your_fen), [gameState?.your_fen])
@@ -254,7 +268,7 @@ export default function GamePage() {
     return selectedMoveBase
   }, [pendingPromotion, selectedMoveBase])
 
-  const highlightedSquares = [fromSquare, toSquare, movingPhantomFrom, dragHoverSquare].filter(Boolean)
+  const highlightedSquares = [fromSquare, toSquare, movingPhantomFrom, dragHoverSquare, draggingMoveFrom, moveDragHoverSquare].filter(Boolean)
   const waitingForOpponent = gameState?.state === "active" && !possibleActions.includes("move")
   const activeClockColor = gameState?.clock?.active_color ?? gameState?.turn
 
@@ -330,7 +344,37 @@ export default function GamePage() {
     dragPointerIdRef.current = null
   }
 
+  function finishMoveDrag(targetSquare) {
+    const sourceSquare = draggingMoveFromRef.current
+    if (!sourceSquare) {
+      return
+    }
+
+    const destination = targetSquare || sourceSquare
+    setDraggingMoveFrom("")
+    draggingMoveFromRef.current = ""
+    moveDragPointerIdRef.current = null
+    setMoveDragHoverSquare("")
+    suppressClickRef.current = true
+
+    if (destination === sourceSquare) {
+      setFromSquare(sourceSquare)
+      setToSquare("")
+      setShowPromotionModal(false)
+      return
+    }
+
+    setFromSquare(sourceSquare)
+    setToSquare(destination)
+    setShowPromotionModal(false)
+  }
+
   function handleSquareClick(square) {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false
+      return
+    }
+
     setActionError("")
     setShowPromotionModal(false)
 
@@ -383,6 +427,19 @@ export default function GamePage() {
   }
 
   function handleSquarePointerDown(square, event) {
+    if (event.button === 0 && !isTouchLikePointer(event) && canMove && squareHasOwnPiece(gameState?.your_fen, square, gameState?.your_color)) {
+      setActionError("")
+      setShowPromotionModal(false)
+      setDraggingMoveFrom(square)
+      draggingMoveFromRef.current = square
+      moveDragPointerIdRef.current = event.pointerId
+      setMoveDragHoverSquare(square)
+      setFromSquare(square)
+      setToSquare("")
+      event.currentTarget.setPointerCapture?.(event.pointerId)
+      return
+    }
+
     if (event.button === 2 && placements[square] && !isTouchLikePointer(event)) {
       setActionError("")
       setDraggingPhantomFrom(square)
@@ -408,12 +465,23 @@ export default function GamePage() {
   }
 
   function handleSquarePointerEnter(square, event) {
+    if (draggingMoveFromRef.current && moveDragPointerIdRef.current === event.pointerId && (event.buttons & 1) === 1) {
+      setMoveDragHoverSquare(square)
+    }
+
     if (draggingPhantomFromRef.current && (event.buttons & 2) === 2) {
       setDragHoverSquare(square)
     }
   }
 
   function handleSquarePointerMove(square, event) {
+    if (draggingMoveFromRef.current && moveDragPointerIdRef.current === event.pointerId) {
+      const hoveredSquare = findSquareFromPointerEvent(event) || square
+      if (hoveredSquare) {
+        setMoveDragHoverSquare(hoveredSquare)
+      }
+    }
+
     if (!draggingPhantomFromRef.current || dragPointerIdRef.current !== event.pointerId) {
       return
     }
@@ -425,7 +493,14 @@ export default function GamePage() {
   }
 
   function handleSquarePointerUp(square, event) {
-    if (draggingPhantomFromRef.current && event.button === 2) {
+    if (draggingMoveFromRef.current && moveDragPointerIdRef.current === event.pointerId) {
+      const hoveredSquare = findSquareFromPointerEvent(event)
+      event.currentTarget.releasePointerCapture?.(event.pointerId)
+      finishMoveDrag(hoveredSquare || square)
+      return
+    }
+
+    if (draggingPhantomFromRef.current && dragPointerIdRef.current === event.pointerId) {
       const hoveredSquare = findSquareFromPointerEvent(event)
       event.currentTarget.releasePointerCapture?.(event.pointerId)
       finishDragPhantom(hoveredSquare || square)
@@ -438,6 +513,11 @@ export default function GamePage() {
   }
 
   function handleSquarePointerCancel(_square, event) {
+    if (draggingMoveFromRef.current && moveDragPointerIdRef.current === event.pointerId) {
+      event.currentTarget.releasePointerCapture?.(event.pointerId)
+      finishMoveDrag(moveDragHoverSquare)
+    }
+
     if (draggingPhantomFromRef.current && dragPointerIdRef.current === event.pointerId) {
       event.currentTarget.releasePointerCapture?.(event.pointerId)
       finishDragPhantom(dragHoverSquare)
@@ -655,7 +735,7 @@ export default function GamePage() {
 
               <div className="game-board-meta">
                 <p className="game-page__meta">Selected move: <code>{selectedMove || "—"}</code></p>
-                <p className="game-page__meta">Phantoms: right-click or right-drag on desktop, or long-press on mobile.</p>
+                <p className="game-page__meta">Moves: click or left-drag your pieces. Phantoms: right-click or right-drag on desktop, or long-press on mobile.</p>
               </div>
             </section>
 
