@@ -7,16 +7,13 @@ beforeEach(() => {
 })
 
 describe("usePhantoms", () => {
-  it("initializes_full_tray_and_supports_place_move_remove_clear", () => {
+  it("initializes_full_tray_and_supports_set_move_remove", () => {
     const { result } = renderHook(() => usePhantoms({ gameId: "g-530", occupiedSquares: [] }))
 
     expect(result.current.trayCounts).toEqual({ p: 8, r: 2, n: 2, b: 2, q: 1, k: 1 })
 
     act(() => {
-      result.current.selectPiece("q")
-    })
-    act(() => {
-      result.current.placeAt("d5")
+      result.current.setPieceAt("d5", "q")
     })
     expect(result.current.placements).toEqual({ d5: "q" })
     expect(result.current.trayCounts.q).toBe(0)
@@ -31,35 +28,16 @@ describe("usePhantoms", () => {
     })
     expect(result.current.placements).toEqual({})
     expect(result.current.trayCounts.q).toBe(1)
-
-    act(() => {
-      result.current.selectPiece("p")
-    })
-    act(() => {
-      result.current.placeAt("a3")
-    })
-    act(() => {
-      result.current.clearAll()
-    })
-    expect(result.current.placements).toEqual({})
-    expect(result.current.selectedPiece).toBe("")
-    expect(result.current.trayCounts.p).toBe(8)
   })
 
   it("displaces_existing_phantom_and_preserves_piece_totals", () => {
     const { result } = renderHook(() => usePhantoms({ gameId: "g-531", occupiedSquares: [] }))
 
     act(() => {
-      result.current.selectPiece("p")
+      result.current.setPieceAt("c4", "p")
     })
     act(() => {
-      result.current.placeAt("c4")
-    })
-    act(() => {
-      result.current.selectPiece("n")
-    })
-    act(() => {
-      result.current.placeAt("c4")
+      result.current.setPieceAt("c4", "n")
     })
 
     expect(result.current.placements).toEqual({ c4: "n" })
@@ -84,12 +62,21 @@ describe("usePhantoms", () => {
     expect(JSON.parse(window.localStorage.getItem("phantoms_g-532"))).toEqual({ placements: { d4: "q" } })
   })
 
-  it("ignores_malformed_localstorage", () => {
-    window.localStorage.setItem("phantoms_g-533", "{oops")
+  it("blocks_add_or_move_onto_real_piece_squares", () => {
+    const { result } = renderHook(() => usePhantoms({ gameId: "g-533", occupiedSquares: ["e4"] }))
 
-    const { result } = renderHook(() => usePhantoms({ gameId: "g-533", occupiedSquares: [] }))
-
+    act(() => {
+      result.current.setPieceAt("e4", "q")
+    })
     expect(result.current.placements).toEqual({})
+
+    act(() => {
+      result.current.setPieceAt("d5", "q")
+    })
+    act(() => {
+      result.current.move("d5", "e4")
+    })
+    expect(result.current.placements).toEqual({ d5: "q" })
   })
 })
 

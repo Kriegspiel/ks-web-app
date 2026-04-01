@@ -1,13 +1,22 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import ChessBoard from "../components/ChessBoard"
-import PhantomTray from "../components/PhantomTray"
 import PromotionModal from "../components/PromotionModal"
 import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
 import { askAny, getGameState, resignGame, submitMove } from "../services/api"
 import "./GamePage.css"
 
 const POLL_INTERVAL_MS = 2000
+const LONG_PRESS_MS = 450
+const PHANTOM_PIECES = ["q", "r", "b", "n", "p", "k"]
+const PHANTOM_LABELS = {
+  q: "Queen",
+  r: "Rook",
+  b: "Bishop",
+  n: "Knight",
+  p: "Pawn",
+  k: "King",
+}
 
 function formatClock(seconds) {
   if (typeof seconds !== "number" || Number.isNaN(seconds)) {
@@ -75,6 +84,20 @@ function isPromotionCandidate({ fen, fromSquare, toSquare, color }) {
   return color === "white" ? targetRank === "8" : targetRank === "1"
 }
 
+function isTouchLikePointer(event) {
+  return event?.pointerType === "touch" || event?.pointerType === "pen"
+}
+
+function buildMenuState(square, event, squareHasPhantom, availablePieces) {
+  return {
+    square,
+    x: event?.clientX ?? null,
+    y: event?.clientY ?? null,
+    mode: squareHasPhantom ? "phantom-actions" : "root",
+    availablePieces,
+  }
+}
+
 export default function GamePage() {
   const { gameId } = useParams()
   const navigate = useNavigate()
@@ -88,17 +111,24 @@ export default function GamePage() {
   const [toSquare, setToSquare] = useState("")
   const [lastMoveSquares, setLastMoveSquares] = useState([])
   const [showPromotionModal, setShowPromotionModal] = useState(false)
+  const [phantomMenu, setPhantomMenu] = useState(null)
+  const [movingPhantomFrom, setMovingPhantomFrom] = useState("")
+  const [draggingPhantomFrom, setDraggingPhantomFrom] = useState("")
+  const [dragHoverSquare, setDragHoverSquare] = useState("")
+
+  const longPressTimerRef = useRef(null)
+  const longPressPointerRef = useRef(null)
 
   const occupiedSquares = useMemo(() => occupiedSquaresFromFen(gameState?.your_fen), [gameState?.your_fen])
 
   const {
+    placements,
     phantomSquares,
     trayCounts,
-    selectedPiece,
-    selectPiece,
-    placeAt,
+    setPieceAt,
+    move,
     removeAt,
-    clearAll,
+    availablePiecesForSquare,
   } = usePhantoms({ gameId, occupiedSquares })
 
   const pollState = useCallback(async ({ silent = false } = {}) => {
@@ -141,6 +171,12 @@ export default function GamePage() {
     }
   }, [gameId, gameState?.state, pollState])
 
+  useEffect(() => () => {
+    if (longPressTimerRef.current) {
+      window.clearTimeout(longPressTimerRef.current)
+    }
+  }, [])
+
   const possibleActions = gameState?.possible_actions ?? []
   const canMove = gameState?.state === "active" && possibleActions.includes("move") && !submittingAction
   const canAskAny = gameState?.state === "active" && possibleActions.includes("ask_any") && !submittingAction
@@ -166,18 +202,82 @@ export default function GamePage() {
     })
   }, [fromSquare, gameState?.your_color, gameState?.your_fen, selectedMoveBase, toSquare])
 
+  const selectedMove = useMemo(() => {
+    if (!selectedMoveBase) {
+      return ""
+    }
+
+    if (pendingPromotion) {
+      return `${selectedMoveBase}?`
+    }
+
+    return selectedMoveBase
+  }, [pendingPromotion, selectedMoveBase])
+
+  const highlightedSquares = [fromSquare, toSquare, movingPhantomFrom, dragHoverSquare].filter(Boolean)
+  const waitingForOpponent = gameState?.state === "active" && !possibleActions.includes("move")
+  const activeClockColor = gameState?.clock?.active_color ?? gameState?.turn
+
+  function closePhantomMenu() {
+    setPhantomMenu(null)
+  }
+
+  function clearLongPressTimer() {
+    if (longPressTimerRef.current) {
+      window.clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+    longPressPointerRef.current = null
+  }
+
   function resetPendingMove() {
     setFromSquare("")
     setToSquare("")
     setShowPromotionModal(false)
   }
 
+  function openPhantomMenu(square, event) {
+    setActionError("")
+    const squareHasPhantom = Boolean(placements[square])
+    setPhantomMenu(buildMenuState(square, event, squareHasPhantom, availablePiecesForSquare(square)))
+  }
+
+  function beginMovePhantom(square) {
+    setMovingPhantomFrom(square)
+    setDragHoverSquare("")
+    closePhantomMenu()
+  }
+
+  function completeMovePhantom(targetSquare) {
+    if (!movingPhantomFrom) {
+      return false
+    }
+
+    if (targetSquare === movingPhantomFrom) {
+      setMovingPhantomFrom("")
+      setDragHoverSquare("")
+      return true
+    }
+
+    const moved = move(movingPhantomFrom, targetSquare)
+    setMovingPhantomFrom("")
+    setDragHoverSquare("")
+    if (!moved) {
+      setActionError("That square cannot take the phantom piece.")
+    }
+    return moved
+  }
+
   function handleSquareClick(square) {
     setActionError("")
     setShowPromotionModal(false)
 
-    if (selectedPiece) {
-      placeAt(square)
+    if (phantomMenu) {
+      closePhantomMenu()
+    }
+
+    if (movingPhantomFrom) {
+      completeMovePhantom(square)
       return
     }
 
@@ -211,10 +311,49 @@ export default function GamePage() {
     setShowPromotionModal(false)
   }
 
-  function handleSquareRightClick(square) {
-    const removed = removeAt(square)
-    if (removed && (square === fromSquare || square === toSquare)) {
-      resetPendingMove()
+  function handleSquareRightClick(square, event) {
+    openPhantomMenu(square, event)
+  }
+
+  function handleSquarePointerDown(square, event) {
+    if (event.button === 2 && placements[square] && !isTouchLikePointer(event)) {
+      setDraggingPhantomFrom(square)
+      setDragHoverSquare(square)
+      closePhantomMenu()
+      return
+    }
+
+    if (!isTouchLikePointer(event)) {
+      return
+    }
+
+    clearLongPressTimer()
+    longPressPointerRef.current = event.pointerId
+    longPressTimerRef.current = window.setTimeout(() => {
+      openPhantomMenu(square, { clientX: null, clientY: null })
+      clearLongPressTimer()
+    }, LONG_PRESS_MS)
+  }
+
+  function handleSquarePointerEnter(square, event) {
+    if (draggingPhantomFrom && (event.buttons & 2) === 2) {
+      setDragHoverSquare(square)
+    }
+  }
+
+  function handleSquarePointerUp(square, event) {
+    if (draggingPhantomFrom && event.button === 2) {
+      const moved = move(draggingPhantomFrom, square)
+      if (!moved && square !== draggingPhantomFrom) {
+        setActionError("That square cannot take the phantom piece.")
+      }
+      setDraggingPhantomFrom("")
+      setDragHoverSquare("")
+      return
+    }
+
+    if (isTouchLikePointer(event) && longPressPointerRef.current === event.pointerId) {
+      clearLongPressTimer()
     }
   }
 
@@ -303,24 +442,32 @@ export default function GamePage() {
     }
   }
 
-  const selectedMove = useMemo(() => {
-    if (!selectedMoveBase) {
-      return ""
+  function handleMenuChoosePiece(piece) {
+    if (!phantomMenu?.square) {
+      return
     }
 
-    if (pendingPromotion) {
-      return `${selectedMoveBase}?`
+    setPieceAt(phantomMenu.square, piece)
+    closePhantomMenu()
+  }
+
+  function handleMenuDeletePhantom() {
+    if (!phantomMenu?.square) {
+      return
     }
 
-    return selectedMoveBase
-  }, [pendingPromotion, selectedMoveBase])
+    removeAt(phantomMenu.square)
+    if (phantomMenu.square === movingPhantomFrom) {
+      setMovingPhantomFrom("")
+    }
+    closePhantomMenu()
+  }
 
-  const highlightedSquares = [fromSquare, toSquare].filter(Boolean)
-  const opponentColor = gameState?.your_color === "black" ? "white" : "black"
-  const waitingForOpponent = gameState?.state === "active" && !possibleActions.includes("move")
+  const phantomMenuSquare = phantomMenu?.square ?? ""
+  const phantomOnMenuSquare = phantomMenuSquare ? placements[phantomMenuSquare] : ""
 
   return (
-    <main className="page-shell game-page" aria-live="polite">
+    <main className="page-shell game-page" aria-live="polite" onClick={() => phantomMenu && closePhantomMenu()}>
       <div className="game-page__header">
         <h1>Game</h1>
         <button type="button" onClick={() => navigate("/lobby")}>Back to lobby</button>
@@ -330,33 +477,96 @@ export default function GamePage() {
       {loading ? <p className="game-page__notice">Loading game state…</p> : null}
       {submittingAction ? <p className="game-page__notice">Submitting action…</p> : null}
       {waitingForOpponent ? <p className="game-page__notice">Waiting for opponent move…</p> : null}
+      {movingPhantomFrom ? <p className="game-page__notice">Moving phantom from <code>{movingPhantomFrom}</code>. Tap or right-click a destination square.</p> : null}
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
 
       {gameState ? (
         <>
           <div className="game-layout">
-            <section className="game-card" aria-label="Board">
-              <ChessBoard
-                boardFen={gameState.your_fen}
-                orientation={gameState.your_color}
-                highlightedSquares={highlightedSquares}
-                lastMoveSquares={lastMoveSquares}
-                phantomSquares={phantomSquares}
-                disabled={false}
-                onSquareClick={handleSquareClick}
-                onSquareRightClick={handleSquareRightClick}
-              />
-              <p className="game-page__meta">Selected move: <code>{selectedMove || "—"}</code></p>
-            </section>
+            <section className="game-card game-card--board" aria-label="Board">
+              <div className="game-clocks" aria-label="Game clocks">
+                <div className={`game-clock ${activeClockColor === "white" ? "game-clock--active" : ""}`.trim()}>
+                  <span className="game-clock__label">White</span>
+                  <strong>{formatClock(gameState.clock?.white_remaining)}</strong>
+                </div>
+                <div className={`game-clock ${activeClockColor === "black" ? "game-clock--active" : ""}`.trim()}>
+                  <span className="game-clock__label">Black</span>
+                  <strong>{formatClock(gameState.clock?.black_remaining)}</strong>
+                </div>
+              </div>
 
-            <section className="game-card" aria-label="Phantom controls">
-              <PhantomTray
-                selectedPiece={selectedPiece}
-                trayCounts={trayCounts}
-                pieceColor={opponentColor}
-                onSelectPiece={selectPiece}
-                onClear={clearAll}
-              />
+              <div className="game-board-shell">
+                <ChessBoard
+                  boardFen={gameState.your_fen}
+                  orientation={gameState.your_color}
+                  highlightedSquares={highlightedSquares}
+                  lastMoveSquares={lastMoveSquares}
+                  phantomSquares={phantomSquares}
+                  phantomPlacements={placements}
+                  disabled={false}
+                  onSquareClick={handleSquareClick}
+                  onSquareRightClick={handleSquareRightClick}
+                  onSquarePointerDown={handleSquarePointerDown}
+                  onSquarePointerEnter={handleSquarePointerEnter}
+                  onSquarePointerUp={handleSquarePointerUp}
+                />
+
+                {phantomMenu ? (
+                  <div
+                    className={`phantom-menu ${phantomMenu.x == null ? "phantom-menu--sheet" : ""}`.trim()}
+                    style={phantomMenu.x == null ? undefined : { left: phantomMenu.x, top: phantomMenu.y }}
+                    role="dialog"
+                    aria-label={`Phantom options for ${phantomMenu.square}`}
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <div className="phantom-menu__header">
+                      <strong>{phantomMenu.square}</strong>
+                      <button type="button" className="phantom-menu__close" onClick={closePhantomMenu} aria-label="Close phantom menu">×</button>
+                    </div>
+
+                    {phantomMenu.mode === "phantom-actions" ? (
+                      <>
+                        <p className="phantom-menu__hint">Phantom: {PHANTOM_LABELS[phantomOnMenuSquare] ?? "Unknown"}</p>
+                        <div className="phantom-menu__actions">
+                          <button type="button" onClick={() => setPhantomMenu({ ...phantomMenu, mode: "add-piece" })}>Change piece</button>
+                          <button type="button" onClick={() => beginMovePhantom(phantomMenu.square)}>Move phantom</button>
+                          <button type="button" className="phantom-menu__danger" onClick={handleMenuDeletePhantom}>Delete phantom</button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="phantom-menu__hint">Add or replace a phantom piece.</p>
+                        <div className="phantom-menu__piece-grid">
+                          {PHANTOM_PIECES.map((piece) => {
+                            const disabled = !phantomMenu.availablePieces.includes(piece)
+                            return (
+                              <button
+                                type="button"
+                                key={piece}
+                                disabled={disabled}
+                                onClick={() => handleMenuChoosePiece(piece)}
+                              >
+                                <span>{PHANTOM_LABELS[piece]}</span>
+                                <small>{trayCounts[piece]} left</small>
+                              </button>
+                            )
+                          })}
+                        </div>
+                        {phantomOnMenuSquare ? (
+                          <button type="button" className="phantom-menu__secondary" onClick={() => setPhantomMenu({ ...phantomMenu, mode: "phantom-actions" })}>
+                            Back
+                          </button>
+                        ) : null}
+                      </>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="game-board-meta">
+                <p className="game-page__meta">Selected move: <code>{selectedMove || "—"}</code></p>
+                <p className="game-page__meta">Phantoms: right-click a square on desktop, or long-press on mobile.</p>
+              </div>
             </section>
 
             <section className="game-card" aria-label="Game status">
@@ -368,8 +578,6 @@ export default function GamePage() {
                   <strong>Turn:</strong> {gameState.turn ?? "—"}
                 </li>
                 <li><strong>Move number:</strong> {gameState.move_number}</li>
-                <li><strong>White clock:</strong> {formatClock(gameState.clock?.white_remaining)}</li>
-                <li><strong>Black clock:</strong> {formatClock(gameState.clock?.black_remaining)}</li>
               </ul>
 
               <div className="game-actions" aria-label="Game actions">

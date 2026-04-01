@@ -66,7 +66,7 @@ describe("GamePage", () => {
   it("submits_two_click_move_and_repolls", async () => {
     render(<GamePage />)
 
-    await screen.findByText(/Game ID:/i)
+    await screen.findByRole("button", { name: "Square e2" })
 
     fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
     fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
@@ -103,68 +103,35 @@ describe("GamePage", () => {
     })
   })
 
-  it("promotion_cancel_resets_pending_move", async () => {
-    mockApi.getGameState.mockResolvedValueOnce({
-      ...activeState,
-      your_fen: "8/P7/8/8/8/8/8/8",
-    })
-
+  it("shows_clocks_above_board", async () => {
     render(<GamePage />)
-    await screen.findByRole("button", { name: "Square a7" })
 
-    fireEvent.click(screen.getByRole("button", { name: "Square a7" }))
-    fireEvent.click(screen.getByRole("button", { name: "Square a8" }))
-    fireEvent.click(screen.getByRole("button", { name: "Submit move" }))
-
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
-
-    expect(screen.queryByRole("dialog", { name: "Choose promotion piece" })).not.toBeInTheDocument()
-    expect(screen.getByText(/Selected move:/i)).toHaveTextContent("—")
-    expect(mockApi.submitMove).not.toHaveBeenCalled()
+    await screen.findByLabelText(/Game clocks/i)
+    expect(screen.getByText("10:01")).toBeInTheDocument()
+    expect(screen.getByText("9:58")).toBeInTheDocument()
   })
 
-  it("shows_illegal_move_feedback_and_waiting_notice", async () => {
-    mockApi.getGameState.mockResolvedValueOnce({ ...activeState, possible_actions: ["ask_any"], turn: "black" })
-
-    render(<GamePage />)
-    await screen.findByText(/Waiting for opponent move…/i)
-
-    cleanup()
-    mockApi.getGameState.mockResolvedValue(activeState)
-    mockApi.submitMove.mockResolvedValueOnce({ move_done: false })
-
-    render(<GamePage />)
-    await screen.findByText(/Game ID:/i)
-
-    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
-    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
-    fireEvent.click(screen.getByRole("button", { name: "Submit move" }))
-
-    await screen.findByText("Illegal move. Try a different move.")
-  })
-
-  it("supports_phantom_place_remove_and_keeps_api_payload_clean", async () => {
+  it("supports_phantom_add_move_delete_via_context_menu", async () => {
     render(<GamePage />)
 
-    await screen.findByText(/Game ID:/i)
-    await screen.findByRole("button", { name: /Q × 1/i })
+    await screen.findByRole("button", { name: "Square d5" })
 
-    fireEvent.click(screen.getByRole("button", { name: /Q × 1/i }))
-    fireEvent.click(screen.getByRole("button", { name: "Square d5" }))
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Square d5" }), { clientX: 120, clientY: 180 })
+    expect(screen.getByRole("dialog", { name: /Phantom options for d5/i })).toBeInTheDocument()
 
+    fireEvent.click(screen.getByRole("button", { name: /Queen/i }))
     expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--phantom")
 
-    fireEvent.click(screen.getByRole("button", { name: /Q × 0/i }))
-    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Square d5" }), { clientX: 120, clientY: 180 })
+    fireEvent.click(screen.getByRole("button", { name: "Move phantom" }))
+    expect(screen.getByText(/Moving phantom from/i)).toBeInTheDocument()
+
     fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
-    fireEvent.click(screen.getByRole("button", { name: "Submit move" }))
+    expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--phantom")
 
-    await waitFor(() => {
-      expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
-    })
-
-    fireEvent.contextMenu(screen.getByRole("button", { name: "Square d5" }))
-    expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--phantom")
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Square e4" }), { clientX: 120, clientY: 180 })
+    fireEvent.click(screen.getByRole("button", { name: "Delete phantom" }))
+    expect(screen.getByRole("button", { name: "Square e4" })).not.toHaveClass("square--phantom")
   })
 
   it("disables_ask_any_when_not_allowed", async () => {

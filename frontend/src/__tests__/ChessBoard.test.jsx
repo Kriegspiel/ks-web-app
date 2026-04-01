@@ -1,6 +1,5 @@
-
-import { render, screen } from "@testing-library/react"
-import { describe, expect, it } from "vitest"
+import { fireEvent, render, screen } from "@testing-library/react"
+import { describe, expect, it, vi } from "vitest"
 import ChessBoard from "../components/ChessBoard"
 import { parseFenBoard } from "../components/chessboard"
 
@@ -20,5 +19,23 @@ describe("ChessBoard", () => {
     expect(screen.getByRole("img", { name: "White king" })).toBeInTheDocument()
     expect(screen.getByLabelText("Square d7")).toBeInTheDocument()
     expect(screen.getByLabelText("Square e1")).toBeInTheDocument()
+  })
+
+  it("supports_secondary_actions_and_renders_phantom_piece_images", () => {
+    const onSquareRightClick = vi.fn()
+
+    render(
+      <ChessBoard
+        boardFen="8/8/8/8/8/8/8/4K3 w - - 0 1"
+        phantomSquares={["d5"]}
+        phantomPlacements={{ d5: "q" }}
+        onSquareRightClick={onSquareRightClick}
+      />,
+    )
+
+    const d5Buttons = screen.getAllByRole("button", { name: "Square d5" })
+    fireEvent.contextMenu(d5Buttons[d5Buttons.length - 1])
+    expect(onSquareRightClick).toHaveBeenCalled()
+    expect(screen.getByLabelText("Phantom Black queen")).toBeInTheDocument()
   })
 })
