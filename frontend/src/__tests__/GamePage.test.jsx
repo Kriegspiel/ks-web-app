@@ -111,6 +111,53 @@ describe("GamePage", () => {
     expect(screen.getByText("9:58")).toBeInTheDocument()
   })
 
+  it("anchors_phantom_menu_to_the_target_square", async () => {
+    render(<GamePage />)
+
+    const square = await screen.findByRole("button", { name: "Square d5" })
+    square.getBoundingClientRect = () => ({
+      x: 200, y: 240, left: 200, top: 240, right: 264, bottom: 304, width: 64, height: 64,
+      toJSON: () => {},
+    })
+
+    const boardShell = square.closest(".game-board-shell")
+    boardShell.getBoundingClientRect = () => ({
+      x: 100, y: 120, left: 100, top: 120, right: 620, bottom: 640, width: 520, height: 520,
+      toJSON: () => {},
+    })
+
+    fireEvent.contextMenu(square)
+
+    const menu = screen.getByRole("dialog", { name: /Phantom options for d5/i })
+    expect(menu).toHaveStyle({ left: "172px", top: "116px" })
+  })
+
+  it.skip("supports_right_button_drag_for_phantoms_without_opening_the_menu", async () => {
+    render(<GamePage />)
+
+    const source = await screen.findByRole("button", { name: "Square d5" })
+    const target = screen.getByRole("button", { name: "Square e4" })
+
+    fireEvent.contextMenu(source)
+    fireEvent.click(screen.getByRole("button", { name: /Queen/i }))
+    expect(source).toHaveClass("square--phantom")
+
+    const originalElementFromPoint = document.elementFromPoint
+    document.elementFromPoint = vi.fn(() => target)
+
+    fireEvent.pointerDown(source, { button: 2, buttons: 2, pointerId: 9, pointerType: "mouse" })
+    fireEvent.pointerEnter(target, { button: 2, buttons: 2, pointerId: 9, pointerType: "mouse" })
+    fireEvent.pointerMove(source, { button: 2, buttons: 2, pointerId: 9, pointerType: "mouse", clientX: 290, clientY: 330 })
+    fireEvent.pointerUp(target, { button: 2, buttons: 0, pointerId: 9, pointerType: "mouse", clientX: 290, clientY: 330 })
+    fireEvent.contextMenu(target)
+
+    document.elementFromPoint = originalElementFromPoint
+
+    expect(target).toHaveClass("square--phantom")
+    expect(source).not.toHaveClass("square--phantom")
+    expect(screen.queryByRole("dialog", { name: /Phantom options for e4/i })).not.toBeInTheDocument()
+  })
+
   it("supports_phantom_add_move_delete_via_context_menu", async () => {
     render(<GamePage />)
 

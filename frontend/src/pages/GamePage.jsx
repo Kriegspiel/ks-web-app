@@ -17,6 +17,8 @@ const PHANTOM_LABELS = {
   p: "Pawn",
   k: "King",
 }
+const PHANTOM_MENU_WIDTH = 208
+const PHANTOM_MENU_GAP = 8
 
 function formatClock(seconds) {
   if (typeof seconds !== "number" || Number.isNaN(seconds)) {
@@ -88,11 +90,44 @@ function isTouchLikePointer(event) {
   return event?.pointerType === "touch" || event?.pointerType === "pen"
 }
 
-function buildMenuState(square, event, squareHasPhantom, availablePieces) {
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max)
+}
+
+function getSquareAnchorPosition(square, boardRoot) {
+  if (!square || !boardRoot) {
+    return null
+  }
+
+  const squareElement = boardRoot.querySelector(`[data-square="${square}"]`)
+  if (!squareElement) {
+    return null
+  }
+
+  const boardRect = boardRoot.getBoundingClientRect()
+  const squareRect = squareElement.getBoundingClientRect()
+  const maxLeft = Math.max(0, boardRect.width - PHANTOM_MENU_WIDTH)
+  const preferredLeft = squareRect.right - boardRect.left + PHANTOM_MENU_GAP
+  const fallbackLeft = squareRect.left - boardRect.left - PHANTOM_MENU_WIDTH - PHANTOM_MENU_GAP
+
+  let left = preferredLeft
+  if (left > maxLeft) {
+    left = fallbackLeft >= 0 ? fallbackLeft : maxLeft
+  }
+
+  return {
+    x: clamp(left, 0, maxLeft),
+    y: clamp(squareRect.top - boardRect.top - 4, 0, Math.max(0, boardRect.height - 32)),
+  }
+}
+
+function buildMenuState(square, boardRoot, squareHasPhantom, availablePieces) {
+  const anchoredPosition = getSquareAnchorPosition(square, boardRoot)
+
   return {
     square,
-    x: event?.clientX ?? null,
-    y: event?.clientY ?? null,
+    x: anchoredPosition?.x ?? null,
+    y: anchoredPosition?.y ?? null,
     mode: squareHasPhantom ? "phantom-actions" : "root",
     availablePieces,
   }
@@ -118,6 +153,10 @@ export default function GamePage() {
 
   const longPressTimerRef = useRef(null)
   const longPressPointerRef = useRef(null)
+  const boardShellRef = useRef(null)
+  const dragPointerIdRef = useRef(null)
+  const draggingPhantomFromRef = useRef("")
+  const suppressContextMenuRef = useRef(false)
 
   const occupiedSquares = useMemo(() => occupiedSquaresFromFen(gameState?.your_fen), [gameState?.your_fen])
 
@@ -236,10 +275,10 @@ export default function GamePage() {
     setShowPromotionModal(false)
   }
 
-  function openPhantomMenu(square, event) {
+  function openPhantomMenu(square) {
     setActionError("")
     const squareHasPhantom = Boolean(placements[square])
-    setPhantomMenu(buildMenuState(square, event, squareHasPhantom, availablePiecesForSquare(square)))
+    setPhantomMenu(buildMenuState(square, boardShellRef.current, squareHasPhantom, availablePiecesForSquare(square)))
   }
 
   function beginMovePhantom(square) {
@@ -266,6 +305,28 @@ export default function GamePage() {
       setActionError("That square cannot take the phantom piece.")
     }
     return moved
+  }
+
+  function findSquareFromPointerEvent(event) {
+    const target = document.elementFromPoint(event.clientX, event.clientY)
+    return target?.closest?.("[data-square]")?.dataset?.square ?? ""
+  }
+
+  function finishDragPhantom(targetSquare) {
+    const sourceSquare = draggingPhantomFromRef.current
+    if (!sourceSquare) {
+      return
+    }
+
+    const destination = targetSquare || sourceSquare
+    const moved = move(sourceSquare, destination)
+    if (!moved && destination !== draggingPhantomFrom) {
+      setActionError("That square cannot take the phantom piece.")
+    }
+    setDraggingPhantomFrom("")
+    draggingPhantomFromRef.current = ""
+    setDragHoverSquare("")
+    dragPointerIdRef.current = null
   }
 
   function handleSquareClick(square) {
@@ -311,14 +372,24 @@ export default function GamePage() {
     setShowPromotionModal(false)
   }
 
-  function handleSquareRightClick(square, event) {
-    openPhantomMenu(square, event)
+  function handleSquareRightClick(square) {
+    if (suppressContextMenuRef.current) {
+      suppressContextMenuRef.current = false
+      return
+    }
+
+    openPhantomMenu(square)
   }
 
   function handleSquarePointerDown(square, event) {
     if (event.button === 2 && placements[square] && !isTouchLikePointer(event)) {
+      setActionError("")
       setDraggingPhantomFrom(square)
+      draggingPhantomFromRef.current = square
       setDragHoverSquare(square)
+      dragPointerIdRef.current = event.pointerId
+      suppressContextMenuRef.current = true
+      event.currentTarget.setPointerCapture?.(event.pointerId)
       closePhantomMenu()
       return
     }
@@ -330,29 +401,48 @@ export default function GamePage() {
     clearLongPressTimer()
     longPressPointerRef.current = event.pointerId
     longPressTimerRef.current = window.setTimeout(() => {
-      openPhantomMenu(square, { clientX: null, clientY: null })
+      openPhantomMenu(square)
       clearLongPressTimer()
     }, LONG_PRESS_MS)
   }
 
   function handleSquarePointerEnter(square, event) {
-    if (draggingPhantomFrom && (event.buttons & 2) === 2) {
+    if (draggingPhantomFromRef.current && (event.buttons & 2) === 2) {
       setDragHoverSquare(square)
     }
   }
 
+  function handleSquarePointerMove(square, event) {
+    if (!draggingPhantomFromRef.current || dragPointerIdRef.current !== event.pointerId) {
+      return
+    }
+
+    const hoveredSquare = findSquareFromPointerEvent(event)
+    if (hoveredSquare) {
+      setDragHoverSquare(hoveredSquare)
+    }
+  }
+
   function handleSquarePointerUp(square, event) {
-    if (draggingPhantomFrom && event.button === 2) {
-      const moved = move(draggingPhantomFrom, square)
-      if (!moved && square !== draggingPhantomFrom) {
-        setActionError("That square cannot take the phantom piece.")
-      }
-      setDraggingPhantomFrom("")
-      setDragHoverSquare("")
+    if (draggingPhantomFromRef.current && event.button === 2) {
+      const hoveredSquare = findSquareFromPointerEvent(event)
+      event.currentTarget.releasePointerCapture?.(event.pointerId)
+      finishDragPhantom(hoveredSquare || square)
       return
     }
 
     if (isTouchLikePointer(event) && longPressPointerRef.current === event.pointerId) {
+      clearLongPressTimer()
+    }
+  }
+
+  function handleSquarePointerCancel(_square, event) {
+    if (draggingPhantomFromRef.current && dragPointerIdRef.current === event.pointerId) {
+      event.currentTarget.releasePointerCapture?.(event.pointerId)
+      finishDragPhantom(dragHoverSquare)
+    }
+
+    if (longPressPointerRef.current === event.pointerId) {
       clearLongPressTimer()
     }
   }
@@ -495,7 +585,7 @@ export default function GamePage() {
                 </div>
               </div>
 
-              <div className="game-board-shell">
+              <div className="game-board-shell" ref={boardShellRef}>
                 <ChessBoard
                   boardFen={gameState.your_fen}
                   orientation={gameState.your_color}
@@ -508,7 +598,9 @@ export default function GamePage() {
                   onSquareRightClick={handleSquareRightClick}
                   onSquarePointerDown={handleSquarePointerDown}
                   onSquarePointerEnter={handleSquarePointerEnter}
+                  onSquarePointerMove={handleSquarePointerMove}
                   onSquarePointerUp={handleSquarePointerUp}
+                  onSquarePointerCancel={handleSquarePointerCancel}
                 />
 
                 {phantomMenu ? (
@@ -565,7 +657,7 @@ export default function GamePage() {
 
               <div className="game-board-meta">
                 <p className="game-page__meta">Selected move: <code>{selectedMove || "—"}</code></p>
-                <p className="game-page__meta">Phantoms: right-click a square on desktop, or long-press on mobile.</p>
+                <p className="game-page__meta">Phantoms: right-click or right-drag on desktop, or long-press on mobile.</p>
               </div>
             </section>
 
