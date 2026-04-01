@@ -13,21 +13,42 @@
 }
 .lobby-opponent-picker legend { padding: 0 0.35rem; font-weight: 700; }
 .lobby-opponent-options {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
 }
-.lobby-opponent-picker label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-height: 2.5rem;
-  padding: 0.5rem 0.75rem;
+.lobby-opponent-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.7rem;
+  min-height: 0;
+  padding: 0.8rem 0.9rem;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   background: var(--surface-strong);
 }
-.lobby-opponent-picker input { margin: 0; }
+.lobby-opponent-option.is-selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-strong));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.lobby-opponent-option input {
+  margin: 0.15rem 0 0;
+}
+.lobby-opponent-copy {
+  display: grid;
+  gap: 0.2rem;
+}
+.lobby-opponent-title {
+  font-weight: 700;
+  line-height: 1.2;
+}
+.lobby-opponent-description {
+  color: var(--muted-soft);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
 .lobby-bot-picker { display: grid; gap: 0.45rem; }
 .lobby-bot-picker select { max-width: 22rem; }
 .lobby-list { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.75rem; }
@@ -38,7 +59,6 @@
 @media (max-width: 700px) {
   .lobby-join-form { grid-template-columns: 1fr; }
   .lobby-list li { align-items: flex-start; flex-direction: column; }
-  .lobby-opponent-options { flex-direction: column; }
-  .lobby-opponent-picker label { width: 100%; justify-content: flex-start; }
+  .lobby-opponent-options { grid-template-columns: 1fr; }
   .lobby-bot-picker select { max-width: 100%; }
 }
