@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import GamePage from "../pages/GamePage"
 
 const mockNavigate = vi.hoisted(() => vi.fn())
@@ -129,7 +129,8 @@ describe("GamePage", () => {
     fireEvent.contextMenu(square)
 
     const menu = screen.getByRole("dialog", { name: /Phantom options for d5/i })
-    expect(menu).toHaveStyle({ left: "172px", top: "116px" })
+    expect(menu).toHaveStyle({ left: "170px", top: "116px" })
+    expect(within(menu).getByText("Add a phantom piece.")).toBeInTheDocument()
   })
 
   it.skip("supports_right_button_drag_for_phantoms_without_opening_the_menu", async () => {
@@ -139,7 +140,7 @@ describe("GamePage", () => {
     const target = screen.getByRole("button", { name: "Square e4" })
 
     fireEvent.contextMenu(source)
-    fireEvent.click(screen.getByRole("button", { name: /Queen/i }))
+    fireEvent.click(screen.getByRole("button", { name: /Queen \(1 left\)/i }))
     expect(source).toHaveClass("square--phantom")
 
     const originalElementFromPoint = document.elementFromPoint
@@ -166,18 +167,18 @@ describe("GamePage", () => {
     fireEvent.contextMenu(screen.getByRole("button", { name: "Square d5" }), { clientX: 120, clientY: 180 })
     expect(screen.getByRole("dialog", { name: /Phantom options for d5/i })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole("button", { name: /Queen/i }))
+    fireEvent.click(screen.getByRole("button", { name: /Queen \(1 left\)/i }))
     expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--phantom")
 
     fireEvent.contextMenu(screen.getByRole("button", { name: "Square d5" }), { clientX: 120, clientY: 180 })
-    fireEvent.click(screen.getByRole("button", { name: "Move phantom" }))
+    fireEvent.click(screen.getByRole("button", { name: "Right-drag to move" }))
     expect(screen.getByText(/Moving phantom from/i)).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
     expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--phantom")
 
     fireEvent.contextMenu(screen.getByRole("button", { name: "Square e4" }), { clientX: 120, clientY: 180 })
-    fireEvent.click(screen.getByRole("button", { name: "Delete phantom" }))
+    fireEvent.click(screen.getByRole("button", { name: "Remove" }))
     expect(screen.getByRole("button", { name: "Square e4" })).not.toHaveClass("square--phantom")
   })
 
