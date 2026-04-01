@@ -14,7 +14,9 @@ function ChessBoard({
   onSquareRightClick,
   onSquarePointerDown,
   onSquarePointerEnter,
+  onSquarePointerMove,
   onSquarePointerUp,
+  onSquarePointerCancel,
 }) {
   const board = parseFenBoard(boardFen)
   const files = orientation === "black" ? [...FILES].reverse() : FILES
@@ -72,9 +74,19 @@ function ChessBoard({
                     onSquarePointerEnter?.(square, event)
                   }
                 }}
+                onPointerMove={(event) => {
+                  if (!disabled) {
+                    onSquarePointerMove?.(square, event)
+                  }
+                }}
                 onPointerUp={(event) => {
                   if (!disabled) {
                     onSquarePointerUp?.(square, event)
+                  }
+                }}
+                onPointerCancel={(event) => {
+                  if (!disabled) {
+                    onSquarePointerCancel?.(square, event)
                   }
                 }}
                 aria-label={`Square ${square}`}

@@ -11,6 +11,7 @@
 
 .game-page__meta {
   color: var(--muted-soft);
+  font-size: 0.76rem;
 }
 
 .game-layout {
@@ -67,13 +68,13 @@
 .phantom-menu {
   position: absolute;
   z-index: 12;
-  width: min(18rem, calc(100vw - 2rem));
-  padding: 0.9rem;
-  border-radius: 1rem;
+  width: min(13rem, calc(100vw - 2rem));
+  min-width: 12rem;
+  padding: 0.65rem;
+  border-radius: 0.85rem;
   border: 1px solid var(--border);
   background: var(--surface);
-  box-shadow: 0 22px 44px rgba(15, 23, 42, 0.26);
-  transform: translate(-0.75rem, 0.75rem);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.24);
 }
 
 .phantom-menu--sheet {
@@ -90,36 +91,43 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.55rem;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
 }
 
 .phantom-menu__close,
 .phantom-menu__secondary {
-  padding: 0.45rem 0.7rem;
+  padding: 0.35rem 0.55rem;
 }
 
 .phantom-menu__hint {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.55rem;
   color: var(--muted-soft);
+  font-size: 0.92rem;
 }
 
 .phantom-menu__actions,
 .phantom-menu__piece-grid {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .phantom-menu__piece-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.phantom-menu__header strong {
+  font-size: 0.95rem;
+}
+
 .phantom-menu__piece-grid button,
 .phantom-menu__actions button {
   display: grid;
   justify-items: start;
-  gap: 0.15rem;
+  gap: 0.1rem;
   width: 100%;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.92rem;
 }
 
 .phantom-menu__piece-grid button small {
