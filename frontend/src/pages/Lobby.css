@@ -4,9 +4,30 @@
 .lobby-join-form { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
 .lobby-join-form label, .lobby-bot-picker label { font-weight: 600; }
 .lobby-join-form input { min-width: 10rem; text-transform: uppercase; }
-.lobby-opponent-picker { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.8rem 0.9rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+.lobby-opponent-picker {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.8rem 0.9rem;
+  display: grid;
+  gap: 0.75rem;
+}
 .lobby-opponent-picker legend { padding: 0 0.35rem; font-weight: 700; }
-.lobby-opponent-picker label { display: inline-flex; align-items: center; gap: 0.45rem; }
+.lobby-opponent-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.lobby-opponent-picker label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-strong);
+}
+.lobby-opponent-picker input { margin: 0; }
 .lobby-bot-picker { display: grid; gap: 0.45rem; }
 .lobby-bot-picker select { max-width: 22rem; }
 .lobby-list { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.75rem; }
@@ -14,4 +35,10 @@
 .lobby-list button { margin-top: 0; }
 .lobby-meta { color: var(--muted-soft); font-size: 0.92rem; }
 .lobby-created-game code { font-size: 1.1rem; }
-@media (max-width: 700px) { .lobby-join-form { grid-template-columns: 1fr; } .lobby-list li { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 700px) {
+  .lobby-join-form { grid-template-columns: 1fr; }
+  .lobby-list li { align-items: flex-start; flex-direction: column; }
+  .lobby-opponent-options { flex-direction: column; }
+  .lobby-opponent-picker label { width: 100%; justify-content: flex-start; }
+  .lobby-bot-picker select { max-width: 100%; }
+}
