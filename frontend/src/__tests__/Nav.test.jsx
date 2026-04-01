@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import AppHeader from "../components/AppHeader"
 import { ThemeProvider } from "../context/ThemeContext"
@@ -11,15 +11,9 @@ const mockAuth = vi.hoisted(() => ({
   logout: vi.fn(),
 }))
 
-const mockApi = vi.hoisted(() => ({
-  getMyGames: vi.fn(),
-}))
-
 vi.mock("../hooks/useAuth", () => ({
   useAuth: () => mockAuth,
 }))
-
-vi.mock("../services/api", () => mockApi)
 
 beforeEach(() => {
   cleanup()
@@ -27,8 +21,6 @@ beforeEach(() => {
   mockAuth.user = null
   mockAuth.actionLoading = false
   mockAuth.logout.mockReset()
-  mockApi.getMyGames.mockReset()
-  mockApi.getMyGames.mockResolvedValue({ games: [] })
 })
 
 afterEach(() => {
@@ -53,12 +45,9 @@ describe("Nav", () => {
     expect(screen.queryByRole("link", { name: "Lobby" })).not.toBeInTheDocument()
   })
 
-  it("shows_authenticated_links_with_active_game_indicator", async () => {
+  it("shows_authenticated_links_without_user_or_active_game_clutter", () => {
     mockAuth.isAuthenticated = true
     mockAuth.user = { username: "fil" }
-    mockApi.getMyGames.mockResolvedValue({
-      games: [{ game_id: "game-99", game_code: "KSP550", state: "active" }],
-    })
 
     render(
       <ThemeProvider>
@@ -68,10 +57,10 @@ describe("Nav", () => {
       </ThemeProvider>,
     )
 
-    await waitFor(() => {
-      expect(screen.getByRole("link", { name: "Lobby" })).toBeInTheDocument()
-      expect(screen.getByRole("link", { name: /Active game \(KSP550\)/i })).toHaveAttribute("href", "/game/game-99")
-    })
+    expect(screen.getByRole("link", { name: "Lobby" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Logout" })).toBeInTheDocument()
+    expect(screen.queryByText(/signed in as/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/active game/i)).not.toBeInTheDocument()
   })
 })
 

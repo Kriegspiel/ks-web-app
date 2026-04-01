@@ -89,11 +89,9 @@ export function occupiedSquaresFromFen(fen) {
 
 export default function usePhantoms({ gameId, occupiedSquares = [] }) {
   const [placements, setPlacements] = useState({})
-  const [selectedPiece, setSelectedPiece] = useState("")
 
   useEffect(() => {
     setPlacements(readPersistedPlacements(gameId))
-    setSelectedPiece("")
   }, [gameId])
 
   useEffect(() => {
@@ -133,96 +131,84 @@ export default function usePhantoms({ gameId, occupiedSquares = [] }) {
 
   const trayCounts = useMemo(() => computeTrayCounts(placements), [placements])
 
-  function selectPiece(piece) {
-    const normalized = normalizePiece(piece)
+  function setPieceAt(square, piece) {
+    const normalizedSquare = isValidSquare(square) ? square : null
+    const normalizedPiece = normalizePiece(piece)
 
-    if (!normalized) {
-      setSelectedPiece("")
-      return
+    if (!normalizedSquare || !normalizedPiece || occupiedSet.has(normalizedSquare)) {
+      return false
     }
 
-    if (trayCounts[normalized] <= 0 && selectedPiece !== normalized) {
-      return
+    const existingPiece = placements[normalizedSquare]
+    if (existingPiece === normalizedPiece) {
+      return false
     }
 
-    setSelectedPiece((current) => (current === normalized ? "" : normalized))
-  }
-
-  function placeAt(square) {
-    if (!isValidSquare(square) || !selectedPiece) {
-      return
+    const availableCount = trayCounts[normalizedPiece]
+    if (availableCount <= 0 && existingPiece !== normalizedPiece) {
+      return false
     }
 
-    setPlacements((previous) => {
-      const next = { ...previous }
-      const displacedPiece = next[square]
+    setPlacements((previous) => ({
+      ...previous,
+      [normalizedSquare]: normalizedPiece,
+    }))
 
-      if (displacedPiece === selectedPiece) {
-        return previous
-      }
-
-      const availableCount = computeTrayCounts(previous)[selectedPiece]
-      if (availableCount <= 0 && !displacedPiece) {
-        return previous
-      }
-
-      next[square] = selectedPiece
-      return next
-    })
+    return true
   }
 
   function move(fromSquare, toSquare) {
-    if (!isValidSquare(fromSquare) || !isValidSquare(toSquare) || fromSquare === toSquare) {
-      return
+    if (!isValidSquare(fromSquare) || !isValidSquare(toSquare) || fromSquare === toSquare || occupiedSet.has(toSquare)) {
+      return false
+    }
+
+    if (!placements[fromSquare]) {
+      return false
     }
 
     setPlacements((previous) => {
-      if (!previous[fromSquare]) {
-        return previous
-      }
-
       const next = { ...previous }
       next[toSquare] = previous[fromSquare]
       delete next[fromSquare]
       return next
     })
+
+    return true
   }
 
   function removeAt(square) {
-    if (!isValidSquare(square)) {
+    if (!isValidSquare(square) || !placements[square]) {
       return false
     }
 
-    let removed = false
-
     setPlacements((previous) => {
-      if (!previous[square]) {
-        return previous
-      }
-
       const next = { ...previous }
       delete next[square]
-      removed = true
       return next
     })
 
-    return removed
+    return true
   }
 
   function clearAll() {
     setPlacements({})
-    setSelectedPiece("")
+  }
+
+  function availablePiecesForSquare(square) {
+    const existingPiece = placements[square]
+    return Object.entries(trayCounts)
+      .filter(([piece, count]) => count > 0 || piece === existingPiece)
+      .map(([piece]) => piece)
   }
 
   return {
     placements,
     phantomSquares: Object.keys(placements),
     trayCounts,
-    selectedPiece,
-    selectPiece,
-    placeAt,
+    setPieceAt,
     move,
     removeAt,
     clearAll,
+    availablePiecesForSquare,
   }
 }
