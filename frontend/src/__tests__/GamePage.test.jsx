@@ -131,6 +131,7 @@ describe("GamePage", () => {
     const menu = screen.getByRole("dialog", { name: /Phantom options for d5/i })
     expect(menu).toHaveStyle({ left: "170px", top: "116px" })
     expect(within(menu).getByText("Add a phantom piece.")).toBeInTheDocument()
+    expect(within(menu).getAllByText("d5")).toHaveLength(1)
   })
 
   it.skip("supports_right_button_drag_for_phantoms_without_opening_the_menu", async () => {

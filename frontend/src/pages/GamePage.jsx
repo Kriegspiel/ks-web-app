@@ -613,13 +613,11 @@ export default function GamePage() {
                     onClick={(event) => event.stopPropagation()}
                   >
                     <div className="phantom-menu__header">
-                      <strong>{phantomMenu.square}</strong>
+                      <div className="phantom-menu__intro">
+                        <strong>{phantomMenu.square}</strong>
+                        <span>Add a phantom piece.</span>
+                      </div>
                       <button type="button" className="phantom-menu__close" onClick={closePhantomMenu} aria-label="Close phantom menu">×</button>
-                    </div>
-
-                    <div className="phantom-menu__intro">
-                      <strong>{phantomMenu.square}</strong>
-                      <span>Add a phantom piece.</span>
                     </div>
 
                     <div className="phantom-menu__piece-grid">
