@@ -64,7 +64,7 @@ function computeTrayCounts(placements) {
 
   for (const piece of Object.values(placements)) {
     if (Object.prototype.hasOwnProperty.call(counts, piece)) {
-      counts[piece] = Math.max(0, counts[piece] - 1)
+      counts[piece] -= 1
     }
   }
 
@@ -144,11 +144,6 @@ export default function usePhantoms({ gameId, occupiedSquares = [] }) {
       return false
     }
 
-    const availableCount = trayCounts[normalizedPiece]
-    if (availableCount <= 0 && existingPiece !== normalizedPiece) {
-      return false
-    }
-
     setPlacements((previous) => ({
       ...previous,
       [normalizedSquare]: normalizedPiece,
@@ -194,11 +189,8 @@ export default function usePhantoms({ gameId, occupiedSquares = [] }) {
     setPlacements({})
   }
 
-  function availablePiecesForSquare(square) {
-    const existingPiece = placements[square]
-    return Object.entries(trayCounts)
-      .filter(([piece, count]) => count > 0 || piece === existingPiece)
-      .map(([piece]) => piece)
+  function availablePiecesForSquare(_square) {
+    return Object.keys(STARTING_TRAY)
   }
 
   return {
