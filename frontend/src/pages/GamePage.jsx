@@ -5,7 +5,7 @@ import ChessBoard from "../components/ChessBoard"
 import PromotionModal from "../components/PromotionModal"
 import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
 import { askAny, getGame, getGameState, resignGame, submitMove } from "../services/api"
-import { getVisibleMoveTargets, PIECE_ASSETS } from "../components/chessboard"
+import { getAllowedMoveTargets, PIECE_ASSETS } from "../components/chessboard"
 import "./GamePage.css"
 
 const POLL_INTERVAL_MS = 500
@@ -848,12 +848,8 @@ export default function GamePage() {
       return []
     }
 
-    return getVisibleMoveTargets({
-      fen: gameState?.your_fen,
-      fromSquare: activeSourceSquare,
-      color: gameState?.your_color,
-    })
-  }, [draggingMoveFrom, fromSquare, gameState?.your_color, gameState?.your_fen])
+    return getAllowedMoveTargets(gameState?.allowed_moves, activeSourceSquare)
+  }, [draggingMoveFrom, fromSquare, gameState?.allowed_moves])
   const waitingForOpponent = gameState?.state === "active" && !possibleActions.includes("move")
   const activeClockColor = gameState?.clock?.active_color ?? gameState?.turn
   const groupedRefereeLog = useMemo(() => buildVisibleRefereeLog(gameState), [gameState])

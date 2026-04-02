@@ -43,17 +43,6 @@
   transition: box-shadow 120ms ease, filter 120ms ease;
 }
 
-.square::before {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  border-radius: 0.18rem;
-  background: rgba(255, 255, 255, 0.08);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease;
-}
-
 .board-grid .square:hover:not(:disabled),
 .board-grid .square:focus-visible:not(:disabled),
 .board-grid .square:active:not(:disabled) {
@@ -62,19 +51,6 @@
   transform: none;
   outline: none;
   filter: none;
-}
-
-.board-grid .square:hover:not(:disabled)::before,
-.board-grid .square:focus-visible:not(:disabled)::before {
-  opacity: 1;
-}
-
-.square.dark::before {
-  background: rgba(255, 248, 235, 0.1);
-}
-
-.square.light::before {
-  background: rgba(106, 69, 29, 0.08);
 }
 
 .board-grid .square:hover:not(:disabled) .piece__image,
@@ -89,6 +65,20 @@
 
 .square.dark {
   background: linear-gradient(180deg, #b3875f 0%, #936942 100%);
+}
+
+.board-grid .square.light:hover:not(:disabled),
+.board-grid .square.light:focus-visible:not(:disabled) {
+  background:
+    linear-gradient(0deg, rgba(106, 69, 29, 0.08), rgba(106, 69, 29, 0.08)),
+    linear-gradient(180deg, #f3e7d4 0%, #e7d6bb 100%);
+}
+
+.board-grid .square.dark:hover:not(:disabled),
+.board-grid .square.dark:focus-visible:not(:disabled) {
+  background:
+    linear-gradient(0deg, rgba(255, 248, 235, 0.1), rgba(255, 248, 235, 0.1)),
+    linear-gradient(180deg, #b3875f 0%, #936942 100%);
 }
 
 .square:disabled {
