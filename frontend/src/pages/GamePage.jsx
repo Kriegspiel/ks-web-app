@@ -389,7 +389,28 @@ function getExplicitRefereeTurns(gameState) {
     .sort((left, right) => left.turn - right.turn)
 }
 
+function getExplicitScoresheetTurns(gameState) {
+  const turns = gameState?.scoresheet?.turns
+  if (!Array.isArray(turns)) {
+    return []
+  }
+
+  return turns
+    .map((turn) => ({
+      turn: Number.parseInt(turn?.turn, 10),
+      white: Array.isArray(turn?.white) ? turn.white.filter((entry) => typeof entry === "string" && entry.trim()) : [],
+      black: Array.isArray(turn?.black) ? turn.black.filter((entry) => typeof entry === "string" && entry.trim()) : [],
+    }))
+    .filter((turn) => Number.isFinite(turn.turn) && turn.turn > 0 && (turn.white.length || turn.black.length))
+    .sort((left, right) => left.turn - right.turn)
+}
+
 function buildVisibleRefereeLog(gameState) {
+  const explicitScoresheetTurns = getExplicitScoresheetTurns(gameState)
+  if (explicitScoresheetTurns.length) {
+    return explicitScoresheetTurns
+  }
+
   const explicitTurns = getExplicitRefereeTurns(gameState)
   if (explicitTurns.length) {
     return explicitTurns
@@ -1176,7 +1197,7 @@ export default function GamePage() {
 
               <div className="game-referee-log">
                 <div className="game-referee-log__header">
-                  <h3>Referee log</h3>
+                  <h3>Scoresheet</h3>
                 </div>
 
                 {groupedRefereeLog.length ? (
