@@ -111,4 +111,16 @@ describe("ChessBoard", () => {
     expect(onSquarePointerUp).toHaveBeenCalledTimes(1)
     expect(onSquarePointerCancel).toHaveBeenCalledTimes(1)
   })
+
+  it("prevents_mouse_down_focus_steal_on_board_squares", () => {
+    render(<ChessBoard boardFen="8/8/8/8/8/8/8/4K3 w - - 0 1" />)
+
+    const squareButtons = screen.getAllByRole("button", { name: "Square e4" })
+    const square = squareButtons[squareButtons.length - 1]
+    const event = new MouseEvent("mousedown", { bubbles: true, cancelable: true })
+    const dispatchResult = square.dispatchEvent(event)
+
+    expect(dispatchResult).toBe(false)
+    expect(event.defaultPrevented).toBe(true)
+  })
 })
