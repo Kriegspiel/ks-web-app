@@ -336,6 +336,28 @@ describe("GamePage", () => {
     expect(screen.getAllByText("Move complete")).toHaveLength(1)
   })
 
+  it("strips_ask_any_prefixes_and_deduplicates_the_response", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      scoresheet: {
+        viewer_color: "white",
+        turns: [
+          {
+            turn: 1,
+            white: [{ message: "Ask any pawn captures — Has pawn captures", answer: { main: "HAS_ANY" } }],
+            black: [],
+          },
+        ],
+      },
+    })
+
+    render(<GamePage />)
+
+    expect(await screen.findByText("Has pawn captures")).toBeInTheDocument()
+    expect(screen.queryByText("Ask any pawn captures — Has pawn captures")).not.toBeInTheDocument()
+    expect(screen.queryByText("Has pawn captures · Has pawn captures")).not.toBeInTheDocument()
+  })
+
   it("formats_structured_referee_status_codes_into_friendly_text", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,

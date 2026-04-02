@@ -341,7 +341,7 @@ function splitRefereeTextParts(value) {
     .split("·")
     .map((part) => part.trim())
     .filter(Boolean)
-    .map((part) => part.replace(/^(Move attempt|Opponent move)\s*[—-]\s*/i, "").trim())
+    .map((part) => part.replace(/^(Move attempt|Opponent move|Ask any pawn captures|Opponent asked any pawn captures)\s*[—-]\s*/i, "").trim())
     .filter(Boolean)
 }
 
