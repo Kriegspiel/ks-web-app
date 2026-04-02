@@ -1,5 +1,6 @@
 .game-page {
   max-width: var(--page-width);
+  overflow-anchor: none;
 }
 
 .game-page__header {
@@ -33,13 +34,15 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .game-clock {
-  display: grid;
-  gap: 0.2rem;
-  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: 0.9rem;
   background: var(--surface-strong);
@@ -52,11 +55,12 @@
 
 .game-clock__label {
   color: var(--muted-soft);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 
-.game-clock strong {
-  font-size: clamp(1.3rem, 2vw, 1.7rem);
+.game-clock__time {
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  line-height: 1;
 }
 
 .game-board-meta {
@@ -263,6 +267,8 @@
   padding-right: 0.2rem;
   display: grid;
   gap: 0.75rem;
+  scroll-behavior: auto;
+  overflow-anchor: auto;
 }
 
 .game-referee-turn {
@@ -317,6 +323,7 @@
   background: var(--danger-bg);
   border-color: var(--danger-border);
   color: var(--danger);
+  margin-top: 0;
 }
 
 .game-danger-button:hover:not(:disabled),

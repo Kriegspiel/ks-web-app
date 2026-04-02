@@ -40,6 +40,7 @@ function sleep(ms) {
 
 beforeEach(() => {
   window.localStorage.clear()
+  window.scrollTo = vi.fn()
   mockNavigate.mockReset()
   Object.values(mockApi).forEach((fn) => fn.mockReset())
   mockApi.getGameState.mockResolvedValue(activeState)
@@ -78,6 +79,24 @@ describe("GamePage", () => {
 
     expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--last-move")
     expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--last-move")
+  })
+
+  it("highlights_illegal_move_squares_in_red", async () => {
+    mockApi.submitMove.mockResolvedValueOnce({ move_done: false })
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e2" })
+    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+
+    await waitFor(() => {
+      expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
+    })
+
+    expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--illegal")
+    expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--illegal")
+    expect(screen.getByText("Illegal move. Try a different move.")).toBeInTheDocument()
   })
 
   it("gates_promotion_with_modal_and_appends_suffix", async () => {
@@ -188,7 +207,7 @@ describe("GamePage", () => {
 
     expect(await screen.findByText("Turn 1")).toBeInTheDocument()
     expect(screen.getByText("Turn 2")).toBeInTheDocument()
-    expect(screen.getAllByText("Move attempt — Move complete").length).toBeGreaterThanOrEqual(3)
+    expect(screen.getAllByText("Move complete").length).toBeGreaterThanOrEqual(3)
 
     expect(screen.queryByText("Old fallback log")).not.toBeInTheDocument()
     expect(screen.queryByText("a2a3 — Move complete")).not.toBeInTheDocument()
@@ -214,8 +233,8 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    expect(await screen.findByText("Move attempt — Move complete")).toBeInTheDocument()
-    expect(screen.getByText("Opponent move — Capture done at D4 · Check on file")).toBeInTheDocument()
+    expect(await screen.findByText("Move complete")).toBeInTheDocument()
+    expect(screen.getByText("Capture done at D4 · Check on file")).toBeInTheDocument()
     expect(screen.queryByText("Old turn fallback")).not.toBeInTheDocument()
     expect(screen.queryByText("Old log fallback")).not.toBeInTheDocument()
   })
@@ -251,11 +270,11 @@ describe("GamePage", () => {
 
     expect(await screen.findByText("Turn 1")).toBeInTheDocument()
     expect(screen.getByText("Turn 2")).toBeInTheDocument()
-    expect(screen.getByText("Move attempt — Move complete")).toBeInTheDocument()
-    expect(screen.getByText("Opponent asked any pawn captures — No pawn captures")).toBeInTheDocument()
-    expect(screen.getByText("Opponent move — Move complete")).toBeInTheDocument()
-    expect(screen.getByText("Move attempt — Illegal move")).toBeInTheDocument()
-    expect(screen.getAllByText(/Move attempt — /).length).toBeGreaterThanOrEqual(3)
+    expect(screen.getByText("[e2e4] Move complete")).toBeInTheDocument()
+    expect(screen.getByText("No pawn captures")).toBeInTheDocument()
+    expect(screen.getByText("Move complete")).toBeInTheDocument()
+    expect(screen.getByText("[g1f3] Illegal move")).toBeInTheDocument()
+    expect(screen.getByText("[f1b5] Move complete · Check on file")).toBeInTheDocument()
     expect(screen.getByText(/Check on file/)).toBeInTheDocument()
     expect(screen.queryByText("Old fallback log")).not.toBeInTheDocument()
   })
