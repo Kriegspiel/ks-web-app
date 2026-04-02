@@ -747,7 +747,7 @@ export default function GamePage() {
     }
 
     const intervalId = window.setInterval(() => {
-      pollState({ silent: true, preserveViewport: true })
+      pollState({ silent: true, preserveViewport: false })
     }, POLL_INTERVAL_MS)
 
     return () => {
