@@ -649,6 +649,15 @@ function blurActiveInteractiveElement() {
   }
 }
 
+function getOpponentPhantomPiece(piece, playerColor) {
+  if (typeof piece !== "string") {
+    return ""
+  }
+
+  const normalized = piece.toLowerCase()
+  return playerColor === "black" ? normalized.toUpperCase() : normalized
+}
+
 export default function GamePage() {
   const { gameId } = useParams()
 
@@ -1329,7 +1338,7 @@ export default function GamePage() {
                       <div className="phantom-menu__piece-grid">
                         {PHANTOM_PIECES.map((piece) => {
                           const disabled = !phantomMenu.availablePieces.includes(piece)
-                          const pieceKey = piece
+                          const pieceKey = getOpponentPhantomPiece(piece, gameState?.your_color)
                           return (
                             <button
                               type="button"
