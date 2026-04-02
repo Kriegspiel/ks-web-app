@@ -10,9 +10,45 @@
   gap: 1rem;
 }
 
+.game-page__title-block {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.game-page__version {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--muted-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
 .game-page__meta {
   color: var(--muted-soft);
   font-size: 0.76rem;
+}
+
+.game-page__notices {
+  display: grid;
+  gap: 0.1rem;
+  min-height: 4.2rem;
+  align-content: start;
+}
+
+.game-page__notice {
+  min-height: 1.3rem;
+}
+
+.game-page__notice--hidden {
+  visibility: hidden;
 }
 
 .game-layout {
@@ -250,6 +286,15 @@
 
 .game-actions {
   margin-top: 0;
+}
+
+.game-action-error-slot {
+  min-height: 2rem;
+}
+
+.game-action-error-slot__placeholder {
+  margin: 0;
+  visibility: hidden;
 }
 
 .game-referee-log {

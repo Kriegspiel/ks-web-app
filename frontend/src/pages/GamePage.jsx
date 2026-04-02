@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import packageInfo from "../../package.json"
 import ChessBoard from "../components/ChessBoard"
 import PromotionModal from "../components/PromotionModal"
 import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
@@ -9,6 +10,7 @@ import "./GamePage.css"
 
 const POLL_INTERVAL_MS = 500
 const LONG_PRESS_MS = 450
+const APP_VERSION = packageInfo.version
 const PHANTOM_PIECES = ["q", "r", "b", "n", "p", "k"]
 const PHANTOM_LABELS = {
   q: "Queen",
@@ -595,6 +597,49 @@ function buildMenuState(square, boardRoot, squareHasPhantom, availablePieces) {
   }
 }
 
+function restoreViewportPosition(viewport) {
+  if (!viewport) {
+    return
+  }
+
+  const x = Number.isFinite(viewport.x) ? viewport.x : 0
+  const y = Number.isFinite(viewport.y) ? viewport.y : 0
+  const scrollRoot = document.scrollingElement ?? document.documentElement ?? document.body
+
+  if (scrollRoot) {
+    scrollRoot.scrollLeft = x
+    scrollRoot.scrollTop = y
+  }
+
+  document.documentElement.scrollLeft = x
+  document.documentElement.scrollTop = y
+  document.body.scrollLeft = x
+  document.body.scrollTop = y
+
+  if (typeof window.scrollTo === "function") {
+    try {
+      window.scrollTo({ left: x, top: y, behavior: "auto" })
+    } catch {
+      try {
+        window.scrollTo(x, y)
+      } catch {
+        // JSDOM does not implement window scrolling.
+      }
+    }
+  }
+}
+
+function blurActiveInteractiveElement() {
+  const activeElement = document.activeElement
+  if (!activeElement || activeElement === document.body) {
+    return
+  }
+
+  if (typeof activeElement.blur === "function") {
+    activeElement.blur()
+  }
+}
+
 export default function GamePage() {
   const { gameId } = useParams()
   const navigate = useNavigate()
@@ -676,12 +721,33 @@ export default function GamePage() {
   }, [pollState])
 
   useEffect(() => {
+    const rootStyle = document.documentElement.style
+    const bodyStyle = document.body.style
+    const previousRootScrollBehavior = rootStyle.scrollBehavior
+    const previousBodyScrollBehavior = bodyStyle.scrollBehavior
+    const previousRootOverflowAnchor = rootStyle.overflowAnchor
+    const previousBodyOverflowAnchor = bodyStyle.overflowAnchor
+
+    rootStyle.scrollBehavior = "auto"
+    bodyStyle.scrollBehavior = "auto"
+    rootStyle.overflowAnchor = "none"
+    bodyStyle.overflowAnchor = "none"
+
+    return () => {
+      rootStyle.scrollBehavior = previousRootScrollBehavior
+      bodyStyle.scrollBehavior = previousBodyScrollBehavior
+      rootStyle.overflowAnchor = previousRootOverflowAnchor
+      bodyStyle.overflowAnchor = previousBodyOverflowAnchor
+    }
+  }, [])
+
+  useEffect(() => {
     if (!gameId || gameState?.state === "completed") {
       return undefined
     }
 
     const intervalId = window.setInterval(() => {
-      pollState({ silent: true, preserveViewport: true })
+      pollState({ silent: true, preserveViewport: false })
     }, POLL_INTERVAL_MS)
 
     return () => {
@@ -701,13 +767,8 @@ export default function GamePage() {
       return
     }
 
-    if (typeof window.scrollTo === "function") {
-      try {
-        window.scrollTo(viewport.x, viewport.y)
-      } catch {
-        // JSDOM does not implement window scrolling.
-      }
-    }
+    restoreViewportPosition(viewport)
+    window.requestAnimationFrame(() => restoreViewportPosition(viewport))
     viewportRestoreRef.current = null
   }, [gameState, loading, submittingAction, actionError])
 
@@ -891,6 +952,8 @@ export default function GamePage() {
   }
 
   async function handleSquareClick(square) {
+    blurActiveInteractiveElement()
+
     if (suppressClickRef.current) {
       suppressClickRef.current = false
       return
@@ -957,6 +1020,8 @@ export default function GamePage() {
   }
 
   function handleSquarePointerDown(square, event) {
+    blurActiveInteractiveElement()
+
     if (event.button === 0 && placements[square] && !isTouchLikePointer(event)) {
       setActionError("")
       setDraggingPhantomFrom(square)
@@ -1063,6 +1128,7 @@ export default function GamePage() {
   }
 
   async function submitMoveWithUci(uci) {
+    blurActiveInteractiveElement()
     setSubmittingAction(true)
     setActionError("")
     captureViewport()
@@ -1106,6 +1172,7 @@ export default function GamePage() {
       return
     }
 
+    blurActiveInteractiveElement()
     setSubmittingAction(true)
     setActionError("")
     setIllegalMoveSquares([])
@@ -1126,6 +1193,7 @@ export default function GamePage() {
       return
     }
 
+    blurActiveInteractiveElement()
     setSubmittingAction(true)
     setActionError("")
     setIllegalMoveSquares([])
@@ -1164,18 +1232,33 @@ export default function GamePage() {
 
   const phantomMenuSquare = phantomMenu?.square ?? ""
   const phantomOnMenuSquare = phantomMenuSquare ? placements[phantomMenuSquare] : ""
+  const pageNotices = [
+    loading ? "Loading game state…" : "",
+    submittingAction ? "Submitting action…" : "",
+    waitingForOpponent ? "Waiting for opponent move…" : "",
+  ]
 
   return (
     <main className="page-shell game-page" onClick={() => phantomMenu && closePhantomMenu()}>
       <div className="game-page__header">
-        <h1>Game</h1>
+        <div className="game-page__title-block">
+          <h1>Game</h1>
+          <span className="game-page__version">v. {APP_VERSION}</span>
+        </div>
         <button type="button" onClick={() => navigate("/lobby")}>Back to lobby</button>
       </div>
 
       <p className="game-page__meta">Game ID: <code>{gameId}</code></p>
-      {loading ? <p className="game-page__notice">Loading game state…</p> : null}
-      {submittingAction ? <p className="game-page__notice">Submitting action…</p> : null}
-      {waitingForOpponent ? <p className="game-page__notice">Waiting for opponent move…</p> : null}
+      <div className="game-page__notices" aria-live="polite">
+        {pageNotices.map((notice, index) => (
+          <p
+            key={`game-notice-${index}`}
+            className={`game-page__notice ${notice ? "" : "game-page__notice--hidden"}`.trim()}
+          >
+            {notice || "\u00A0"}
+          </p>
+        ))}
+      </div>
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
 
       {gameState ? (
@@ -1280,7 +1363,9 @@ export default function GamePage() {
                 </button>
               </div>
 
-              {actionError ? <p className="auth-error" role="alert">{actionError}</p> : null}
+              <div className="game-action-error-slot" aria-live="assertive">
+                {actionError ? <p className="auth-error" role="alert">{actionError}</p> : <p className="game-action-error-slot__placeholder" aria-hidden="true">{"\u00A0"}</p>}
+              </div>
 
               <div className="game-referee-log">
                 <div className="game-referee-log__header">
