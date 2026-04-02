@@ -246,7 +246,6 @@ export default function LobbyPage() {
       <div className="lobby-page__header">
         <div className="lobby-page__title-block">
           <h1>Lobby</h1>
-          <span className="lobby-page__version">v. {APP_VERSION}</span>
         </div>
         <p>Signed in as {signedInAs}.</p>
       </div>
@@ -267,8 +266,8 @@ export default function LobbyPage() {
             </div>
           </div>
 
-          <fieldset className="lobby-opponent-picker">
-            <legend>Who is this game against?</legend>
+          <div className="lobby-create-field">
+            <span className="lobby-create-field__label">Who is this game against?</span>
             <div className="lobby-opponent-options">
               <div className={`lobby-opponent-option${opponentType === "human" ? " is-selected" : ""}`}>
                 <label className="lobby-opponent-option__radio">
@@ -304,7 +303,7 @@ export default function LobbyPage() {
                 ) : null}
               </div>
             </div>
-          </fieldset>
+          </div>
 
           <button type="submit" disabled={creatingGame}>
             {creatingGame ? "Creating…" : opponentType === "bot" ? "Create bot game" : "Create waiting game"}

@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
+import packageInfo from "../../package.json"
 import { useAuth } from "../hooks/useAuth"
 import { getMyGames } from "../services/api"
 
 const ACTIVE_STATES = new Set(["active"])
+const APP_VERSION = packageInfo.version
 
 function formatUpdatedAt(isoDate) {
   if (!isoDate) {
@@ -130,6 +132,7 @@ export default function HomePage() {
           </nav>
         </>
       )}
+      <p className="page-version">v. {APP_VERSION}</p>
     </main>
   )
 }

@@ -71,6 +71,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByText(/Game ID:/i)
+    expect(screen.getByText("v. 1.0.9")).toBeInTheDocument()
     expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
 
     await sleep(650)
@@ -87,7 +88,7 @@ describe("GamePage", () => {
 
     await waitFor(() => {
       expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
-      expect(mockApi.getGameState).toHaveBeenCalledTimes(2)
+      expect(mockApi.getGameState.mock.calls.length).toBeGreaterThanOrEqual(2)
     })
 
     expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--last-move")

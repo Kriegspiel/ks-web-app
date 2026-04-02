@@ -1411,7 +1411,7 @@ export default function GamePage() {
                 </div>
               </section>
 
-              <p className="game-page__meta game-page__meta--below-board">Game ID: <code>{gameId}</code> · <span className="game-page__version game-page__version--inline">v. {APP_VERSION}</span></p>
+              <p className="game-page__meta game-page__meta--below-board">Game ID: <code>{gameId}</code></p>
             </div>
 
             <section className="game-card game-card--status" aria-label="Game status">
@@ -1492,6 +1492,7 @@ export default function GamePage() {
             onSelect={handlePromotionSelect}
             onCancel={handlePromotionCancel}
           />
+          <p className="page-version">v. {APP_VERSION}</p>
         </>
       ) : null}
     </main>

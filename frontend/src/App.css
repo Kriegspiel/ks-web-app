@@ -177,6 +177,13 @@ button.theme-toggle:active {
   position: relative;
 }
 
+.page-version {
+  margin: 1rem 0 0;
+  text-align: center;
+  color: var(--muted-soft);
+  font-size: 0.76rem;
+}
+
 .page-shell > :first-child {
   margin-top: 0;
 }
