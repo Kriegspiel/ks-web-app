@@ -1247,7 +1247,6 @@ export default function GamePage() {
           <h1>Game</h1>
           <span className="game-page__version">v. {APP_VERSION}</span>
         </div>
-        <button type="button" onClick={() => navigate("/lobby")}>Back to lobby</button>
       </div>
 
       <p className="game-page__meta">Game ID: <code>{gameId}</code></p>
