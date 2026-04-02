@@ -1203,7 +1203,7 @@ export default function GamePage() {
 
               <div className="game-referee-log">
                 <div className="game-referee-log__header">
-                  <h3>Scoresheet</h3>
+                  <h3>Referee log</h3>
                 </div>
 
                 {groupedRefereeLog.length ? (

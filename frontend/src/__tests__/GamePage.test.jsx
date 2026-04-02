@@ -194,6 +194,32 @@ describe("GamePage", () => {
     expect(screen.queryByText("a2a3 — Move complete")).not.toBeInTheDocument()
   })
 
+  it("renders_viewer_scoresheet_turns_from_the_api_before_other_log_fallbacks", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      scoresheet: {
+        viewer_color: "white",
+        last_move_number: 1,
+        turns: [
+          {
+            turn: 1,
+            white: [{ message: "Move attempt — Move complete" }],
+            black: [{ message: "Opponent move — Capture done at D4 · Check on file" }],
+          },
+        ],
+      },
+      referee_turns: [{ turn: 99, white: ["Old turn fallback"], black: [] }],
+      referee_log: [{ turn: 99, color: "white", announcement: "Old log fallback" }],
+    })
+
+    render(<GamePage />)
+
+    expect(await screen.findByText("Move attempt — Move complete")).toBeInTheDocument()
+    expect(screen.getByText("Opponent move — Capture done at D4 · Check on file")).toBeInTheDocument()
+    expect(screen.queryByText("Old turn fallback")).not.toBeInTheDocument()
+    expect(screen.queryByText("Old log fallback")).not.toBeInTheDocument()
+  })
+
   it("prefers_the_current_players_scoresheet_when_available", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
