@@ -595,6 +595,38 @@ function buildMenuState(square, boardRoot, squareHasPhantom, availablePieces) {
   }
 }
 
+function restoreViewportPosition(viewport) {
+  if (!viewport) {
+    return
+  }
+
+  const x = Number.isFinite(viewport.x) ? viewport.x : 0
+  const y = Number.isFinite(viewport.y) ? viewport.y : 0
+  const scrollRoot = document.scrollingElement ?? document.documentElement ?? document.body
+
+  if (scrollRoot) {
+    scrollRoot.scrollLeft = x
+    scrollRoot.scrollTop = y
+  }
+
+  document.documentElement.scrollLeft = x
+  document.documentElement.scrollTop = y
+  document.body.scrollLeft = x
+  document.body.scrollTop = y
+
+  if (typeof window.scrollTo === "function") {
+    try {
+      window.scrollTo({ left: x, top: y, behavior: "auto" })
+    } catch {
+      try {
+        window.scrollTo(x, y)
+      } catch {
+        // JSDOM does not implement window scrolling.
+      }
+    }
+  }
+}
+
 export default function GamePage() {
   const { gameId } = useParams()
   const navigate = useNavigate()
@@ -676,6 +708,27 @@ export default function GamePage() {
   }, [pollState])
 
   useEffect(() => {
+    const rootStyle = document.documentElement.style
+    const bodyStyle = document.body.style
+    const previousRootScrollBehavior = rootStyle.scrollBehavior
+    const previousBodyScrollBehavior = bodyStyle.scrollBehavior
+    const previousRootOverflowAnchor = rootStyle.overflowAnchor
+    const previousBodyOverflowAnchor = bodyStyle.overflowAnchor
+
+    rootStyle.scrollBehavior = "auto"
+    bodyStyle.scrollBehavior = "auto"
+    rootStyle.overflowAnchor = "none"
+    bodyStyle.overflowAnchor = "none"
+
+    return () => {
+      rootStyle.scrollBehavior = previousRootScrollBehavior
+      bodyStyle.scrollBehavior = previousBodyScrollBehavior
+      rootStyle.overflowAnchor = previousRootOverflowAnchor
+      bodyStyle.overflowAnchor = previousBodyOverflowAnchor
+    }
+  }, [])
+
+  useEffect(() => {
     if (!gameId || gameState?.state === "completed") {
       return undefined
     }
@@ -701,13 +754,8 @@ export default function GamePage() {
       return
     }
 
-    if (typeof window.scrollTo === "function") {
-      try {
-        window.scrollTo(viewport.x, viewport.y)
-      } catch {
-        // JSDOM does not implement window scrolling.
-      }
-    }
+    restoreViewportPosition(viewport)
+    window.requestAnimationFrame(() => restoreViewportPosition(viewport))
     viewportRestoreRef.current = null
   }, [gameState, loading, submittingAction, actionError])
 
