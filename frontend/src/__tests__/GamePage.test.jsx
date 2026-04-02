@@ -30,6 +30,7 @@ const activeState = {
   move_number: 1,
   your_color: "white",
   your_fen: "8/8/8/8/8/8/4P3/4K3",
+  allowed_moves: ["e2e4"],
   referee_log: [{ turn: 1, color: "white", announcement: "White to move" }],
   possible_actions: ["move", "ask_any"],
   clock: { white_remaining: 601, black_remaining: 598, active_color: "white" },
@@ -71,7 +72,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByText(/Game ID:/i)
-    expect(screen.getByText("v. 1.0.9")).toBeInTheDocument()
+    expect(screen.getByText("v. 1.0.10")).toBeInTheDocument()
     expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
 
     await sleep(650)
@@ -93,6 +94,19 @@ describe("GamePage", () => {
 
     expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--last-move")
     expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--last-move")
+  })
+
+  it("shows_only_backend_legal_move_dots_for_the_selected_piece", async () => {
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e2" })
+    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
+
+    const e3 = screen.getAllByRole("button", { name: "Square e3" }).at(-1)
+    const e4 = screen.getAllByRole("button", { name: "Square e4" }).at(-1)
+
+    expect(e4.querySelector(".square__move-dot")).toBeTruthy()
+    expect(e3.querySelector(".square__move-dot")).toBeFalsy()
   })
 
   it("highlights_illegal_move_squares_in_red", async () => {

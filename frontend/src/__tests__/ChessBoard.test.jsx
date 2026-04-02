@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import ChessBoard from "../components/ChessBoard"
-import { getVisibleMoveTargets, parseFenBoard } from "../components/chessboard"
+import { getAllowedMoveTargets, getVisibleMoveTargets, parseFenBoard } from "../components/chessboard"
 
 describe("ChessBoard", () => {
   it("parses_piece_positions_deterministically", () => {
@@ -24,6 +24,11 @@ describe("ChessBoard", () => {
       fromSquare: "d4",
       color: "white",
     })).toContain("h8")
+  })
+
+  it("derives_allowed_move_targets_from_backend_legal_moves", () => {
+    expect(getAllowedMoveTargets(["e2e4", "e2e3", "g1f3"], "e2")).toEqual(["e4", "e3"])
+    expect(getAllowedMoveTargets(["e2e4", "e2e3", "g1f3"], "g1")).toEqual(["f3"])
   })
 
   it("renders_pieces_from_fen", () => {

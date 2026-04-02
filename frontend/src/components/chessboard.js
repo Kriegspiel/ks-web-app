@@ -228,3 +228,21 @@ export function getVisibleMoveTargets({ fen, fromSquare, color }) {
 
   return [...new Set(targets)]
 }
+
+export function getAllowedMoveTargets(allowedMoves, fromSquare) {
+  if (!Array.isArray(allowedMoves) || !fromSquare) {
+    return []
+  }
+
+  const normalizedFromSquare = String(fromSquare).trim().toLowerCase()
+  if (!/^[a-h][1-8]$/.test(normalizedFromSquare)) {
+    return []
+  }
+
+  const targets = allowedMoves
+    .filter((uci) => typeof uci === "string" && uci.trim().toLowerCase().startsWith(normalizedFromSquare))
+    .map((uci) => uci.trim().toLowerCase().slice(2, 4))
+    .filter((square) => /^[a-h][1-8]$/.test(square))
+
+  return [...new Set(targets)]
+}
