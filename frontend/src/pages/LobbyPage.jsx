@@ -275,10 +275,9 @@ export default function LobbyPage() {
                   <input type="radio" aria-label="Human" name="opponent-type" checked={opponentType === "human"} onChange={() => setOpponentType("human")} />
                   <span className="lobby-opponent-copy">
                     <span className="lobby-opponent-title">Human</span>
-                    <span className="lobby-opponent-description">Create a waiting game to share with another player.</span>
+                    <span className="lobby-opponent-description">Play another human.</span>
                   </span>
                 </label>
-                {opponentType === "human" ? <p className="lobby-meta">Create a waiting game and share the join code with another human.</p> : null}
               </div>
 
               <div className={`lobby-opponent-option${opponentType === "bot" ? " is-selected" : ""}`}>
@@ -374,6 +373,8 @@ export default function LobbyPage() {
           ))}
         </ul>
       </section>
+
+      <p className="lobby-page__footer-version">v. {APP_VERSION}</p>
     </main>
   )
 }

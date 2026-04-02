@@ -4,7 +4,7 @@ import packageInfo from "../../package.json"
 import ChessBoard from "../components/ChessBoard"
 import PromotionModal from "../components/PromotionModal"
 import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
-import { askAny, getGameState, resignGame, submitMove } from "../services/api"
+import { askAny, getGame, getGameState, resignGame, submitMove } from "../services/api"
 import { getVisibleMoveTargets, PIECE_ASSETS } from "../components/chessboard"
 import "./GamePage.css"
 
@@ -662,6 +662,7 @@ export default function GamePage() {
   const { gameId } = useParams()
 
   const [gameState, setGameState] = useState(null)
+  const [gameMeta, setGameMeta] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [actionError, setActionError] = useState("")
@@ -733,9 +734,23 @@ export default function GamePage() {
     }
   }, [captureViewport, gameId])
 
+  const pollMetadata = useCallback(async () => {
+    if (!gameId) {
+      return
+    }
+
+    try {
+      const metadata = await getGame(gameId)
+      setGameMeta(metadata)
+    } catch {
+      // Keep the board usable even if metadata fails.
+    }
+  }, [gameId])
+
   useEffect(() => {
     pollState({ silent: false })
-  }, [pollState])
+    pollMetadata()
+  }, [pollMetadata, pollState])
 
   useEffect(() => {
     const rootStyle = document.documentElement.style
@@ -842,6 +857,18 @@ export default function GamePage() {
   const waitingForOpponent = gameState?.state === "active" && !possibleActions.includes("move")
   const activeClockColor = gameState?.clock?.active_color ?? gameState?.turn
   const groupedRefereeLog = useMemo(() => buildVisibleRefereeLog(gameState), [gameState])
+  const opponentLabel = useMemo(() => {
+    if (!gameMeta || !gameState?.your_color) {
+      return "—"
+    }
+
+    const opponent = gameState.your_color === "white" ? gameMeta.black : gameMeta.white
+    if (!opponent?.username) {
+      return gameMeta.opponent_type === "bot" ? "Bot" : "Waiting…"
+    }
+
+    return `${opponent.username}${opponent.role === "bot" ? " (bot)" : ""}`
+  }, [gameMeta, gameState?.your_color])
 
   useEffect(() => {
     const logNode = logScrollRef.current
@@ -910,6 +937,10 @@ export default function GamePage() {
     }
 
     setDragPreview({ piece, x: event.clientX, y: event.clientY })
+  }
+
+  function displayedPhantomPiece(piece) {
+    return getOpponentPhantomPiece(piece, gameState?.your_color)
   }
 
   function clearDragPreview() {
@@ -1057,7 +1088,7 @@ export default function GamePage() {
       draggingPhantomFromRef.current = square
       setDragHoverSquare(square)
       dragPointerIdRef.current = event.pointerId
-      updateDragPreview(event, placements[square])
+      updateDragPreview(event, displayedPhantomPiece(placements[square]))
       event.currentTarget.setPointerCapture?.(event.pointerId)
       closePhantomMenu()
       return
@@ -1117,7 +1148,7 @@ export default function GamePage() {
     if (hoveredSquare) {
       setDragHoverSquare(hoveredSquare)
     }
-    updateDragPreview(event, placements[draggingPhantomFromRef.current])
+    updateDragPreview(event, displayedPhantomPiece(placements[draggingPhantomFromRef.current]))
   }
 
   function handleSquarePointerUp(square, event) {
@@ -1442,7 +1473,8 @@ export default function GamePage() {
                 <h2>Status</h2>
                 <ul className="game-status-list">
                   <li><strong>State:</strong> {gameState.state}</li>
-                  <li><strong>Rules:</strong> {formatRuleVariant(gameState.rule_variant)}</li>
+                  <li><strong>Rules:</strong> {formatRuleVariant(gameMeta?.rule_variant)}</li>
+                  <li><strong>Against:</strong> {opponentLabel}</li>
                   <li><strong>Your color:</strong> {gameState.your_color}</li>
                   <li className={canMove ? "game-status-list__turn game-status-list__turn--active" : "game-status-list__turn"}><strong>Turn:</strong> {gameState.turn ?? "—"}</li>
                   <li><strong>Move number:</strong> {gameState.move_number}</li>

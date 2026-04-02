@@ -15,7 +15,7 @@ describe("LobbyPage", () => {
   it("shows_lobby_version_badge", async () => {
     render(<LobbyPage />)
 
-    expect(await screen.findByText("v. 1.0.7")).toBeInTheDocument()
+    expect(await screen.findAllByText("v. 1.0.8")).toHaveLength(2)
   })
 
   it("creates_waiting_game_and_shows_join_code", async () => {
