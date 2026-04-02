@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import packageInfo from "../../package.json"
 import ChessBoard from "../components/ChessBoard"
 import PromotionModal from "../components/PromotionModal"
 import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
 import { askAny, getGameState, resignGame, submitMove } from "../services/api"
-import { PIECE_ASSETS } from "../components/chessboard"
+import { getVisibleMoveTargets, PIECE_ASSETS } from "../components/chessboard"
 import "./GamePage.css"
 
 const POLL_INTERVAL_MS = 500
@@ -642,7 +642,6 @@ function blurActiveInteractiveElement() {
 
 export default function GamePage() {
   const { gameId } = useParams()
-  const navigate = useNavigate()
 
   const [gameState, setGameState] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -810,6 +809,18 @@ export default function GamePage() {
   }, [pendingPromotion, selectedMoveBase])
 
   const highlightedSquares = [fromSquare, toSquare, movingPhantomFrom, dragHoverSquare, draggingMoveFrom, moveDragHoverSquare].filter(Boolean)
+  const moveSuggestionSquares = useMemo(() => {
+    const activeSourceSquare = draggingMoveFrom || fromSquare
+    if (!activeSourceSquare) {
+      return []
+    }
+
+    return getVisibleMoveTargets({
+      fen: gameState?.your_fen,
+      fromSquare: activeSourceSquare,
+      color: gameState?.your_color,
+    })
+  }, [draggingMoveFrom, fromSquare, gameState?.your_color, gameState?.your_fen])
   const waitingForOpponent = gameState?.state === "active" && !possibleActions.includes("move")
   const activeClockColor = gameState?.clock?.active_color ?? gameState?.turn
   const groupedRefereeLog = useMemo(() => buildVisibleRefereeLog(gameState), [gameState])
@@ -1232,11 +1243,13 @@ export default function GamePage() {
 
   const phantomMenuSquare = phantomMenu?.square ?? ""
   const phantomOnMenuSquare = phantomMenuSquare ? placements[phantomMenuSquare] : ""
-  const pageNotices = [
-    loading ? "Loading game state…" : "",
-    submittingAction ? "Submitting action…" : "",
-    waitingForOpponent ? "Waiting for opponent move…" : "",
-  ]
+  const pageNotice = loading
+    ? "Loading game state…"
+    : submittingAction
+      ? "Submitting action…"
+      : waitingForOpponent
+        ? "Waiting for opponent move…"
+        : ""
 
   return (
     <main className="page-shell game-page" onClick={() => phantomMenu && closePhantomMenu()}>
@@ -1245,19 +1258,13 @@ export default function GamePage() {
           <h1>Game</h1>
           <span className="game-page__version">v. {APP_VERSION}</span>
         </div>
-        <button type="button" onClick={() => navigate("/lobby")}>Back to lobby</button>
       </div>
 
       <p className="game-page__meta">Game ID: <code>{gameId}</code></p>
       <div className="game-page__notices" aria-live="polite">
-        {pageNotices.map((notice, index) => (
-          <p
-            key={`game-notice-${index}`}
-            className={`game-page__notice ${notice ? "" : "game-page__notice--hidden"}`.trim()}
-          >
-            {notice || "\u00A0"}
-          </p>
-        ))}
+        <p className={`game-page__notice ${pageNotice ? "" : "game-page__notice--hidden"}`.trim()}>
+          {pageNotice || "\u00A0"}
+        </p>
       </div>
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
 
@@ -1283,6 +1290,7 @@ export default function GamePage() {
                   highlightedSquares={highlightedSquares}
                   lastMoveSquares={lastMoveSquares}
                   illegalSquares={illegalMoveSquares}
+                  suggestedSquares={moveSuggestionSquares}
                   phantomSquares={phantomSquares}
                   phantomPlacements={placements}
                   disabled={false}

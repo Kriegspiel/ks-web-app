@@ -2,12 +2,22 @@ import React from "react"
 import "./ChessBoard.css"
 import { FILES, PIECE_ASSETS, PIECE_LABELS, RANKS, parseFenBoard } from "./chessboard"
 
+function getPhantomDisplayPiece(piece, orientation) {
+  if (typeof piece !== "string") {
+    return ""
+  }
+
+  const normalized = piece.toLowerCase()
+  return orientation === "black" ? normalized.toUpperCase() : normalized
+}
+
 function ChessBoard({
   boardFen,
   orientation = "white",
   highlightedSquares = [],
   lastMoveSquares = [],
   illegalSquares = [],
+  suggestedSquares = [],
   phantomSquares = [],
   phantomPlacements = {},
   disabled = false,
@@ -40,7 +50,9 @@ function ChessBoard({
             const highlighted = highlightedSquares.includes(square)
             const lastMove = lastMoveSquares.includes(square)
             const illegal = illegalSquares.includes(square)
+            const suggested = suggestedSquares.includes(square)
             const phantom = phantomSquares.includes(square)
+            const phantomDisplayPiece = getPhantomDisplayPiece(phantomPiece, orientation)
 
             return (
               <button
@@ -52,6 +64,7 @@ function ChessBoard({
                   highlighted ? "square--highlighted" : "",
                   lastMove ? "square--last-move" : "",
                   illegal ? "square--illegal" : "",
+                  suggested ? "square--suggested" : "",
                   phantom ? "square--phantom" : "",
                 ]
                   .filter(Boolean)
@@ -103,9 +116,10 @@ function ChessBoard({
               >
                 {showFileLabelOnSquare(file, rank) && <span className="coord file">{file}</span>}
                 {showRankLabelOnSquare(file) && <span className="coord rank">{rank}</span>}
+                {suggested && !piece && !phantomPiece ? <span className="square__move-dot" aria-hidden="true" /> : null}
                 {phantomPiece && !piece ? (
-                  <span className="phantom-piece-on-board" aria-label={`Phantom ${PIECE_LABELS[phantomPiece]}`}>
-                    <img className="phantom-piece-on-board__image" src={PIECE_ASSETS[phantomPiece]} alt="" draggable="false" />
+                  <span className="phantom-piece-on-board" aria-label={`Phantom ${PIECE_LABELS[phantomDisplayPiece]}`}>
+                    <img className="phantom-piece-on-board__image" src={PIECE_ASSETS[phantomDisplayPiece]} alt="" draggable="false" />
                   </span>
                 ) : null}
                 {piece && (

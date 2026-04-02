@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import ChessBoard from "../components/ChessBoard"
-import { parseFenBoard } from "../components/chessboard"
+import { getVisibleMoveTargets, parseFenBoard } from "../components/chessboard"
 
 describe("ChessBoard", () => {
   it("parses_piece_positions_deterministically", () => {
@@ -10,6 +10,20 @@ describe("ChessBoard", () => {
     expect(board[1][3]).toBe("k")
     expect(board[6][4]).toBe("P")
     expect(board[7][4]).toBe("K")
+  })
+
+  it("derives_visible_move_targets_for_selected_pieces", () => {
+    expect(getVisibleMoveTargets({
+      fen: "8/8/8/8/8/8/4P3/4K3 w - - 0 1",
+      fromSquare: "e2",
+      color: "white",
+    })).toEqual(["e3", "e4"])
+
+    expect(getVisibleMoveTargets({
+      fen: "8/8/8/8/3B4/8/8/4K3 w - - 0 1",
+      fromSquare: "d4",
+      color: "white",
+    })).toContain("h8")
   })
 
   it("renders_pieces_from_fen", () => {
@@ -37,6 +51,34 @@ describe("ChessBoard", () => {
     fireEvent.contextMenu(d5Buttons[d5Buttons.length - 1])
     expect(onSquareRightClick).toHaveBeenCalled()
     expect(screen.getByLabelText("Phantom Black queen")).toBeInTheDocument()
+  })
+
+  it("renders_phantom_pieces_in_the_opposite_color_for_black_players", () => {
+    render(
+      <ChessBoard
+        boardFen="8/8/8/8/8/8/8/4k3 w - - 0 1"
+        orientation="black"
+        phantomSquares={["d5"]}
+        phantomPlacements={{ d5: "q" }}
+      />,
+    )
+
+    expect(screen.getByLabelText("Phantom White queen")).toBeInTheDocument()
+  })
+
+  it("renders_move_suggestion_dots_on_suggested_squares", () => {
+    render(
+      <ChessBoard
+        boardFen="8/8/8/8/8/8/4P3/4K3 w - - 0 1"
+        suggestedSquares={["e3", "e4"]}
+      />,
+    )
+
+    const e3 = screen.getAllByRole("button", { name: "Square e3" }).at(-1)
+    const e4 = screen.getAllByRole("button", { name: "Square e4" }).at(-1)
+
+    expect(e3.querySelector(".square__move-dot")).toBeTruthy()
+    expect(e4.querySelector(".square__move-dot")).toBeTruthy()
   })
 
   it("wires_primary_and_pointer_handlers_and_respects_disabled", () => {

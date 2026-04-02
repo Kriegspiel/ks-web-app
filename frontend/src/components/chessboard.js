@@ -44,6 +44,76 @@ export const PIECE_ASSETS = {
   p: bP,
 }
 
+function pieceColor(piece) {
+  if (!piece) {
+    return ""
+  }
+
+  return piece === piece.toUpperCase() ? "white" : "black"
+}
+
+function squareToCoords(square) {
+  if (typeof square !== "string" || !/^[a-h][1-8]$/.test(square)) {
+    return null
+  }
+
+  return {
+    fileIndex: FILES.indexOf(square[0]),
+    rankIndex: RANKS.indexOf(Number.parseInt(square[1], 10)),
+  }
+}
+
+function coordsToSquare(fileIndex, rankIndex) {
+  const file = FILES[fileIndex]
+  const rank = RANKS[rankIndex]
+  if (!file || !rank) {
+    return ""
+  }
+
+  return `${file}${rank}`
+}
+
+function isInsideBoard(fileIndex, rankIndex) {
+  return fileIndex >= 0 && fileIndex < 8 && rankIndex >= 0 && rankIndex < 8
+}
+
+function collectRayMoves(board, fromPiece, fileIndex, rankIndex, deltas, output) {
+  for (const [fileDelta, rankDelta] of deltas) {
+    let nextFile = fileIndex + fileDelta
+    let nextRank = rankIndex + rankDelta
+
+    while (isInsideBoard(nextFile, nextRank)) {
+      const targetPiece = board[nextRank]?.[nextFile]
+      if (!targetPiece) {
+        output.push(coordsToSquare(nextFile, nextRank))
+      } else {
+        if (pieceColor(targetPiece) !== pieceColor(fromPiece)) {
+          output.push(coordsToSquare(nextFile, nextRank))
+        }
+        break
+      }
+
+      nextFile += fileDelta
+      nextRank += rankDelta
+    }
+  }
+}
+
+function collectStepMoves(board, fromPiece, fileIndex, rankIndex, deltas, output) {
+  for (const [fileDelta, rankDelta] of deltas) {
+    const nextFile = fileIndex + fileDelta
+    const nextRank = rankIndex + rankDelta
+    if (!isInsideBoard(nextFile, nextRank)) {
+      continue
+    }
+
+    const targetPiece = board[nextRank]?.[nextFile]
+    if (!targetPiece || pieceColor(targetPiece) !== pieceColor(fromPiece)) {
+      output.push(coordsToSquare(nextFile, nextRank))
+    }
+  }
+}
+
 export function parseFenBoard(fen) {
   const placement = (fen || "8/8/8/8/8/8/8/8").trim().split(" ")[0]
   const fenRanks = placement.split("/")
@@ -63,4 +133,98 @@ export function parseFenBoard(fen) {
     while (row.length < 8) row.push(null)
     return row.slice(0, 8)
   })
+}
+
+export function getVisibleMoveTargets({ fen, fromSquare, color }) {
+  const board = parseFenBoard(fen)
+  const coords = squareToCoords(fromSquare)
+  if (!coords || !color) {
+    return []
+  }
+
+  const fromPiece = board[coords.rankIndex]?.[coords.fileIndex]
+  if (!fromPiece || pieceColor(fromPiece) !== color) {
+    return []
+  }
+
+  const pieceType = fromPiece.toLowerCase()
+  const targets = []
+
+  if (pieceType === "p") {
+    const direction = color === "white" ? -1 : 1
+    const startRankIndex = color === "white" ? 6 : 1
+    const oneForwardRank = coords.rankIndex + direction
+
+    if (isInsideBoard(coords.fileIndex, oneForwardRank) && !board[oneForwardRank]?.[coords.fileIndex]) {
+      targets.push(coordsToSquare(coords.fileIndex, oneForwardRank))
+
+      const twoForwardRank = coords.rankIndex + direction * 2
+      if (
+        coords.rankIndex === startRankIndex &&
+        isInsideBoard(coords.fileIndex, twoForwardRank) &&
+        !board[twoForwardRank]?.[coords.fileIndex]
+      ) {
+        targets.push(coordsToSquare(coords.fileIndex, twoForwardRank))
+      }
+    }
+
+    for (const fileDelta of [-1, 1]) {
+      const targetFile = coords.fileIndex + fileDelta
+      const targetRank = coords.rankIndex + direction
+      if (!isInsideBoard(targetFile, targetRank)) {
+        continue
+      }
+
+      const targetPiece = board[targetRank]?.[targetFile]
+      if (targetPiece && pieceColor(targetPiece) !== color) {
+        targets.push(coordsToSquare(targetFile, targetRank))
+      }
+    }
+  }
+
+  if (pieceType === "n") {
+    collectStepMoves(
+      board,
+      fromPiece,
+      coords.fileIndex,
+      coords.rankIndex,
+      [
+        [-2, -1], [-2, 1], [-1, -2], [-1, 2],
+        [1, -2], [1, 2], [2, -1], [2, 1],
+      ],
+      targets,
+    )
+  }
+
+  if (pieceType === "b") {
+    collectRayMoves(board, fromPiece, coords.fileIndex, coords.rankIndex, [[-1, -1], [-1, 1], [1, -1], [1, 1]], targets)
+  }
+
+  if (pieceType === "r") {
+    collectRayMoves(board, fromPiece, coords.fileIndex, coords.rankIndex, [[-1, 0], [1, 0], [0, -1], [0, 1]], targets)
+  }
+
+  if (pieceType === "q") {
+    collectRayMoves(
+      board,
+      fromPiece,
+      coords.fileIndex,
+      coords.rankIndex,
+      [[-1, -1], [-1, 1], [1, -1], [1, 1], [-1, 0], [1, 0], [0, -1], [0, 1]],
+      targets,
+    )
+  }
+
+  if (pieceType === "k") {
+    collectStepMoves(
+      board,
+      fromPiece,
+      coords.fileIndex,
+      coords.rankIndex,
+      [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]],
+      targets,
+    )
+  }
+
+  return [...new Set(targets)]
 }
