@@ -300,26 +300,6 @@ function getScoresheetQuestionType(value) {
   return getScoresheetQuestionType(value.question_type ?? value.type ?? value.question)
 }
 
-function getScoresheetMoveLabel(value) {
-  if (!value) {
-    return ""
-  }
-
-  if (typeof value === "string") {
-    const normalized = value.trim()
-    if (/^[a-h][1-8][a-h][1-8][qrbn]?$/i.test(normalized)) {
-      return normalized.toLowerCase()
-    }
-    return ""
-  }
-
-  if (typeof value !== "object") {
-    return ""
-  }
-
-  return getScoresheetMoveLabel(value.uci ?? value.move_uci ?? value.chess_move ?? value.move)
-}
-
 function normalizeScoresheetTurnEntry(pair, perspective) {
   if (!pair) {
     return null
@@ -330,7 +310,6 @@ function normalizeScoresheetTurnEntry(pair, perspective) {
     : [pair.move ?? pair.question ?? pair.prompt ?? pair[0], pair.answer ?? pair.response ?? pair.result ?? pair[1]]
   const [questionValue, answerValue] = tuple
   const questionType = getScoresheetQuestionType(questionValue)
-  const moveLabel = getScoresheetMoveLabel(questionValue)
   const answerTexts = getLogEntryTexts({ answer: answerValue })
 
   if (!answerTexts.length) {
@@ -341,7 +320,7 @@ function normalizeScoresheetTurnEntry(pair, perspective) {
     if (questionType === "ASK_ANY") {
       return `Ask any pawn captures — ${answerTexts.join(" · ")}`
     }
-    return moveLabel ? `${moveLabel} — ${answerTexts.join(" · ")}` : answerTexts.join(" · ")
+    return `Move attempt — ${answerTexts.join(" · ")}`
   }
 
   if (questionType === "ASK_ANY") {

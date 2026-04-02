@@ -170,8 +170,8 @@ describe("GamePage", () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
       referee_turns: [
-        { turn: 1, white: ["c2c3 — Move complete"], black: ["e7e5 — Move complete"] },
-        { turn: 2, white: ["d2d3 — Move complete"], black: [] },
+        { turn: 1, white: ["Move attempt — Move complete"], black: ["Move attempt — Move complete"] },
+        { turn: 2, white: ["Move attempt — Move complete"], black: [] },
       ],
       referee_log: [{ turn: 99, color: "white", announcement: "Old fallback log" }],
       engine_state: {
@@ -188,9 +188,8 @@ describe("GamePage", () => {
 
     expect(await screen.findByText("Turn 1")).toBeInTheDocument()
     expect(screen.getByText("Turn 2")).toBeInTheDocument()
-    expect(screen.getByText("c2c3 — Move complete")).toBeInTheDocument()
-    expect(screen.getByText("e7e5 — Move complete")).toBeInTheDocument()
-    expect(screen.getByText("d2d3 — Move complete")).toBeInTheDocument()
+    expect(screen.getAllByText("Move attempt — Move complete").length).toBeGreaterThanOrEqual(3)
+
     expect(screen.queryByText("Old fallback log")).not.toBeInTheDocument()
     expect(screen.queryByText("a2a3 — Move complete")).not.toBeInTheDocument()
   })
@@ -226,11 +225,11 @@ describe("GamePage", () => {
 
     expect(await screen.findByText("Turn 1")).toBeInTheDocument()
     expect(screen.getByText("Turn 2")).toBeInTheDocument()
-    expect(screen.getByText("e2e4 — Move complete")).toBeInTheDocument()
+    expect(screen.getByText("Move attempt — Move complete")).toBeInTheDocument()
     expect(screen.getByText("Opponent asked any pawn captures — No pawn captures")).toBeInTheDocument()
     expect(screen.getByText("Opponent move — Move complete")).toBeInTheDocument()
-    expect(screen.getByText("g1f3 — Illegal move")).toBeInTheDocument()
-    expect(screen.getByText(/f1b5/)).toBeInTheDocument()
+    expect(screen.getByText("Move attempt — Illegal move")).toBeInTheDocument()
+    expect(screen.getAllByText(/Move attempt — /).length).toBeGreaterThanOrEqual(3)
     expect(screen.getByText(/Check on file/)).toBeInTheDocument()
     expect(screen.queryByText("Old fallback log")).not.toBeInTheDocument()
   })
