@@ -1212,6 +1212,11 @@ export default function GamePage() {
 
   const phantomMenuSquare = phantomMenu?.square ?? ""
   const phantomOnMenuSquare = phantomMenuSquare ? placements[phantomMenuSquare] : ""
+  const pageNotices = [
+    loading ? "Loading game state…" : "",
+    submittingAction ? "Submitting action…" : "",
+    waitingForOpponent ? "Waiting for opponent move…" : "",
+  ]
 
   return (
     <main className="page-shell game-page" onClick={() => phantomMenu && closePhantomMenu()}>
@@ -1221,9 +1226,16 @@ export default function GamePage() {
       </div>
 
       <p className="game-page__meta">Game ID: <code>{gameId}</code></p>
-      {loading ? <p className="game-page__notice">Loading game state…</p> : null}
-      {submittingAction ? <p className="game-page__notice">Submitting action…</p> : null}
-      {waitingForOpponent ? <p className="game-page__notice">Waiting for opponent move…</p> : null}
+      <div className="game-page__notices" aria-live="polite">
+        {pageNotices.map((notice, index) => (
+          <p
+            key={`game-notice-${index}`}
+            className={`game-page__notice ${notice ? "" : "game-page__notice--hidden"}`.trim()}
+          >
+            {notice || "\u00A0"}
+          </p>
+        ))}
+      </div>
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
 
       {gameState ? (
@@ -1328,7 +1340,9 @@ export default function GamePage() {
                 </button>
               </div>
 
-              {actionError ? <p className="auth-error" role="alert">{actionError}</p> : null}
+              <div className="game-action-error-slot" aria-live="assertive">
+                {actionError ? <p className="auth-error" role="alert">{actionError}</p> : <p className="game-action-error-slot__placeholder" aria-hidden="true">{"\u00A0"}</p>}
+              </div>
 
               <div className="game-referee-log">
                 <div className="game-referee-log__header">

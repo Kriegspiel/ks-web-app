@@ -15,6 +15,21 @@
   font-size: 0.76rem;
 }
 
+.game-page__notices {
+  display: grid;
+  gap: 0.1rem;
+  min-height: 4.2rem;
+  align-content: start;
+}
+
+.game-page__notice {
+  min-height: 1.3rem;
+}
+
+.game-page__notice--hidden {
+  visibility: hidden;
+}
+
 .game-layout {
   display: grid;
   gap: 1rem;
@@ -250,6 +265,15 @@
 
 .game-actions {
   margin-top: 0;
+}
+
+.game-action-error-slot {
+  min-height: 2rem;
+}
+
+.game-action-error-slot__placeholder {
+  margin: 0;
+  visibility: hidden;
 }
 
 .game-referee-log {
