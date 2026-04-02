@@ -308,6 +308,34 @@ describe("GamePage", () => {
     expect(screen.getByText("Black must respond")).toBeInTheDocument()
   })
 
+  it("deduplicates_repeated_referee_messages_within_a_single_entry", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      scoresheet: {
+        viewer_color: "white",
+        turns: [
+          {
+            turn: 1,
+            white: [{ move_uci: "e4d5", message: "Capture done at D5", answer: { main: "CAPTURE_DONE", capture_square: "d5" } }],
+            black: [
+              { message: "Illegal move", answer: { main: "ILLEGAL_MOVE" } },
+              { message: "Illegal move", answer: { main: "ILLEGAL_MOVE" } },
+              { message: "Illegal move", answer: { main: "ILLEGAL_MOVE" } },
+              { message: "Move complete", answer: { main: "REGULAR_MOVE" } },
+            ],
+          },
+        ],
+      },
+    })
+
+    render(<GamePage />)
+
+    expect(await screen.findByText("[e4d5] Capture done at D5")).toBeInTheDocument()
+    expect(screen.queryByText("[e4d5] Capture done at D5 · Capture done at D5")).not.toBeInTheDocument()
+    expect(screen.getAllByText("Illegal move")).toHaveLength(3)
+    expect(screen.getAllByText("Move complete")).toHaveLength(1)
+  })
+
   it("formats_structured_referee_status_codes_into_friendly_text", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,

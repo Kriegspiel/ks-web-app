@@ -324,7 +324,8 @@ function formatRefereeEntryText({ messages = [], moveUci = "" }) {
       return parts.length ? parts : [message.trim()].filter(Boolean)
     })
     : []
-  const joined = cleanedMessages.join(" · ")
+  const uniqueMessages = [...new Set(cleanedMessages)]
+  const joined = uniqueMessages.join(" · ")
   if (!joined) {
     return ""
   }
