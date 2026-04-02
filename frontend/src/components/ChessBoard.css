@@ -40,21 +40,45 @@
   outline: none;
   outline-offset: 0;
   cursor: pointer;
-  transition: none;
+  transition: box-shadow 120ms ease, filter 120ms ease;
 }
 
-.square:hover,
-.square:focus-visible,
-.square:active {
+.square::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.08);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.board-grid .square:hover:not(:disabled),
+.board-grid .square:focus-visible:not(:disabled),
+.board-grid .square:active:not(:disabled) {
   border-color: transparent;
   background: inherit;
   transform: none;
   box-shadow: none;
   outline: none;
+  filter: none;
 }
 
-.square:hover .piece__image,
-.square:focus-visible .piece__image {
+.board-grid .square:hover:not(:disabled)::before,
+.board-grid .square:focus-visible:not(:disabled)::before {
+  opacity: 1;
+}
+
+.square.dark::before {
+  background: rgba(255, 248, 235, 0.1);
+}
+
+.square.light::before {
+  background: rgba(106, 69, 29, 0.08);
+}
+
+.board-grid .square:hover:not(:disabled) .piece__image,
+.board-grid .square:focus-visible:not(:disabled) .piece__image {
   filter: brightness(1.06) saturate(1.06);
 }
 
