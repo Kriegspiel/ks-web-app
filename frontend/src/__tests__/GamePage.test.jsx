@@ -166,6 +166,35 @@ describe("GamePage", () => {
     expect(screen.getByText("White in check")).toBeInTheDocument()
   })
 
+  it("prefers_explicit_referee_turns_from_the_api_when_available", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      referee_turns: [
+        { turn: 1, white: ["c2c3 — Move complete"], black: ["e7e5 — Move complete"] },
+        { turn: 2, white: ["d2d3 — Move complete"], black: [] },
+      ],
+      referee_log: [{ turn: 99, color: "white", announcement: "Old fallback log" }],
+      engine_state: {
+        game_state: {
+          white_scoresheet: {
+            moves_own: [[[{ question_type: "COMMON", move: "a2a3" }, { main: "REGULAR_MOVE" }]]],
+            moves_opponent: [],
+          },
+        },
+      },
+    })
+
+    render(<GamePage />)
+
+    expect(await screen.findByText("Turn 1")).toBeInTheDocument()
+    expect(screen.getByText("Turn 2")).toBeInTheDocument()
+    expect(screen.getByText("c2c3 — Move complete")).toBeInTheDocument()
+    expect(screen.getByText("e7e5 — Move complete")).toBeInTheDocument()
+    expect(screen.getByText("d2d3 — Move complete")).toBeInTheDocument()
+    expect(screen.queryByText("Old fallback log")).not.toBeInTheDocument()
+    expect(screen.queryByText("a2a3 — Move complete")).not.toBeInTheDocument()
+  })
+
   it("prefers_the_current_players_scoresheet_when_available", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
