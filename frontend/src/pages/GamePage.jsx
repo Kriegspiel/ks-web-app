@@ -373,7 +373,28 @@ function buildScoresheetRefereeLog(gameState) {
   })).filter((turn) => turn.white.length || turn.black.length)
 }
 
+function getExplicitRefereeTurns(gameState) {
+  const turns = gameState?.referee_turns
+  if (!Array.isArray(turns)) {
+    return []
+  }
+
+  return turns
+    .map((turn) => ({
+      turn: Number.parseInt(turn?.turn, 10),
+      white: Array.isArray(turn?.white) ? turn.white.filter((entry) => typeof entry === "string" && entry.trim()) : [],
+      black: Array.isArray(turn?.black) ? turn.black.filter((entry) => typeof entry === "string" && entry.trim()) : [],
+    }))
+    .filter((turn) => Number.isFinite(turn.turn) && turn.turn > 0 && (turn.white.length || turn.black.length))
+    .sort((left, right) => left.turn - right.turn)
+}
+
 function buildVisibleRefereeLog(gameState) {
+  const explicitTurns = getExplicitRefereeTurns(gameState)
+  if (explicitTurns.length) {
+    return explicitTurns
+  }
+
   const scoresheetTurns = buildScoresheetRefereeLog(gameState)
   if (scoresheetTurns.length) {
     return scoresheetTurns
