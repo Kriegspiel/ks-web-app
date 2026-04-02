@@ -55,6 +55,13 @@ function ChessBoard({
                   .join(" ")}
                 data-square={square}
                 disabled={disabled}
+                onMouseDown={(event) => {
+                  if (!disabled) {
+                    // Keep pointer interaction from moving focus back to a square button,
+                    // which causes the viewport to jump when the board rerenders.
+                    event.preventDefault()
+                  }
+                }}
                 onClick={() => {
                   if (!disabled) {
                     onSquareClick?.(square)
