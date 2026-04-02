@@ -1232,11 +1232,13 @@ export default function GamePage() {
 
   const phantomMenuSquare = phantomMenu?.square ?? ""
   const phantomOnMenuSquare = phantomMenuSquare ? placements[phantomMenuSquare] : ""
-  const pageNotices = [
-    loading ? "Loading game state…" : "",
-    submittingAction ? "Submitting action…" : "",
-    waitingForOpponent ? "Waiting for opponent move…" : "",
-  ]
+  const pageNotice = loading
+    ? "Loading game state…"
+    : submittingAction
+      ? "Submitting action…"
+      : waitingForOpponent
+        ? "Waiting for opponent move…"
+        : ""
 
   return (
     <main className="page-shell game-page" onClick={() => phantomMenu && closePhantomMenu()}>
@@ -1250,14 +1252,9 @@ export default function GamePage() {
 
       <p className="game-page__meta">Game ID: <code>{gameId}</code></p>
       <div className="game-page__notices" aria-live="polite">
-        {pageNotices.map((notice, index) => (
-          <p
-            key={`game-notice-${index}`}
-            className={`game-page__notice ${notice ? "" : "game-page__notice--hidden"}`.trim()}
-          >
-            {notice || "\u00A0"}
-          </p>
-        ))}
+        <p className={`game-page__notice ${pageNotice ? "" : "game-page__notice--hidden"}`.trim()}>
+          {pageNotice || "\u00A0"}
+        </p>
       </div>
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
 

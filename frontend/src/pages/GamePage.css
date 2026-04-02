@@ -38,8 +38,7 @@
 
 .game-page__notices {
   display: grid;
-  gap: 0.1rem;
-  min-height: 4.2rem;
+  min-height: 1.3rem;
   align-content: start;
 }
 
