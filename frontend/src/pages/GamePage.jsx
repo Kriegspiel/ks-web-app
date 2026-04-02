@@ -26,13 +26,41 @@ const REFEREE_MAIN_ANNOUNCEMENT_TEXT = {
   3: "Capture done",
   4: "Has pawn captures",
   5: "No pawn captures",
+  6: "Check on rank",
+  7: "Check on file",
+  8: "Check on long diagonal",
+  9: "Check on short diagonal",
+  10: "Check by knight",
+  11: "Double check",
   ILLEGAL_MOVE: "Illegal move",
   REGULAR_MOVE: "Move complete",
   CAPTURE_DONE: "Capture done",
   HAS_ANY: "Has pawn captures",
   NO_ANY: "No pawn captures",
+  DRAW_TOOMANYREVERSIBLEMOVES: "Draw by too many reversible moves",
+  DRAW_STALEMATE: "Draw by stalemate",
+  DRAW_INSUFFICIENT: "Draw by insufficient material",
+  CHECKMATE_WHITE_WINS: "Checkmate — White wins",
+  CHECKMATE_BLACK_WINS: "Checkmate — Black wins",
+  CHECK_RANK: "Check on rank",
+  CHECK_FILE: "Check on file",
+  CHECK_LONG_DIAGONAL: "Check on long diagonal",
+  CHECK_SHORT_DIAGONAL: "Check on short diagonal",
+  CHECK_KNIGHT: "Check by knight",
+  CHECK_DOUBLE: "Double check",
 }
-const REFEREE_CODE_KEYS = ["main", "main_announcement", "code", "status", "status_code", "announcement_code", "result_code"]
+const REFEREE_CODE_KEYS = [
+  "main",
+  "main_announcement",
+  "code",
+  "status",
+  "status_code",
+  "announcement_code",
+  "result_code",
+  "special",
+  "special_announcement",
+  "special_case",
+]
 const REFEREE_CAPTURE_SQUARE_KEYS = ["capture_square", "capture_at_square", "captured_square", "target_square", "square"]
 
 function normalizeLogColor(value) {
