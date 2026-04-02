@@ -195,6 +195,60 @@ describe("GamePage", () => {
     expect(screen.getByText("Black must respond")).toBeInTheDocument()
   })
 
+  it("formats_structured_referee_status_codes_into_friendly_text", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      referee_log: [
+        {
+          turn: 1,
+          color: "white",
+          answer: {
+            main: "ILLEGAL_MOVE",
+          },
+        },
+        {
+          turn: 1,
+          color: "black",
+          answer: {
+            main: 2,
+          },
+        },
+        {
+          turn: 2,
+          color: "white",
+          answer: {
+            main: "CAPTURE_DONE",
+            capture_square: "c6",
+          },
+        },
+        {
+          turn: 2,
+          color: "black",
+          answer: {
+            main: 4,
+          },
+        },
+        {
+          turn: 3,
+          color: "white",
+          answer: {
+            main: "5",
+          },
+        },
+      ],
+    })
+
+    render(<GamePage />)
+
+    expect(await screen.findByText("Illegal move")).toBeInTheDocument()
+    expect(screen.getByText("Move complete")).toBeInTheDocument()
+    expect(screen.getByText("Capture done at C6")).toBeInTheDocument()
+    expect(screen.getByText("Has pawn captures")).toBeInTheDocument()
+    expect(screen.getByText("No pawn captures")).toBeInTheDocument()
+    expect(screen.queryByText("ILLEGAL_MOVE")).not.toBeInTheDocument()
+    expect(screen.queryByText("CAPTURE_DONE")).not.toBeInTheDocument()
+  })
+
   it("does_not_mark_the_whole_game_page_as_a_live_region", async () => {
     const { container } = render(<GamePage />)
 
