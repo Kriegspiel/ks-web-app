@@ -249,6 +249,39 @@ describe("GamePage", () => {
     expect(screen.queryByText("CAPTURE_DONE")).not.toBeInTheDocument()
   })
 
+  it("formats_special_referee_announcements_into_friendly_text", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      referee_log: [
+        { turn: 1, color: "white", announcement: "CHECK_RANK" },
+        { turn: 1, color: "black", announcement: "CHECK_FILE" },
+        { turn: 2, color: "white", announcement: "CHECK_LONG_DIAGONAL" },
+        { turn: 2, color: "black", announcement: "CHECK_SHORT_DIAGONAL" },
+        { turn: 3, color: "white", announcement: "CHECK_KNIGHT" },
+        { turn: 3, color: "black", announcement: "CHECK_DOUBLE" },
+        { turn: 4, color: "white", announcement: "DRAW_TOOMANYREVERSIBLEMOVES" },
+        { turn: 4, color: "black", announcement: "DRAW_STALEMATE" },
+        { turn: 5, color: "white", announcement: "DRAW_INSUFFICIENT" },
+        { turn: 5, color: "black", announcement: "CHECKMATE_WHITE_WINS" },
+        { turn: 6, color: "white", announcement: "CHECKMATE_BLACK_WINS" },
+      ],
+    })
+
+    render(<GamePage />)
+
+    expect(await screen.findByText("Check on rank")).toBeInTheDocument()
+    expect(screen.getByText("Check on file")).toBeInTheDocument()
+    expect(screen.getByText("Check on long diagonal")).toBeInTheDocument()
+    expect(screen.getByText("Check on short diagonal")).toBeInTheDocument()
+    expect(screen.getByText("Check by knight")).toBeInTheDocument()
+    expect(screen.getByText("Double check")).toBeInTheDocument()
+    expect(screen.getByText("Draw by too many reversible moves")).toBeInTheDocument()
+    expect(screen.getByText("Draw by stalemate")).toBeInTheDocument()
+    expect(screen.getByText("Draw by insufficient material")).toBeInTheDocument()
+    expect(screen.getByText("Checkmate — White wins")).toBeInTheDocument()
+    expect(screen.getByText("Checkmate — Black wins")).toBeInTheDocument()
+  })
+
   it("does_not_mark_the_whole_game_page_as_a_live_region", async () => {
     const { container } = render(<GamePage />)
 
