@@ -627,6 +627,17 @@ function restoreViewportPosition(viewport) {
   }
 }
 
+function blurActiveInteractiveElement() {
+  const activeElement = document.activeElement
+  if (!activeElement || activeElement === document.body) {
+    return
+  }
+
+  if (typeof activeElement.blur === "function") {
+    activeElement.blur()
+  }
+}
+
 export default function GamePage() {
   const { gameId } = useParams()
   const navigate = useNavigate()
@@ -939,6 +950,8 @@ export default function GamePage() {
   }
 
   async function handleSquareClick(square) {
+    blurActiveInteractiveElement()
+
     if (suppressClickRef.current) {
       suppressClickRef.current = false
       return
@@ -1005,6 +1018,8 @@ export default function GamePage() {
   }
 
   function handleSquarePointerDown(square, event) {
+    blurActiveInteractiveElement()
+
     if (event.button === 0 && placements[square] && !isTouchLikePointer(event)) {
       setActionError("")
       setDraggingPhantomFrom(square)
@@ -1111,6 +1126,7 @@ export default function GamePage() {
   }
 
   async function submitMoveWithUci(uci) {
+    blurActiveInteractiveElement()
     setSubmittingAction(true)
     setActionError("")
     captureViewport()
@@ -1154,6 +1170,7 @@ export default function GamePage() {
       return
     }
 
+    blurActiveInteractiveElement()
     setSubmittingAction(true)
     setActionError("")
     setIllegalMoveSquares([])
@@ -1174,6 +1191,7 @@ export default function GamePage() {
       return
     }
 
+    blurActiveInteractiveElement()
     setSubmittingAction(true)
     setActionError("")
     setIllegalMoveSquares([])
