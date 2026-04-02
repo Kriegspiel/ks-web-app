@@ -10,6 +10,41 @@ const STARTING_FENS = {
   black: "8/8/8/8/8/8/pppppppp/4k3 b - - 0 1",
 }
 
+const ANNOUNCEMENT_TEXT = {
+  ILLEGAL_MOVE: "Illegal move",
+  REGULAR_MOVE: "Move complete",
+  CAPTURE_DONE: "Capture done",
+  HAS_ANY: "Has pawn captures",
+  NO_ANY: "No pawn captures",
+  DRAW_TOOMANYREVERSIBLEMOVES: "Draw by too many reversible moves",
+  DRAW_STALEMATE: "Draw by stalemate",
+  DRAW_INSUFFICIENT: "Draw by insufficient material",
+  CHECKMATE_WHITE_WINS: "Checkmate — White wins",
+  CHECKMATE_BLACK_WINS: "Checkmate — Black wins",
+  CHECK_RANK: "Check on rank",
+  CHECK_FILE: "Check on file",
+  CHECK_LONG_DIAGONAL: "Check on long diagonal",
+  CHECK_SHORT_DIAGONAL: "Check on short diagonal",
+  CHECK_KNIGHT: "Check by knight",
+  CHECK_DOUBLE: "Double check",
+}
+
+function formatTranscriptMove(move) {
+  const questionType = String(move?.question_type ?? "COMMON").toUpperCase()
+  const prompt = questionType === "ASK_ANY" ? "Ask any pawn captures" : "Move attempt"
+  const main = typeof move?.answer?.main === "string" ? ANNOUNCEMENT_TEXT[move.answer.main] ?? move.answer.main : "UNKNOWN"
+  const special = typeof move?.answer?.special === "string" ? ANNOUNCEMENT_TEXT[move.answer.special] ?? move.answer.special : ""
+  const captureSquare = typeof move?.answer?.capture_square === "string" ? move.answer.capture_square.trim().toUpperCase() : ""
+  const messages = []
+  if (main) {
+    messages.push(move?.answer?.main === "CAPTURE_DONE" && captureSquare ? `${main} at ${captureSquare}` : main)
+  }
+  if (special) {
+    messages.push(special)
+  }
+  return `${prompt} — ${messages.join(" · ") || "UNKNOWN"}`
+}
+
 function formatResult(result) {
   if (!result || typeof result !== "object") {
     return "Result unavailable"
@@ -157,7 +192,7 @@ export default function ReviewPage() {
                     className={currentPly === index + 1 ? "is-active" : ""}
                     onClick={() => setCurrentPly(index + 1)}
                   >
-                    {move.ply}. {move.uci ?? move.question_type} — {move.answer?.main ?? "UNKNOWN"}
+                    {move.ply}. {formatTranscriptMove(move)}
                   </button>
                 </li>
               ))}
