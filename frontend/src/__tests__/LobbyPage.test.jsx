@@ -12,13 +12,20 @@ beforeEach(() => { mockNavigate.mockReset(); Object.values(mockApi).forEach((fn)
 afterEach(() => { cleanup(); vi.useRealTimers() })
 
 describe("LobbyPage", () => {
+  it("shows_lobby_version_badge", async () => {
+    render(<LobbyPage />)
+
+    expect(await screen.findAllByText("v. 1.0.8")).toHaveLength(2)
+  })
+
   it("creates_waiting_game_and_shows_join_code", async () => {
     mockApi.createGame.mockResolvedValue({ game_id: "g-1", game_code: "ABCD23", state: "waiting" })
     render(<LobbyPage />)
+    fireEvent.change(await screen.findByLabelText("Ruleset"), { target: { value: "berkeley" } })
     fireEvent.click(await screen.findByRole("button", { name: "Create waiting game" }))
     await screen.findByText("Join code:")
     expect(screen.getByText("ABCD23")).toBeInTheDocument()
-    expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({ opponent_type: "human", bot_id: undefined }))
+    expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({ opponent_type: "human", bot_id: undefined, rule_variant: "berkeley" }))
   })
 
   it("shows_bot_picker_and_creates_bot_game", async () => {
@@ -26,6 +33,7 @@ describe("LobbyPage", () => {
     render(<LobbyPage />)
     fireEvent.click(await screen.findByLabelText("Bot"))
     expect(await screen.findByLabelText("Bot opponent")).toBeInTheDocument()
+    expect(screen.getByText("Plays random legal-looking moves")).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText("Bot opponent"), { target: { value: "bot-1" } })
     fireEvent.click(screen.getByRole("button", { name: "Create bot game" }))
     await waitFor(() => expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({ opponent_type: "bot", bot_id: "bot-1" })))

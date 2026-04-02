@@ -5,6 +5,7 @@ import GamePage from "../pages/GamePage"
 const mockNavigate = vi.hoisted(() => vi.fn())
 
 const mockApi = vi.hoisted(() => ({
+  getGame: vi.fn(),
   getGameState: vi.fn(),
   submitMove: vi.fn(),
   askAny: vi.fn(),
@@ -43,6 +44,18 @@ beforeEach(() => {
   window.scrollTo = vi.fn()
   mockNavigate.mockReset()
   Object.values(mockApi).forEach((fn) => fn.mockReset())
+  mockApi.getGame.mockResolvedValue({
+    game_id: "g-123",
+    game_code: "ABC123",
+    rule_variant: "berkeley_any",
+    state: "active",
+    opponent_type: "bot",
+    white: { username: "fil", role: "user", connected: true },
+    black: { username: "gptnano", role: "bot", connected: true },
+    turn: "white",
+    move_number: 1,
+    created_at: "2026-04-02T12:00:00Z",
+  })
   mockApi.getGameState.mockResolvedValue(activeState)
   mockApi.submitMove.mockResolvedValue({ move_done: true })
   mockApi.askAny.mockResolvedValue({ has_any: false })
@@ -126,6 +139,13 @@ describe("GamePage", () => {
     await screen.findByLabelText(/Game clocks/i)
     expect(screen.getByText("10:01")).toBeInTheDocument()
     expect(screen.getByText("9:58")).toBeInTheDocument()
+  })
+
+  it("shows_rules_and_opponent_in_status_from_metadata", async () => {
+    render(<GamePage />)
+
+    expect(await screen.findByText("Berkeley Any")).toBeInTheDocument()
+    expect(screen.getByText("gptnano (bot)")).toBeInTheDocument()
   })
 
   it("anchors_phantom_menu_to_the_target_square", async () => {

@@ -5,7 +5,7 @@
 
 .game-page__header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   gap: 1rem;
 }
@@ -31,6 +31,15 @@
   white-space: nowrap;
 }
 
+.game-page__version--inline {
+  vertical-align: middle;
+}
+
+.game-page__meta--below-board {
+  margin-top: 0;
+  padding-inline: 0.15rem;
+}
+
 .game-page__meta {
   color: var(--muted-soft);
   font-size: 0.76rem;
@@ -38,13 +47,15 @@
 
 .game-page__notices {
   display: grid;
-  gap: 0.1rem;
-  min-height: 4.2rem;
+  min-height: 0.8rem;
   align-content: start;
 }
 
 .game-page__notice {
-  min-height: 1.3rem;
+  min-height: 0.8rem;
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  line-height: 1.1;
 }
 
 .game-page__notice--hidden {
@@ -56,6 +67,12 @@
   gap: 1rem;
   grid-template-columns: minmax(0, 1.35fr) minmax(19rem, 0.85fr);
   align-items: start;
+}
+
+.game-layout__board-column {
+  display: grid;
+  gap: 0.55rem;
+  align-content: start;
 }
 
 .game-card--board {
