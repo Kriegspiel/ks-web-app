@@ -20,6 +20,20 @@ const PHANTOM_LABELS = {
 }
 const PHANTOM_MENU_WIDTH = 164
 const PHANTOM_MENU_GAP = 6
+const REFEREE_MAIN_ANNOUNCEMENT_TEXT = {
+  1: "Illegal move",
+  2: "Move complete",
+  3: "Capture done",
+  4: "Has pawn captures",
+  5: "No pawn captures",
+  ILLEGAL_MOVE: "Illegal move",
+  REGULAR_MOVE: "Move complete",
+  CAPTURE_DONE: "Capture done",
+  HAS_ANY: "Has pawn captures",
+  NO_ANY: "No pawn captures",
+}
+const REFEREE_CODE_KEYS = ["main", "main_announcement", "code", "status", "status_code", "announcement_code", "result_code"]
+const REFEREE_CAPTURE_SQUARE_KEYS = ["capture_square", "capture_at_square", "captured_square", "target_square", "square"]
 
 function normalizeLogColor(value) {
   if (typeof value !== "string") {
@@ -36,12 +50,70 @@ function normalizeLogColor(value) {
   return null
 }
 
+function formatCaptureSquare(value) {
+  if (typeof value !== "string") {
+    return ""
+  }
+
+  const normalized = value.trim()
+  if (!/^[a-h][1-8]$/i.test(normalized)) {
+    return ""
+  }
+
+  return normalized.toUpperCase()
+}
+
+function getRefereeCode(value) {
+  if (typeof value === "number" && REFEREE_MAIN_ANNOUNCEMENT_TEXT[value]) {
+    return value
+  }
+
+  if (typeof value !== "string") {
+    return null
+  }
+
+  const normalized = value.trim()
+  if (!normalized) {
+    return null
+  }
+
+  if (REFEREE_MAIN_ANNOUNCEMENT_TEXT[normalized]) {
+    return normalized
+  }
+
+  const numeric = Number.parseInt(normalized, 10)
+  if (Number.isFinite(numeric) && REFEREE_MAIN_ANNOUNCEMENT_TEXT[numeric]) {
+    return numeric
+  }
+
+  return null
+}
+
+function formatRefereeCode(code, captureSquare) {
+  const text = REFEREE_MAIN_ANNOUNCEMENT_TEXT[code]
+  if (!text) {
+    return ""
+  }
+
+  if (code === 3 || code === "CAPTURE_DONE") {
+    return captureSquare ? text + " at " + captureSquare : text
+  }
+
+  return text
+}
+
 function collectLogText(value, output) {
   if (!value) {
     return
   }
 
   if (typeof value === "string") {
+    const code = getRefereeCode(value)
+    if (code) {
+      output.push(formatRefereeCode(code, ""))
+      return
+    }
+
     const normalized = value.trim()
     if (normalized) {
       output.push(normalized)
@@ -55,7 +127,22 @@ function collectLogText(value, output) {
   }
 
   if (typeof value === "object") {
-    Object.values(value).forEach((item) => collectLogText(item, output))
+    const code = REFEREE_CODE_KEYS.map((key) => getRefereeCode(value[key])).find(Boolean)
+    const captureSquare = REFEREE_CAPTURE_SQUARE_KEYS.map((key) => formatCaptureSquare(value[key])).find(Boolean)
+
+    if (code) {
+      output.push(formatRefereeCode(code, captureSquare))
+    }
+
+    Object.entries(value).forEach(([key, item]) => {
+      if (REFEREE_CAPTURE_SQUARE_KEYS.includes(key)) {
+        return
+      }
+      if (REFEREE_CODE_KEYS.includes(key) && getRefereeCode(item)) {
+        return
+      }
+      collectLogText(item, output)
+    })
   }
 }
 
