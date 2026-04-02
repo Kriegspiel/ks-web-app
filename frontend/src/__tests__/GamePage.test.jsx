@@ -166,6 +166,54 @@ describe("GamePage", () => {
     expect(screen.getByText("White in check")).toBeInTheDocument()
   })
 
+  it("renders_all_referee_announcements_from_nested_log_payloads", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      referee_log: [
+        {
+          turn: 1,
+          color: "white",
+          response: {
+            main: "White move accepted",
+            extra: ["White gives check", "White hears no capture"],
+          },
+        },
+        {
+          turn: 1,
+          color: "black",
+          announcements: ["Black in check", "Black must respond"],
+        },
+      ],
+    })
+
+    render(<GamePage />)
+
+    expect(await screen.findByText("White move accepted")).toBeInTheDocument()
+    expect(screen.getByText("White gives check")).toBeInTheDocument()
+    expect(screen.getByText("White hears no capture")).toBeInTheDocument()
+    expect(screen.getByText("Black in check")).toBeInTheDocument()
+    expect(screen.getByText("Black must respond")).toBeInTheDocument()
+  })
+
+  it("does_not_mark_the_whole_game_page_as_a_live_region", async () => {
+    const { container } = render(<GamePage />)
+
+    await screen.findByText(/Game ID:/i)
+    expect(container.querySelector("main.game-page")).not.toHaveAttribute("aria-live")
+  })
+
+  it("asks_the_referee_and_repolls", async () => {
+    render(<GamePage />)
+
+    const askButton = await screen.findByRole("button", { name: "Any pawn captures?" })
+    fireEvent.click(askButton)
+
+    await waitFor(() => {
+      expect(mockApi.askAny).toHaveBeenCalledWith("g-123")
+      expect(mockApi.getGameState).toHaveBeenCalledTimes(2)
+    })
+  })
+
   it("disables_ask_any_when_not_allowed", async () => {
     mockApi.getGameState.mockResolvedValueOnce({ ...activeState, possible_actions: ["move"] })
 

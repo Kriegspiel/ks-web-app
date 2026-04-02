@@ -189,7 +189,7 @@ export default function usePhantoms({ gameId, occupiedSquares = [] }) {
     setPlacements({})
   }
 
-  function availablePiecesForSquare(_square) {
+  function availablePiecesForSquare() {
     return Object.keys(STARTING_TRAY)
   }
 

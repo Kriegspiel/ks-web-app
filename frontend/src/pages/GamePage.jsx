@@ -36,19 +36,56 @@ function normalizeLogColor(value) {
   return null
 }
 
-function getLogEntryText(entry) {
-  if (!entry || typeof entry !== "object") {
-    return ""
+function collectLogText(value, output) {
+  if (!value) {
+    return
   }
 
-  const candidates = [entry.announcement, entry.message, entry.text, entry.response, entry.referee_response, entry.description, entry.detail, entry.summary]
-  for (const candidate of candidates) {
-    if (typeof candidate === "string" && candidate.trim()) {
-      return candidate.trim()
+  if (typeof value === "string") {
+    const normalized = value.trim()
+    if (normalized) {
+      output.push(normalized)
     }
+    return
   }
 
-  return ""
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectLogText(item, output))
+    return
+  }
+
+  if (typeof value === "object") {
+    Object.values(value).forEach((item) => collectLogText(item, output))
+  }
+}
+
+function getLogEntryTexts(entry) {
+  if (!entry || typeof entry !== "object") {
+    return []
+  }
+
+  const output = []
+  const candidates = [
+    entry.announcement,
+    entry.announcements,
+    entry.message,
+    entry.messages,
+    entry.text,
+    entry.response,
+    entry.responses,
+    entry.referee_response,
+    entry.referee_responses,
+    entry.description,
+    entry.detail,
+    entry.details,
+    entry.summary,
+    entry.answer,
+    entry.result,
+  ]
+
+  candidates.forEach((candidate) => collectLogText(candidate, output))
+
+  return [...new Set(output)]
 }
 
 function getLogEntryColor(entry, fallbackIndex = 0) {
@@ -63,7 +100,7 @@ function getLogEntryColor(entry, fallbackIndex = 0) {
     return explicitColor
   }
 
-  const text = getLogEntryText(entry).toLowerCase()
+  const text = getLogEntryTexts(entry).join(" ").toLowerCase()
   if (text.startsWith("white") || text.includes(" white ")) {
     return "white"
   }
@@ -101,8 +138,8 @@ function groupRefereeLog(entries = []) {
   entries.forEach((entry, index) => {
     const turn = getLogEntryTurn(entry, Math.floor(index / 2) + 1)
     const color = getLogEntryColor(entry, index)
-    const text = getLogEntryText(entry)
-    if (!text) {
+    const texts = getLogEntryTexts(entry)
+    if (!texts.length) {
       return
     }
 
@@ -110,7 +147,7 @@ function groupRefereeLog(entries = []) {
       turns.set(turn, { turn, white: [], black: [] })
     }
 
-    turns.get(turn)[color].push(text)
+    turns.get(turn)[color].push(...texts)
   })
 
   return Array.from(turns.values()).sort((left, right) => left.turn - right.turn)
@@ -253,7 +290,7 @@ export default function GamePage() {
   const [showPromotionModal, setShowPromotionModal] = useState(false)
   const [phantomMenu, setPhantomMenu] = useState(null)
   const [movingPhantomFrom, setMovingPhantomFrom] = useState("")
-  const [draggingPhantomFrom, setDraggingPhantomFrom] = useState("")
+  const [, setDraggingPhantomFrom] = useState("")
   const [dragHoverSquare, setDragHoverSquare] = useState("")
   const [draggingMoveFrom, setDraggingMoveFrom] = useState("")
   const [moveDragHoverSquare, setMoveDragHoverSquare] = useState("")
@@ -764,7 +801,7 @@ export default function GamePage() {
   const phantomOnMenuSquare = phantomMenuSquare ? placements[phantomMenuSquare] : ""
 
   return (
-    <main className="page-shell game-page" aria-live="polite" onClick={() => phantomMenu && closePhantomMenu()}>
+    <main className="page-shell game-page" onClick={() => phantomMenu && closePhantomMenu()}>
       <div className="game-page__header">
         <h1>Game</h1>
         <button type="button" onClick={() => navigate("/lobby")}>Back to lobby</button>
