@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import packageInfo from "../../package.json"
 import ChessBoard from "../components/ChessBoard"
 import PromotionModal from "../components/PromotionModal"
 import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
@@ -9,6 +10,7 @@ import "./GamePage.css"
 
 const POLL_INTERVAL_MS = 500
 const LONG_PRESS_MS = 450
+const APP_VERSION = packageInfo.version
 const PHANTOM_PIECES = ["q", "r", "b", "n", "p", "k"]
 const PHANTOM_LABELS = {
   q: "Queen",
@@ -1239,7 +1241,10 @@ export default function GamePage() {
   return (
     <main className="page-shell game-page" onClick={() => phantomMenu && closePhantomMenu()}>
       <div className="game-page__header">
-        <h1>Game</h1>
+        <div className="game-page__title-block">
+          <h1>Game</h1>
+          <span className="game-page__version">v. {APP_VERSION}</span>
+        </div>
         <button type="button" onClick={() => navigate("/lobby")}>Back to lobby</button>
       </div>
 
