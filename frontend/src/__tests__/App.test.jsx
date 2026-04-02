@@ -60,6 +60,7 @@ describe("App routes", () => {
     renderRoute("/auth/login")
 
     await screen.findByRole("heading", { name: "Login" })
+    expect(screen.getByText("v. 1.0.9")).toBeInTheDocument()
     expect(screen.getAllByRole("link", { name: "Login" }).length).toBeGreaterThan(0)
     expect(screen.getAllByRole("link", { name: "Register" }).length).toBeGreaterThan(0)
   })
@@ -87,6 +88,7 @@ describe("App routes", () => {
 
     renderRoute("/auth/register")
 
+    expect(await screen.findByText("v. 1.0.9")).toBeInTheDocument()
     fireEvent.click(await screen.findByRole("button", { name: "Register" }))
     await screen.findByText("Username is required.")
     expect(mockApi.register).not.toHaveBeenCalled()

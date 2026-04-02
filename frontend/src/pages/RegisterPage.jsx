@@ -1,6 +1,9 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import packageInfo from "../../package.json"
 import { useAuth } from "../hooks/useAuth"
+
+const APP_VERSION = packageInfo.version
 
 function getValidationError(formState) {
   if (!formState.username.trim()) return "Username is required."
@@ -68,6 +71,7 @@ export default function RegisterPage() {
       <p>
         Already have an account? <Link to="/auth/login">Login</Link>
       </p>
+      <p className="page-version">v. {APP_VERSION}</p>
     </main>
   )
 }
