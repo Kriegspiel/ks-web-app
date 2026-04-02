@@ -72,7 +72,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByText(/Game ID:/i)
-    expect(screen.getByText("v. 1.0.10")).toBeInTheDocument()
+    expect(screen.getByText("v. 1.0.11")).toBeInTheDocument()
     expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
 
     await sleep(650)
@@ -107,6 +107,28 @@ describe("GamePage", () => {
 
     expect(e4.querySelector(".square__move-dot")).toBeTruthy()
     expect(e3.querySelector(".square__move-dot")).toBeFalsy()
+  })
+
+  it("shows_all_backend_legal_targets_for_a_selected_kriegspiel_pawn", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      your_fen: "8/8/8/8/4P3/8/8/4K3",
+      allowed_moves: ["e4d5", "e4e5", "e4f5"],
+    })
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e4" })
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+
+    const d5 = screen.getAllByRole("button", { name: "Square d5" }).at(-1)
+    const e5 = screen.getAllByRole("button", { name: "Square e5" }).at(-1)
+    const f5 = screen.getAllByRole("button", { name: "Square f5" }).at(-1)
+
+    expect(d5).toHaveClass("square--suggested")
+    expect(e5).toHaveClass("square--suggested")
+    expect(f5).toHaveClass("square--suggested")
+    expect(e5.querySelector(".square__move-dot")).toBeTruthy()
   })
 
   it("highlights_illegal_move_squares_in_red", async () => {

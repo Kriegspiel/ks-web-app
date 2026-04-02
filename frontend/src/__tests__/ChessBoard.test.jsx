@@ -86,6 +86,24 @@ describe("ChessBoard", () => {
     expect(e4.querySelector(".square__move-dot")).toBeTruthy()
   })
 
+  it("keeps_suggested_square_contours_visible_even_when_occupied", () => {
+    render(
+      <ChessBoard
+        boardFen="8/8/8/3p1p2/4P3/8/8/4K3 w - - 0 1"
+        suggestedSquares={["d5", "e5", "f5"]}
+      />,
+    )
+
+    const d5 = screen.getAllByRole("button", { name: "Square d5" }).at(-1)
+    const e5 = screen.getAllByRole("button", { name: "Square e5" }).at(-1)
+    const f5 = screen.getAllByRole("button", { name: "Square f5" }).at(-1)
+
+    expect(d5).toHaveClass("square--suggested")
+    expect(e5).toHaveClass("square--suggested")
+    expect(f5).toHaveClass("square--suggested")
+    expect(e5.querySelector(".square__move-dot")).toBeTruthy()
+  })
+
   it("wires_primary_and_pointer_handlers_and_respects_disabled", () => {
     const onSquareClick = vi.fn()
     const onSquareRightClick = vi.fn()
