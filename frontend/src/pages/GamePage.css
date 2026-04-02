@@ -35,6 +35,11 @@
   vertical-align: middle;
 }
 
+.game-page__meta--below-board {
+  margin-top: 0;
+  padding-inline: 0.15rem;
+}
+
 .game-page__meta {
   color: var(--muted-soft);
   font-size: 0.76rem;
@@ -62,6 +67,12 @@
   gap: 1rem;
   grid-template-columns: minmax(0, 1.35fr) minmax(19rem, 0.85fr);
   align-items: start;
+}
+
+.game-layout__board-column {
+  display: grid;
+  gap: 0.55rem;
+  align-content: start;
 }
 
 .game-card--board {
