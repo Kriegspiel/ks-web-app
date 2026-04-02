@@ -74,9 +74,9 @@ describe("ReviewPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
     expect(screen.getByText("Ply 1 / 2")).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole("button", { name: /2\. e7e5/i }))
+    fireEvent.click(screen.getByRole("button", { name: /2\. Move attempt — Move complete/i }))
     expect(screen.getByText("Ply 2 / 2")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /2\. e7e5/i })).toHaveClass("is-active")
+    expect(screen.getByRole("button", { name: /2\. Move attempt — Move complete/i })).toHaveClass("is-active")
   })
 
   it("supports_keyboard_navigation_and_perspective_toggle", async () => {

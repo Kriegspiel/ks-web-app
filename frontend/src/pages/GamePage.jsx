@@ -300,9 +300,43 @@ function getScoresheetQuestionType(value) {
   return getScoresheetQuestionType(value.question_type ?? value.type ?? value.question)
 }
 
+function normalizeAnnouncementItem(entry) {
+  if (!entry) {
+    return null
+  }
+
+  if (typeof entry === "string") {
+    const normalized = entry.trim()
+    return normalized ? { text: normalized } : null
+  }
+
+  const texts = getLogEntryTexts(entry)
+  if (!texts.length) {
+    return null
+  }
+
+  const prompt = typeof entry.prompt === "string" && entry.prompt.trim() ? entry.prompt.trim() : ""
+  const message = typeof entry.message === "string" && entry.message.trim() ? entry.message.trim() : ""
+  const moveUci = typeof entry.move_uci === "string" ? entry.move_uci.trim().toLowerCase() : ""
+
+  if (message) {
+    return { text: message, messages: texts, prompt, moveUci }
+  }
+
+  if (prompt) {
+    return { text: `${prompt} — ${texts.join(" · ")}`, messages: texts, prompt, moveUci }
+  }
+
+  return { text: texts.join(" · "), messages: texts, moveUci }
+}
+
 function normalizeScoresheetTurnEntry(pair, perspective) {
   if (!pair) {
     return null
+  }
+
+  if (!Array.isArray(pair) && typeof pair === "object" && (pair.message || pair.messages || pair.prompt)) {
+    return normalizeAnnouncementItem(pair)
   }
 
   const tuple = Array.isArray(pair)
@@ -316,18 +350,22 @@ function normalizeScoresheetTurnEntry(pair, perspective) {
     return null
   }
 
+  let prompt = "Opponent move"
   if (perspective === "own") {
-    if (questionType === "ASK_ANY") {
-      return `Ask any pawn captures — ${answerTexts.join(" · ")}`
-    }
-    return `Move attempt — ${answerTexts.join(" · ")}`
+    prompt = questionType === "ASK_ANY" ? "Ask any pawn captures" : "Move attempt"
+  } else if (questionType === "ASK_ANY") {
+    prompt = "Opponent asked any pawn captures"
   }
 
-  if (questionType === "ASK_ANY") {
-    return `Opponent asked any pawn captures — ${answerTexts.join(" · ")}`
+  return { text: `${prompt} — ${answerTexts.join(" · ")}`, messages: answerTexts, prompt }
+}
+
+function normalizeTurnSideEntries(entries, normalizer) {
+  if (!Array.isArray(entries)) {
+    return []
   }
 
-  return `Opponent move — ${answerTexts.join(" · ")}`
+  return entries.map(normalizer).filter(Boolean)
 }
 
 function buildScoresheetRefereeLog(gameState) {
@@ -343,17 +381,18 @@ function buildScoresheetRefereeLog(gameState) {
 
   return Array.from({ length: turnCount }, (_, index) => ({
     turn: index + 1,
-    white: ((playerColor === "white" ? ownTurns[index] : opponentTurns[index]) ?? [])
-      .map((entry) => normalizeScoresheetTurnEntry(entry, playerColor === "white" ? "own" : "opponent"))
-      .filter(Boolean),
-    black: ((playerColor === "black" ? ownTurns[index] : opponentTurns[index]) ?? [])
-      .map((entry) => normalizeScoresheetTurnEntry(entry, playerColor === "black" ? "own" : "opponent"))
-      .filter(Boolean),
+    white: normalizeTurnSideEntries(
+      (playerColor === "white" ? ownTurns[index] : opponentTurns[index]) ?? [],
+      (entry) => normalizeScoresheetTurnEntry(entry, playerColor === "white" ? "own" : "opponent")
+    ),
+    black: normalizeTurnSideEntries(
+      (playerColor === "black" ? ownTurns[index] : opponentTurns[index]) ?? [],
+      (entry) => normalizeScoresheetTurnEntry(entry, playerColor === "black" ? "own" : "opponent")
+    ),
   })).filter((turn) => turn.white.length || turn.black.length)
 }
 
-function getExplicitRefereeTurns(gameState) {
-  const turns = gameState?.referee_turns
+function normalizeExplicitTurns(turns) {
   if (!Array.isArray(turns)) {
     return []
   }
@@ -361,36 +400,20 @@ function getExplicitRefereeTurns(gameState) {
   return turns
     .map((turn) => ({
       turn: Number.parseInt(turn?.turn, 10),
-      white: Array.isArray(turn?.white) ? turn.white.filter((entry) => typeof entry === "string" && entry.trim()) : [],
-      black: Array.isArray(turn?.black) ? turn.black.filter((entry) => typeof entry === "string" && entry.trim()) : [],
-    }))
-    .filter((turn) => Number.isFinite(turn.turn) && turn.turn > 0 && (turn.white.length || turn.black.length))
-    .sort((left, right) => left.turn - right.turn)
-}
-
-function getExplicitScoresheetTurns(gameState) {
-  const turns = gameState?.scoresheet?.turns
-  if (!Array.isArray(turns)) {
-    return []
-  }
-
-  return turns
-    .map((turn) => ({
-      turn: Number.parseInt(turn?.turn, 10),
-      white: Array.isArray(turn?.white) ? turn.white.filter((entry) => typeof entry === "string" && entry.trim()) : [],
-      black: Array.isArray(turn?.black) ? turn.black.filter((entry) => typeof entry === "string" && entry.trim()) : [],
+      white: normalizeTurnSideEntries(turn?.white, normalizeAnnouncementItem),
+      black: normalizeTurnSideEntries(turn?.black, normalizeAnnouncementItem),
     }))
     .filter((turn) => Number.isFinite(turn.turn) && turn.turn > 0 && (turn.white.length || turn.black.length))
     .sort((left, right) => left.turn - right.turn)
 }
 
 function buildVisibleRefereeLog(gameState) {
-  const explicitScoresheetTurns = getExplicitScoresheetTurns(gameState)
+  const explicitScoresheetTurns = normalizeExplicitTurns(gameState?.scoresheet?.turns)
   if (explicitScoresheetTurns.length) {
     return explicitScoresheetTurns
   }
 
-  const explicitTurns = getExplicitRefereeTurns(gameState)
+  const explicitTurns = normalizeExplicitTurns(gameState?.referee_turns)
   if (explicitTurns.length) {
     return explicitTurns
   }
@@ -400,7 +423,11 @@ function buildVisibleRefereeLog(gameState) {
     return scoresheetTurns
   }
 
-  return groupRefereeLog(gameState?.referee_log ?? [])
+  return groupRefereeLog(gameState?.referee_log ?? []).map((turn) => ({
+    ...turn,
+    white: normalizeTurnSideEntries(turn.white, normalizeAnnouncementItem),
+    black: normalizeTurnSideEntries(turn.black, normalizeAnnouncementItem),
+  }))
 }
 
 function formatClock(seconds) {
@@ -1190,7 +1217,7 @@ export default function GamePage() {
                             {turnEntry.white.length ? (
                               <ul className="game-referee-column__list">
                                 {turnEntry.white.map((entry, index) => (
-                                  <li key={`turn-${turnEntry.turn}-white-${index}`}>{entry}</li>
+                                  <li key={`turn-${turnEntry.turn}-white-${index}`}>{entry.text ?? entry}</li>
                                 ))}
                               </ul>
                             ) : (
@@ -1202,7 +1229,7 @@ export default function GamePage() {
                             {turnEntry.black.length ? (
                               <ul className="game-referee-column__list">
                                 {turnEntry.black.map((entry, index) => (
-                                  <li key={`turn-${turnEntry.turn}-black-${index}`}>{entry}</li>
+                                  <li key={`turn-${turnEntry.turn}-black-${index}`}>{entry.text ?? entry}</li>
                                 ))}
                               </ul>
                             ) : (
