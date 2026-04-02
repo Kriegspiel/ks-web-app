@@ -31,6 +31,10 @@
   white-space: nowrap;
 }
 
+.game-page__version--inline {
+  vertical-align: middle;
+}
+
 .game-page__meta {
   color: var(--muted-soft);
   font-size: 0.76rem;

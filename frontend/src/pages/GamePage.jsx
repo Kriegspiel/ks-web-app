@@ -486,6 +486,15 @@ function formatClock(seconds) {
   return `${minutes}:${String(remain).padStart(2, "0")}`
 }
 
+function formatRuleVariant(value) {
+  if (typeof value !== "string" || !value.trim()) {
+    return "—"
+  }
+
+  const normalized = value.trim().replace(/[_-]+/g, " ")
+  return normalized.replace(/\b\w/g, (char) => char.toUpperCase())
+}
+
 function pieceAtSquare(fen, square) {
   if (!fen || !square) {
     return ""
@@ -1256,11 +1265,8 @@ export default function GamePage() {
       <div className="game-page__header">
         <div className="game-page__title-block">
           <h1>Game</h1>
-          <span className="game-page__version">v. {APP_VERSION}</span>
         </div>
       </div>
-
-      <p className="game-page__meta">Game ID: <code>{gameId}</code></p>
       <div className="game-page__notices" aria-live="polite">
         <p className={`game-page__notice ${pageNotice ? "" : "game-page__notice--hidden"}`.trim()}>
           {pageNotice || "\u00A0"}
@@ -1359,6 +1365,7 @@ export default function GamePage() {
               ) : null}
 
               <div className="game-board-meta">
+                <p className="game-page__meta">Game ID: <code>{gameId}</code> · <span className="game-page__version game-page__version--inline">v. {APP_VERSION}</span></p>
                 <p className="game-page__meta">Selected move: <code>{selectedMove || "—"}</code></p>
                 <p className="game-page__meta">Moves commit immediately when you click or left-drag a real piece. Phantoms: left-drag to move, right-click to remove, long-press or right-click empty squares to add.</p>
               </div>
@@ -1423,6 +1430,7 @@ export default function GamePage() {
                 <h2>Status</h2>
                 <ul className="game-status-list">
                   <li><strong>State:</strong> {gameState.state}</li>
+                  <li><strong>Rules:</strong> {formatRuleVariant(gameState.rule_variant)}</li>
                   <li><strong>Your color:</strong> {gameState.your_color}</li>
                   <li className={canMove ? "game-status-list__turn game-status-list__turn--active" : "game-status-list__turn"}><strong>Turn:</strong> {gameState.turn ?? "—"}</li>
                   <li><strong>Move number:</strong> {gameState.move_number}</li>
