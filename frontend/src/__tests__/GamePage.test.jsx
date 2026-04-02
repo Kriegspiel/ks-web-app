@@ -166,6 +166,46 @@ describe("GamePage", () => {
     expect(screen.getByText("White in check")).toBeInTheDocument()
   })
 
+  it("prefers_the_current_players_scoresheet_when_available", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      referee_log: [{ turn: 99, color: "white", announcement: "Old fallback log" }],
+      engine_state: {
+        game_state: {
+          white_scoresheet: {
+            moves_own: [
+              [
+                [{ question_type: "COMMON", move: "e2e4" }, { main: "REGULAR_MOVE" }],
+              ],
+              [
+                [{ question_type: "COMMON", move: "g1f3" }, { main: "ILLEGAL_MOVE" }],
+                [{ question_type: "COMMON", move: "f1b5" }, { main: "REGULAR_MOVE", special: "CHECK_FILE" }],
+              ],
+            ],
+            moves_opponent: [
+              [
+                ["ASK_ANY", { main: "NO_ANY" }],
+                ["COMMON", { main: "REGULAR_MOVE" }],
+              ],
+            ],
+          },
+        },
+      },
+    })
+
+    render(<GamePage />)
+
+    expect(await screen.findByText("Turn 1")).toBeInTheDocument()
+    expect(screen.getByText("Turn 2")).toBeInTheDocument()
+    expect(screen.getByText("e2e4 — Move complete")).toBeInTheDocument()
+    expect(screen.getByText("Opponent asked any pawn captures — No pawn captures")).toBeInTheDocument()
+    expect(screen.getByText("Opponent move — Move complete")).toBeInTheDocument()
+    expect(screen.getByText("g1f3 — Illegal move")).toBeInTheDocument()
+    expect(screen.getByText(/f1b5/)).toBeInTheDocument()
+    expect(screen.getByText(/Check on file/)).toBeInTheDocument()
+    expect(screen.queryByText("Old fallback log")).not.toBeInTheDocument()
+  })
+
   it("renders_all_referee_announcements_from_nested_log_payloads", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,

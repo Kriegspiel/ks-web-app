@@ -155,12 +155,12 @@ function collectLogText(value, output) {
   }
 
   if (typeof value === "object") {
-    const code = REFEREE_CODE_KEYS.map((key) => getRefereeCode(value[key])).find(Boolean)
+    const codes = REFEREE_CODE_KEYS.map((key) => getRefereeCode(value[key])).filter(Boolean)
     const captureSquare = REFEREE_CAPTURE_SQUARE_KEYS.map((key) => formatCaptureSquare(value[key])).find(Boolean)
 
-    if (code) {
-      output.push(formatRefereeCode(code, captureSquare))
-    }
+    codes.forEach((code, index) => {
+      output.push(formatRefereeCode(code, index === 0 ? captureSquare : ""))
+    })
 
     Object.entries(value).forEach(([key, item]) => {
       if (REFEREE_CAPTURE_SQUARE_KEYS.includes(key)) {
@@ -266,6 +266,120 @@ function groupRefereeLog(entries = []) {
   })
 
   return Array.from(turns.values()).sort((left, right) => left.turn - right.turn)
+}
+
+function getGameScoresheet(gameState, color) {
+  if (!gameState || !color) {
+    return null
+  }
+
+  const directKey = `${color}_scoresheet`
+  const engineGameState = gameState.engine_state?.game_state
+  return gameState[directKey] ?? engineGameState?.[directKey] ?? null
+}
+
+function getScoresheetTurns(value, privateKey, publicKey) {
+  if (!value || typeof value !== "object") {
+    return []
+  }
+
+  const turns = value[publicKey] ?? value[privateKey]
+  return Array.isArray(turns) ? turns : []
+}
+
+function getScoresheetQuestionType(value) {
+  if (typeof value === "string") {
+    const normalized = value.trim()
+    return normalized ? normalized.toUpperCase() : ""
+  }
+
+  if (!value || typeof value !== "object") {
+    return ""
+  }
+
+  return getScoresheetQuestionType(value.question_type ?? value.type ?? value.question)
+}
+
+function getScoresheetMoveLabel(value) {
+  if (!value) {
+    return ""
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim()
+    if (/^[a-h][1-8][a-h][1-8][qrbn]?$/i.test(normalized)) {
+      return normalized.toLowerCase()
+    }
+    return ""
+  }
+
+  if (typeof value !== "object") {
+    return ""
+  }
+
+  return getScoresheetMoveLabel(value.uci ?? value.move_uci ?? value.chess_move ?? value.move)
+}
+
+function normalizeScoresheetTurnEntry(pair, perspective) {
+  if (!pair) {
+    return null
+  }
+
+  const tuple = Array.isArray(pair)
+    ? pair
+    : [pair.move ?? pair.question ?? pair.prompt ?? pair[0], pair.answer ?? pair.response ?? pair.result ?? pair[1]]
+  const [questionValue, answerValue] = tuple
+  const questionType = getScoresheetQuestionType(questionValue)
+  const moveLabel = getScoresheetMoveLabel(questionValue)
+  const answerTexts = getLogEntryTexts({ answer: answerValue })
+
+  if (!answerTexts.length) {
+    return null
+  }
+
+  if (perspective === "own") {
+    if (questionType === "ASK_ANY") {
+      return `Ask any pawn captures — ${answerTexts.join(" · ")}`
+    }
+    return moveLabel ? `${moveLabel} — ${answerTexts.join(" · ")}` : answerTexts.join(" · ")
+  }
+
+  if (questionType === "ASK_ANY") {
+    return `Opponent asked any pawn captures — ${answerTexts.join(" · ")}`
+  }
+
+  return `Opponent move — ${answerTexts.join(" · ")}`
+}
+
+function buildScoresheetRefereeLog(gameState) {
+  const playerColor = normalizeLogColor(gameState?.your_color)
+  const scoresheet = getGameScoresheet(gameState, playerColor)
+  if (!scoresheet) {
+    return []
+  }
+
+  const ownTurns = getScoresheetTurns(scoresheet, "_KriegspielScoresheet__moves_own", "moves_own")
+  const opponentTurns = getScoresheetTurns(scoresheet, "_KriegspielScoresheet__moves_opponent", "moves_opponent")
+  const turnCount = Math.max(ownTurns.length, opponentTurns.length)
+
+  return Array.from({ length: turnCount }, (_, index) => ({
+    turn: index + 1,
+    white: ((playerColor === "white" ? ownTurns[index] : opponentTurns[index]) ?? [])
+      .map((entry) => normalizeScoresheetTurnEntry(entry, playerColor === "white" ? "own" : "opponent"))
+      .filter(Boolean),
+    black: ((playerColor === "black" ? ownTurns[index] : opponentTurns[index]) ?? [])
+      .map((entry) => normalizeScoresheetTurnEntry(entry, playerColor === "black" ? "own" : "opponent"))
+      .filter(Boolean),
+  })).filter((turn) => turn.white.length || turn.black.length)
+}
+
+function buildVisibleRefereeLog(gameState) {
+  const scoresheetTurns = buildScoresheetRefereeLog(gameState)
+  if (scoresheetTurns.length) {
+    return scoresheetTurns
+  }
+
+  return groupRefereeLog(gameState?.referee_log ?? [])
 }
 
 function formatClock(seconds) {
@@ -519,7 +633,7 @@ export default function GamePage() {
   const highlightedSquares = [fromSquare, toSquare, movingPhantomFrom, dragHoverSquare, draggingMoveFrom, moveDragHoverSquare].filter(Boolean)
   const waitingForOpponent = gameState?.state === "active" && !possibleActions.includes("move")
   const activeClockColor = gameState?.clock?.active_color ?? gameState?.turn
-  const groupedRefereeLog = useMemo(() => groupRefereeLog(gameState?.referee_log ?? []), [gameState?.referee_log])
+  const groupedRefereeLog = useMemo(() => buildVisibleRefereeLog(gameState), [gameState])
 
   function closePhantomMenu() {
     setPhantomMenu(null)
