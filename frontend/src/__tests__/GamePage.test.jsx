@@ -40,6 +40,7 @@ function sleep(ms) {
 
 beforeEach(() => {
   window.localStorage.clear()
+  window.scrollTo = vi.fn()
   mockNavigate.mockReset()
   Object.values(mockApi).forEach((fn) => fn.mockReset())
   mockApi.getGameState.mockResolvedValue(activeState)
@@ -78,6 +79,24 @@ describe("GamePage", () => {
 
     expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--last-move")
     expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--last-move")
+  })
+
+  it("highlights_illegal_move_squares_in_red", async () => {
+    mockApi.submitMove.mockResolvedValueOnce({ move_done: false })
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e2" })
+    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+
+    await waitFor(() => {
+      expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
+    })
+
+    expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--illegal")
+    expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--illegal")
+    expect(screen.getByText("Illegal move. Try a different move.")).toBeInTheDocument()
   })
 
   it("gates_promotion_with_modal_and_appends_suffix", async () => {
@@ -188,7 +207,7 @@ describe("GamePage", () => {
 
     expect(await screen.findByText("Turn 1")).toBeInTheDocument()
     expect(screen.getByText("Turn 2")).toBeInTheDocument()
-    expect(screen.getAllByText("Move attempt — Move complete").length).toBeGreaterThanOrEqual(3)
+    expect(screen.getAllByText("Move complete").length).toBeGreaterThanOrEqual(3)
 
     expect(screen.queryByText("Old fallback log")).not.toBeInTheDocument()
     expect(screen.queryByText("a2a3 — Move complete")).not.toBeInTheDocument()
@@ -214,8 +233,8 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    expect(await screen.findByText("Move attempt — Move complete")).toBeInTheDocument()
-    expect(screen.getByText("Opponent move — Capture done at D4 · Check on file")).toBeInTheDocument()
+    expect(await screen.findByText("Move complete")).toBeInTheDocument()
+    expect(screen.getByText("Capture done at D4 · Check on file")).toBeInTheDocument()
     expect(screen.queryByText("Old turn fallback")).not.toBeInTheDocument()
     expect(screen.queryByText("Old log fallback")).not.toBeInTheDocument()
   })
@@ -251,11 +270,11 @@ describe("GamePage", () => {
 
     expect(await screen.findByText("Turn 1")).toBeInTheDocument()
     expect(screen.getByText("Turn 2")).toBeInTheDocument()
-    expect(screen.getByText("Move attempt — Move complete")).toBeInTheDocument()
-    expect(screen.getByText("Opponent asked any pawn captures — No pawn captures")).toBeInTheDocument()
-    expect(screen.getByText("Opponent move — Move complete")).toBeInTheDocument()
-    expect(screen.getByText("Move attempt — Illegal move")).toBeInTheDocument()
-    expect(screen.getAllByText(/Move attempt — /).length).toBeGreaterThanOrEqual(3)
+    expect(screen.getByText("[e2e4] Move complete")).toBeInTheDocument()
+    expect(screen.getByText("No pawn captures")).toBeInTheDocument()
+    expect(screen.getByText("Move complete")).toBeInTheDocument()
+    expect(screen.getByText("[g1f3] Illegal move")).toBeInTheDocument()
+    expect(screen.getByText("[f1b5] Move complete · Check on file")).toBeInTheDocument()
     expect(screen.getByText(/Check on file/)).toBeInTheDocument()
     expect(screen.queryByText("Old fallback log")).not.toBeInTheDocument()
   })
@@ -287,6 +306,56 @@ describe("GamePage", () => {
     expect(screen.getByText("White hears no capture")).toBeInTheDocument()
     expect(screen.getByText("Black in check")).toBeInTheDocument()
     expect(screen.getByText("Black must respond")).toBeInTheDocument()
+  })
+
+  it("deduplicates_repeated_referee_messages_within_a_single_entry", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      scoresheet: {
+        viewer_color: "white",
+        turns: [
+          {
+            turn: 1,
+            white: [{ move_uci: "e4d5", message: "Capture done at D5", answer: { main: "CAPTURE_DONE", capture_square: "d5" } }],
+            black: [
+              { message: "Illegal move", answer: { main: "ILLEGAL_MOVE" } },
+              { message: "Illegal move", answer: { main: "ILLEGAL_MOVE" } },
+              { message: "Illegal move", answer: { main: "ILLEGAL_MOVE" } },
+              { message: "Move complete", answer: { main: "REGULAR_MOVE" } },
+            ],
+          },
+        ],
+      },
+    })
+
+    render(<GamePage />)
+
+    expect(await screen.findByText("[e4d5] Capture done at D5")).toBeInTheDocument()
+    expect(screen.queryByText("[e4d5] Capture done at D5 · Capture done at D5")).not.toBeInTheDocument()
+    expect(screen.getAllByText("Illegal move")).toHaveLength(3)
+    expect(screen.getAllByText("Move complete")).toHaveLength(1)
+  })
+
+  it("strips_ask_any_prefixes_and_deduplicates_the_response", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      scoresheet: {
+        viewer_color: "white",
+        turns: [
+          {
+            turn: 1,
+            white: [{ message: "Ask any pawn captures — Has pawn captures", answer: { main: "HAS_ANY" } }],
+            black: [],
+          },
+        ],
+      },
+    })
+
+    render(<GamePage />)
+
+    expect(await screen.findByText("Has pawn captures")).toBeInTheDocument()
+    expect(screen.queryByText("Ask any pawn captures — Has pawn captures")).not.toBeInTheDocument()
+    expect(screen.queryByText("Has pawn captures · Has pawn captures")).not.toBeInTheDocument()
   })
 
   it("formats_structured_referee_status_codes_into_friendly_text", async () => {

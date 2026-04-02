@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import ChessBoard from "../components/ChessBoard"
 import PromotionModal from "../components/PromotionModal"
@@ -300,14 +300,63 @@ function getScoresheetQuestionType(value) {
   return getScoresheetQuestionType(value.question_type ?? value.type ?? value.question)
 }
 
+function getScoresheetMoveUci(value) {
+  if (!value || typeof value === "string") {
+    return ""
+  }
+
+  if (Array.isArray(value)) {
+    return getScoresheetMoveUci(value[0])
+  }
+
+  const moveUci = value.move_uci ?? value.move
+  return typeof moveUci === "string" ? moveUci.trim().toLowerCase() : ""
+}
+
+function formatRefereeEntryText({ messages = [], moveUci = "" }) {
+  const cleanedMessages = Array.isArray(messages)
+    ? messages.flatMap((message) => {
+      if (typeof message !== "string") {
+        return []
+      }
+
+      const parts = splitRefereeTextParts(message)
+      return parts.length ? parts : [message.trim()].filter(Boolean)
+    })
+    : []
+  const uniqueMessages = [...new Set(cleanedMessages)]
+  const joined = uniqueMessages.join(" · ")
+  if (!joined) {
+    return ""
+  }
+  return moveUci ? `[${moveUci}] ${joined}` : joined
+}
+
+function splitRefereeTextParts(value) {
+  if (typeof value !== "string") {
+    return []
+  }
+
+  return value
+    .split("·")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => part.replace(/^(Move attempt|Opponent move|Ask any pawn captures|Opponent asked any pawn captures)\s*[—-]\s*/i, "").trim())
+    .filter(Boolean)
+}
+
 function normalizeAnnouncementItem(entry) {
   if (!entry) {
     return null
   }
 
   if (typeof entry === "string") {
-    const normalized = entry.trim()
-    return normalized ? { text: normalized } : null
+    const parts = splitRefereeTextParts(entry)
+    if (!parts.length) {
+      return null
+    }
+
+    return { text: formatRefereeEntryText({ messages: parts }), messages: parts }
   }
 
   const texts = getLogEntryTexts(entry)
@@ -318,16 +367,17 @@ function normalizeAnnouncementItem(entry) {
   const prompt = typeof entry.prompt === "string" && entry.prompt.trim() ? entry.prompt.trim() : ""
   const message = typeof entry.message === "string" && entry.message.trim() ? entry.message.trim() : ""
   const moveUci = typeof entry.move_uci === "string" ? entry.move_uci.trim().toLowerCase() : ""
+  const text = formatRefereeEntryText({ messages: texts, moveUci })
 
   if (message) {
-    return { text: message, messages: texts, prompt, moveUci }
+    return { text, messages: texts, prompt, moveUci }
   }
 
   if (prompt) {
-    return { text: `${prompt} — ${texts.join(" · ")}`, messages: texts, prompt, moveUci }
+    return { text, messages: texts, prompt, moveUci }
   }
 
-  return { text: texts.join(" · "), messages: texts, moveUci }
+  return { text, messages: texts, moveUci }
 }
 
 function normalizeScoresheetTurnEntry(pair, perspective) {
@@ -343,21 +393,14 @@ function normalizeScoresheetTurnEntry(pair, perspective) {
     ? pair
     : [pair.move ?? pair.question ?? pair.prompt ?? pair[0], pair.answer ?? pair.response ?? pair.result ?? pair[1]]
   const [questionValue, answerValue] = tuple
-  const questionType = getScoresheetQuestionType(questionValue)
+  const moveUci = perspective === "own" ? getScoresheetMoveUci(questionValue) : ""
   const answerTexts = getLogEntryTexts({ answer: answerValue })
 
   if (!answerTexts.length) {
     return null
   }
 
-  let prompt = "Opponent move"
-  if (perspective === "own") {
-    prompt = questionType === "ASK_ANY" ? "Ask any pawn captures" : "Move attempt"
-  } else if (questionType === "ASK_ANY") {
-    prompt = "Opponent asked any pawn captures"
-  }
-
-  return { text: `${prompt} — ${answerTexts.join(" · ")}`, messages: answerTexts, prompt }
+  return { text: formatRefereeEntryText({ messages: answerTexts, moveUci }), messages: answerTexts, moveUci }
 }
 
 function normalizeTurnSideEntries(entries, normalizer) {
@@ -564,6 +607,7 @@ export default function GamePage() {
   const [fromSquare, setFromSquare] = useState("")
   const [toSquare, setToSquare] = useState("")
   const [lastMoveSquares, setLastMoveSquares] = useState([])
+  const [illegalMoveSquares, setIllegalMoveSquares] = useState([])
   const [showPromotionModal, setShowPromotionModal] = useState(false)
   const [phantomMenu, setPhantomMenu] = useState(null)
   const [movingPhantomFrom, setMovingPhantomFrom] = useState("")
@@ -582,6 +626,12 @@ export default function GamePage() {
   const draggingMoveFromRef = useRef("")
   const suppressClickRef = useRef(false)
   const suppressContextMenuRef = useRef(false)
+  const logScrollRef = useRef(null)
+  const viewportRestoreRef = useRef(null)
+
+  const captureViewport = useCallback(() => {
+    viewportRestoreRef.current = { x: window.scrollX, y: window.scrollY }
+  }, [])
 
   const occupiedSquares = useMemo(() => occupiedSquaresFromFen(gameState?.your_fen), [gameState?.your_fen])
 
@@ -595,9 +645,13 @@ export default function GamePage() {
     availablePiecesForSquare,
   } = usePhantoms({ gameId, occupiedSquares })
 
-  const pollState = useCallback(async ({ silent = false } = {}) => {
+  const pollState = useCallback(async ({ silent = false, preserveViewport = false } = {}) => {
     if (!gameId) {
       return
+    }
+
+    if (preserveViewport) {
+      captureViewport()
     }
 
     if (!silent) {
@@ -615,7 +669,7 @@ export default function GamePage() {
         setLoading(false)
       }
     }
-  }, [gameId])
+  }, [captureViewport, gameId])
 
   useEffect(() => {
     pollState({ silent: false })
@@ -627,7 +681,7 @@ export default function GamePage() {
     }
 
     const intervalId = window.setInterval(() => {
-      pollState({ silent: true })
+      pollState({ silent: true, preserveViewport: true })
     }, POLL_INTERVAL_MS)
 
     return () => {
@@ -640,6 +694,22 @@ export default function GamePage() {
       window.clearTimeout(longPressTimerRef.current)
     }
   }, [])
+
+  useLayoutEffect(() => {
+    const viewport = viewportRestoreRef.current
+    if (!viewport) {
+      return
+    }
+
+    if (typeof window.scrollTo === "function") {
+      try {
+        window.scrollTo(viewport.x, viewport.y)
+      } catch {
+        // JSDOM does not implement window scrolling.
+      }
+    }
+    viewportRestoreRef.current = null
+  }, [gameState, loading, submittingAction, actionError])
 
   const possibleActions = gameState?.possible_actions ?? []
   const canMove = gameState?.state === "active" && possibleActions.includes("move") && !submittingAction
@@ -683,6 +753,15 @@ export default function GamePage() {
   const activeClockColor = gameState?.clock?.active_color ?? gameState?.turn
   const groupedRefereeLog = useMemo(() => buildVisibleRefereeLog(gameState), [gameState])
 
+  useEffect(() => {
+    const logNode = logScrollRef.current
+    if (!logNode) {
+      return
+    }
+
+    logNode.scrollTop = logNode.scrollHeight
+  }, [groupedRefereeLog])
+
   function closePhantomMenu() {
     setPhantomMenu(null)
   }
@@ -699,6 +778,7 @@ export default function GamePage() {
     setFromSquare("")
     setToSquare("")
     setShowPromotionModal(false)
+    setIllegalMoveSquares([])
   }
 
   function openPhantomMenu(square) {
@@ -818,6 +898,7 @@ export default function GamePage() {
 
     setActionError("")
     setShowPromotionModal(false)
+    setIllegalMoveSquares([])
 
     if (phantomMenu) {
       closePhantomMenu()
@@ -984,18 +1065,21 @@ export default function GamePage() {
   async function submitMoveWithUci(uci) {
     setSubmittingAction(true)
     setActionError("")
+    captureViewport()
 
     try {
       const result = await submitMove(gameId, uci)
       if (result?.move_done === false) {
         setActionError("Illegal move. Try a different move.")
+        setIllegalMoveSquares([uci.slice(0, 2), uci.slice(2, 4)])
         setToSquare("")
         return
       }
 
       setLastMoveSquares([uci.slice(0, 2), uci.slice(2, 4)])
+      setIllegalMoveSquares([])
       resetPendingMove()
-      await pollState({ silent: true })
+      await pollState({ silent: true, preserveViewport: true })
     } catch (requestError) {
       setActionError(requestError?.message ?? "Unable to submit move right now.")
     } finally {
@@ -1024,10 +1108,12 @@ export default function GamePage() {
 
     setSubmittingAction(true)
     setActionError("")
+    setIllegalMoveSquares([])
+    captureViewport()
 
     try {
       await askAny(gameId)
-      await pollState({ silent: true })
+      await pollState({ silent: true, preserveViewport: true })
     } catch (requestError) {
       setActionError(requestError?.message ?? "Unable to ask the referee right now.")
     } finally {
@@ -1042,10 +1128,12 @@ export default function GamePage() {
 
     setSubmittingAction(true)
     setActionError("")
+    setIllegalMoveSquares([])
+    captureViewport()
 
     try {
       await resignGame(gameId)
-      await pollState({ silent: true })
+      await pollState({ silent: true, preserveViewport: true })
     } catch (requestError) {
       setActionError(requestError?.message ?? "Unable to resign right now.")
     } finally {
@@ -1097,11 +1185,11 @@ export default function GamePage() {
               <div className="game-clocks" aria-label="Game clocks">
                 <div className={`game-clock ${activeClockColor === "white" ? "game-clock--active" : ""}`.trim()}>
                   <span className="game-clock__label">White</span>
-                  <strong>{formatClock(gameState.clock?.white_remaining)}</strong>
+                  <strong className="game-clock__time">{formatClock(gameState.clock?.white_remaining)}</strong>
                 </div>
                 <div className={`game-clock ${activeClockColor === "black" ? "game-clock--active" : ""}`.trim()}>
                   <span className="game-clock__label">Black</span>
-                  <strong>{formatClock(gameState.clock?.black_remaining)}</strong>
+                  <strong className="game-clock__time">{formatClock(gameState.clock?.black_remaining)}</strong>
                 </div>
               </div>
 
@@ -1111,6 +1199,7 @@ export default function GamePage() {
                   orientation={gameState.your_color}
                   highlightedSquares={highlightedSquares}
                   lastMoveSquares={lastMoveSquares}
+                  illegalSquares={illegalMoveSquares}
                   phantomSquares={phantomSquares}
                   phantomPlacements={placements}
                   disabled={false}
@@ -1191,14 +1280,6 @@ export default function GamePage() {
                 </button>
               </div>
 
-              <h2>Status</h2>
-              <ul className="game-status-list">
-                <li><strong>State:</strong> {gameState.state}</li>
-                <li><strong>Your color:</strong> {gameState.your_color}</li>
-                <li className={canMove ? "game-status-list__turn game-status-list__turn--active" : "game-status-list__turn"}><strong>Turn:</strong> {gameState.turn ?? "—"}</li>
-                <li><strong>Move number:</strong> {gameState.move_number}</li>
-              </ul>
-
               {actionError ? <p className="auth-error" role="alert">{actionError}</p> : null}
 
               <div className="game-referee-log">
@@ -1207,7 +1288,7 @@ export default function GamePage() {
                 </div>
 
                 {groupedRefereeLog.length ? (
-                  <div className="game-referee-log__scroll" role="log" aria-label="Referee log by turn">
+                  <div className="game-referee-log__scroll" role="log" aria-label="Referee log by turn" ref={logScrollRef}>
                     {groupedRefereeLog.map((turnEntry) => (
                       <section key={`turn-${turnEntry.turn}`} className="game-referee-turn">
                         <div className="game-referee-turn__title">Turn {turnEntry.turn}</div>
@@ -1243,6 +1324,16 @@ export default function GamePage() {
                 ) : (
                   <p className="game-referee-column__empty">No referee responses yet.</p>
                 )}
+              </div>
+
+              <div className="game-status-section">
+                <h2>Status</h2>
+                <ul className="game-status-list">
+                  <li><strong>State:</strong> {gameState.state}</li>
+                  <li><strong>Your color:</strong> {gameState.your_color}</li>
+                  <li className={canMove ? "game-status-list__turn game-status-list__turn--active" : "game-status-list__turn"}><strong>Turn:</strong> {gameState.turn ?? "—"}</li>
+                  <li><strong>Move number:</strong> {gameState.move_number}</li>
+                </ul>
               </div>
 
               <button type="button" className="game-danger-button" onClick={handleResign} disabled={!canResign}>
