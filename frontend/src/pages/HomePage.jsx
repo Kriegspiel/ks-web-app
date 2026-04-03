@@ -6,7 +6,7 @@ import { getMyGames, userApi } from "../services/api"
 import { formatUtcDate, formatUtcDateTime } from "../utils/dateTime"
 
 const ACTIVE_STATES = new Set(["active"])
-const RULES_URL = "https://kriegspiel.org/rules/berkeley/"
+const RULES_URL = "https://kriegspiel.org/rules"
 
 function statOrZero(value) {
   return Number.isFinite(Number(value)) ? Number(value) : 0

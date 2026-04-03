@@ -10,7 +10,6 @@ import JoinPage from "./pages/JoinPage"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
 import GamePage from "./pages/GamePage"
-import RulesPage from "./pages/RulesPage"
 import ReviewPage from "./pages/Review"
 import ProfilePage from "./pages/Profile"
 import GameHistoryPage from "./pages/GameHistory"
@@ -93,7 +92,6 @@ export function AppRoutes() {
     <Routes>
       <Route element={<AppLayout />}>
         <Route path="/" element={<HomePage />} />
-        <Route path="/rules" element={<RulesPage />} />
         <Route
           path="/auth/login"
           element={(
