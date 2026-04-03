@@ -72,7 +72,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByText(/Game ID:/i)
-    expect(screen.getByText("v. 1.1.2 / v. 1.0.0")).toBeInTheDocument()
+    expect(screen.getByText("v. 1.1.3 / v. 1.0.0")).toBeInTheDocument()
     expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
 
     await sleep(650)
@@ -179,10 +179,24 @@ describe("GamePage", () => {
   })
 
   it("shows_rules_and_opponent_in_status_from_metadata", async () => {
+    mockApi.getGame.mockResolvedValueOnce({
+      game_id: "g-123",
+      game_code: "ABC123",
+      rule_variant: "berkeley_any",
+      state: "active",
+      opponent_type: "bot",
+      white: { username: "fil", role: "user", elo: 1400 },
+      black: { username: "gptnano", role: "bot", elo: 1342 },
+      turn: "white",
+      move_number: 1,
+      created_at: "2026-04-02T12:00:00Z",
+    })
+
     render(<GamePage />)
 
     expect(await screen.findByText("Berkeley Any")).toBeInTheDocument()
     expect(screen.getByText("gptnano (bot)")).toBeInTheDocument()
+    expect(screen.getByText("1342")).toBeInTheDocument()
   })
 
   it("anchors_phantom_menu_to_the_target_square", async () => {
