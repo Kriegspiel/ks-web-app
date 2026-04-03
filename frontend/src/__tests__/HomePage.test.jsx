@@ -49,7 +49,7 @@ describe("HomePage", () => {
     renderPage()
 
     expect(screen.getByRole("link", { name: "Play now" })).toHaveAttribute("href", "/auth/login")
-    expect(screen.getByRole("link", { name: "Read rules (opens external page)" })).toHaveAttribute("href", "https://kriegspiel.org/rules/berkeley/")
+    expect(screen.getByRole("link", { name: "Read rules (opens external page)" })).toHaveAttribute("href", "https://kriegspiel.org/rules")
     expect(screen.getByRole("link", { name: "Read rules (opens external page)" })).toHaveAttribute("target", "_blank")
     expect(screen.getByText(TEST_VERSION_STAMP)).toBeInTheDocument()
   })
