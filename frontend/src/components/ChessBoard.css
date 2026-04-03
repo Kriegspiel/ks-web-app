@@ -21,6 +21,7 @@
 }
 
 .square {
+  --square-hover-overlay: transparent;
   --square-ring-highlight: inset 0 0 0 0 rgba(0, 0, 0, 0);
   --square-ring-last-move: inset 0 0 0 0 rgba(0, 0, 0, 0);
   --square-ring-illegal: inset 0 0 0 0 rgba(0, 0, 0, 0);
@@ -49,6 +50,18 @@
 .square::before {
   content: "";
   position: absolute;
+  inset: 0.18rem;
+  border-radius: 0.18rem;
+  background: var(--square-hover-overlay);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 120ms ease;
+}
+
+.square::after {
+  content: "";
+  position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 4;
@@ -64,10 +77,15 @@
 .board-grid .square:focus-visible:not(:disabled),
 .board-grid .square:active:not(:disabled) {
   border-color: transparent;
-  background: inherit;
   transform: none;
   outline: none;
   filter: none;
+}
+
+.board-grid .square:hover:not(:disabled)::before,
+.board-grid .square:focus-visible:not(:disabled)::before,
+.board-grid .square:active:not(:disabled)::before {
+  opacity: 1;
 }
 
 .board-grid .square:hover:not(:disabled) .piece__image,
@@ -85,17 +103,15 @@
 }
 
 .board-grid .square.light:hover:not(:disabled),
-.board-grid .square.light:focus-visible:not(:disabled) {
-  background:
-    linear-gradient(0deg, rgba(106, 69, 29, 0.08), rgba(106, 69, 29, 0.08)),
-    linear-gradient(180deg, #f3e7d4 0%, #e7d6bb 100%);
+.board-grid .square.light:focus-visible:not(:disabled),
+.board-grid .square.light:active:not(:disabled) {
+  --square-hover-overlay: rgba(106, 69, 29, 0.1);
 }
 
 .board-grid .square.dark:hover:not(:disabled),
-.board-grid .square.dark:focus-visible:not(:disabled) {
-  background:
-    linear-gradient(0deg, rgba(255, 248, 235, 0.1), rgba(255, 248, 235, 0.1)),
-    linear-gradient(180deg, #b3875f 0%, #936942 100%);
+.board-grid .square.dark:focus-visible:not(:disabled),
+.board-grid .square.dark:active:not(:disabled) {
+  --square-hover-overlay: rgba(255, 248, 235, 0.13);
 }
 
 .square:disabled {
@@ -118,13 +134,14 @@
   --square-ring-suggested: inset 0 0 0 0.16rem rgba(34, 197, 94, 0.78);
 }
 
-.square--phantom::after {
+.square--phantom .phantom-piece-on-board::after {
   content: "";
   position: absolute;
   inset: 14%;
   border-radius: 1rem;
   background: rgba(86, 156, 255, 0.14);
   box-shadow: inset 0 0 0 1px rgba(86, 156, 255, 0.28);
+  pointer-events: none;
 }
 
 .square__move-dot {
