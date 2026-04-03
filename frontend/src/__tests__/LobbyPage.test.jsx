@@ -8,14 +8,14 @@ vi.mock("react-router-dom", async () => ({ ...(await vi.importActual("react-rout
 vi.mock("../hooks/useAuth", () => ({ useAuth: () => ({ user: { username: "fil" }, actionError: "" }) }))
 vi.mock("../services/api", () => mockApi)
 
-beforeEach(() => { mockNavigate.mockReset(); Object.values(mockApi).forEach((fn) => fn.mockReset()); mockApi.getOpenGames.mockResolvedValue({ games: [] }); mockApi.getMyGames.mockResolvedValue({ games: [] }); mockApi.getGame.mockResolvedValue({ state: "waiting" }); mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", display_name: "Random Bot", description: "Plays random legal-looking moves" }] }) })
+beforeEach(() => { mockNavigate.mockReset(); Object.values(mockApi).forEach((fn) => fn.mockReset()); mockApi.getOpenGames.mockResolvedValue({ games: [] }); mockApi.getMyGames.mockResolvedValue({ games: [] }); mockApi.getGame.mockResolvedValue({ state: "waiting" }); mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves" }] }) })
 afterEach(() => { cleanup(); vi.useRealTimers() })
 
 describe("LobbyPage", () => {
   it("shows_lobby_version_badge", async () => {
     render(<LobbyPage />)
 
-    expect(await screen.findAllByText("v. 1.0.13")).toHaveLength(1)
+    expect(await screen.findAllByText("v. 1.0.14")).toHaveLength(1)
   })
 
   it("creates_waiting_game_and_shows_join_code", async () => {
@@ -33,7 +33,7 @@ describe("LobbyPage", () => {
     render(<LobbyPage />)
     fireEvent.click(await screen.findByLabelText("Bot"))
     expect(await screen.findByLabelText("Bot opponent")).toBeInTheDocument()
-    expect(screen.getByText("Plays random legal-looking moves")).toBeInTheDocument()
+    expect(screen.getByText("Plays random legal-looking moves.")).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText("Bot opponent"), { target: { value: "bot-1" } })
     fireEvent.click(screen.getByRole("button", { name: "Create bot game" }))
     await waitFor(() => expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({ opponent_type: "bot", bot_id: "bot-1" })))
