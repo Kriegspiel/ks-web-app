@@ -562,6 +562,19 @@ function squareHasOwnPiece(fen, square, color) {
   return color === "white" ? piece === piece.toUpperCase() : piece === piece.toLowerCase()
 }
 
+function getAllowedMoveSources(allowedMoves) {
+  if (!Array.isArray(allowedMoves)) {
+    return []
+  }
+
+  const sources = allowedMoves
+    .filter((uci) => typeof uci === "string")
+    .map((uci) => uci.trim().toLowerCase().slice(0, 2))
+    .filter((square) => /^[a-h][1-8]$/.test(square))
+
+  return [...new Set(sources)]
+}
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max)
 }
@@ -842,6 +855,7 @@ export default function GamePage() {
 
     return getAllowedMoveTargets(gameState?.allowed_moves, activeSourceSquare)
   }, [draggingMoveFrom, fromSquare, gameState?.allowed_moves])
+  const allowedMoveSourceSquares = useMemo(() => getAllowedMoveSources(gameState?.allowed_moves), [gameState?.allowed_moves])
   const waitingForOpponent = gameState?.state === "active" && !possibleActions.includes("move")
   const activeClockColor = gameState?.clock?.active_color ?? gameState?.turn
   const groupedRefereeLog = useMemo(() => buildVisibleRefereeLog(gameState), [gameState])
@@ -879,6 +893,18 @@ export default function GamePage() {
 
     logNode.scrollTop = logNode.scrollHeight
   }, [groupedRefereeLog])
+
+  useEffect(() => {
+    if (!fromSquare) {
+      return
+    }
+
+    if (allowedMoveSourceSquares.includes(fromSquare)) {
+      return
+    }
+
+    resetPendingMove()
+  }, [allowedMoveSourceSquares, fromSquare])
 
   function closePhantomMenu() {
     setPhantomMenu(null)
@@ -1016,7 +1042,8 @@ export default function GamePage() {
       return
     }
 
-    const ownPiece = squareHasOwnPiece(gameState?.your_fen, square, gameState?.your_color)
+    const legalMoveSource = allowedMoveSourceSquares.includes(square)
+    const ownPiece = squareHasOwnPiece(gameState?.your_fen, square, gameState?.your_color) || legalMoveSource
     const eligibleForDoubleTapPhantom = !fromSquare && (!ownPiece || Boolean(placements[square]))
     const now = Date.now()
     const previousTap = lastTapRef.current
@@ -1051,7 +1078,7 @@ export default function GamePage() {
     }
 
     if (!fromSquare) {
-      if (!squareHasOwnPiece(gameState?.your_fen, square, gameState?.your_color)) {
+      if (!allowedMoveSourceSquares.includes(square)) {
         return
       }
       setFromSquare(square)
@@ -1063,7 +1090,7 @@ export default function GamePage() {
       return
     }
 
-    if (squareHasOwnPiece(gameState?.your_fen, square, gameState?.your_color)) {
+    if (allowedMoveSourceSquares.includes(square)) {
       setFromSquare(square)
       setToSquare("")
       setShowPromotionModal(false)
@@ -1110,7 +1137,7 @@ export default function GamePage() {
       return
     }
 
-    if (event.button === 0 && !isTouchLikePointer(event) && canMove && squareHasOwnPiece(gameState?.your_fen, square, gameState?.your_color)) {
+    if (event.button === 0 && !isTouchLikePointer(event) && canMove && allowedMoveSourceSquares.includes(square)) {
       const piece = pieceAtSquare(gameState?.your_fen, square)
       setActionError("")
       setShowPromotionModal(false)
@@ -1241,6 +1268,7 @@ export default function GamePage() {
     setSubmittingAction(true)
     setActionError("")
     setIllegalMoveSquares([])
+    resetPendingMove()
     captureViewport()
 
     try {
