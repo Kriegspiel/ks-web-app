@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
-import { createGame, getBots, getGame, getMyGames, getOpenGames, joinGame } from "../services/api"
+import { createGame, getBots, getGame, getLobbyStats, getMyGames, getOpenGames, joinGame } from "../services/api"
 import { formatUtcDateTime } from "../utils/dateTime"
 import "./Lobby.css"
 
 const WAITING_GAME_POLL_MS = 3000
 const OPEN_GAMES_POLL_MS = 5000
 const MY_GAMES_POLL_MS = 10000
+const LOBBY_STATS_POLL_MS = 10000
 const RULESET_OPTIONS = [
   { value: "berkeley", label: "Berkeley" },
   { value: "berkeley_any", label: "Berkeley + Any" },
@@ -109,6 +110,9 @@ export default function LobbyPage() {
   const [myGames, setMyGames] = useState([])
   const [myGamesError, setMyGamesError] = useState("")
   const [myGamesLoading, setMyGamesLoading] = useState(true)
+  const [lobbyStats, setLobbyStats] = useState(null)
+  const [lobbyStatsError, setLobbyStatsError] = useState("")
+  const [lobbyStatsLoading, setLobbyStatsLoading] = useState(true)
   const signedInAs = user?.username ?? user?.email ?? "player"
   const supportedBots = useMemo(() => bots.filter((bot) => botSupportsRuleVariant(bot, ruleVariant)), [bots, ruleVariant])
   const selectedBot = supportedBots.find((bot) => bot.bot_id === selectedBotId) ?? null
@@ -149,6 +153,24 @@ export default function LobbyPage() {
     }
   }
 
+  async function refreshLobbyStats({ markLoading = false } = {}) {
+    if (markLoading) {
+      setLobbyStatsLoading(true)
+    }
+
+    try {
+      const response = await getLobbyStats()
+      setLobbyStats(response ?? null)
+      setLobbyStatsError("")
+    } catch (error) {
+      setLobbyStatsError(error?.message ?? "Unable to load lobby stats right now.")
+    } finally {
+      if (markLoading) {
+        setLobbyStatsLoading(false)
+      }
+    }
+  }
+
   async function refreshBots() {
     try {
       const response = await getBots()
@@ -173,6 +195,12 @@ export default function LobbyPage() {
   useEffect(() => {
     refreshMyGames({ markLoading: true })
     const id = window.setInterval(() => refreshMyGames(), MY_GAMES_POLL_MS)
+    return () => window.clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    refreshLobbyStats({ markLoading: true })
+    const id = window.setInterval(() => refreshLobbyStats(), LOBBY_STATS_POLL_MS)
     return () => window.clearInterval(id)
   }, [])
 
@@ -434,6 +462,32 @@ export default function LobbyPage() {
           <button type="submit" disabled={joiningGame}>{joiningGame ? "Joining…" : "Join game"}</button>
         </form>
         {joinError ? <p className="auth-error" role="alert">{joinError}</p> : null}
+      </section>
+
+      <section className="lobby-card" aria-labelledby="lobby-stats-heading">
+        <h2 id="lobby-stats-heading">Lobby stats</h2>
+        {lobbyStatsError ? <p role="alert">{lobbyStatsError}</p> : null}
+        {lobbyStatsLoading ? <p>Loading…</p> : null}
+        {lobbyStats ? (
+          <div className="lobby-stats-grid">
+            <div className="lobby-stats-tile">
+              <strong>{lobbyStats.active_games_now ?? 0}</strong>
+              <span>Active games now</span>
+            </div>
+            <div className="lobby-stats-tile">
+              <strong>{lobbyStats.completed_last_hour ?? 0}</strong>
+              <span>Completed last hour</span>
+            </div>
+            <div className="lobby-stats-tile">
+              <strong>{lobbyStats.completed_last_24_hours ?? 0}</strong>
+              <span>Completed last 24 hours</span>
+            </div>
+            <div className="lobby-stats-tile">
+              <strong>{lobbyStats.completed_total ?? 0}</strong>
+              <span>Completed total</span>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <section className="lobby-card">

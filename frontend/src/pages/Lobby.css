@@ -59,6 +59,10 @@
 }
 .lobby-bot-picker { display: grid; gap: 0.45rem; padding-top: 0.15rem; }
 .lobby-bot-picker select { max-width: 22rem; }
+.lobby-stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+.lobby-stats-tile { display: grid; gap: 0.3rem; padding: 0.9rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-strong); }
+.lobby-stats-tile strong { font-size: 1.35rem; line-height: 1; }
+.lobby-stats-tile span { color: var(--muted-soft); font-size: 0.92rem; line-height: 1.3; }
 .lobby-list { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.75rem; }
 .lobby-list li { display: flex; justify-content: space-between; gap: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.85rem 0.95rem; align-items: center; background: rgba(248, 250, 252, 0.72); }
 .lobby-list button { margin-top: 0; }
@@ -66,6 +70,7 @@
 .lobby-created-game code { font-size: 1.1rem; }
 @media (max-width: 700px) {
   .lobby-join-form { grid-template-columns: 1fr; }
+  .lobby-stats-grid { grid-template-columns: 1fr 1fr; }
   .lobby-list li { align-items: flex-start; flex-direction: column; }
   .lobby-opponent-options { grid-template-columns: 1fr; }
   .lobby-bot-picker select { max-width: 100%; }
