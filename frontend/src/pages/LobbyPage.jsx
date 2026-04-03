@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import { createGame, getBots, getGame, getMyGames, getOpenGames, joinGame } from "../services/api"
+import { formatUtcDateTime } from "../utils/dateTime"
 import "./Lobby.css"
 
 const WAITING_GAME_POLL_MS = 3000
@@ -49,18 +50,6 @@ function preferredBotId(bots) {
   })
 
   return randomBot?.bot_id || bots[0]?.bot_id || ""
-}
-
-function formatDate(isoDate) {
-  if (!isoDate) {
-    return ""
-  }
-
-  try {
-    return new Date(isoDate).toLocaleString()
-  } catch {
-    return isoDate
-  }
 }
 
 export default function LobbyPage() {
@@ -385,7 +374,7 @@ export default function LobbyPage() {
             <li key={game.game_code}>
               <div>
                 <strong>{game.game_code}</strong>
-                <div className="lobby-meta">{game.created_by} · {game.available_color} · {formatDate(game.created_at)}</div>
+                <div className="lobby-meta">{game.created_by} · {game.available_color} · {formatUtcDateTime(game.created_at)}</div>
               </div>
               <button type="button" onClick={() => handleJoinOpenGame(game.game_code)}>Join</button>
             </li>

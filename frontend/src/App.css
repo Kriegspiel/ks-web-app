@@ -178,7 +178,7 @@ button.theme-toggle:active {
 }
 
 .page-version {
-  margin: 1rem 0 0;
+  margin: 2rem 0 2rem;
   text-align: center;
   color: var(--muted-soft);
   font-size: 0.76rem;

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import { getMyGames, userApi } from "../services/api"
+import { formatUtcDate, formatUtcDateTime } from "../utils/dateTime"
 
 const ACTIVE_STATES = new Set(["active"])
 
@@ -20,7 +21,7 @@ function buildEloSeries(historyGames) {
     .sort((left, right) => Date.parse(left?.played_at ?? "") - Date.parse(right?.played_at ?? ""))
     .map((game, index) => ({
       index,
-      label: game?.played_at ? new Date(game.played_at).toLocaleDateString() : `Game ${index + 1}`,
+      label: game?.played_at ? formatUtcDate(game.played_at) : `Game ${index + 1}`,
       elo: Number(game.elo_after),
       delta: Number(game?.elo_delta ?? 0),
     }))
@@ -53,15 +54,7 @@ function buildChartPoints(points) {
 }
 
 function formatUpdatedAt(isoDate) {
-  if (!isoDate) {
-    return ""
-  }
-
-  try {
-    return new Date(isoDate).toLocaleString()
-  } catch {
-    return isoDate
-  }
+  return formatUtcDateTime(isoDate)
 }
 
 function sortRecentGames(games) {
@@ -138,14 +131,19 @@ export default function HomePage() {
     const source = user?.stats ?? {}
     const gamesPlayed = statOrZero(source.games_played)
     const gamesWon = statOrZero(source.games_won)
+    const gamesLost = statOrZero(source.games_lost)
+    const gamesDrawn = statOrZero(source.games_drawn)
+    const formatRate = (value) => `${gamesPlayed > 0 ? ((value / gamesPlayed) * 100).toFixed(1) : "0.0"}%`
     return {
       gamesPlayed,
       gamesWon,
-      gamesLost: statOrZero(source.games_lost),
-      gamesDrawn: statOrZero(source.games_drawn),
+      gamesLost,
+      gamesDrawn,
       elo: statOrZero(source.elo),
       eloPeak: statOrZero(source.elo_peak),
-      winRate: gamesPlayed > 0 ? (gamesWon / gamesPlayed) * 100 : 0,
+      winsLabel: `${gamesWon} (${formatRate(gamesWon)})`,
+      lossesLabel: `${gamesLost} (${formatRate(gamesLost)})`,
+      drawsLabel: `${gamesDrawn} (${formatRate(gamesDrawn)})`,
     }
   }, [user?.stats])
   const eloSeries = useMemo(() => buildEloSeries(historyGames), [historyGames])
@@ -172,10 +170,9 @@ export default function HomePage() {
               <div><dt>Elo</dt><dd>{stats.elo}</dd></div>
               <div><dt>Peak Elo</dt><dd>{stats.eloPeak}</dd></div>
               <div><dt>Games</dt><dd>{stats.gamesPlayed}</dd></div>
-              <div><dt>Wins</dt><dd>{stats.gamesWon}</dd></div>
-              <div><dt>Losses</dt><dd>{stats.gamesLost}</dd></div>
-              <div><dt>Draws</dt><dd>{stats.gamesDrawn}</dd></div>
-              <div><dt>Win rate</dt><dd>{stats.winRate.toFixed(1)}%</dd></div>
+              <div><dt>Wins</dt><dd>{stats.winsLabel}</dd></div>
+              <div><dt>Losses</dt><dd>{stats.lossesLabel}</dd></div>
+              <div><dt>Draws</dt><dd>{stats.drawsLabel}</dd></div>
             </dl>
           </section>
 

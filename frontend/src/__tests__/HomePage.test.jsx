@@ -49,7 +49,7 @@ describe("HomePage", () => {
 
     expect(screen.getByRole("link", { name: "Play now" })).toHaveAttribute("href", "/auth/login")
     expect(screen.getByRole("link", { name: "Read rules" })).toHaveAttribute("href", "/rules")
-    expect(screen.getByText("v. 1.1.9 / v. 1.0.0")).toBeInTheDocument()
+    expect(screen.getByText("v. 1.1.12 / v. 1.0.0")).toBeInTheDocument()
   })
 
   it("routes_authenticated_play_now_to_lobby_when_no_active_game", async () => {
@@ -65,6 +65,9 @@ describe("HomePage", () => {
 
     expect(screen.getByRole("link", { name: "Play now" })).toHaveAttribute("href", "/lobby")
     expect(screen.getByText("1337")).toBeInTheDocument()
+    expect(screen.getByText("7 (58.3%)")).toBeInTheDocument()
+    expect(screen.getByText("3 (25.0%)")).toBeInTheDocument()
+    expect(screen.getByText("2 (16.7%)")).toBeInTheDocument()
   })
 
   it("shows_recent_games_and_resume_cta_for_active_game", async () => {
@@ -90,6 +93,7 @@ describe("HomePage", () => {
     expect(screen.getByRole("link", { name: "Resume active game" })).toHaveAttribute("href", "/game/game-1")
     expect(screen.getByText("ABCD12")).toBeInTheDocument()
     expect(screen.getByText("Active")).toBeInTheDocument()
+    expect(screen.getByText(/2026-03-26 15:00:00 UTC/)).toBeInTheDocument()
     expect(screen.getByRole("img", { name: "Elo rating over time" })).toBeInTheDocument()
     expect(screen.getByText("Latest 1345")).toBeInTheDocument()
   })

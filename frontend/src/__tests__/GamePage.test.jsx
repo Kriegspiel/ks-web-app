@@ -72,7 +72,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByText(/Game ID:/i)
-    expect(screen.getByText("v. 1.1.9 / v. 1.0.0")).toBeInTheDocument()
+    expect(screen.getByText("v. 1.1.12 / v. 1.0.0")).toBeInTheDocument()
     expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
 
     await sleep(650)
@@ -760,7 +760,7 @@ describe("GamePage", () => {
   it("does_not_apply_an_old_no_any_constraint_to_a_later_turn", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
-      move_number: 2,
+      move_number: 3,
       your_fen: "8/8/8/8/8/8/8/4K3",
       allowed_moves: ["e4d5", "e4e5", "e4f5"],
       scoresheet: {
@@ -782,6 +782,48 @@ describe("GamePage", () => {
     expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
     expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
     expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
+  })
+
+  it("applies_no_any_constraint_on_black_turns_using_turn_number_not_halfmove_number", async () => {
+    mockApi.getGame.mockResolvedValueOnce({
+      game_id: "g-123",
+      game_code: "ABC123",
+      rule_variant: "berkeley_any",
+      state: "active",
+      opponent_type: "user",
+      white: { username: "fil", role: "user", connected: true },
+      black: { username: "gptnano", role: "bot", connected: true },
+      turn: "black",
+      move_number: 2,
+      created_at: "2026-04-02T12:00:00Z",
+    })
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      turn: "black",
+      move_number: 2,
+      your_color: "black",
+      your_fen: "8/8/8/3p4/8/8/8/4k3",
+      allowed_moves: ["d5c4", "d5d4", "d5e4"],
+      possible_actions: ["move", "ask_any"],
+      scoresheet: {
+        turns: [
+          {
+            turn: 1,
+            white: [],
+            black: [{ messages: ["No pawn captures"] }],
+          },
+        ],
+      },
+    })
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square d5" })
+    fireEvent.click(screen.getByRole("button", { name: "Square d5" }))
+
+    expect(screen.getByRole("button", { name: "Square d4" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square c4" })).not.toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square e4" })).not.toHaveClass("square--suggested")
   })
 
   it("disables_ask_any_when_not_allowed", async () => {

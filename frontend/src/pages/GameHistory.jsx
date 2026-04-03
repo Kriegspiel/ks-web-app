@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { userApi } from "../services/api"
+import { formatUtcDateTime } from "../utils/dateTime"
 import "./GameHistory.css"
 
 function formatDate(value) {
-  if (!value) return "—"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return String(value)
-  return date.toLocaleDateString()
+  return formatUtcDateTime(value) || "—"
 }
 
 export default function GameHistoryPage() {
