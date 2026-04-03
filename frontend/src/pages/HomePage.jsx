@@ -6,6 +6,7 @@ import { getMyGames, userApi } from "../services/api"
 import { formatUtcDate, formatUtcDateTime } from "../utils/dateTime"
 
 const ACTIVE_STATES = new Set(["active"])
+const RULES_URL = "https://kriegspiel.org/rules/berkeley/"
 
 function statOrZero(value) {
   return Number.isFinite(Number(value)) ? Number(value) : 0
@@ -86,6 +87,14 @@ function renderPlayerLink(player, fallback) {
       {username}
       {player?.role === "bot" ? " (bot)" : ""}
     </Link>
+  )
+}
+
+function renderExternalRulesLink() {
+  return (
+    <a href={RULES_URL} target="_blank" rel="noreferrer noopener" aria-label="Read rules (opens external page)">
+      Read rules ↗
+    </a>
   )
 }
 
@@ -175,7 +184,7 @@ export default function HomePage() {
           <nav className="inline-links" aria-label="Home quick actions">
             <Link to={playNowPath}>{activeGame ? "Resume active game" : "Play now"}</Link>
             <Link to="/lobby">Browse lobby</Link>
-            <Link to="/rules">Read rules</Link>
+            {renderExternalRulesLink()}
           </nav>
 
           <section className="home-card" aria-labelledby="home-stats-heading">
@@ -246,7 +255,7 @@ export default function HomePage() {
           <p>Please login or create an account.</p>
           <nav className="inline-links" aria-label="Home quick actions">
             <Link to={playNowPath}>Play now</Link>
-            <Link to="/rules">Read rules</Link>
+            {renderExternalRulesLink()}
             <Link to="/auth/register">Create account</Link>
           </nav>
         </>
