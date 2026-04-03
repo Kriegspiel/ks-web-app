@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import api, { askAny, createGame, getBots, getGame, getGameState, getMyGames, getOpenGames, joinGame, login, logout, me, register, resignGame, submitMove, userApi } from "../services/api"
+import api, { askAny, createGame, deleteWaitingGame, getBots, getGame, getGameState, getMyGames, getOpenGames, joinGame, login, logout, me, register, resignGame, submitMove, userApi } from "../services/api"
 
 describe("api client", () => {
   it("api_client_uses_relative_base_url", () => { expect(api.defaults.baseURL ?? "").toBe("") })
@@ -20,6 +20,7 @@ describe("game helpers", () => {
   it("create_game_posts_to_api_game_create", async () => { const payload = { rule_variant: "berkeley_any", play_as: "random", time_control: "rapid", opponent_type: "human" }; const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { game_id: "g1" } }); const result = await createGame(payload); expect(postSpy).toHaveBeenCalledWith("/api/game/create", payload); expect(result).toEqual({ game_id: "g1" }) })
   it("bot_and_game_reads_use_expected_endpoints", async () => { const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: { games: [] } }); await getBots(); await getOpenGames(); await getMyGames(); await getGame("g-123"); await getGameState("g-123"); expect(getSpy).toHaveBeenNthCalledWith(1, "/api/bots"); expect(getSpy).toHaveBeenNthCalledWith(2, "/api/game/open"); expect(getSpy).toHaveBeenNthCalledWith(3, "/api/game/mine"); expect(getSpy).toHaveBeenNthCalledWith(4, "/api/game/g-123"); expect(getSpy).toHaveBeenNthCalledWith(5, "/api/game/g-123/state") })
   it("move_ask_any_resign_use_expected_endpoints", async () => { const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { ok: true } }); await submitMove("g-123", "e2e4"); await askAny("g-123"); await resignGame("g-123"); expect(postSpy).toHaveBeenNthCalledWith(1, "/api/game/g-123/move", { uci: "e2e4" }); expect(postSpy).toHaveBeenNthCalledWith(2, "/api/game/g-123/ask-any"); expect(postSpy).toHaveBeenNthCalledWith(3, "/api/game/g-123/resign") })
+  it("delete_waiting_game_uses_expected_endpoint", async () => { const deleteSpy = vi.spyOn(api, "delete").mockResolvedValue({ data: {} }); await deleteWaitingGame("g-123"); expect(deleteSpy).toHaveBeenCalledWith("/api/game/g-123") })
   it("normalizes_nested_game_error_shape", async () => { vi.spyOn(api, "post").mockRejectedValue({ response: { status: 409, data: { error: { code: "GAME_ALREADY_JOINED", message: "You already joined this game." } } } }); await expect(joinGame("ABC123")).rejects.toEqual({ status: 409, code: "GAME_ALREADY_JOINED", message: "You already joined this game." }) })
 })
 

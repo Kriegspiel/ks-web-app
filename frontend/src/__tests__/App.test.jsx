@@ -15,6 +15,7 @@ const mockApi = vi.hoisted(() => ({
   getMyGames: vi.fn(),
   getGame: vi.fn(),
   getGameState: vi.fn(),
+  deleteWaitingGame: vi.fn(),
   submitMove: vi.fn(),
   askAny: vi.fn(),
   resignGame: vi.fn(),
