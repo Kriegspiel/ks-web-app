@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { MemoryRouter } from "react-router-dom"
 import LobbyPage from "../pages/LobbyPage"
 
 const mockNavigate = vi.hoisted(() => vi.fn())
@@ -11,16 +12,24 @@ vi.mock("../services/api", () => mockApi)
 beforeEach(() => { mockNavigate.mockReset(); Object.values(mockApi).forEach((fn) => fn.mockReset()); mockApi.getOpenGames.mockResolvedValue({ games: [] }); mockApi.getMyGames.mockResolvedValue({ games: [] }); mockApi.getGame.mockResolvedValue({ state: "waiting" }); mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201 }, { bot_id: "bot-2", username: "gptnano", display_name: "GPT Nano", description: "Model-driven Kriegspiel bot that chooses moves using GPT nano model.", elo: 1342 }] }) })
 afterEach(() => { cleanup(); vi.useRealTimers() })
 
+function renderPage() {
+  render(
+    <MemoryRouter>
+      <LobbyPage />
+    </MemoryRouter>,
+  )
+}
+
 describe("LobbyPage", () => {
   it("shows_lobby_version_badge", async () => {
-    render(<LobbyPage />)
+    renderPage()
 
-    expect(await screen.findAllByText("v. 1.1.13 / v. 1.0.0")).toHaveLength(1)
+    expect(await screen.findAllByText("v. 1.1.14 / v. 1.0.0")).toHaveLength(1)
 
   })
 
   it("orders_join_sections_as_create_open_join", async () => {
-    render(<LobbyPage />)
+    renderPage()
 
     const headings = await screen.findAllByRole("heading", { level: 2 })
     expect(headings.map((heading) => heading.textContent)).toEqual([
@@ -43,19 +52,40 @@ describe("LobbyPage", () => {
       ],
     })
 
-    render(<LobbyPage />)
+    renderPage()
 
     expect(await screen.findByText(/2026-04-03 23:59:59 UTC/)).toBeInTheDocument()
   })
 
   it("creates_waiting_game_and_shows_join_code", async () => {
     mockApi.createGame.mockResolvedValue({ game_id: "g-1", game_code: "ABCD23", state: "waiting" })
-    render(<LobbyPage />)
+    renderPage()
     fireEvent.change(await screen.findByLabelText("Ruleset"), { target: { value: "berkeley" } })
     fireEvent.click(await screen.findByRole("button", { name: "Create waiting game" }))
     await screen.findByText("Join code:")
     expect(screen.getByText("ABCD23")).toBeInTheDocument()
     expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({ opponent_type: "human", bot_id: undefined, rule_variant: "berkeley" }))
+  })
+
+  it("shows_profile_links_and_bot_labels_in_my_games", async () => {
+    mockApi.getMyGames.mockResolvedValue({
+      games: [
+        {
+          game_id: "g-1",
+          game_code: "M6QNCP",
+          state: "completed",
+          move_number: 16,
+          white: { username: "randobot", role: "bot" },
+          black: { username: "fil", role: "user" },
+        },
+      ],
+    })
+
+    renderPage()
+
+    expect(await screen.findByRole("link", { name: "randobot (bot)" })).toHaveAttribute("href", "/user/randobot")
+    expect(screen.getByRole("link", { name: "fil" })).toHaveAttribute("href", "/user/fil")
+    expect(screen.getByText(/completed · move 16/i)).toBeInTheDocument()
   })
 
   it("shows_bot_picker_and_creates_bot_game", async () => {
