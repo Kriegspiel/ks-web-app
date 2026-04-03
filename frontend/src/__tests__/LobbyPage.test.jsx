@@ -5,12 +5,12 @@ import LobbyPage from "../pages/LobbyPage"
 import { TEST_VERSION_STAMP } from "../version"
 
 const mockNavigate = vi.hoisted(() => vi.fn())
-const mockApi = vi.hoisted(() => ({ createGame: vi.fn(), joinGame: vi.fn(), getOpenGames: vi.fn(), getMyGames: vi.fn(), getGame: vi.fn(), getBots: vi.fn(), getLobbyStats: vi.fn() }))
+const mockApi = vi.hoisted(() => ({ createGame: vi.fn(), deleteWaitingGame: vi.fn(), joinGame: vi.fn(), getOpenGames: vi.fn(), getMyGames: vi.fn(), getGame: vi.fn(), getBots: vi.fn(), getLobbyStats: vi.fn() }))
 vi.mock("react-router-dom", async () => ({ ...(await vi.importActual("react-router-dom")), useNavigate: () => mockNavigate }))
 vi.mock("../hooks/useAuth", () => ({ useAuth: () => ({ user: { username: "fil" }, actionError: "" }) }))
 vi.mock("../services/api", () => mockApi)
 
-beforeEach(() => { mockNavigate.mockReset(); Object.values(mockApi).forEach((fn) => fn.mockReset()); mockApi.getOpenGames.mockResolvedValue({ games: [] }); mockApi.getMyGames.mockResolvedValue({ games: [] }); mockApi.getLobbyStats.mockResolvedValue({ active_games_now: 12, completed_last_hour: 3, completed_last_24_hours: 42, completed_total: 314 }); mockApi.getGame.mockResolvedValue({ state: "waiting" }); mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-2", username: "gptnano", display_name: "GPT Nano", description: "Model-driven Kriegspiel bot that chooses moves using GPT nano model.", elo: 1342, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-3", username: "randobotany", display_name: "Random Any Bot", description: "Asks any pawn captures first, then plays random legal-looking moves.", elo: 1200, supported_rule_variants: ["berkeley_any"] }] }) })
+beforeEach(() => { mockNavigate.mockReset(); Object.values(mockApi).forEach((fn) => fn.mockReset()); mockApi.getOpenGames.mockResolvedValue({ games: [] }); mockApi.getMyGames.mockResolvedValue({ games: [] }); mockApi.getLobbyStats.mockResolvedValue({ active_games_now: 12, completed_last_hour: 3, completed_last_24_hours: 42, completed_total: 314 }); mockApi.getGame.mockResolvedValue({ state: "waiting" }); mockApi.deleteWaitingGame.mockResolvedValue({}); mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-2", username: "gptnano", display_name: "GPT Nano", description: "Model-driven Kriegspiel bot that chooses moves using GPT nano model.", elo: 1342, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-3", username: "randobotany", display_name: "Random Any Bot", description: "Asks any pawn captures first, then plays random legal-looking moves.", elo: 1200, supported_rule_variants: ["berkeley_any"] }] }) })
 afterEach(() => { cleanup(); vi.useRealTimers() })
 
 function renderPage() {
@@ -81,6 +81,18 @@ describe("LobbyPage", () => {
     expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({ opponent_type: "human", bot_id: undefined, rule_variant: "berkeley" }))
   })
 
+  it("closes_the_created_waiting_game", async () => {
+    mockApi.createGame.mockResolvedValue({ game_id: "g-1", game_code: "ABCD23", state: "waiting" })
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create waiting game" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Close" }))
+
+    await waitFor(() => {
+      expect(mockApi.deleteWaitingGame).toHaveBeenCalledWith("g-1")
+    })
+  })
+
   it("shows_profile_links_and_bot_labels_in_my_games", async () => {
     mockApi.getMyGames.mockResolvedValue({
       games: [
@@ -100,6 +112,29 @@ describe("LobbyPage", () => {
     expect(await screen.findByRole("link", { name: "randobot (bot)" })).toHaveAttribute("href", "/user/randobot")
     expect(screen.getByRole("link", { name: "fil" })).toHaveAttribute("href", "/user/fil")
     expect(screen.getByText(/completed · move 16/i)).toBeInTheDocument()
+  })
+
+  it("shows_close_for_waiting_games_in_my_games", async () => {
+    mockApi.getMyGames.mockResolvedValue({
+      games: [
+        {
+          game_id: "g-waiting",
+          game_code: "WAIT01",
+          state: "waiting",
+          move_number: 0,
+          white: { username: "fil", role: "user" },
+          black: null,
+        },
+      ],
+    })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Close" }))
+
+    await waitFor(() => {
+      expect(mockApi.deleteWaitingGame).toHaveBeenCalledWith("g-waiting")
+    })
   })
 
   it("shows_bot_picker_and_creates_bot_game", async () => {

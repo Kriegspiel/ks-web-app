@@ -8,6 +8,7 @@ const mockNavigate = vi.hoisted(() => vi.fn())
 const mockApi = vi.hoisted(() => ({
   getGame: vi.fn(),
   getGameState: vi.fn(),
+  deleteWaitingGame: vi.fn(),
   submitMove: vi.fn(),
   askAny: vi.fn(),
   resignGame: vi.fn(),
@@ -59,6 +60,7 @@ beforeEach(() => {
     created_at: "2026-04-02T12:00:00Z",
   })
   mockApi.getGameState.mockResolvedValue(activeState)
+  mockApi.deleteWaitingGame.mockResolvedValue({})
   mockApi.submitMove.mockResolvedValue({ move_done: true })
   mockApi.askAny.mockResolvedValue({ has_any: false })
   mockApi.resignGame.mockResolvedValue({ result: { winner: "black", reason: "resignation" } })
@@ -216,6 +218,36 @@ describe("GamePage", () => {
     expect(await screen.findByText("Berkeley Any")).toBeInTheDocument()
     expect(screen.getByText("gptnano (bot)")).toBeInTheDocument()
     expect(screen.getByText("1342")).toBeInTheDocument()
+  })
+
+  it("shows_close_for_waiting_games_and_returns_to_lobby", async () => {
+    mockApi.getGame.mockResolvedValueOnce({
+      game_id: "g-123",
+      game_code: "ABC123",
+      rule_variant: "berkeley_any",
+      state: "waiting",
+      opponent_type: "human",
+      white: { username: "fil", role: "user", connected: true },
+      black: null,
+      turn: "white",
+      move_number: 0,
+      created_at: "2026-04-02T12:00:00Z",
+    })
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      state: "waiting",
+      possible_actions: [],
+      move_number: 0,
+    })
+
+    render(<GamePage />)
+
+    fireEvent.click(await screen.findByRole("button", { name: "Close" }))
+
+    await waitFor(() => {
+      expect(mockApi.deleteWaitingGame).toHaveBeenCalledWith("g-123")
+      expect(mockNavigate).toHaveBeenCalledWith("/lobby")
+    })
   })
 
   it("anchors_phantom_menu_to_the_target_square", async () => {

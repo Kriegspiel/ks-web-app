@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
-import { createGame, getBots, getGame, getLobbyStats, getMyGames, getOpenGames, joinGame } from "../services/api"
+import { createGame, deleteWaitingGame, getBots, getGame, getLobbyStats, getMyGames, getOpenGames, joinGame } from "../services/api"
 import { formatUtcDateTime } from "../utils/dateTime"
 import "./Lobby.css"
 
@@ -98,6 +98,7 @@ export default function LobbyPage() {
   const [createResult, setCreateResult] = useState(null)
   const [createError, setCreateError] = useState("")
   const [creatingGame, setCreatingGame] = useState(false)
+  const [closingWaitingGame, setClosingWaitingGame] = useState(false)
   const [waitingGameId, setWaitingGameId] = useState(null)
   const [opponentType, setOpponentType] = useState("human")
   const [ruleVariant, setRuleVariant] = useState("berkeley_any")
@@ -342,6 +343,31 @@ export default function LobbyPage() {
     }
   }
 
+  async function handleCloseWaitingGame(gameId) {
+    if (!gameId) {
+      return
+    }
+
+    setClosingWaitingGame(true)
+    setCreateError("")
+    setJoinError("")
+
+    try {
+      await deleteWaitingGame(gameId)
+      if (waitingGameId === gameId) {
+        setWaitingGameId(null)
+      }
+      if (createResult?.game_id === gameId) {
+        setCreateResult(null)
+      }
+      await Promise.all([refreshOpenGames(), refreshMyGames()])
+    } catch (error) {
+      setCreateError(error?.message ?? "Unable to close this waiting game right now.")
+    } finally {
+      setClosingWaitingGame(false)
+    }
+  }
+
   return (
     <main className="page-shell lobby-page">
       <div className="lobby-page__header">
@@ -419,6 +445,9 @@ export default function LobbyPage() {
             <p><strong>Join code:</strong> <code>{createResult.game_code}</code></p>
             <p><strong>Share link:</strong> <a href={shareJoinUrl}>{shareJoinUrl}</a></p>
             <p><strong>State:</strong> {waitingGameId ? "Waiting for opponent…" : createResult.state}</p>
+            <button type="button" className="game-danger-button" onClick={() => handleCloseWaitingGame(createResult.game_id)} disabled={closingWaitingGame}>
+              {closingWaitingGame ? "Closing…" : "Close"}
+            </button>
           </div>
         ) : null}
       </section>
@@ -509,7 +538,14 @@ export default function LobbyPage() {
                   {game.move_number}
                 </div>
               </div>
-              <button type="button" onClick={() => navigate(`/game/${game.game_id}`)}>Open</button>
+              <div className="lobby-list__actions">
+                <button type="button" onClick={() => navigate(`/game/${game.game_id}`)}>Open</button>
+                {game.state === "waiting" ? (
+                  <button type="button" className="game-danger-button" onClick={() => handleCloseWaitingGame(game.game_id)} disabled={closingWaitingGame}>
+                    {closingWaitingGame ? "Closing…" : "Close"}
+                  </button>
+                ) : null}
+              </div>
             </li>
           ))}
         </ul>

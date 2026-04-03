@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import ChessBoard from "../components/ChessBoard"
 import PromotionModal from "../components/PromotionModal"
 import VersionStamp from "../components/VersionStamp"
 import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
-import { askAny, getGame, getGameState, resignGame, submitMove } from "../services/api"
+import { askAny, deleteWaitingGame, getGame, getGameState, resignGame, submitMove } from "../services/api"
 import { getAllowedMoveTargets, PIECE_ASSETS } from "../components/chessboard"
 import "./GamePage.css"
 
@@ -783,6 +783,7 @@ function getOpponentPhantomPiece(piece, playerColor) {
 }
 
 export default function GamePage() {
+  const navigate = useNavigate()
   const { gameId } = useParams()
 
   const [gameState, setGameState] = useState(null)
@@ -935,6 +936,7 @@ export default function GamePage() {
   const canMove = gameState?.state === "active" && possibleActions.includes("move") && !submittingAction
   const canAskAny = gameState?.state === "active" && possibleActions.includes("ask_any") && !submittingAction
   const canResign = gameState?.state === "active" && !submittingAction
+  const canCloseWaitingGame = gameState?.state === "waiting" && !submittingAction
 
   const selectedMoveBase = useMemo(() => {
     if (!fromSquare || !toSquare) {
@@ -1443,6 +1445,26 @@ export default function GamePage() {
     }
   }
 
+  async function handleCloseWaitingGame() {
+    if (!gameId || !canCloseWaitingGame) {
+      return
+    }
+
+    blurActiveInteractiveElement()
+    setSubmittingAction(true)
+    setActionError("")
+    captureViewport()
+
+    try {
+      await deleteWaitingGame(gameId)
+      navigate("/lobby")
+    } catch (requestError) {
+      setActionError(requestError?.message ?? "Unable to close this waiting game right now.")
+    } finally {
+      setSubmittingAction(false)
+    }
+  }
+
   function handleMenuChoosePiece(piece) {
     if (!phantomMenu?.square) {
       return
@@ -1656,9 +1678,15 @@ export default function GamePage() {
                 </ul>
               </div>
 
-              <button type="button" className="game-danger-button" onClick={handleResign} disabled={!canResign}>
-                Resign
-              </button>
+              {canCloseWaitingGame ? (
+                <button type="button" className="game-danger-button" onClick={handleCloseWaitingGame} disabled={!canCloseWaitingGame}>
+                  Close
+                </button>
+              ) : (
+                <button type="button" className="game-danger-button" onClick={handleResign} disabled={!canResign}>
+                  Resign
+                </button>
+              )}
             </section>
           </div>
 
