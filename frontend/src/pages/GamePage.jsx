@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useParams } from "react-router-dom"
-import packageInfo from "../../package.json"
 import ChessBoard from "../components/ChessBoard"
 import PromotionModal from "../components/PromotionModal"
+import VersionStamp from "../components/VersionStamp"
 import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
 import { askAny, getGame, getGameState, resignGame, submitMove } from "../services/api"
 import { getAllowedMoveTargets, PIECE_ASSETS } from "../components/chessboard"
@@ -10,7 +10,6 @@ import "./GamePage.css"
 
 const POLL_INTERVAL_MS = 500
 const LONG_PRESS_MS = 450
-const APP_VERSION = packageInfo.version
 const PHANTOM_PIECES = ["q", "r", "b", "n", "p", "k"]
 const PHANTOM_LABELS = {
   q: "Queen",
@@ -1488,7 +1487,7 @@ export default function GamePage() {
             onSelect={handlePromotionSelect}
             onCancel={handlePromotionCancel}
           />
-          <p className="page-version">v. {APP_VERSION}</p>
+          <VersionStamp />
         </>
       ) : null}
     </main>

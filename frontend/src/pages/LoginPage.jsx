@@ -1,9 +1,7 @@
 import { useMemo, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import packageInfo from "../../package.json"
+import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
-
-const APP_VERSION = packageInfo.version
 
 function normalizeDestination(fromState) {
   const path = `${fromState?.pathname ?? ""}${fromState?.search ?? ""}${fromState?.hash ?? ""}`
@@ -73,7 +71,7 @@ export default function LoginPage() {
       <p>
         Need an account? <Link to="/auth/register">Register</Link>
       </p>
-      <p className="page-version">v. {APP_VERSION}</p>
+      <VersionStamp />
     </main>
   )
 }
