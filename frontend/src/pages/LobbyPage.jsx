@@ -37,6 +37,20 @@ function normalizeBotDescription(bot) {
   return description
 }
 
+function preferredBotId(bots) {
+  if (!Array.isArray(bots) || bots.length === 0) {
+    return ""
+  }
+
+  const randomBot = bots.find((bot) => {
+    const username = String(bot?.username || "").trim().toLowerCase()
+    const displayName = String(bot?.display_name || "").trim().toLowerCase()
+    return username === "randobot" || displayName === "random bot"
+  })
+
+  return randomBot?.bot_id || bots[0]?.bot_id || ""
+}
+
 function formatDate(isoDate) {
   if (!isoDate) {
     return ""
@@ -115,8 +129,8 @@ export default function LobbyPage() {
       const available = Array.isArray(response?.bots) ? response.bots : []
       setBots(available)
       setBotsError("")
-      if (!selectedBotId && available[0]?.bot_id) {
-        setSelectedBotId(available[0].bot_id)
+      if (!selectedBotId) {
+        setSelectedBotId(preferredBotId(available))
       }
     } catch (error) {
       setBots([])
@@ -317,7 +331,7 @@ export default function LobbyPage() {
                     <select id="bot-picker" value={selectedBotId} onChange={(event) => setSelectedBotId(event.target.value)}>
                       <option value="">Select a bot</option>
                       {bots.map((bot) => (
-                        <option key={bot.bot_id} value={bot.bot_id}>{bot.display_name}</option>
+                        <option key={bot.bot_id} value={bot.bot_id}>{`${bot.display_name} (${bot.elo ?? 1200})`}</option>
                       ))}
                     </select>
                     {selectedBot ? <p className="lobby-meta">{normalizeBotDescription(selectedBot)}</p> : null}

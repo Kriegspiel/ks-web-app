@@ -8,14 +8,14 @@ vi.mock("react-router-dom", async () => ({ ...(await vi.importActual("react-rout
 vi.mock("../hooks/useAuth", () => ({ useAuth: () => ({ user: { username: "fil" }, actionError: "" }) }))
 vi.mock("../services/api", () => mockApi)
 
-beforeEach(() => { mockNavigate.mockReset(); Object.values(mockApi).forEach((fn) => fn.mockReset()); mockApi.getOpenGames.mockResolvedValue({ games: [] }); mockApi.getMyGames.mockResolvedValue({ games: [] }); mockApi.getGame.mockResolvedValue({ state: "waiting" }); mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves" }] }) })
+beforeEach(() => { mockNavigate.mockReset(); Object.values(mockApi).forEach((fn) => fn.mockReset()); mockApi.getOpenGames.mockResolvedValue({ games: [] }); mockApi.getMyGames.mockResolvedValue({ games: [] }); mockApi.getGame.mockResolvedValue({ state: "waiting" }); mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201 }, { bot_id: "bot-2", username: "gptnano", display_name: "GPT Nano", description: "Model-driven Kriegspiel bot that chooses moves using GPT nano model.", elo: 1342 }] }) })
 afterEach(() => { cleanup(); vi.useRealTimers() })
 
 describe("LobbyPage", () => {
   it("shows_lobby_version_badge", async () => {
     render(<LobbyPage />)
 
-    expect(await screen.findAllByText("v. 1.1.2 / v. 1.0.0")).toHaveLength(1)
+    expect(await screen.findAllByText("v. 1.1.3 / v. 1.0.0")).toHaveLength(1)
   })
 
   it("creates_waiting_game_and_shows_join_code", async () => {
@@ -34,7 +34,9 @@ describe("LobbyPage", () => {
     fireEvent.click(await screen.findByLabelText("Bot"))
     expect(await screen.findByLabelText("Bot opponent")).toBeInTheDocument()
     expect(screen.getByText("Plays random legal-looking moves.")).toBeInTheDocument()
-    fireEvent.change(screen.getByLabelText("Bot opponent"), { target: { value: "bot-1" } })
+    expect(screen.getByLabelText("Bot opponent")).toHaveValue("bot-1")
+    expect(screen.getByRole("option", { name: "Random Bot (1201)" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "GPT Nano (1342)" })).toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "Create bot game" }))
     await waitFor(() => expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({ opponent_type: "bot", bot_id: "bot-1" })))
     expect(mockNavigate).toHaveBeenCalledWith("/game/g-bot-1")

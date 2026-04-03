@@ -865,6 +865,19 @@ export default function GamePage() {
     return `${opponent.username}${opponent.role === "bot" ? " (bot)" : ""}`
   }, [gameMeta, gameState?.your_color])
 
+  const opponentRating = useMemo(() => {
+    if (!gameMeta || !gameState?.your_color) {
+      return null
+    }
+
+    const opponent = gameState.your_color === "white" ? gameMeta.black : gameMeta.white
+    if (!opponent) {
+      return null
+    }
+
+    return Number.isFinite(opponent.elo) ? opponent.elo : null
+  }, [gameMeta, gameState?.your_color])
+
   useEffect(() => {
     const logNode = logScrollRef.current
     if (!logNode) {
@@ -1470,6 +1483,7 @@ export default function GamePage() {
                   <li><strong>State:</strong> {gameState.state}</li>
                   <li><strong>Rules:</strong> {formatRuleVariant(gameMeta?.rule_variant)}</li>
                   <li><strong>Against:</strong> {opponentLabel}</li>
+                  <li><strong>Opponent rating:</strong> {opponentRating ?? "—"}</li>
                   <li><strong>Your color:</strong> {gameState.your_color}</li>
                   <li className={canMove ? "game-status-list__turn game-status-list__turn--active" : "game-status-list__turn"}><strong>Turn:</strong> {gameState.turn ?? "—"}</li>
                   <li><strong>Move number:</strong> {gameState.move_number}</li>
