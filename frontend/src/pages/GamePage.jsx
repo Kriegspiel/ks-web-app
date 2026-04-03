@@ -632,7 +632,7 @@ function getPawnMoveKind(uci, color, fen) {
 
 function getLatestAskAnyConstraint(turns, playerColor) {
   if (!Array.isArray(turns) || !playerColor) {
-    return ""
+    return { type: "", turn: null }
   }
 
   const sideKey = playerColor === "black" ? "black" : "white"
@@ -645,15 +645,15 @@ function getLatestAskAnyConstraint(turns, playerColor) {
       }
       const messages = Array.isArray(entry.messages) ? entry.messages : []
       if (messages.includes("Has pawn captures")) {
-        return "has_any"
+        return { type: "has_any", turn: Number.isFinite(turns[turnIndex]?.turn) ? turns[turnIndex].turn : null }
       }
       if (messages.includes("No pawn captures")) {
-        return "no_any"
+        return { type: "no_any", turn: Number.isFinite(turns[turnIndex]?.turn) ? turns[turnIndex].turn : null }
       }
     }
   }
 
-  return ""
+  return { type: "", turn: null }
 }
 
 function filterAllowedMovesByAskAny(allowedMoves, { askAnyConstraint, color, fen }) {
@@ -959,10 +959,17 @@ export default function GamePage() {
 
   const highlightedSquares = [fromSquare, toSquare, movingPhantomFrom, dragHoverSquare, draggingMoveFrom, moveDragHoverSquare].filter(Boolean)
   const groupedRefereeLog = useMemo(() => buildVisibleRefereeLog(gameState), [gameState])
-  const askAnyConstraint = useMemo(
+  const latestAskAnyConstraint = useMemo(
     () => getLatestAskAnyConstraint(groupedRefereeLog, gameState?.your_color),
     [groupedRefereeLog, gameState?.your_color]
   )
+  const askAnyConstraint = useMemo(() => {
+    const currentTurn = Number.parseInt(gameState?.move_number, 10)
+    if (!Number.isFinite(currentTurn) || latestAskAnyConstraint.turn !== currentTurn) {
+      return ""
+    }
+    return latestAskAnyConstraint.type
+  }, [gameState?.move_number, latestAskAnyConstraint])
   const effectiveAllowedMoves = useMemo(
     () => filterAllowedMovesByAskAny(gameState?.allowed_moves, { askAnyConstraint, color: gameState?.your_color, fen: gameState?.your_fen }),
     [askAnyConstraint, gameState?.allowed_moves, gameState?.your_color, gameState?.your_fen]
