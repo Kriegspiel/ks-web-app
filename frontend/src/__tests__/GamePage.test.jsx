@@ -72,7 +72,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByText(/Game ID:/i)
-    expect(screen.getByText("v. 1.1.5 / v. 1.0.0")).toBeInTheDocument()
+    expect(screen.getByText("v. 1.1.6 / v. 1.0.0")).toBeInTheDocument()
     expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
 
     await sleep(650)
@@ -609,6 +609,72 @@ describe("GamePage", () => {
 
     expect(screen.getByRole("button", { name: "Square e4" })).not.toHaveClass("square--highlighted")
     expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--suggested")
+  })
+
+  it("reduces_a_hidden_midfield_pawn_to_only_non_capture_moves_after_no_any", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      your_fen: "8/8/8/8/8/8/8/4K3",
+      allowed_moves: ["e4d5", "e4e5", "e4f5"],
+    })
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e4" })
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+
+    expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
+
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      your_fen: "8/8/8/8/8/8/8/4K3",
+      allowed_moves: ["e4e5"],
+      referee_log: [{ turn: 1, color: "white", announcement: "No pawn captures" }],
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "Any pawn captures?" }))
+
+    await waitFor(() => expect(mockApi.getGameState).toHaveBeenCalledTimes(2))
+
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+    expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square f5" })).not.toHaveClass("square--suggested")
+  })
+
+  it("reduces_a_hidden_midfield_pawn_to_only_capture_moves_after_has_any", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      your_fen: "8/8/8/8/8/8/8/4K3",
+      allowed_moves: ["e4d5", "e4e5", "e4f5"],
+    })
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e4" })
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+
+    expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
+
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      your_fen: "8/8/8/8/8/8/8/4K3",
+      allowed_moves: ["e4d5", "e4f5"],
+      referee_log: [{ turn: 1, color: "white", announcement: "Has pawn captures" }],
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "Any pawn captures?" }))
+
+    await waitFor(() => expect(mockApi.getGameState).toHaveBeenCalledTimes(2))
+
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+    expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square e5" })).not.toHaveClass("square--suggested")
   })
 
   it("disables_ask_any_when_not_allowed", async () => {

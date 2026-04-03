@@ -702,6 +702,7 @@ export default function GamePage() {
   const suppressContextMenuRef = useRef(false)
   const logScrollRef = useRef(null)
   const viewportRestoreRef = useRef(null)
+  const stateRequestIdRef = useRef(0)
 
   const captureViewport = useCallback(() => {
     viewportRestoreRef.current = { x: window.scrollX, y: window.scrollY }
@@ -724,6 +725,9 @@ export default function GamePage() {
       return
     }
 
+    const requestId = stateRequestIdRef.current + 1
+    stateRequestIdRef.current = requestId
+
     if (preserveViewport) {
       captureViewport()
     }
@@ -734,12 +738,18 @@ export default function GamePage() {
 
     try {
       const state = await getGameState(gameId)
+      if (requestId !== stateRequestIdRef.current) {
+        return
+      }
       setGameState(state)
       setError("")
     } catch (requestError) {
+      if (requestId !== stateRequestIdRef.current) {
+        return
+      }
       setError(requestError?.message ?? "Unable to load this game right now.")
     } finally {
-      if (!silent) {
+      if (!silent && requestId === stateRequestIdRef.current) {
         setLoading(false)
       }
     }
