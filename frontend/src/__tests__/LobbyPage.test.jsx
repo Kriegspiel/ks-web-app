@@ -46,7 +46,7 @@ describe("LobbyPage", () => {
     renderPage()
 
     expect(await screen.findByRole("heading", { name: "Lobby stats" })).toBeInTheDocument()
-    expect(screen.getByText("12")).toBeInTheDocument()
+    expect(await screen.findByText("12")).toBeInTheDocument()
     expect(screen.getByText("Active games now")).toBeInTheDocument()
     expect(screen.getByText("Completed last hour")).toBeInTheDocument()
     expect(screen.getByText("Completed last 24 hours")).toBeInTheDocument()
@@ -69,6 +69,28 @@ describe("LobbyPage", () => {
 
     expect(await screen.findByRole("link", { name: "randobot (bot)" })).toHaveAttribute("href", "/user/randobot")
     expect(await screen.findByText(/2026-04-03 23:59:59 UTC/)).toBeInTheDocument()
+  })
+
+  it("shows_close_for_my_open_waiting_game", async () => {
+    mockApi.getOpenGames.mockResolvedValue({
+      games: [
+        {
+          game_id: "g-open-own",
+          game_code: "OWN123",
+          created_by: "fil",
+          available_color: "white",
+          created_at: "2026-04-03T23:59:59Z",
+        },
+      ],
+    })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Close" }))
+
+    await waitFor(() => {
+      expect(mockApi.deleteWaitingGame).toHaveBeenCalledWith("g-open-own")
+    })
   })
 
   it("creates_waiting_game_and_shows_join_code", async () => {
