@@ -72,7 +72,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByText(/Game ID:/i)
-    expect(screen.getByText("v. 1.1.14 / v. 1.0.0")).toBeInTheDocument()
+    expect(screen.getByText("v. 1.1.15 / v. 1.0.0")).toBeInTheDocument()
     expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
 
     await sleep(650)
