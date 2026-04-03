@@ -173,7 +173,7 @@ button.theme-toggle:active {
 .page-shell {
   width: min(calc(100% - (var(--page-gutter) * 2)), var(--page-width));
   margin: 0 auto;
-  padding: 2.5rem 0 4rem;
+  padding: 2.5rem 0 0;
   position: relative;
 }
 
