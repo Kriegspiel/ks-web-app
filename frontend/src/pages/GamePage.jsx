@@ -575,6 +575,107 @@ function getAllowedMoveSources(allowedMoves) {
   return [...new Set(sources)]
 }
 
+function squareRankNumber(square) {
+  const rank = Number.parseInt(String(square || "")[1], 10)
+  return Number.isFinite(rank) ? rank : null
+}
+
+function squareFileNumber(square) {
+  const file = String(square || "")[0]
+  const fileNumber = file.charCodeAt(0) - 97
+  return fileNumber >= 0 && fileNumber < 8 ? fileNumber : null
+}
+
+function getPawnMoveKind(uci, color, fen) {
+  if (typeof uci !== "string" || !/^[a-h][1-8][a-h][1-8][qrbn]?$/i.test(uci.trim())) {
+    return ""
+  }
+
+  const normalized = uci.trim().toLowerCase()
+  const fromSquare = normalized.slice(0, 2)
+  const toSquare = normalized.slice(2, 4)
+  const fromPiece = pieceAtSquare(fen, fromSquare)
+  if (fromPiece) {
+    const isPawn = color === "white" ? fromPiece === "P" : fromPiece === "p"
+    if (!isPawn) {
+      return ""
+    }
+  }
+
+  const fromRank = squareRankNumber(fromSquare)
+  const toRank = squareRankNumber(toSquare)
+  const fromFile = squareFileNumber(fromSquare)
+  const toFile = squareFileNumber(toSquare)
+  if (fromRank == null || toRank == null || fromFile == null || toFile == null) {
+    return ""
+  }
+
+  const fileDelta = toFile - fromFile
+  const rankDelta = toRank - fromRank
+  const forward = color === "black" ? -1 : 1
+  const startRank = color === "black" ? 7 : 2
+
+  if (Math.abs(fileDelta) === 1 && rankDelta === forward) {
+    return "capture"
+  }
+
+  if (fileDelta === 0 && rankDelta === forward) {
+    return "advance"
+  }
+
+  if (fileDelta === 0 && fromRank === startRank && rankDelta === forward * 2) {
+    return "advance"
+  }
+
+  return ""
+}
+
+function getLatestAskAnyConstraint(turns, playerColor) {
+  if (!Array.isArray(turns) || !playerColor) {
+    return ""
+  }
+
+  const sideKey = playerColor === "black" ? "black" : "white"
+  for (let turnIndex = turns.length - 1; turnIndex >= 0; turnIndex -= 1) {
+    const sideEntries = Array.isArray(turns[turnIndex]?.[sideKey]) ? turns[turnIndex][sideKey] : []
+    for (let entryIndex = sideEntries.length - 1; entryIndex >= 0; entryIndex -= 1) {
+      const entry = sideEntries[entryIndex]
+      if (entry?.prompt !== "Ask any pawn captures") {
+        continue
+      }
+      const messages = Array.isArray(entry.messages) ? entry.messages : []
+      if (messages.includes("Has pawn captures")) {
+        return "has_any"
+      }
+      if (messages.includes("No pawn captures")) {
+        return "no_any"
+      }
+    }
+  }
+
+  return ""
+}
+
+function filterAllowedMovesByAskAny(allowedMoves, { askAnyConstraint, color, fen }) {
+  if (!Array.isArray(allowedMoves) || !askAnyConstraint || !color) {
+    return Array.isArray(allowedMoves) ? allowedMoves : []
+  }
+
+  return allowedMoves.filter((uci) => {
+    const pawnMoveKind = getPawnMoveKind(uci, color, fen)
+    if (!pawnMoveKind) {
+      return askAnyConstraint !== "has_any"
+    }
+    if (askAnyConstraint === "has_any") {
+      return pawnMoveKind === "capture"
+    }
+    if (askAnyConstraint === "no_any") {
+      return pawnMoveKind !== "capture"
+    }
+    return true
+  })
+}
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max)
 }
@@ -857,18 +958,26 @@ export default function GamePage() {
   }, [pendingPromotion, selectedMoveBase])
 
   const highlightedSquares = [fromSquare, toSquare, movingPhantomFrom, dragHoverSquare, draggingMoveFrom, moveDragHoverSquare].filter(Boolean)
+  const groupedRefereeLog = useMemo(() => buildVisibleRefereeLog(gameState), [gameState])
+  const askAnyConstraint = useMemo(
+    () => getLatestAskAnyConstraint(groupedRefereeLog, gameState?.your_color),
+    [groupedRefereeLog, gameState?.your_color]
+  )
+  const effectiveAllowedMoves = useMemo(
+    () => filterAllowedMovesByAskAny(gameState?.allowed_moves, { askAnyConstraint, color: gameState?.your_color, fen: gameState?.your_fen }),
+    [askAnyConstraint, gameState?.allowed_moves, gameState?.your_color, gameState?.your_fen]
+  )
   const moveSuggestionSquares = useMemo(() => {
     const activeSourceSquare = draggingMoveFrom || fromSquare
     if (!activeSourceSquare) {
       return []
     }
 
-    return getAllowedMoveTargets(gameState?.allowed_moves, activeSourceSquare)
-  }, [draggingMoveFrom, fromSquare, gameState?.allowed_moves])
-  const allowedMoveSourceSquares = useMemo(() => getAllowedMoveSources(gameState?.allowed_moves), [gameState?.allowed_moves])
+    return getAllowedMoveTargets(effectiveAllowedMoves, activeSourceSquare)
+  }, [draggingMoveFrom, effectiveAllowedMoves, fromSquare])
+  const allowedMoveSourceSquares = useMemo(() => getAllowedMoveSources(effectiveAllowedMoves), [effectiveAllowedMoves])
   const waitingForOpponent = gameState?.state === "active" && !possibleActions.includes("move")
   const activeClockColor = gameState?.clock?.active_color ?? gameState?.turn
-  const groupedRefereeLog = useMemo(() => buildVisibleRefereeLog(gameState), [gameState])
   const opponentLabel = useMemo(() => {
     if (!gameMeta || !gameState?.your_color) {
       return "—"
