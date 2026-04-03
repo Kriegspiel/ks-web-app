@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import GamePage from "../pages/GamePage"
+import { TEST_VERSION_STAMP } from "../version"
 
 const mockNavigate = vi.hoisted(() => vi.fn())
 
@@ -72,7 +73,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByText(/Game ID:/i)
-    expect(screen.getByText("v. 1.1.17 / v. 1.0.0")).toBeInTheDocument()
+    expect(screen.getByText(TEST_VERSION_STAMP)).toBeInTheDocument()
     expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
 
     await sleep(650)

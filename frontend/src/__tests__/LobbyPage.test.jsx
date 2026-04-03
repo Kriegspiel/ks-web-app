@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import LobbyPage from "../pages/LobbyPage"
+import { TEST_VERSION_STAMP } from "../version"
 
 const mockNavigate = vi.hoisted(() => vi.fn())
 const mockApi = vi.hoisted(() => ({ createGame: vi.fn(), joinGame: vi.fn(), getOpenGames: vi.fn(), getMyGames: vi.fn(), getGame: vi.fn(), getBots: vi.fn() }))
@@ -24,7 +25,7 @@ describe("LobbyPage", () => {
   it("shows_lobby_version_badge", async () => {
     renderPage()
 
-    expect(await screen.findAllByText("v. 1.1.17 / v. 1.0.0")).toHaveLength(1)
+    expect(await screen.findAllByText(TEST_VERSION_STAMP)).toHaveLength(1)
 
   })
 

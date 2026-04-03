@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import HomePage from "../pages/HomePage"
+import { TEST_VERSION_STAMP } from "../version"
 
 const mockAuth = vi.hoisted(() => ({
   isAuthenticated: false,
@@ -49,7 +50,7 @@ describe("HomePage", () => {
 
     expect(screen.getByRole("link", { name: "Play now" })).toHaveAttribute("href", "/auth/login")
     expect(screen.getByRole("link", { name: "Read rules" })).toHaveAttribute("href", "/rules")
-    expect(screen.getByText("v. 1.1.17 / v. 1.0.0")).toBeInTheDocument()
+    expect(screen.getByText(TEST_VERSION_STAMP)).toBeInTheDocument()
   })
 
   it("routes_authenticated_play_now_to_lobby_when_no_active_game", async () => {
