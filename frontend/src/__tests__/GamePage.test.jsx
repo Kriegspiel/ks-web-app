@@ -72,7 +72,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByText(/Game ID:/i)
-    expect(screen.getByText("v. 1.1.4 / v. 1.0.0")).toBeInTheDocument()
+    expect(screen.getByText("v. 1.1.5 / v. 1.0.0")).toBeInTheDocument()
     expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
 
     await sleep(650)
@@ -131,6 +131,23 @@ describe("GamePage", () => {
     expect(e5.querySelector(".square__move-dot")).toBeTruthy()
   })
 
+  it("allows_selecting_a_backend_legal_source_square_even_when_the_piece_is_not_visible", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      your_fen: "8/8/8/8/8/8/8/4K3",
+      allowed_moves: ["e4d5", "e4f5"],
+    })
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e4" })
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+
+    expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--highlighted")
+    expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
+  })
+
   it("highlights_illegal_move_squares_in_red", async () => {
     mockApi.submitMove.mockResolvedValueOnce({ move_done: false })
 
@@ -153,6 +170,7 @@ describe("GamePage", () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
       your_fen: "8/P7/8/8/8/8/8/8",
+      allowed_moves: ["a7a8q", "a7a8r", "a7a8b", "a7a8n"],
     })
 
     render(<GamePage />)
@@ -561,6 +579,36 @@ describe("GamePage", () => {
       expect(mockApi.askAny).toHaveBeenCalledWith("g-123")
       expect(mockApi.getGameState).toHaveBeenCalledTimes(2)
     })
+  })
+
+  it("clears_stale_move_highlights_after_ask_any_repolls_the_legal_moves", async () => {
+    mockApi.getGameState
+      .mockResolvedValueOnce({
+        ...activeState,
+        your_fen: "8/8/8/8/8/8/8/4K3",
+        allowed_moves: ["e4d5"],
+      })
+      .mockResolvedValueOnce({
+        ...activeState,
+        your_fen: "8/8/8/8/8/8/8/4K3",
+        allowed_moves: ["a2a3"],
+      })
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e4" })
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+    expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
+
+    fireEvent.click(screen.getByRole("button", { name: "Any pawn captures?" }))
+
+    await waitFor(() => {
+      expect(mockApi.askAny).toHaveBeenCalledWith("g-123")
+      expect(mockApi.getGameState).toHaveBeenCalledTimes(2)
+    })
+
+    expect(screen.getByRole("button", { name: "Square e4" })).not.toHaveClass("square--highlighted")
+    expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--suggested")
   })
 
   it("disables_ask_any_when_not_allowed", async () => {
