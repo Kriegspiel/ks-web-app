@@ -347,6 +347,23 @@ export default function LobbyPage() {
         ) : null}
       </section>
 
+      <section className="lobby-card" aria-labelledby="open-games-heading">
+        <h2 id="open-games-heading">Open games</h2>
+        {openGamesError ? <p role="alert">{openGamesError}</p> : null}
+        {openGamesLoading ? <p>Loading…</p> : null}
+        <ul className="lobby-list">
+          {openGames.map((game) => (
+            <li key={game.game_code}>
+              <div>
+                <strong>{game.game_code}</strong>
+                <div className="lobby-meta">{game.created_by} · {game.available_color} · {formatUtcDateTime(game.created_at)}</div>
+              </div>
+              <button type="button" onClick={() => handleJoinOpenGame(game.game_code)}>Join</button>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <section className="lobby-card" aria-labelledby="join-game-heading">
         <h2 id="join-game-heading">Join by code</h2>
         <form onSubmit={handleJoinByCode} className="lobby-join-form">
@@ -363,23 +380,6 @@ export default function LobbyPage() {
           <button type="submit" disabled={joiningGame}>{joiningGame ? "Joining…" : "Join game"}</button>
         </form>
         {joinError ? <p className="auth-error" role="alert">{joinError}</p> : null}
-      </section>
-
-      <section className="lobby-card">
-        <h2>Open games</h2>
-        {openGamesError ? <p role="alert">{openGamesError}</p> : null}
-        {openGamesLoading ? <p>Loading…</p> : null}
-        <ul className="lobby-list">
-          {openGames.map((game) => (
-            <li key={game.game_code}>
-              <div>
-                <strong>{game.game_code}</strong>
-                <div className="lobby-meta">{game.created_by} · {game.available_color} · {formatUtcDateTime(game.created_at)}</div>
-              </div>
-              <button type="button" onClick={() => handleJoinOpenGame(game.game_code)}>Join</button>
-            </li>
-          ))}
-        </ul>
       </section>
 
       <section className="lobby-card">
