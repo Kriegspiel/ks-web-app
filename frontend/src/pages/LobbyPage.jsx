@@ -14,6 +14,30 @@ const RULESET_OPTIONS = [
   { value: "berkeley_any", label: "Berkeley + Any" },
 ]
 
+function normalizeBotDescription(bot) {
+  if (!bot || typeof bot !== "object") {
+    return ""
+  }
+
+  const username = String(bot.username || "").trim().toLowerCase()
+  const displayName = String(bot.display_name || "").trim().toLowerCase()
+  const description = String(bot.description || "").trim()
+
+  if (username === "gptnano" || displayName === "gpt nano") {
+    return "Model-driven Kriegspiel bot that chooses moves using GPT nano model."
+  }
+
+  if (
+    username === "randobot" ||
+    displayName === "random bot" ||
+    description === "Plays random legal-looking moves"
+  ) {
+    return "Plays random legal-looking moves."
+  }
+
+  return description
+}
+
 function formatDate(isoDate) {
   if (!isoDate) {
     return ""
@@ -297,7 +321,7 @@ export default function LobbyPage() {
                         <option key={bot.bot_id} value={bot.bot_id}>{bot.display_name}</option>
                       ))}
                     </select>
-                    {selectedBot ? <p className="lobby-meta">{selectedBot.description}</p> : null}
+                    {selectedBot ? <p className="lobby-meta">{normalizeBotDescription(selectedBot)}</p> : null}
                     {botsError ? <p className="auth-error" role="alert">{botsError}</p> : null}
                   </div>
                 ) : null}

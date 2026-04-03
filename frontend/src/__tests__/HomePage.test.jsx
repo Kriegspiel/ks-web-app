@@ -44,7 +44,7 @@ describe("HomePage", () => {
 
     expect(screen.getByRole("link", { name: "Play now" })).toHaveAttribute("href", "/auth/login")
     expect(screen.getByRole("link", { name: "Read rules" })).toHaveAttribute("href", "/rules")
-    expect(screen.getByText("v. 1.0.13")).toBeInTheDocument()
+    expect(screen.getByText("v. 1.0.14")).toBeInTheDocument()
   })
 
   it("routes_authenticated_play_now_to_lobby_when_no_active_game", async () => {
