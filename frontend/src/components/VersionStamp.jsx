@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react"
-import packageInfo from "../../package.json"
 import api from "../services/api"
-
-const FRONTEND_VERSION = packageInfo.version
-const BACKEND_VERSION_FALLBACK = "1.0.0"
+import { BACKEND_VERSION_FALLBACK, FRONTEND_VERSION } from "../version"
 
 export default function VersionStamp({ className = "page-version" }) {
   const [backendVersion, setBackendVersion] = useState(BACKEND_VERSION_FALLBACK)

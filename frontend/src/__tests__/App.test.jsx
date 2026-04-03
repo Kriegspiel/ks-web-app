@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import { AppProviders, AppRoutes } from "../App"
+import { TEST_VERSION_STAMP } from "../version"
 
 const mockApi = vi.hoisted(() => ({
   me: vi.fn(),
@@ -69,7 +70,7 @@ describe("App routes", () => {
     renderRoute("/auth/login")
 
     await screen.findByRole("heading", { name: "Login" })
-    expect(screen.getByText("v. 1.1.17 / v. 1.0.0")).toBeInTheDocument()
+    expect(screen.getByText(TEST_VERSION_STAMP)).toBeInTheDocument()
     expect(screen.getAllByRole("link", { name: "Login" }).length).toBeGreaterThan(0)
     expect(screen.getAllByRole("link", { name: "Register" }).length).toBeGreaterThan(0)
   })
@@ -97,7 +98,7 @@ describe("App routes", () => {
 
     renderRoute("/auth/register")
 
-    expect(await screen.findByText("v. 1.1.17 / v. 1.0.0")).toBeInTheDocument()
+    expect(await screen.findByText(TEST_VERSION_STAMP)).toBeInTheDocument()
     fireEvent.click(await screen.findByRole("button", { name: "Register" }))
     await screen.findByText("Username is required.")
     expect(mockApi.register).not.toHaveBeenCalled()
