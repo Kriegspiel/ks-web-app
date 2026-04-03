@@ -24,7 +24,7 @@ describe("LobbyPage", () => {
   it("shows_lobby_version_badge", async () => {
     renderPage()
 
-    expect(await screen.findAllByText("v. 1.1.14 / v. 1.0.0")).toHaveLength(1)
+    expect(await screen.findAllByText("v. 1.1.15 / v. 1.0.0")).toHaveLength(1)
 
   })
 
@@ -45,7 +45,7 @@ describe("LobbyPage", () => {
       games: [
         {
           game_code: "ABCD23",
-          created_by: "fil",
+          created_by: "randobot",
           available_color: "black",
           created_at: "2026-04-03T23:59:59Z",
         },
@@ -54,6 +54,7 @@ describe("LobbyPage", () => {
 
     renderPage()
 
+    expect(await screen.findByRole("link", { name: "randobot (bot)" })).toHaveAttribute("href", "/user/randobot")
     expect(await screen.findByText(/2026-04-03 23:59:59 UTC/)).toBeInTheDocument()
   })
 
@@ -90,7 +91,7 @@ describe("LobbyPage", () => {
 
   it("shows_bot_picker_and_creates_bot_game", async () => {
     mockApi.createGame.mockResolvedValue({ game_id: "g-bot-1", game_code: "BOT123", state: "active", opponent_type: "bot", bot: { bot_id: "bot-1", username: "randobot" } })
-    render(<LobbyPage />)
+    renderPage()
     fireEvent.click(await screen.findByLabelText("Bot"))
     expect(await screen.findByLabelText("Bot opponent")).toBeInTheDocument()
     expect(screen.getByText("Plays random legal-looking moves.")).toBeInTheDocument()

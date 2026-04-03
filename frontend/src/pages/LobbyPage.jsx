@@ -66,6 +66,23 @@ function renderPlayerLink(player, fallback) {
   )
 }
 
+function renderCreatorLink(game) {
+  const username = String(game?.created_by || "").trim()
+  if (!username) {
+    return "Unknown"
+  }
+
+  const normalizedBotUsernames = new Set(["randobot", "gptnano"])
+  const isBot = game?.created_by_role === "bot" || normalizedBotUsernames.has(username.toLowerCase())
+
+  return (
+    <Link to={`/user/${username}`}>
+      {username}
+      {isBot ? " (bot)" : ""}
+    </Link>
+  )
+}
+
 export default function LobbyPage() {
   const navigate = useNavigate()
   const { user, actionError } = useAuth()
@@ -370,7 +387,13 @@ export default function LobbyPage() {
             <li key={game.game_code}>
               <div>
                 <strong>{game.game_code}</strong>
-                <div className="lobby-meta">{game.created_by} · {game.available_color} · {formatUtcDateTime(game.created_at)}</div>
+                <div className="lobby-meta">
+                  {renderCreatorLink(game)}
+                  {" · "}
+                  {game.available_color}
+                  {" · "}
+                  {formatUtcDateTime(game.created_at)}
+                </div>
               </div>
               <button type="button" onClick={() => handleJoinOpenGame(game.game_code)}>Join</button>
             </li>
