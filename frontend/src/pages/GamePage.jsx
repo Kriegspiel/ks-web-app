@@ -640,9 +640,6 @@ function getLatestAskAnyConstraint(turns, playerColor) {
     const sideEntries = Array.isArray(turns[turnIndex]?.[sideKey]) ? turns[turnIndex][sideKey] : []
     for (let entryIndex = sideEntries.length - 1; entryIndex >= 0; entryIndex -= 1) {
       const entry = sideEntries[entryIndex]
-      if (entry?.prompt !== "Ask any pawn captures") {
-        continue
-      }
       const messages = Array.isArray(entry.messages) ? entry.messages : []
       if (messages.includes("Has pawn captures")) {
         return { type: "has_any", turn: Number.isFinite(turns[turnIndex]?.turn) ? turns[turnIndex].turn : null }
