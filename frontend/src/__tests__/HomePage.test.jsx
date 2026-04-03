@@ -49,7 +49,7 @@ describe("HomePage", () => {
 
     expect(screen.getByRole("link", { name: "Play now" })).toHaveAttribute("href", "/auth/login")
     expect(screen.getByRole("link", { name: "Read rules" })).toHaveAttribute("href", "/rules")
-    expect(screen.getByText("v. 1.1.13 / v. 1.0.0")).toBeInTheDocument()
+    expect(screen.getByText("v. 1.1.14 / v. 1.0.0")).toBeInTheDocument()
   })
 
   it("routes_authenticated_play_now_to_lobby_when_no_active_game", async () => {
@@ -75,8 +75,22 @@ describe("HomePage", () => {
     mockAuth.user = { username: "fil", stats: { elo: 1345, elo_peak: 1402, games_played: 12, games_won: 7, games_lost: 3, games_drawn: 2 } }
     mockApi.getMyGames.mockResolvedValue({
       games: [
-        { game_id: "game-1", game_code: "ABCD12", state: "active", updated_at: "2026-03-26T15:00:00Z" },
-        { game_id: "game-2", game_code: "EFGH34", state: "completed", updated_at: "2026-03-25T15:00:00Z" },
+        {
+          game_id: "game-1",
+          game_code: "ABCD12",
+          state: "active",
+          updated_at: "2026-03-26T15:00:00Z",
+          white: { username: "randobot", role: "bot" },
+          black: { username: "fil", role: "user" },
+        },
+        {
+          game_id: "game-2",
+          game_code: "EFGH34",
+          state: "completed",
+          updated_at: "2026-03-25T15:00:00Z",
+          white: { username: "fil", role: "user" },
+          black: { username: "amy", role: "user" },
+        },
       ],
     })
     mockApi.userApi.getGameHistory.mockResolvedValue({
@@ -93,6 +107,8 @@ describe("HomePage", () => {
     expect(screen.getByRole("link", { name: "Resume active game" })).toHaveAttribute("href", "/game/game-1")
     expect(screen.getByText("ABCD12")).toBeInTheDocument()
     expect(screen.getByText("Active")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "randobot (bot)" })).toHaveAttribute("href", "/user/randobot")
+    expect(screen.getAllByRole("link", { name: "fil" })[0]).toHaveAttribute("href", "/user/fil")
     expect(screen.getByText(/2026-03-26 15:00:00 UTC/)).toBeInTheDocument()
     expect(screen.getByRole("img", { name: "Elo rating over time" })).toBeInTheDocument()
     expect(screen.getByText("Latest 1345")).toBeInTheDocument()

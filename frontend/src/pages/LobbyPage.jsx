@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import { createGame, getBots, getGame, getMyGames, getOpenGames, joinGame } from "../services/api"
@@ -50,6 +50,20 @@ function preferredBotId(bots) {
   })
 
   return randomBot?.bot_id || bots[0]?.bot_id || ""
+}
+
+function renderPlayerLink(player, fallback) {
+  const username = String(player?.username || "").trim()
+  if (!username) {
+    return fallback
+  }
+
+  return (
+    <Link to={`/user/${username}`}>
+      {username}
+      {player?.role === "bot" ? " (bot)" : ""}
+    </Link>
+  )
 }
 
 export default function LobbyPage() {
@@ -391,7 +405,15 @@ export default function LobbyPage() {
             <li key={game.game_id}>
               <div>
                 <strong>{game.game_code}</strong>
-                <div className="lobby-meta">{game.white?.username} vs {game.black?.username ?? "Waiting…"} · {game.state} · move {game.move_number}</div>
+                <div className="lobby-meta">
+                  {renderPlayerLink(game.white, "Waiting…")}
+                  {" vs "}
+                  {renderPlayerLink(game.black, "Waiting…")}
+                  {" · "}
+                  {game.state}
+                  {" · move "}
+                  {game.move_number}
+                </div>
               </div>
               <button type="button" onClick={() => navigate(`/game/${game.game_id}`)}>Open</button>
             </li>

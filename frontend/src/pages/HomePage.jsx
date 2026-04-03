@@ -75,6 +75,20 @@ function getActiveGame(games) {
   return games.find((game) => ACTIVE_STATES.has(String(game?.state ?? "").toLowerCase())) ?? null
 }
 
+function renderPlayerLink(player, fallback) {
+  const username = String(player?.username || "").trim()
+  if (!username) {
+    return fallback
+  }
+
+  return (
+    <Link to={`/user/${username}`}>
+      {username}
+      {player?.role === "bot" ? " (bot)" : ""}
+    </Link>
+  )
+}
+
 export default function HomePage() {
   const { isAuthenticated, user } = useAuth()
   const [myGames, setMyGames] = useState([])
@@ -212,6 +226,11 @@ export default function HomePage() {
                       <div>
                         <strong>{game.game_code ?? game.game_id}</strong> · {game.state}
                         {isActive ? <span className="status-pill">Active</span> : null}
+                        <div className="lobby-meta">
+                          {renderPlayerLink(game.white, "Waiting…")}
+                          {" vs "}
+                          {renderPlayerLink(game.black, "Waiting…")}
+                        </div>
                         <div className="lobby-meta">Updated {formatUpdatedAt(game.updated_at ?? game.created_at)}</div>
                       </div>
                       <Link to={`/game/${game.game_id}`}>Open</Link>
