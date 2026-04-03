@@ -2,9 +2,55 @@ import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
-import { getMyGames } from "../services/api"
+import { getMyGames, userApi } from "../services/api"
 
 const ACTIVE_STATES = new Set(["active"])
+
+function statOrZero(value) {
+  return Number.isFinite(Number(value)) ? Number(value) : 0
+}
+
+function buildEloSeries(historyGames) {
+  if (!Array.isArray(historyGames)) {
+    return []
+  }
+
+  return [...historyGames]
+    .filter((game) => Number.isFinite(Number(game?.elo_after)))
+    .sort((left, right) => Date.parse(left?.played_at ?? "") - Date.parse(right?.played_at ?? ""))
+    .map((game, index) => ({
+      index,
+      label: game?.played_at ? new Date(game.played_at).toLocaleDateString() : `Game ${index + 1}`,
+      elo: Number(game.elo_after),
+      delta: Number(game?.elo_delta ?? 0),
+    }))
+}
+
+function buildChartPoints(points) {
+  if (!Array.isArray(points) || points.length === 0) {
+    return { polyline: "", circles: [] }
+  }
+
+  const width = 320
+  const height = 112
+  const paddingX = 12
+  const paddingY = 12
+  const minElo = Math.min(...points.map((point) => point.elo))
+  const maxElo = Math.max(...points.map((point) => point.elo))
+  const eloRange = Math.max(1, maxElo - minElo)
+  const xStep = points.length === 1 ? 0 : (width - paddingX * 2) / (points.length - 1)
+
+  const circles = points.map((point, index) => {
+    const x = paddingX + (xStep * index)
+    const y = height - paddingY - (((point.elo - minElo) / eloRange) * (height - paddingY * 2))
+    return { ...point, x, y }
+  })
+
+  return {
+    polyline: circles.map((point) => `${point.x},${point.y}`).join(" "),
+    circles,
+  }
+}
 
 function formatUpdatedAt(isoDate) {
   if (!isoDate) {
@@ -39,12 +85,14 @@ function getActiveGame(games) {
 export default function HomePage() {
   const { isAuthenticated, user } = useAuth()
   const [myGames, setMyGames] = useState([])
+  const [historyGames, setHistoryGames] = useState([])
   const [myGamesLoading, setMyGamesLoading] = useState(false)
   const [myGamesError, setMyGamesError] = useState("")
 
   useEffect(() => {
     if (!isAuthenticated) {
       setMyGames([])
+      setHistoryGames([])
       setMyGamesLoading(false)
       setMyGamesError("")
       return
@@ -55,15 +103,20 @@ export default function HomePage() {
     async function loadMyGames() {
       setMyGamesLoading(true)
       try {
-        const response = await getMyGames()
+        const [gamesResponse, historyResponse] = await Promise.all([
+          getMyGames(),
+          user?.username ? userApi.getGameHistory(user.username, 1, 20) : Promise.resolve({ games: [] }),
+        ])
         if (cancelled) {
           return
         }
-        setMyGames(Array.isArray(response?.games) ? response.games : [])
+        setMyGames(Array.isArray(gamesResponse?.games) ? gamesResponse.games : [])
+        setHistoryGames(Array.isArray(historyResponse?.games) ? historyResponse.games : [])
         setMyGamesError("")
       } catch (error) {
         if (!cancelled) {
           setMyGamesError(error?.message ?? "Unable to load your games right now.")
+          setHistoryGames([])
         }
       } finally {
         if (!cancelled) {
@@ -77,10 +130,26 @@ export default function HomePage() {
     return () => {
       cancelled = true
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, user?.username])
 
   const recentGames = useMemo(() => sortRecentGames(myGames), [myGames])
   const activeGame = useMemo(() => getActiveGame(myGames), [myGames])
+  const stats = useMemo(() => {
+    const source = user?.stats ?? {}
+    const gamesPlayed = statOrZero(source.games_played)
+    const gamesWon = statOrZero(source.games_won)
+    return {
+      gamesPlayed,
+      gamesWon,
+      gamesLost: statOrZero(source.games_lost),
+      gamesDrawn: statOrZero(source.games_drawn),
+      elo: statOrZero(source.elo),
+      eloPeak: statOrZero(source.elo_peak),
+      winRate: gamesPlayed > 0 ? (gamesWon / gamesPlayed) * 100 : 0,
+    }
+  }, [user?.stats])
+  const eloSeries = useMemo(() => buildEloSeries(historyGames), [historyGames])
+  const eloChart = useMemo(() => buildChartPoints(eloSeries), [eloSeries])
   const playNowPath = isAuthenticated
     ? (activeGame?.game_id ? `/game/${activeGame.game_id}` : "/lobby")
     : "/auth/login"
@@ -96,6 +165,41 @@ export default function HomePage() {
             <Link to="/lobby">Browse lobby</Link>
             <Link to="/rules">Read rules</Link>
           </nav>
+
+          <section className="home-card" aria-labelledby="home-stats-heading">
+            <h2 id="home-stats-heading">Your stats</h2>
+            <dl className="home-stats-grid">
+              <div><dt>Elo</dt><dd>{stats.elo}</dd></div>
+              <div><dt>Peak Elo</dt><dd>{stats.eloPeak}</dd></div>
+              <div><dt>Games</dt><dd>{stats.gamesPlayed}</dd></div>
+              <div><dt>Wins</dt><dd>{stats.gamesWon}</dd></div>
+              <div><dt>Losses</dt><dd>{stats.gamesLost}</dd></div>
+              <div><dt>Draws</dt><dd>{stats.gamesDrawn}</dd></div>
+              <div><dt>Win rate</dt><dd>{stats.winRate.toFixed(1)}%</dd></div>
+            </dl>
+          </section>
+
+          <section className="home-card" aria-labelledby="home-elo-heading">
+            <h2 id="home-elo-heading">Elo rating</h2>
+            {eloSeries.length > 0 ? (
+              <div className="home-elo-chart">
+                <svg viewBox="0 0 320 112" role="img" aria-label="Elo rating over time">
+                  <polyline className="home-elo-chart__line" fill="none" points={eloChart.polyline} />
+                  {eloChart.circles.map((point) => (
+                    <circle key={`${point.label}-${point.index}`} className="home-elo-chart__point" cx={point.x} cy={point.y} r="3.5">
+                      <title>{`${point.label}: ${point.elo}${point.delta ? ` (${point.delta > 0 ? "+" : ""}${point.delta})` : ""}`}</title>
+                    </circle>
+                  ))}
+                </svg>
+                <div className="home-elo-chart__summary">
+                  <span>Start {eloSeries[0].elo}</span>
+                  <span>Latest {eloSeries[eloSeries.length - 1].elo}</span>
+                </div>
+              </div>
+            ) : (
+              <p>No finished games with rating history yet.</p>
+            )}
+          </section>
 
           <section className="home-card" aria-labelledby="home-recent-games-heading">
             <h2 id="home-recent-games-heading">Recent games</h2>
