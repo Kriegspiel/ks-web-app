@@ -15,7 +15,25 @@ describe("LobbyPage", () => {
   it("shows_lobby_version_badge", async () => {
     render(<LobbyPage />)
 
-    expect(await screen.findAllByText("v. 1.1.9 / v. 1.0.0")).toHaveLength(1)
+    expect(await screen.findAllByText("v. 1.1.12 / v. 1.0.0")).toHaveLength(1)
+
+  })
+
+  it("formats_open_game_dates_in_utc", async () => {
+    mockApi.getOpenGames.mockResolvedValue({
+      games: [
+        {
+          game_code: "ABCD23",
+          created_by: "fil",
+          available_color: "black",
+          created_at: "2026-04-03T23:59:59Z",
+        },
+      ],
+    })
+
+    render(<LobbyPage />)
+
+    expect(await screen.findByText(/2026-04-03 23:59:59 UTC/)).toBeInTheDocument()
   })
 
   it("creates_waiting_game_and_shows_join_code", async () => {

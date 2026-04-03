@@ -653,6 +653,20 @@ function getLatestAskAnyConstraint(turns, playerColor) {
   return { type: "", turn: null }
 }
 
+function getActivePlayerTurnNumber({ moveNumber, turn, yourColor }) {
+  const normalizedTurn = normalizeLogColor(turn)
+  const normalizedColor = normalizeLogColor(yourColor)
+  const numericMoveNumber = Number.parseInt(moveNumber, 10)
+  if (!Number.isFinite(numericMoveNumber) || numericMoveNumber < 1) {
+    return null
+  }
+  if (!normalizedTurn || !normalizedColor || normalizedTurn !== normalizedColor) {
+    return null
+  }
+
+  return Math.ceil(numericMoveNumber / 2)
+}
+
 function filterAllowedMovesByAskAny(allowedMoves, { askAnyConstraint, color, fen }) {
   if (!Array.isArray(allowedMoves) || !askAnyConstraint || !color) {
     return Array.isArray(allowedMoves) ? allowedMoves : []
@@ -961,12 +975,16 @@ export default function GamePage() {
     [groupedRefereeLog, gameState?.your_color]
   )
   const askAnyConstraint = useMemo(() => {
-    const currentTurn = Number.parseInt(gameState?.move_number, 10)
+    const currentTurn = getActivePlayerTurnNumber({
+      moveNumber: gameState?.move_number,
+      turn: gameState?.turn,
+      yourColor: gameState?.your_color,
+    })
     if (!Number.isFinite(currentTurn) || latestAskAnyConstraint.turn !== currentTurn) {
       return ""
     }
     return latestAskAnyConstraint.type
-  }, [gameState?.move_number, latestAskAnyConstraint])
+  }, [gameState?.move_number, gameState?.turn, gameState?.your_color, latestAskAnyConstraint])
   const effectiveAllowedMoves = useMemo(
     () => filterAllowedMovesByAskAny(gameState?.allowed_moves, { askAnyConstraint, color: gameState?.your_color, fen: gameState?.your_fen }),
     [askAnyConstraint, gameState?.allowed_moves, gameState?.your_color, gameState?.your_fen]

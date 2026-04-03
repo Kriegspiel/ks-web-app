@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { userApi } from "../services/api"
+import { formatUtcDateTime } from "../utils/dateTime"
 import "./Profile.css"
 
 function formatDate(value) {
-  if (!value) return "Unknown"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return String(value)
-  return date.toLocaleDateString()
+  return formatUtcDateTime(value) || "Unknown"
 }
 
 function statOrZero(value) {
