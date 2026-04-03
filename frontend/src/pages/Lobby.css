@@ -2,7 +2,7 @@
 .lobby-page__header { display: grid; gap: 0.35rem; }
 .lobby-page__title-block { display: flex; align-items: baseline; gap: 0.65rem; min-width: 0; }
 .lobby-page__footer-version {
-  margin: 0.15rem 0 0;
+  margin: 2.75rem 0 2.75rem;
   text-align: center;
   color: var(--muted-soft);
   font-size: 0.76rem;
