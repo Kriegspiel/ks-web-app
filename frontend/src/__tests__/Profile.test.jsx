@@ -38,8 +38,8 @@ describe("ProfilePage", () => {
     })
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({
       games: [
-        { game_id: "g-1", result: "win", opponent: "amy" },
-        { game_id: "g-2", result: "loss", opponent: "bob" },
+        { game_id: "g-1", result: "win", opponent: "amy", played_at: "2026-03-21T12:00:00Z", elo_after: 1320, elo_delta: 16 },
+        { game_id: "g-2", result: "loss", opponent: "bob", played_at: "2026-03-25T12:00:00Z", elo_after: 1345, elo_delta: 25 },
       ],
     })
 
@@ -51,6 +51,9 @@ describe("ProfilePage", () => {
     expect(screen.getByText("3 (30.0%)")).toBeInTheDocument()
     expect(screen.getByText("1 (10.0%)")).toBeInTheDocument()
     expect(screen.queryByText(/win rate/i)).not.toBeInTheDocument()
+    expect(screen.getByRole("img", { name: "Elo rating over time" })).toBeInTheDocument()
+    expect(screen.getByText("Start 1320")).toBeInTheDocument()
+    expect(screen.getByText("Latest 1345")).toBeInTheDocument()
     expect(screen.getByText(/win vs amy/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/fil/games")
   })
