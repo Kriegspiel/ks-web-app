@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { userApi } from "../services/api"
-import { formatUtcDateTime } from "../utils/dateTime"
+import { formatUtcDate, formatUtcDateTime } from "../utils/dateTime"
 import "./Profile.css"
 
 function formatDate(value) {
@@ -10,6 +10,48 @@ function formatDate(value) {
 
 function statOrZero(value) {
   return Number.isFinite(Number(value)) ? Number(value) : 0
+}
+
+function buildEloSeries(historyGames) {
+  if (!Array.isArray(historyGames)) {
+    return []
+  }
+
+  return [...historyGames]
+    .filter((game) => Number.isFinite(Number(game?.elo_after)))
+    .sort((left, right) => Date.parse(left?.played_at ?? "") - Date.parse(right?.played_at ?? ""))
+    .map((game, index) => ({
+      index,
+      label: game?.played_at ? formatUtcDate(game.played_at) : `Game ${index + 1}`,
+      elo: Number(game.elo_after),
+      delta: Number(game?.elo_delta ?? 0),
+    }))
+}
+
+function buildChartPoints(points) {
+  if (!Array.isArray(points) || points.length === 0) {
+    return { polyline: "", circles: [] }
+  }
+
+  const width = 320
+  const height = 112
+  const paddingX = 12
+  const paddingY = 12
+  const minElo = Math.min(...points.map((point) => point.elo))
+  const maxElo = Math.max(...points.map((point) => point.elo))
+  const eloRange = Math.max(1, maxElo - minElo)
+  const xStep = points.length === 1 ? 0 : (width - paddingX * 2) / (points.length - 1)
+
+  const circles = points.map((point, index) => {
+    const x = paddingX + (xStep * index)
+    const y = height - paddingY - (((point.elo - minElo) / eloRange) * (height - paddingY * 2))
+    return { ...point, x, y }
+  })
+
+  return {
+    polyline: circles.map((point) => `${point.x},${point.y}`).join(" "),
+    circles,
+  }
 }
 
 export default function ProfilePage() {
@@ -73,6 +115,8 @@ export default function ProfilePage() {
       drawsLabel: `${gamesDrawn} (${formatRate(gamesDrawn)})`,
     }
   }, [profile])
+  const eloSeries = useMemo(() => buildEloSeries(recentGames), [recentGames])
+  const eloChart = useMemo(() => buildChartPoints(eloSeries), [eloSeries])
 
   if (loading) {
     return <main className="page-shell profile-page"><h1>Profile</h1><p>Loading profile…</p></main>
@@ -97,6 +141,28 @@ export default function ProfilePage() {
           <div><dt>ELO</dt><dd>{stats.elo}</dd></div>
           <div><dt>Peak</dt><dd>{stats.eloPeak}</dd></div>
         </dl>
+      </section>
+
+      <section className="profile-card" aria-labelledby="profile-elo-heading">
+        <h2 id="profile-elo-heading">Elo rating</h2>
+        {eloSeries.length > 0 ? (
+          <div className="profile-elo-chart">
+            <svg viewBox="0 0 320 112" role="img" aria-label="Elo rating over time">
+              <polyline className="profile-elo-chart__line" fill="none" points={eloChart.polyline} />
+              {eloChart.circles.map((point) => (
+                <circle key={`${point.label}-${point.index}`} className="profile-elo-chart__point" cx={point.x} cy={point.y} r="3.5">
+                  <title>{`${point.label}: ${point.elo}${point.delta ? ` (${point.delta > 0 ? "+" : ""}${point.delta})` : ""}`}</title>
+                </circle>
+              ))}
+            </svg>
+            <div className="profile-elo-chart__summary">
+              <span>Start {eloSeries[0].elo}</span>
+              <span>Latest {eloSeries[eloSeries.length - 1].elo}</span>
+            </div>
+          </div>
+        ) : (
+          <p>No finished games with rating history yet.</p>
+        )}
       </section>
 
       <section className="profile-card" aria-label="Recent games">
