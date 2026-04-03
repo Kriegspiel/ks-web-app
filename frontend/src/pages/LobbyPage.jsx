@@ -89,6 +89,10 @@ function renderCreatorLink(game) {
   )
 }
 
+function isOwnOpenGame(game, username) {
+  return String(game?.created_by || "").trim().toLowerCase() === String(username || "").trim().toLowerCase()
+}
+
 export default function LobbyPage() {
   const navigate = useNavigate()
   const { user, actionError } = useAuth()
@@ -469,7 +473,15 @@ export default function LobbyPage() {
                   {formatUtcDateTime(game.created_at)}
                 </div>
               </div>
-              <button type="button" onClick={() => handleJoinOpenGame(game.game_code)}>Join</button>
+              <div className="lobby-list__actions">
+                {isOwnOpenGame(game, user?.username) ? (
+                  <button type="button" className="game-danger-button" onClick={() => handleCloseWaitingGame(game.game_id)} disabled={closingWaitingGame}>
+                    {closingWaitingGame ? "Closing…" : "Close"}
+                  </button>
+                ) : (
+                  <button type="button" onClick={() => handleJoinOpenGame(game.game_code)}>Join</button>
+                )}
+              </div>
             </li>
           ))}
         </ul>
