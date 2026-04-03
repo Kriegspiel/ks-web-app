@@ -72,7 +72,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByText(/Game ID:/i)
-    expect(screen.getByText("v. 1.1.3 / v. 1.0.0")).toBeInTheDocument()
+    expect(screen.getByText("v. 1.1.4 / v. 1.0.0")).toBeInTheDocument()
     expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
 
     await sleep(650)
@@ -220,6 +220,34 @@ describe("GamePage", () => {
     expect(menu).toHaveStyle({ left: "170px", top: "116px" })
     expect(within(menu).getByText("Add a phantom piece.")).toBeInTheDocument()
     expect(within(menu).getAllByText("d5")).toHaveLength(1)
+  })
+
+  it("opens_the_phantom_menu_on_double_tap_for_mobile_style_taps", async () => {
+    let now = new Date("2026-04-03T10:00:00Z").valueOf()
+    const nowSpy = vi.spyOn(Date, "now").mockImplementation(() => now)
+
+    render(<GamePage />)
+
+    const square = await screen.findByRole("button", { name: "Square d5" })
+    square.getBoundingClientRect = () => ({
+      x: 200, y: 240, left: 200, top: 240, right: 264, bottom: 304, width: 64, height: 64,
+      toJSON: () => {},
+    })
+
+    const boardShell = square.closest(".game-board-shell")
+    boardShell.getBoundingClientRect = () => ({
+      x: 100, y: 120, left: 100, top: 120, right: 620, bottom: 640, width: 520, height: 520,
+      toJSON: () => {},
+    })
+
+    fireEvent.click(square)
+
+    now += 150
+    fireEvent.click(square)
+
+    expect(await screen.findByRole("dialog", { name: /Phantom options for d5/i })).toBeInTheDocument()
+
+    nowSpy.mockRestore()
   })
 
   it("supports_phantom_add_and_remove", async () => {

@@ -9,7 +9,7 @@ import { getAllowedMoveTargets, PIECE_ASSETS } from "../components/chessboard"
 import "./GamePage.css"
 
 const POLL_INTERVAL_MS = 500
-const LONG_PRESS_MS = 450
+const DOUBLE_TAP_WINDOW_MS = 320
 const PHANTOM_PIECES = ["q", "r", "b", "n", "p", "k"]
 const PHANTOM_LABELS = {
   q: "Queen",
@@ -679,8 +679,7 @@ export default function GamePage() {
   const [moveDragHoverSquare, setMoveDragHoverSquare] = useState("")
   const [dragPreview, setDragPreview] = useState(null)
 
-  const longPressTimerRef = useRef(null)
-  const longPressPointerRef = useRef(null)
+  const lastTapRef = useRef({ square: "", time: 0 })
   const boardShellRef = useRef(null)
   const dragPointerIdRef = useRef(null)
   const draggingPhantomFromRef = useRef("")
@@ -786,12 +785,6 @@ export default function GamePage() {
     }
   }, [gameId, gameState?.state, pollState])
 
-  useEffect(() => () => {
-    if (longPressTimerRef.current) {
-      window.clearTimeout(longPressTimerRef.current)
-    }
-  }, [])
-
   useLayoutEffect(() => {
     const viewport = viewportRestoreRef.current
     if (!viewport) {
@@ -891,12 +884,8 @@ export default function GamePage() {
     setPhantomMenu(null)
   }
 
-  function clearLongPressTimer() {
-    if (longPressTimerRef.current) {
-      window.clearTimeout(longPressTimerRef.current)
-      longPressTimerRef.current = null
-    }
-    longPressPointerRef.current = null
+  function resetTapState() {
+    lastTapRef.current = { square: "", time: 0 }
   }
 
   function resetPendingMove() {
@@ -1027,6 +1016,23 @@ export default function GamePage() {
       return
     }
 
+    const ownPiece = squareHasOwnPiece(gameState?.your_fen, square, gameState?.your_color)
+    const eligibleForDoubleTapPhantom = !fromSquare && (!ownPiece || Boolean(placements[square]))
+    const now = Date.now()
+    const previousTap = lastTapRef.current
+
+    if (eligibleForDoubleTapPhantom && previousTap.square === square && now - previousTap.time <= DOUBLE_TAP_WINDOW_MS) {
+      openPhantomMenu(square)
+      resetTapState()
+      return
+    }
+
+    if (eligibleForDoubleTapPhantom) {
+      lastTapRef.current = { square, time: now }
+    } else {
+      resetTapState()
+    }
+
     setActionError("")
     setShowPromotionModal(false)
     setIllegalMoveSquares([])
@@ -1068,6 +1074,8 @@ export default function GamePage() {
   }
 
   function handleSquareRightClick(square) {
+    resetTapState()
+
     if (suppressContextMenuRef.current) {
       suppressContextMenuRef.current = false
       return
@@ -1120,13 +1128,6 @@ export default function GamePage() {
     if (!isTouchLikePointer(event)) {
       return
     }
-
-    clearLongPressTimer()
-    longPressPointerRef.current = event.pointerId
-    longPressTimerRef.current = window.setTimeout(() => {
-      openPhantomMenu(square)
-      clearLongPressTimer()
-    }, LONG_PRESS_MS)
   }
 
   function handleSquarePointerEnter(square, event) {
@@ -1173,10 +1174,6 @@ export default function GamePage() {
       finishDragPhantom(hoveredSquare || square)
       return
     }
-
-    if (isTouchLikePointer(event) && longPressPointerRef.current === event.pointerId) {
-      clearLongPressTimer()
-    }
   }
 
   function handleSquarePointerCancel(_square, event) {
@@ -1190,8 +1187,8 @@ export default function GamePage() {
       finishDragPhantom(dragHoverSquare)
     }
 
-    if (longPressPointerRef.current === event.pointerId) {
-      clearLongPressTimer()
+    if (isTouchLikePointer(event)) {
+      resetTapState()
     }
   }
 
