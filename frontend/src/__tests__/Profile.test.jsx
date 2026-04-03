@@ -47,6 +47,10 @@ describe("ProfilePage", () => {
 
     await screen.findByRole("heading", { name: "fil" })
     expect(screen.getByText(/games played/i)).toBeInTheDocument()
+    expect(screen.getByText("6 (60.0%)")).toBeInTheDocument()
+    expect(screen.getByText("3 (30.0%)")).toBeInTheDocument()
+    expect(screen.getByText("1 (10.0%)")).toBeInTheDocument()
+    expect(screen.queryByText(/win rate/i)).not.toBeInTheDocument()
     expect(screen.getByText(/win vs amy/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/fil/games")
   })

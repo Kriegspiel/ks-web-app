@@ -57,16 +57,20 @@ export default function ProfilePage() {
     const source = profile?.stats ?? {}
     const gamesPlayed = statOrZero(source.games_played)
     const gamesWon = statOrZero(source.games_won)
-    const winRate = gamesPlayed > 0 ? (gamesWon / gamesPlayed) * 100 : 0
+    const gamesLost = statOrZero(source.games_lost)
+    const gamesDrawn = statOrZero(source.games_drawn)
+    const formatRate = (value) => `${gamesPlayed > 0 ? ((value / gamesPlayed) * 100).toFixed(1) : "0.0"}%`
 
     return {
       gamesPlayed,
       gamesWon,
-      gamesLost: statOrZero(source.games_lost),
-      gamesDrawn: statOrZero(source.games_drawn),
+      gamesLost,
+      gamesDrawn,
       elo: statOrZero(source.elo),
       eloPeak: statOrZero(source.elo_peak),
-      winRate,
+      winsLabel: `${gamesWon} (${formatRate(gamesWon)})`,
+      lossesLabel: `${gamesLost} (${formatRate(gamesLost)})`,
+      drawsLabel: `${gamesDrawn} (${formatRate(gamesDrawn)})`,
     }
   }, [profile])
 
@@ -87,12 +91,11 @@ export default function ProfilePage() {
         <h2>Stats</h2>
         <dl className="profile-stats-grid">
           <div><dt>Games played</dt><dd>{stats.gamesPlayed}</dd></div>
-          <div><dt>Wins</dt><dd>{stats.gamesWon}</dd></div>
-          <div><dt>Losses</dt><dd>{stats.gamesLost}</dd></div>
-          <div><dt>Draws</dt><dd>{stats.gamesDrawn}</dd></div>
+          <div><dt>Wins</dt><dd>{stats.winsLabel}</dd></div>
+          <div><dt>Losses</dt><dd>{stats.lossesLabel}</dd></div>
+          <div><dt>Draws</dt><dd>{stats.drawsLabel}</dd></div>
           <div><dt>ELO</dt><dd>{stats.elo}</dd></div>
           <div><dt>Peak</dt><dd>{stats.eloPeak}</dd></div>
-          <div><dt>Win rate</dt><dd>{stats.winRate.toFixed(1)}%</dd></div>
         </dl>
       </section>
 
