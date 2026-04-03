@@ -40,15 +40,24 @@
   width: 100%;
   aspect-ratio: 1 / 1;
   background: transparent;
+  outline: none;
+  outline-offset: 0;
+  cursor: pointer;
+  transition: filter 120ms ease;
+}
+
+.square::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
   box-shadow:
     var(--square-ring-highlight),
     var(--square-ring-last-move),
     var(--square-ring-illegal),
     var(--square-ring-suggested);
-  outline: none;
-  outline-offset: 0;
-  cursor: pointer;
-  transition: box-shadow 120ms ease, filter 120ms ease;
+  transition: box-shadow 120ms ease;
 }
 
 .board-grid .square:hover:not(:disabled),
