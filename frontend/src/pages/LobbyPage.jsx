@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import packageInfo from "../../package.json"
+import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import { createGame, getBots, getGame, getMyGames, getOpenGames, joinGame } from "../services/api"
 import "./Lobby.css"
@@ -8,7 +8,6 @@ import "./Lobby.css"
 const WAITING_GAME_POLL_MS = 3000
 const OPEN_GAMES_POLL_MS = 5000
 const MY_GAMES_POLL_MS = 10000
-const APP_VERSION = packageInfo.version
 const RULESET_OPTIONS = [
   { value: "berkeley", label: "Berkeley" },
   { value: "berkeley_any", label: "Berkeley + Any" },
@@ -397,7 +396,7 @@ export default function LobbyPage() {
         </ul>
       </section>
 
-      <p className="lobby-page__footer-version">v. {APP_VERSION}</p>
+      <VersionStamp className="lobby-page__footer-version" />
     </main>
   )
 }
