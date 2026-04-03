@@ -10,8 +10,9 @@
 .lobby-card h2 { margin-top: 0; margin-bottom: 0.35rem; }
 .lobby-create-form, .lobby-join-form { display: grid; gap: 0.75rem; margin-top: 0.9rem; }
 .lobby-join-form { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+.lobby-join-form label { grid-column: 1 / -1; }
 .lobby-join-form label, .lobby-bot-picker label, .lobby-create-field label { font-weight: 600; }
-.lobby-join-form input { min-width: 10rem; text-transform: uppercase; }
+.lobby-join-form input { min-width: 10rem; width: 100%; text-transform: uppercase; }
 .lobby-create-grid { display: grid; gap: 0.75rem; }
 .lobby-create-field { display: grid; gap: 0.45rem; width: 100%; }
 .lobby-create-field__label { font-weight: 600; }
