@@ -46,6 +46,7 @@ describe("ProfilePage", () => {
     renderProfile()
 
     await screen.findByRole("heading", { name: "fil" })
+    expect(screen.getByText("Member since 2026-01-01")).toBeInTheDocument()
     expect(screen.getByText(/games played/i)).toBeInTheDocument()
     expect(screen.getByText("6 (60.0%)")).toBeInTheDocument()
     expect(screen.getByText("3 (30.0%)")).toBeInTheDocument()

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { userApi } from "../services/api"
-import { formatUtcDate, formatUtcDateTime } from "../utils/dateTime"
+import { formatUtcDate } from "../utils/dateTime"
 import "./Profile.css"
 
 function formatDate(value) {
-  return formatUtcDateTime(value) || "Unknown"
+  return formatUtcDate(value) || "Unknown"
 }
 
 function statOrZero(value) {
