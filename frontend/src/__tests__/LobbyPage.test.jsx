@@ -10,7 +10,7 @@ vi.mock("react-router-dom", async () => ({ ...(await vi.importActual("react-rout
 vi.mock("../hooks/useAuth", () => ({ useAuth: () => ({ user: { username: "fil" }, actionError: "" }) }))
 vi.mock("../services/api", () => mockApi)
 
-beforeEach(() => { mockNavigate.mockReset(); Object.values(mockApi).forEach((fn) => fn.mockReset()); mockApi.getOpenGames.mockResolvedValue({ games: [] }); mockApi.getMyGames.mockResolvedValue({ games: [] }); mockApi.getGame.mockResolvedValue({ state: "waiting" }); mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201 }, { bot_id: "bot-2", username: "gptnano", display_name: "GPT Nano", description: "Model-driven Kriegspiel bot that chooses moves using GPT nano model.", elo: 1342 }] }) })
+beforeEach(() => { mockNavigate.mockReset(); Object.values(mockApi).forEach((fn) => fn.mockReset()); mockApi.getOpenGames.mockResolvedValue({ games: [] }); mockApi.getMyGames.mockResolvedValue({ games: [] }); mockApi.getGame.mockResolvedValue({ state: "waiting" }); mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-2", username: "gptnano", display_name: "GPT Nano", description: "Model-driven Kriegspiel bot that chooses moves using GPT nano model.", elo: 1342, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-3", username: "randobotany", display_name: "Random Any Bot", description: "Asks any pawn captures first, then plays random legal-looking moves.", elo: 1200, supported_rule_variants: ["berkeley_any"] }] }) })
 afterEach(() => { cleanup(); vi.useRealTimers() })
 
 function renderPage() {
@@ -99,8 +99,19 @@ describe("LobbyPage", () => {
     expect(screen.getByLabelText("Bot opponent")).toHaveValue("bot-1")
     expect(screen.getByRole("option", { name: "Random Bot (1201)" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "GPT Nano (1342)" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "Random Any Bot (1200)" })).toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "Create bot game" }))
     await waitFor(() => expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({ opponent_type: "bot", bot_id: "bot-1" })))
     expect(mockNavigate).toHaveBeenCalledWith("/game/g-bot-1")
+  })
+
+  it("filters_unsupported_bots_for_selected_ruleset", async () => {
+    renderPage()
+    fireEvent.change(await screen.findByLabelText("Ruleset"), { target: { value: "berkeley" } })
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    expect(await screen.findByLabelText("Bot opponent")).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "Random Any Bot (1200)" })).not.toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "Random Bot (1201)" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "GPT Nano (1342)" })).toBeInTheDocument()
   })
 })
