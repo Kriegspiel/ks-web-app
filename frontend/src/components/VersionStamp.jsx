@@ -3,7 +3,7 @@ import packageInfo from "../../package.json"
 import api from "../services/api"
 
 const FRONTEND_VERSION = packageInfo.version
-const BACKEND_VERSION_FALLBACK = "0.1.0"
+const BACKEND_VERSION_FALLBACK = "1.0.0"
 
 export default function VersionStamp({ className = "page-version" }) {
   const [backendVersion, setBackendVersion] = useState(BACKEND_VERSION_FALLBACK)

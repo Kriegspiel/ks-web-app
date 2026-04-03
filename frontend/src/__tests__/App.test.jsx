@@ -17,6 +17,9 @@ const mockApi = vi.hoisted(() => ({
   submitMove: vi.fn(),
   askAny: vi.fn(),
   resignGame: vi.fn(),
+  userApi: {
+    getGameHistory: vi.fn(),
+  },
 }))
 
 vi.mock("../services/api", () => mockApi)
@@ -26,10 +29,16 @@ afterEach(() => {
 })
 
 beforeEach(() => {
-  Object.values(mockApi).forEach((fn) => fn.mockReset())
+  Object.entries(mockApi).forEach(([, value]) => {
+    if (typeof value?.mockReset === "function") {
+      value.mockReset()
+    }
+  })
   mockApi.getOpenGames.mockResolvedValue({ games: [] })
   mockApi.getMyGames.mockResolvedValue({ games: [] })
   mockApi.getGame.mockResolvedValue({ state: "waiting" })
+  mockApi.userApi.getGameHistory.mockReset()
+  mockApi.userApi.getGameHistory.mockResolvedValue({ games: [] })
   mockApi.getGameState.mockResolvedValue({
     game_id: "abc-123",
     state: "active",
@@ -60,7 +69,7 @@ describe("App routes", () => {
     renderRoute("/auth/login")
 
     await screen.findByRole("heading", { name: "Login" })
-    expect(screen.getByText("v. 1.0.15 / v. 0.1.0")).toBeInTheDocument()
+    expect(screen.getByText("v. 1.1.0 / v. 1.0.0")).toBeInTheDocument()
     expect(screen.getAllByRole("link", { name: "Login" }).length).toBeGreaterThan(0)
     expect(screen.getAllByRole("link", { name: "Register" }).length).toBeGreaterThan(0)
   })
@@ -88,7 +97,7 @@ describe("App routes", () => {
 
     renderRoute("/auth/register")
 
-    expect(await screen.findByText("v. 1.0.15 / v. 0.1.0")).toBeInTheDocument()
+    expect(await screen.findByText("v. 1.1.0 / v. 1.0.0")).toBeInTheDocument()
     fireEvent.click(await screen.findByRole("button", { name: "Register" }))
     await screen.findByText("Username is required.")
     expect(mockApi.register).not.toHaveBeenCalled()
