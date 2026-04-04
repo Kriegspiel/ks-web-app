@@ -229,38 +229,65 @@ button.theme-toggle:active {
 .elo-chart__toolbar {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.7rem;
+  flex-wrap: nowrap;
 }
 
-.elo-chart__toolbar-label {
+.elo-chart__mode-label {
   color: var(--muted-soft);
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  transition: color 120ms ease;
 }
 
-.elo-chart__toggle {
+.elo-chart__mode-label.is-active {
+  color: var(--text);
+}
+
+.elo-chart__switch {
   min-height: auto;
   margin-top: 0;
-  padding: 0.45rem 0.7rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(248, 250, 252, 0.72);
-  font-size: 0.88rem;
-  font-weight: 600;
+  padding: 0;
+  border: 0;
+  background: transparent;
   box-shadow: none;
   transform: none;
 }
 
-.elo-chart__toggle.is-active,
-.elo-chart__toggle:hover:not(:disabled),
-.elo-chart__toggle:focus-visible {
-  background: var(--surface-strong);
-  border-color: var(--border-strong);
-  box-shadow: none;
-  transform: none;
+.elo-chart__switch-track {
+  width: 3.4rem;
+  height: 1.9rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: rgba(177, 138, 83, 0.18);
+  box-shadow: inset 0 1px 2px rgba(17, 24, 39, 0.12);
+}
+
+.elo-chart__switch-thumb {
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 999px;
+  background: white;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.18);
+  transform: translateX(0);
+  transition: transform 160ms ease;
+}
+
+.elo-chart__switch-thumb.is-game {
+  transform: translateX(1.48rem);
+}
+
+.elo-chart__switch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.elo-chart__plot {
+  position: relative;
 }
 
 .elo-chart__plot svg {
@@ -269,10 +296,21 @@ button.theme-toggle:active {
   display: block;
   border-radius: var(--radius-sm);
   background:
-    linear-gradient(180deg, rgba(177, 138, 83, 0.09), transparent 65%),
-    rgba(248, 250, 252, 0.72);
+    linear-gradient(180deg, rgba(177, 138, 83, 0.12), rgba(177, 138, 83, 0.03) 40%, transparent 100%),
+    rgba(248, 250, 252, 0.82);
   border: 1px solid var(--border);
-  padding: 0.3rem;
+  padding: 0.35rem;
+}
+
+.elo-chart__grid {
+  stroke: rgba(148, 163, 184, 0.3);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.elo-chart__tick-label {
+  fill: var(--muted-soft);
+  font-size: 8px;
 }
 
 .elo-chart__line {
@@ -280,22 +318,54 @@ button.theme-toggle:active {
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
+  filter: drop-shadow(0 3px 8px rgba(177, 138, 83, 0.2));
+}
+
+.elo-chart__focus-line {
+  stroke: rgba(177, 138, 83, 0.35);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
 }
 
 .elo-chart__point {
-  fill: var(--accent);
+  fill: color-mix(in srgb, var(--accent) 88%, white);
   stroke: white;
-  stroke-width: 1.5;
+  stroke-width: 2;
   cursor: pointer;
-  transition: r 120ms ease, fill 120ms ease;
+  transition: r 120ms ease, fill 120ms ease, stroke 120ms ease;
 }
 
 .elo-chart__point.is-active,
 .elo-chart__point:hover,
 .elo-chart__point:focus-visible {
-  fill: color-mix(in srgb, var(--accent) 65%, white);
-  r: 5;
+  fill: color-mix(in srgb, var(--accent) 60%, white);
+  stroke: rgba(255, 255, 255, 0.85);
+  r: 5.5;
   outline: none;
+}
+
+.elo-chart__tooltip {
+  position: absolute;
+  display: grid;
+  gap: 0.16rem;
+  min-width: 9rem;
+  padding: 0.65rem 0.72rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(15, 23, 42, 0.92);
+  color: white;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.22);
+  transform: translate(-50%, calc(-100% - 0.85rem));
+  pointer-events: none;
+}
+
+.elo-chart__tooltip strong {
+  font-size: 0.88rem;
+}
+
+.elo-chart__tooltip span {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .elo-chart__axis {
@@ -304,22 +374,7 @@ button.theme-toggle:active {
   gap: 0.75rem;
   color: var(--muted-soft);
   font-size: 0.8rem;
-}
-
-.elo-chart__details {
-  display: flex;
-  gap: 0.9rem;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 0.75rem 0.85rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: rgba(248, 250, 252, 0.72);
-  color: var(--text);
-}
-
-.elo-chart__details strong {
-  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .elo-chart__summary {
@@ -328,6 +383,21 @@ button.theme-toggle:active {
   gap: 0.75rem;
   color: var(--muted-soft);
   font-size: 0.88rem;
+}
+
+@media (max-width: 700px) {
+  .elo-chart__toolbar {
+    gap: 0.5rem;
+  }
+
+  .elo-chart__mode-label {
+    font-size: 0.82rem;
+  }
+
+  .elo-chart__tooltip {
+    min-width: 8.25rem;
+    transform: translate(-50%, calc(-100% - 0.7rem));
+  }
 }
 
 .inline-links {

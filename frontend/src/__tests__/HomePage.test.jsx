@@ -116,7 +116,7 @@ describe("HomePage", () => {
     expect(screen.getByRole("img", { name: "Elo rating over time" })).toBeInTheDocument()
     expect(screen.getByText("Latest 1345")).toBeInTheDocument()
     expect(screen.getAllByText("2026-03-25").length).toBeGreaterThan(0)
-    fireEvent.click(screen.getByRole("button", { name: "Game number" }))
+    fireEvent.click(screen.getByRole("switch", { name: "X-axis mode: Date" }))
     expect(screen.getAllByText("Game 2").length).toBeGreaterThan(0)
   })
 })
