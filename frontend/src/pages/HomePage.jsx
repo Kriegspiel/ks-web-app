@@ -162,6 +162,7 @@ export default function HomePage() {
 
           <section className="home-card" aria-labelledby="home-stats-heading">
             <h2 id="home-stats-heading">Your stats</h2>
+            <EloChart historyGames={historyGames} emptyText="No finished games with rating history yet." />
             <div className="stats-group-grid">
               <section className="stats-group-card" aria-labelledby="home-ratings-heading">
                 <h3 id="home-ratings-heading">Ratings</h3>
@@ -184,11 +185,6 @@ export default function HomePage() {
                 </dl>
               </section>
             </div>
-          </section>
-
-          <section className="home-card" aria-labelledby="home-elo-heading">
-            <h2 id="home-elo-heading">Overall Elo rating</h2>
-            <EloChart historyGames={historyGames} emptyText="No finished games with rating history yet." />
           </section>
 
           <section className="home-card" aria-labelledby="home-recent-games-heading">

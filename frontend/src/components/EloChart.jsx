@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { formatUtcDate } from "../utils/dateTime"
 
 const TRACKS = [
@@ -7,7 +7,7 @@ const TRACKS = [
   { key: "vs_bots", label: "vs Bots" },
 ]
 
-function buildEloSeries(historyGames, ratingTrack) {
+function buildBaseEloSeries(historyGames, ratingTrack) {
   if (!Array.isArray(historyGames)) {
     return []
   }
@@ -30,9 +30,32 @@ function buildEloSeries(historyGames, ratingTrack) {
       index,
       gameNumber: index + 1,
       dateLabel: game?.played_at ? formatUtcDate(game.played_at) : "Unknown date",
+      playedAt: game?.played_at ?? null,
       elo: Number(game.elo_after),
       delta: Number(game?.elo_delta ?? 0),
     }))
+}
+
+function buildEloSeries(historyGames, ratingTrack, xAxisMode) {
+  const base = buildBaseEloSeries(historyGames, ratingTrack)
+  if (xAxisMode !== "date") {
+    return base
+  }
+
+  const byDate = new Map()
+  base.forEach((point) => {
+    byDate.set(point.dateLabel, point)
+  })
+
+  return [...byDate.values()].map((point, index, points) => {
+    const previous = points[index - 1]
+    return {
+      ...point,
+      index,
+      gameNumber: index + 1,
+      delta: previous ? point.elo - previous.elo : point.delta,
+    }
+  })
 }
 
 function buildChartPoints(points) {
@@ -85,12 +108,15 @@ function formatDelta(delta) {
 export default function EloChart({ historyGames, emptyText }) {
   const [xAxisMode, setXAxisMode] = useState("date")
   const [ratingTrack, setRatingTrack] = useState("overall")
-  const chartId = useId()
-  const series = useMemo(() => buildEloSeries(historyGames, ratingTrack), [historyGames, ratingTrack])
+  const series = useMemo(() => buildEloSeries(historyGames, ratingTrack, xAxisMode), [historyGames, ratingTrack, xAxisMode])
   const chart = useMemo(() => buildChartPoints(series), [series])
   const [activeIndex, setActiveIndex] = useState(series.length > 0 ? series.length - 1 : -1)
   const activePoint = activeIndex >= 0 ? chart.circles[activeIndex] : null
   const trackLabel = TRACKS.find((track) => track.key === ratingTrack)?.label ?? "Overall"
+
+  useEffect(() => {
+    setActiveIndex(series.length > 0 ? series.length - 1 : -1)
+  }, [series])
 
   if (series.length === 0) {
     return <p>{emptyText}</p>
@@ -140,10 +166,7 @@ export default function EloChart({ historyGames, emptyText }) {
               role="tab"
               aria-selected={ratingTrack === track.key}
               className={`elo-chart__track-pill${ratingTrack === track.key ? " is-active" : ""}`}
-              onClick={() => {
-                setRatingTrack(track.key)
-                setActiveIndex(series.length > 0 ? series.length - 1 : -1)
-              }}
+              onClick={() => setRatingTrack(track.key)}
             >
               {track.label}
             </button>
