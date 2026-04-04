@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link, useParams } from "react-router-dom"
-import EloChart from "../components/EloChart"
+import EloChart, { ELO_TRACKS } from "../components/EloChart"
 import VersionStamp from "../components/VersionStamp"
 import { userApi } from "../services/api"
 import { formatUtcDate } from "../utils/dateTime"
@@ -35,6 +35,7 @@ export default function ProfilePage() {
   const [error, setError] = useState("")
   const [profile, setProfile] = useState(null)
   const [recentGames, setRecentGames] = useState([])
+  const [ratingTrack, setRatingTrack] = useState("overall")
 
   useEffect(() => {
     let cancelled = false
@@ -90,6 +91,8 @@ export default function ProfilePage() {
       drawsLabel: `${gamesDrawn} (${formatRate(gamesDrawn)})`,
     }
   }, [profile])
+  const selectedTrack = ELO_TRACKS.find((track) => track.key === ratingTrack) ?? ELO_TRACKS[0]
+  const selectedRating = ratingTrack === "vs_humans" ? stats.ratings.vsHumans : ratingTrack === "vs_bots" ? stats.ratings.vsBots : stats.ratings.overall
   if (loading) {
     return <main className="page-shell profile-page"><h1>Profile</h1><p>Loading profile…</p></main>
   }
@@ -105,16 +108,26 @@ export default function ProfilePage() {
 
       <section className="profile-card" aria-label="User stats">
         <h2>Stats</h2>
+        <div className="elo-chart__track-toggle" role="tablist" aria-label="Elo track">
+          {ELO_TRACKS.map((track) => (
+            <button
+              key={track.key}
+              type="button"
+              role="tab"
+              aria-selected={ratingTrack === track.key}
+              className={`elo-chart__track-pill${ratingTrack === track.key ? " is-active" : ""}`}
+              onClick={() => setRatingTrack(track.key)}
+            >
+              {track.label}
+            </button>
+          ))}
+        </div>
         <div className="stats-group-grid">
           <section className="stats-group-card" aria-labelledby="profile-ratings-heading">
-            <h3 id="profile-ratings-heading">Ratings</h3>
+            <h3 id="profile-ratings-heading">{selectedTrack.label} rating</h3>
             <dl className="profile-stats-grid">
-              <div><dt>Overall Elo</dt><dd>{stats.ratings.overall.elo}</dd></div>
-              <div><dt>Peak overall</dt><dd>{stats.ratings.overall.peak}</dd></div>
-              <div><dt>Elo vs humans</dt><dd>{stats.ratings.vsHumans.elo}</dd></div>
-              <div><dt>Peak vs humans</dt><dd>{stats.ratings.vsHumans.peak}</dd></div>
-              <div><dt>Elo vs bots</dt><dd>{stats.ratings.vsBots.elo}</dd></div>
-              <div><dt>Peak vs bots</dt><dd>{stats.ratings.vsBots.peak}</dd></div>
+              <div><dt>{selectedTrack.label} Elo</dt><dd>{selectedRating.elo}</dd></div>
+              <div><dt>Peak {selectedTrack.label.toLowerCase()}</dt><dd>{selectedRating.peak}</dd></div>
             </dl>
           </section>
           <section className="stats-group-card" aria-labelledby="profile-results-heading">
@@ -124,14 +137,10 @@ export default function ProfilePage() {
               <div><dt>Wins</dt><dd>{stats.winsLabel}</dd></div>
               <div><dt>Losses</dt><dd>{stats.lossesLabel}</dd></div>
               <div><dt>Draws</dt><dd>{stats.drawsLabel}</dd></div>
-            </dl>
-          </section>
-        </div>
-      </section>
-
-      <section className="profile-card" aria-labelledby="profile-elo-heading">
-        <h2 id="profile-elo-heading">Overall Elo rating</h2>
-        <EloChart historyGames={recentGames} emptyText="No finished games with rating history yet." />
+                </dl>
+              </section>
+            </div>
+        <EloChart historyGames={recentGames} emptyText="No finished games with rating history yet." ratingTrack={ratingTrack} showTrackToggle={false} />
       </section>
 
       <section className="profile-card" aria-label="Recent games">

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { formatUtcDate } from "../utils/dateTime"
 
-const TRACKS = [
+export const ELO_TRACKS = [
   { key: "overall", label: "Overall" },
   { key: "vs_humans", label: "vs Humans" },
   { key: "vs_bots", label: "vs Bots" },
@@ -105,14 +105,13 @@ function formatDelta(delta) {
   return `${delta > 0 ? "+" : ""}${delta}`
 }
 
-export default function EloChart({ historyGames, emptyText }) {
+export default function EloChart({ historyGames, emptyText, ratingTrack = "overall", showTrackToggle = true }) {
   const [xAxisMode, setXAxisMode] = useState("date")
-  const [ratingTrack, setRatingTrack] = useState("overall")
   const series = useMemo(() => buildEloSeries(historyGames, ratingTrack, xAxisMode), [historyGames, ratingTrack, xAxisMode])
   const chart = useMemo(() => buildChartPoints(series), [series])
   const [activeIndex, setActiveIndex] = useState(series.length > 0 ? series.length - 1 : -1)
   const activePoint = activeIndex >= 0 ? chart.circles[activeIndex] : null
-  const trackLabel = TRACKS.find((track) => track.key === ratingTrack)?.label ?? "Overall"
+  const trackLabel = ELO_TRACKS.find((track) => track.key === ratingTrack)?.label ?? "Overall"
 
   useEffect(() => {
     setActiveIndex(series.length > 0 ? series.length - 1 : -1)
@@ -158,20 +157,21 @@ export default function EloChart({ historyGames, emptyText }) {
   return (
     <div className="elo-chart">
       <div className="elo-chart__toolbar">
-        <div className="elo-chart__track-toggle" role="tablist" aria-label="Elo track">
-          {TRACKS.map((track) => (
-            <button
-              key={track.key}
-              type="button"
-              role="tab"
-              aria-selected={ratingTrack === track.key}
-              className={`elo-chart__track-pill${ratingTrack === track.key ? " is-active" : ""}`}
-              onClick={() => setRatingTrack(track.key)}
-            >
-              {track.label}
-            </button>
-          ))}
-        </div>
+        {showTrackToggle ? (
+          <div className="elo-chart__track-toggle" role="tablist" aria-label="Elo track">
+            {ELO_TRACKS.map((track) => (
+              <button
+                key={track.key}
+                type="button"
+                role="tab"
+                aria-selected={ratingTrack === track.key}
+                className={`elo-chart__track-pill${ratingTrack === track.key ? " is-active" : ""}`}
+              >
+                {track.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <span className={`elo-chart__mode-label${xAxisMode === "date" ? " is-active" : ""}`}>Date</span>
         <button
           type="button"

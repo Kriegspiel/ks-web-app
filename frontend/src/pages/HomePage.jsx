@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
-import EloChart from "../components/EloChart"
+import EloChart, { ELO_TRACKS } from "../components/EloChart"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import { getMyGames, userApi } from "../services/api"
@@ -78,6 +78,7 @@ export default function HomePage() {
   const [historyGames, setHistoryGames] = useState([])
   const [myGamesLoading, setMyGamesLoading] = useState(false)
   const [myGamesError, setMyGamesError] = useState("")
+  const [ratingTrack, setRatingTrack] = useState("overall")
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -143,6 +144,8 @@ export default function HomePage() {
       drawsLabel: `${gamesDrawn} (${formatRate(gamesDrawn)})`,
     }
   }, [user?.stats])
+  const selectedTrack = ELO_TRACKS.find((track) => track.key === ratingTrack) ?? ELO_TRACKS[0]
+  const selectedRating = ratingTrack === "vs_humans" ? stats.ratings.vsHumans : ratingTrack === "vs_bots" ? stats.ratings.vsBots : stats.ratings.overall
   const playNowPath = isAuthenticated
     ? (activeGame?.game_id ? `/game/${activeGame.game_id}` : "/lobby")
     : "/auth/login"
@@ -162,17 +165,26 @@ export default function HomePage() {
 
           <section className="home-card" aria-labelledby="home-stats-heading">
             <h2 id="home-stats-heading">Your stats</h2>
-            <EloChart historyGames={historyGames} emptyText="No finished games with rating history yet." />
+            <div className="elo-chart__track-toggle" role="tablist" aria-label="Elo track">
+              {ELO_TRACKS.map((track) => (
+                <button
+                  key={track.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={ratingTrack === track.key}
+                  className={`elo-chart__track-pill${ratingTrack === track.key ? " is-active" : ""}`}
+                  onClick={() => setRatingTrack(track.key)}
+                >
+                  {track.label}
+                </button>
+              ))}
+            </div>
             <div className="stats-group-grid">
               <section className="stats-group-card" aria-labelledby="home-ratings-heading">
-                <h3 id="home-ratings-heading">Ratings</h3>
+                <h3 id="home-ratings-heading">{selectedTrack.label} rating</h3>
                 <dl className="home-stats-grid">
-                  <div><dt>Overall Elo</dt><dd>{stats.ratings.overall.elo}</dd></div>
-                  <div><dt>Peak overall</dt><dd>{stats.ratings.overall.peak}</dd></div>
-                  <div><dt>Elo vs humans</dt><dd>{stats.ratings.vsHumans.elo}</dd></div>
-                  <div><dt>Peak vs humans</dt><dd>{stats.ratings.vsHumans.peak}</dd></div>
-                  <div><dt>Elo vs bots</dt><dd>{stats.ratings.vsBots.elo}</dd></div>
-                  <div><dt>Peak vs bots</dt><dd>{stats.ratings.vsBots.peak}</dd></div>
+                  <div><dt>{selectedTrack.label} Elo</dt><dd>{selectedRating.elo}</dd></div>
+                  <div><dt>Peak {selectedTrack.label.toLowerCase()}</dt><dd>{selectedRating.peak}</dd></div>
                 </dl>
               </section>
               <section className="stats-group-card" aria-labelledby="home-results-heading">
@@ -185,6 +197,7 @@ export default function HomePage() {
                 </dl>
               </section>
             </div>
+            <EloChart historyGames={historyGames} emptyText="No finished games with rating history yet." ratingTrack={ratingTrack} showTrackToggle={false} />
           </section>
 
           <section className="home-card" aria-labelledby="home-recent-games-heading">
