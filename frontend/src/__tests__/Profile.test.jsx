@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import ProfilePage from "../pages/Profile"
 
@@ -55,6 +55,9 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("img", { name: "Elo rating over time" })).toBeInTheDocument()
     expect(screen.getByText("Start 1320")).toBeInTheDocument()
     expect(screen.getByText("Latest 1345")).toBeInTheDocument()
+    expect(screen.getAllByText("2026-03-25").length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole("button", { name: "Game number" }))
+    expect(screen.getAllByText("Game 2").length).toBeGreaterThan(0)
     expect(screen.getByText(/win vs amy/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/fil/games")
   })

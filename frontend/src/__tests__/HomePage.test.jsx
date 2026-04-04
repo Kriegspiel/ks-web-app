@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import HomePage from "../pages/HomePage"
 import { TEST_VERSION_STAMP } from "../version"
@@ -115,5 +115,8 @@ describe("HomePage", () => {
     expect(screen.getByText(/2026-03-26 15:00:00 UTC/)).toBeInTheDocument()
     expect(screen.getByRole("img", { name: "Elo rating over time" })).toBeInTheDocument()
     expect(screen.getByText("Latest 1345")).toBeInTheDocument()
+    expect(screen.getAllByText("2026-03-25").length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole("button", { name: "Game number" }))
+    expect(screen.getAllByText("Game 2").length).toBeGreaterThan(0)
   })
 })
