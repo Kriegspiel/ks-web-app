@@ -21,6 +21,7 @@ const PHANTOM_LABELS = {
 }
 const PHANTOM_MENU_WIDTH = 164
 const PHANTOM_MENU_GAP = 6
+const REFEREE_LOG_FOLLOW_THRESHOLD_PX = 24
 const REFEREE_MAIN_ANNOUNCEMENT_TEXT = {
   1: "Illegal move",
   2: "Move complete",
@@ -814,6 +815,8 @@ export default function GamePage() {
   const suppressClickRef = useRef(false)
   const suppressContextMenuRef = useRef(false)
   const logScrollRef = useRef(null)
+  const shouldFollowLogRef = useRef(true)
+  const lastRefereeEntryCountRef = useRef(0)
   const viewportRestoreRef = useRef(null)
   const stateRequestIdRef = useRef(0)
 
@@ -1028,13 +1031,32 @@ export default function GamePage() {
     return Number.isFinite(opponent.elo) ? opponent.elo : null
   }, [gameMeta, gameState?.your_color])
 
+  const handleLogScroll = useCallback(() => {
+    const logNode = logScrollRef.current
+    if (!logNode) {
+      return
+    }
+
+    const distanceFromBottom = logNode.scrollHeight - logNode.clientHeight - logNode.scrollTop
+    shouldFollowLogRef.current = distanceFromBottom <= REFEREE_LOG_FOLLOW_THRESHOLD_PX
+  }, [])
+
   useEffect(() => {
     const logNode = logScrollRef.current
     if (!logNode) {
       return
     }
 
-    logNode.scrollTop = logNode.scrollHeight
+    const nextEntryCount = groupedRefereeLog.reduce((total, turnEntry) => total + turnEntry.white.length + turnEntry.black.length, 0)
+    const hadPreviousEntries = lastRefereeEntryCountRef.current > 0
+    const hasNewEntries = nextEntryCount > lastRefereeEntryCountRef.current
+
+    if (!hadPreviousEntries || (hasNewEntries && shouldFollowLogRef.current)) {
+      logNode.scrollTop = logNode.scrollHeight
+      shouldFollowLogRef.current = true
+    }
+
+    lastRefereeEntryCountRef.current = nextEntryCount
   }, [groupedRefereeLog])
 
   useEffect(() => {
@@ -1627,7 +1649,7 @@ export default function GamePage() {
                 </div>
 
                 {groupedRefereeLog.length ? (
-                  <div className="game-referee-log__scroll" role="log" aria-label="Referee log by turn" ref={logScrollRef}>
+                  <div className="game-referee-log__scroll" role="log" aria-label="Referee log by turn" ref={logScrollRef} onScroll={handleLogScroll}>
                     {groupedRefereeLog.map((turnEntry) => (
                       <section key={`turn-${turnEntry.turn}`} className="game-referee-turn">
                         <div className="game-referee-turn__title">Turn {turnEntry.turn}</div>

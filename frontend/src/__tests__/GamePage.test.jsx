@@ -199,6 +199,44 @@ describe("GamePage", () => {
     expect(screen.getByText("9:58")).toBeInTheDocument()
   })
 
+  it("auto_follows_new_referee_entries_only_while_log_is_near_bottom", async () => {
+    const firstState = {
+      ...activeState,
+      referee_log: [{ turn: 1, color: "white", announcement: "White to move" }],
+    }
+    const secondState = {
+      ...activeState,
+      referee_log: [
+        { turn: 1, color: "white", announcement: "White to move" },
+        { turn: 1, color: "black", announcement: "Black replied" },
+      ],
+    }
+
+    mockApi.getGameState
+      .mockResolvedValueOnce(firstState)
+      .mockResolvedValueOnce(secondState)
+
+    render(<GamePage />)
+
+    const log = await screen.findByRole("log", { name: "Referee log by turn" })
+    Object.defineProperty(log, "scrollHeight", { value: 500, configurable: true })
+    Object.defineProperty(log, "clientHeight", { value: 120, configurable: true })
+    Object.defineProperty(log, "scrollTop", { value: 0, writable: true, configurable: true })
+
+    await waitFor(() => {
+      expect(log.scrollTop).toBe(500)
+    })
+
+    log.scrollTop = 100
+    fireEvent.scroll(log)
+
+    await waitFor(() => {
+      expect(mockApi.getGameState).toHaveBeenCalledTimes(2)
+    })
+
+    expect(log.scrollTop).toBe(100)
+  })
+
   it("shows_rules_and_opponent_in_status_from_metadata", async () => {
     mockApi.getGame.mockResolvedValueOnce({
       game_id: "g-123",
