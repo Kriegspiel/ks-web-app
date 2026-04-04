@@ -104,6 +104,18 @@ describe("ChessBoard", () => {
     expect(e5.querySelector(".square__move-dot")).toBeTruthy()
   })
 
+  it("renders_recent_capture_square_state", () => {
+    render(
+      <ChessBoard
+        boardFen="8/8/8/8/8/8/8/4K3 w - - 0 1"
+        captureSquares={["d5"]}
+      />,
+    )
+
+    expect(screen.getAllByRole("button", { name: "Square d5" }).at(-1)).toHaveClass("square--capture")
+    expect(screen.getAllByRole("button", { name: "Square e5" }).at(-1)).not.toHaveClass("square--capture")
+  })
+
   it("wires_primary_and_pointer_handlers_and_respects_disabled", () => {
     const onSquareClick = vi.fn()
     const onSquareRightClick = vi.fn()

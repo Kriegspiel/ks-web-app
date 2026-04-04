@@ -93,6 +93,14 @@ function formatCaptureSquare(value) {
   return normalized.toUpperCase()
 }
 
+function getEntryCaptureSquare(value) {
+  if (!value || typeof value !== "object") {
+    return ""
+  }
+
+  return REFEREE_CAPTURE_SQUARE_KEYS.map((key) => formatCaptureSquare(value[key])).find(Boolean) ?? ""
+}
+
 function getRefereeCode(value) {
   if (typeof value === "number" && REFEREE_MAIN_ANNOUNCEMENT_TEXT[value]) {
     return value
@@ -358,7 +366,12 @@ function normalizeAnnouncementItem(entry) {
       return null
     }
 
-    return { text: formatRefereeEntryText({ messages: parts }), messages: parts }
+    const captureSquare = parts.map((part) => {
+      const match = part.match(/capture done at ([a-h][1-8])/i)
+      return match ? formatCaptureSquare(match[1]) : ""
+    }).find(Boolean) ?? ""
+
+    return { text: formatRefereeEntryText({ messages: parts }), messages: parts, captureSquare }
   }
 
   const texts = getLogEntryTexts(entry)
@@ -369,17 +382,18 @@ function normalizeAnnouncementItem(entry) {
   const prompt = typeof entry.prompt === "string" && entry.prompt.trim() ? entry.prompt.trim() : ""
   const message = typeof entry.message === "string" && entry.message.trim() ? entry.message.trim() : ""
   const moveUci = typeof entry.move_uci === "string" ? entry.move_uci.trim().toLowerCase() : ""
+  const captureSquare = getEntryCaptureSquare(entry)
   const text = formatRefereeEntryText({ messages: texts, moveUci })
 
   if (message) {
-    return { text, messages: texts, prompt, moveUci }
+    return { text, messages: texts, prompt, moveUci, captureSquare }
   }
 
   if (prompt) {
-    return { text, messages: texts, prompt, moveUci }
+    return { text, messages: texts, prompt, moveUci, captureSquare }
   }
 
-  return { text, messages: texts, moveUci }
+  return { text, messages: texts, moveUci, captureSquare }
 }
 
 function normalizeScoresheetTurnEntry(pair, perspective) {
@@ -397,12 +411,13 @@ function normalizeScoresheetTurnEntry(pair, perspective) {
   const [questionValue, answerValue] = tuple
   const moveUci = perspective === "own" ? getScoresheetMoveUci(questionValue) : ""
   const answerTexts = getLogEntryTexts({ answer: answerValue })
+  const captureSquare = getEntryCaptureSquare(answerValue)
 
   if (!answerTexts.length) {
     return null
   }
 
-  return { text: formatRefereeEntryText({ messages: answerTexts, moveUci }), messages: answerTexts, moveUci }
+  return { text: formatRefereeEntryText({ messages: answerTexts, moveUci }), messages: answerTexts, moveUci, captureSquare }
 }
 
 function normalizeTurnSideEntries(entries, normalizer) {
@@ -468,11 +483,102 @@ function buildVisibleRefereeLog(gameState) {
     return scoresheetTurns
   }
 
-  return groupRefereeLog(gameState?.referee_log ?? []).map((turn) => ({
-    ...turn,
-    white: normalizeTurnSideEntries(turn.white, normalizeAnnouncementItem),
-    black: normalizeTurnSideEntries(turn.black, normalizeAnnouncementItem),
-  }))
+  const groupedRefereeEntries = new Map()
+  ;(Array.isArray(gameState?.referee_log) ? gameState.referee_log : []).forEach((entry, index) => {
+    const turn = getLogEntryTurn(entry, Math.floor(index / 2) + 1)
+    const color = getLogEntryColor(entry, index)
+    const texts = getLogEntryTexts(entry)
+    if (!texts.length) {
+      return
+    }
+    const captureSquare = getEntryCaptureSquare(entry)
+
+    if (!groupedRefereeEntries.has(turn)) {
+      groupedRefereeEntries.set(turn, { turn, white: [], black: [] })
+    }
+
+    texts.forEach((text, textIndex) => {
+      groupedRefereeEntries.get(turn)[color].push({
+        text,
+        messages: [text],
+        captureSquare: textIndex === 0 ? captureSquare : "",
+      })
+    })
+  })
+
+  return Array.from(groupedRefereeEntries.values()).sort((left, right) => left.turn - right.turn)
+}
+
+function rawEntryMessages(entry) {
+  return Array.isArray(getLogEntryTexts(entry)) ? getLogEntryTexts(entry) : []
+}
+
+function isCaptureAnnouncementEntry(entry) {
+  return rawEntryMessages(entry).some((message) => typeof message === "string" && message.startsWith("Capture done"))
+}
+
+function getRecentCaptureSquaresFromTurns(turns) {
+  if (!Array.isArray(turns)) {
+    return []
+  }
+
+  for (let turnIndex = turns.length - 1; turnIndex >= 0; turnIndex -= 1) {
+    const turn = turns[turnIndex]
+    const orderedEntries = [...(Array.isArray(turn?.white) ? turn.white : []), ...(Array.isArray(turn?.black) ? turn.black : [])]
+    for (let entryIndex = orderedEntries.length - 1; entryIndex >= 0; entryIndex -= 1) {
+      const entry = orderedEntries[entryIndex]
+      if (!entry) {
+        continue
+      }
+      if (!isCaptureAnnouncementEntry(entry)) {
+        return []
+      }
+      const captureSquare = getEntryCaptureSquare(entry) || getEntryCaptureSquare(entry?.answer) || getEntryCaptureSquare(entry?.response) || getEntryCaptureSquare(entry?.result)
+      return captureSquare ? [captureSquare.toLowerCase()] : []
+    }
+  }
+
+  return []
+}
+
+function getRecentCaptureSquares(gameState) {
+  const explicitScoresheetTurns = Array.isArray(gameState?.scoresheet?.turns) ? gameState.scoresheet.turns : []
+  if (explicitScoresheetTurns.length) {
+    return getRecentCaptureSquaresFromTurns(explicitScoresheetTurns)
+  }
+
+  const explicitTurns = Array.isArray(gameState?.referee_turns) ? gameState.referee_turns : []
+  if (explicitTurns.length) {
+    return getRecentCaptureSquaresFromTurns(explicitTurns)
+  }
+
+  const playerColor = normalizeLogColor(gameState?.your_color)
+  const scoresheet = getGameScoresheet(gameState, playerColor)
+  if (scoresheet) {
+    const ownTurns = getScoresheetTurns(scoresheet, "_KriegspielScoresheet__moves_own", "moves_own")
+    const opponentTurns = getScoresheetTurns(scoresheet, "_KriegspielScoresheet__moves_opponent", "moves_opponent")
+    const turnCount = Math.max(ownTurns.length, opponentTurns.length)
+    const turns = Array.from({ length: turnCount }, (_, index) => ({
+      white: playerColor === "white" ? ownTurns[index] ?? [] : opponentTurns[index] ?? [],
+      black: playerColor === "black" ? ownTurns[index] ?? [] : opponentTurns[index] ?? [],
+    }))
+    return getRecentCaptureSquaresFromTurns(turns)
+  }
+
+  const refereeLog = Array.isArray(gameState?.referee_log) ? gameState.referee_log : []
+  for (let index = refereeLog.length - 1; index >= 0; index -= 1) {
+    const entry = refereeLog[index]
+    if (!entry) {
+      continue
+    }
+    if (!isCaptureAnnouncementEntry(entry)) {
+      return []
+    }
+    const captureSquare = getEntryCaptureSquare(entry) || getEntryCaptureSquare(entry?.answer) || getEntryCaptureSquare(entry?.response) || getEntryCaptureSquare(entry?.result)
+    return captureSquare ? [captureSquare.toLowerCase()] : []
+  }
+
+  return []
 }
 
 function formatClock(seconds) {
@@ -975,6 +1081,7 @@ export default function GamePage() {
 
   const highlightedSquares = [fromSquare, toSquare, movingPhantomFrom, dragHoverSquare, draggingMoveFrom, moveDragHoverSquare].filter(Boolean)
   const groupedRefereeLog = useMemo(() => buildVisibleRefereeLog(gameState), [gameState])
+  const captureSquares = useMemo(() => getRecentCaptureSquares(gameState), [gameState])
   const latestAskAnyConstraint = useMemo(
     () => getLatestAskAnyConstraint(groupedRefereeLog, gameState?.your_color),
     [groupedRefereeLog, gameState?.your_color]
@@ -1554,6 +1661,7 @@ export default function GamePage() {
                     orientation={gameState.your_color}
                     highlightedSquares={highlightedSquares}
                     lastMoveSquares={lastMoveSquares}
+                    captureSquares={captureSquares}
                     illegalSquares={illegalMoveSquares}
                     suggestedSquares={moveSuggestionSquares}
                     phantomSquares={phantomSquares}

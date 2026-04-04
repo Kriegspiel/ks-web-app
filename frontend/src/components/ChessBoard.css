@@ -24,6 +24,7 @@
   --square-hover-overlay: transparent;
   --square-ring-highlight: inset 0 0 0 0 rgba(0, 0, 0, 0);
   --square-ring-last-move: inset 0 0 0 0 rgba(0, 0, 0, 0);
+  --square-ring-capture: inset 0 0 0 0 rgba(0, 0, 0, 0);
   --square-ring-illegal: inset 0 0 0 0 rgba(0, 0, 0, 0);
   --square-ring-suggested: inset 0 0 0 0 rgba(0, 0, 0, 0);
   position: relative;
@@ -68,6 +69,7 @@
   box-shadow:
     var(--square-ring-highlight),
     var(--square-ring-last-move),
+    var(--square-ring-capture),
     var(--square-ring-illegal),
     var(--square-ring-suggested);
   transition: box-shadow 120ms ease;
@@ -128,6 +130,10 @@
 
 .square--illegal {
   --square-ring-illegal: inset 0 0 0 0.22rem rgba(220, 38, 38, 0.95);
+}
+
+.square--capture {
+  --square-ring-capture: inset 0 0 0 0.22rem rgba(185, 28, 28, 0.72);
 }
 
 .square--suggested {
