@@ -1,12 +1,29 @@
 import { useId, useMemo, useState } from "react"
 import { formatUtcDate } from "../utils/dateTime"
 
-function buildEloSeries(historyGames) {
+const TRACKS = [
+  { key: "overall", label: "Overall" },
+  { key: "vs_humans", label: "vs Humans" },
+  { key: "vs_bots", label: "vs Bots" },
+]
+
+function buildEloSeries(historyGames, ratingTrack) {
   if (!Array.isArray(historyGames)) {
     return []
   }
 
   return [...historyGames]
+    .map((game) => {
+      const snapshot = game?.rating_snapshot
+      const trackSnapshot = snapshot?.[ratingTrack]
+      const eloAfter = trackSnapshot?.elo_after ?? game?.elo_after
+      const eloDelta = trackSnapshot?.elo_delta ?? game?.elo_delta
+      return {
+        ...game,
+        elo_after: eloAfter,
+        elo_delta: eloDelta,
+      }
+    })
     .filter((game) => Number.isFinite(Number(game?.elo_after)))
     .sort((left, right) => Date.parse(left?.played_at ?? "") - Date.parse(right?.played_at ?? ""))
     .map((game, index) => ({
@@ -67,11 +84,13 @@ function formatDelta(delta) {
 
 export default function EloChart({ historyGames, emptyText }) {
   const [xAxisMode, setXAxisMode] = useState("date")
+  const [ratingTrack, setRatingTrack] = useState("overall")
   const chartId = useId()
-  const series = useMemo(() => buildEloSeries(historyGames), [historyGames])
+  const series = useMemo(() => buildEloSeries(historyGames, ratingTrack), [historyGames, ratingTrack])
   const chart = useMemo(() => buildChartPoints(series), [series])
   const [activeIndex, setActiveIndex] = useState(series.length > 0 ? series.length - 1 : -1)
   const activePoint = activeIndex >= 0 ? chart.circles[activeIndex] : null
+  const trackLabel = TRACKS.find((track) => track.key === ratingTrack)?.label ?? "Overall"
 
   if (series.length === 0) {
     return <p>{emptyText}</p>
@@ -113,6 +132,23 @@ export default function EloChart({ historyGames, emptyText }) {
   return (
     <div className="elo-chart">
       <div className="elo-chart__toolbar">
+        <div className="elo-chart__track-toggle" role="tablist" aria-label="Elo track">
+          {TRACKS.map((track) => (
+            <button
+              key={track.key}
+              type="button"
+              role="tab"
+              aria-selected={ratingTrack === track.key}
+              className={`elo-chart__track-pill${ratingTrack === track.key ? " is-active" : ""}`}
+              onClick={() => {
+                setRatingTrack(track.key)
+                setActiveIndex(series.length > 0 ? series.length - 1 : -1)
+              }}
+            >
+              {track.label}
+            </button>
+          ))}
+        </div>
         <span className={`elo-chart__mode-label${xAxisMode === "date" ? " is-active" : ""}`}>Date</span>
         <button
           type="button"
@@ -133,7 +169,7 @@ export default function EloChart({ historyGames, emptyText }) {
         onMouseMove={handlePlotHover}
         onMouseLeave={() => setActiveIndex(series.length - 1)}
       >
-        <svg viewBox={`0 0 ${chart.width} ${chart.height}`} role="img" aria-label="Elo rating over time">
+        <svg viewBox={`0 0 ${chart.width} ${chart.height}`} role="img" aria-label={`${trackLabel} Elo rating over time`}>
           {chart.ticks.map((tick) => (
             <g key={`${tick.value}-${tick.y}`}>
               <line className="elo-chart__grid" x1="18" x2={chart.width - 18} y1={tick.y} y2={tick.y} />
@@ -162,7 +198,7 @@ export default function EloChart({ historyGames, emptyText }) {
         {activePoint && tooltipStyle ? (
           <div className="elo-chart__tooltip" style={tooltipStyle} aria-live="polite">
             <strong>{activeLabel}</strong>
-            <span>Elo {activePoint.elo}</span>
+            <span>{trackLabel} Elo {activePoint.elo}</span>
             <span>Delta {formatDelta(activePoint.delta)}</span>
           </div>
         ) : null}

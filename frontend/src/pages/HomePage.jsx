@@ -162,18 +162,28 @@ export default function HomePage() {
 
           <section className="home-card" aria-labelledby="home-stats-heading">
             <h2 id="home-stats-heading">Your stats</h2>
-            <dl className="home-stats-grid">
-              <div><dt>Overall Elo</dt><dd>{stats.ratings.overall.elo}</dd></div>
-              <div><dt>Peak overall</dt><dd>{stats.ratings.overall.peak}</dd></div>
-              <div><dt>Elo vs humans</dt><dd>{stats.ratings.vsHumans.elo}</dd></div>
-              <div><dt>Peak vs humans</dt><dd>{stats.ratings.vsHumans.peak}</dd></div>
-              <div><dt>Elo vs bots</dt><dd>{stats.ratings.vsBots.elo}</dd></div>
-              <div><dt>Peak vs bots</dt><dd>{stats.ratings.vsBots.peak}</dd></div>
-              <div><dt>Games</dt><dd>{stats.gamesPlayed}</dd></div>
-              <div><dt>Wins</dt><dd>{stats.winsLabel}</dd></div>
-              <div><dt>Losses</dt><dd>{stats.lossesLabel}</dd></div>
-              <div><dt>Draws</dt><dd>{stats.drawsLabel}</dd></div>
-            </dl>
+            <div className="stats-group-grid">
+              <section className="stats-group-card" aria-labelledby="home-ratings-heading">
+                <h3 id="home-ratings-heading">Ratings</h3>
+                <dl className="home-stats-grid">
+                  <div><dt>Overall Elo</dt><dd>{stats.ratings.overall.elo}</dd></div>
+                  <div><dt>Peak overall</dt><dd>{stats.ratings.overall.peak}</dd></div>
+                  <div><dt>Elo vs humans</dt><dd>{stats.ratings.vsHumans.elo}</dd></div>
+                  <div><dt>Peak vs humans</dt><dd>{stats.ratings.vsHumans.peak}</dd></div>
+                  <div><dt>Elo vs bots</dt><dd>{stats.ratings.vsBots.elo}</dd></div>
+                  <div><dt>Peak vs bots</dt><dd>{stats.ratings.vsBots.peak}</dd></div>
+                </dl>
+              </section>
+              <section className="stats-group-card" aria-labelledby="home-results-heading">
+                <h3 id="home-results-heading">Results</h3>
+                <dl className="home-stats-grid">
+                  <div><dt>Games</dt><dd>{stats.gamesPlayed}</dd></div>
+                  <div><dt>Wins</dt><dd>{stats.winsLabel}</dd></div>
+                  <div><dt>Losses</dt><dd>{stats.lossesLabel}</dd></div>
+                  <div><dt>Draws</dt><dd>{stats.drawsLabel}</dd></div>
+                </dl>
+              </section>
+            </div>
           </section>
 
           <section className="home-card" aria-labelledby="home-elo-heading">
