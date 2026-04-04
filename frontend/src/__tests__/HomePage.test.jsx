@@ -56,7 +56,22 @@ describe("HomePage", () => {
 
   it("routes_authenticated_play_now_to_lobby_when_no_active_game", async () => {
     mockAuth.isAuthenticated = true
-    mockAuth.user = { username: "fil", stats: { elo: 1337, elo_peak: 1402, games_played: 12, games_won: 7, games_lost: 3, games_drawn: 2 } }
+    mockAuth.user = {
+      username: "fil",
+      stats: {
+        elo: 1337,
+        elo_peak: 1402,
+        ratings: {
+          overall: { elo: 1337, peak: 1402 },
+          vs_humans: { elo: 1310, peak: 1360 },
+          vs_bots: { elo: 1388, peak: 1400 },
+        },
+        games_played: 12,
+        games_won: 7,
+        games_lost: 3,
+        games_drawn: 2,
+      },
+    }
 
     renderPage()
 
@@ -68,6 +83,8 @@ describe("HomePage", () => {
     expect(screen.getByRole("link", { name: "Play now" })).toHaveAttribute("href", "/lobby")
     expect(screen.getByRole("link", { name: "Leaderboard" })).toHaveAttribute("href", "/leaderboard")
     expect(screen.getByText("1337")).toBeInTheDocument()
+    expect(screen.getByText("1310")).toBeInTheDocument()
+    expect(screen.getByText("1388")).toBeInTheDocument()
     expect(screen.getByText("7 (58.3%)")).toBeInTheDocument()
     expect(screen.getByText("3 (25.0%)")).toBeInTheDocument()
     expect(screen.getByText("2 (16.7%)")).toBeInTheDocument()
@@ -75,7 +92,22 @@ describe("HomePage", () => {
 
   it("shows_recent_games_and_resume_cta_for_active_game", async () => {
     mockAuth.isAuthenticated = true
-    mockAuth.user = { username: "fil", stats: { elo: 1345, elo_peak: 1402, games_played: 12, games_won: 7, games_lost: 3, games_drawn: 2 } }
+    mockAuth.user = {
+      username: "fil",
+      stats: {
+        elo: 1345,
+        elo_peak: 1402,
+        ratings: {
+          overall: { elo: 1345, peak: 1402 },
+          vs_humans: { elo: 1321, peak: 1361 },
+          vs_bots: { elo: 1390, peak: 1404 },
+        },
+        games_played: 12,
+        games_won: 7,
+        games_lost: 3,
+        games_drawn: 2,
+      },
+    }
     mockApi.getMyGames.mockResolvedValue({
       games: [
         {
