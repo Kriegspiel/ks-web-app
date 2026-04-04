@@ -13,6 +13,13 @@ function buildBaseEloSeries(historyGames, ratingTrack) {
   }
 
   return [...historyGames]
+    .filter((game) => {
+      if (ratingTrack === "overall") {
+        return true
+      }
+      const opponentRole = String(game?.opponent_role ?? "user").toLowerCase()
+      return ratingTrack === "vs_bots" ? opponentRole === "bot" : opponentRole !== "bot"
+    })
     .map((game) => {
       const snapshot = game?.rating_snapshot
       const trackSnapshot = snapshot?.[ratingTrack]
