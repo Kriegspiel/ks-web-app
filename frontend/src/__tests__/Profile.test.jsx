@@ -34,7 +34,19 @@ describe("ProfilePage", () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username: "fil",
       member_since: "2026-01-01T00:00:00Z",
-      stats: { games_played: 10, games_won: 6, games_lost: 3, games_drawn: 1, elo: 1345, elo_peak: 1401 },
+      stats: {
+        games_played: 10,
+        games_won: 6,
+        games_lost: 3,
+        games_drawn: 1,
+        elo: 1345,
+        elo_peak: 1401,
+        ratings: {
+          overall: { elo: 1345, peak: 1401 },
+          vs_humans: { elo: 1290, peak: 1325 },
+          vs_bots: { elo: 1410, peak: 1412 },
+        },
+      },
     })
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({
       games: [
@@ -51,6 +63,8 @@ describe("ProfilePage", () => {
     expect(screen.getByText("6 (60.0%)")).toBeInTheDocument()
     expect(screen.getByText("3 (30.0%)")).toBeInTheDocument()
     expect(screen.getByText("1 (10.0%)")).toBeInTheDocument()
+    expect(screen.getByText("1290")).toBeInTheDocument()
+    expect(screen.getByText("1410")).toBeInTheDocument()
     expect(screen.queryByText(/win rate/i)).not.toBeInTheDocument()
     expect(screen.getByRole("img", { name: "Elo rating over time" })).toBeInTheDocument()
     expect(screen.getByText("Start 1320")).toBeInTheDocument()

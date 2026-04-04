@@ -20,7 +20,16 @@ beforeEach(() => {
 describe("LeaderboardPage", () => {
   it("renders_ranked_rows_and_profile_links", async () => {
     mockApi.userApi.getLeaderboard.mockResolvedValueOnce({
-      players: [{ rank: 1, username: "amy", role: "user", is_bot: false, elo: 1500, games_played: 12, win_rate: 0.75 }],
+      players: [{
+        rank: 1,
+        username: "amy",
+        role: "user",
+        is_bot: false,
+        elo: 1500,
+        ratings: { overall: { elo: 1500 }, vs_humans: { elo: 1520 }, vs_bots: { elo: 1470 } },
+        games_played: 12,
+        win_rate: 0.75,
+      }],
       pagination: { page: 1, pages: 1, total: 1 },
     })
 
@@ -29,12 +38,14 @@ describe("LeaderboardPage", () => {
     await screen.findByText("amy")
     expect(screen.getByRole("link", { name: "amy" })).toHaveAttribute("href", "/user/amy")
     expect(screen.getByText("Human")).toBeInTheDocument()
+    expect(screen.getByText("1520")).toBeInTheDocument()
+    expect(screen.getByText("1470")).toBeInTheDocument()
     expect(screen.getByText("75.0%")).toBeInTheDocument()
   })
 
   it("shows_bot_type_for_bot_rows", async () => {
     mockApi.userApi.getLeaderboard.mockResolvedValueOnce({
-      players: [{ rank: 1, username: "randobot", role: "bot", is_bot: true, elo: 1400, games_played: 40, win_rate: 0.5 }],
+      players: [{ rank: 1, username: "randobot", role: "bot", is_bot: true, elo: 1400, ratings: { overall: { elo: 1400 }, vs_humans: { elo: 1300 }, vs_bots: { elo: 1450 } }, games_played: 40, win_rate: 0.5 }],
       pagination: { page: 1, pages: 1, total: 1 },
     })
 

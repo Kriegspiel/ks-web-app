@@ -14,6 +14,21 @@ function statOrZero(value) {
   return Number.isFinite(Number(value)) ? Number(value) : 0
 }
 
+function normalizeRatings(source) {
+  const ratings = source?.ratings ?? {}
+  const track = (key, fallbackElo, fallbackPeak) => ({
+    elo: statOrZero(ratings?.[key]?.elo ?? fallbackElo),
+    peak: statOrZero(ratings?.[key]?.peak ?? fallbackPeak),
+  })
+
+  const overall = track("overall", source?.elo, source?.elo_peak)
+  return {
+    overall,
+    vsHumans: track("vs_humans"),
+    vsBots: track("vs_bots"),
+  }
+}
+
 export default function ProfilePage() {
   const { username = "" } = useParams()
   const [loading, setLoading] = useState(true)
@@ -57,6 +72,7 @@ export default function ProfilePage() {
 
   const stats = useMemo(() => {
     const source = profile?.stats ?? {}
+    const ratings = normalizeRatings(source)
     const gamesPlayed = statOrZero(source.games_played)
     const gamesWon = statOrZero(source.games_won)
     const gamesLost = statOrZero(source.games_lost)
@@ -68,8 +84,7 @@ export default function ProfilePage() {
       gamesWon,
       gamesLost,
       gamesDrawn,
-      elo: statOrZero(source.elo),
-      eloPeak: statOrZero(source.elo_peak),
+      ratings,
       winsLabel: `${gamesWon} (${formatRate(gamesWon)})`,
       lossesLabel: `${gamesLost} (${formatRate(gamesLost)})`,
       drawsLabel: `${gamesDrawn} (${formatRate(gamesDrawn)})`,
@@ -95,13 +110,17 @@ export default function ProfilePage() {
           <div><dt>Wins</dt><dd>{stats.winsLabel}</dd></div>
           <div><dt>Losses</dt><dd>{stats.lossesLabel}</dd></div>
           <div><dt>Draws</dt><dd>{stats.drawsLabel}</dd></div>
-          <div><dt>ELO</dt><dd>{stats.elo}</dd></div>
-          <div><dt>Peak</dt><dd>{stats.eloPeak}</dd></div>
+          <div><dt>Overall Elo</dt><dd>{stats.ratings.overall.elo}</dd></div>
+          <div><dt>Peak overall</dt><dd>{stats.ratings.overall.peak}</dd></div>
+          <div><dt>Elo vs humans</dt><dd>{stats.ratings.vsHumans.elo}</dd></div>
+          <div><dt>Peak vs humans</dt><dd>{stats.ratings.vsHumans.peak}</dd></div>
+          <div><dt>Elo vs bots</dt><dd>{stats.ratings.vsBots.elo}</dd></div>
+          <div><dt>Peak vs bots</dt><dd>{stats.ratings.vsBots.peak}</dd></div>
         </dl>
       </section>
 
       <section className="profile-card" aria-labelledby="profile-elo-heading">
-        <h2 id="profile-elo-heading">Elo rating</h2>
+        <h2 id="profile-elo-heading">Overall Elo rating</h2>
         <EloChart historyGames={recentGames} emptyText="No finished games with rating history yet." />
       </section>
 

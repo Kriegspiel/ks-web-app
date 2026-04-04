@@ -48,14 +48,16 @@ export default function LeaderboardPage() {
           {data.players.length === 0 ? <p>No ranked players found.</p> : (
             <div className="leaderboard-table-wrap">
               <table className="leaderboard-table">
-                <thead><tr><th>Rank</th><th>Username</th><th>Type</th><th>Elo</th><th>Games</th><th>Win rate</th></tr></thead>
+                <thead><tr><th>Rank</th><th>Username</th><th>Type</th><th>Overall</th><th>vs Humans</th><th>vs Bots</th><th>Games</th><th>Win rate</th></tr></thead>
                 <tbody>
                   {data.players.map((player) => (
                     <tr key={`${player.username}-${player.rank}`}>
                       <td>{player.rank}</td>
                       <td><Link to={`/user/${player.username}`}>{player.username}</Link></td>
                       <td>{player.is_bot || player.role === "bot" ? "Bot" : "Human"}</td>
-                      <td>{player.elo}</td>
+                      <td>{Number(player?.ratings?.overall?.elo ?? player.elo ?? 1200)}</td>
+                      <td>{Number(player?.ratings?.vs_humans?.elo ?? 1200)}</td>
+                      <td>{Number(player?.ratings?.vs_bots?.elo ?? 1200)}</td>
                       <td>{player.games_played}</td>
                       <td>{(Number(player.win_rate ?? 0) * 100).toFixed(1)}%</td>
                     </tr>
