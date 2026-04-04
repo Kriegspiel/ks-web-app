@@ -136,7 +136,7 @@ export default function LobbyPage() {
     [bots],
   )
   const activeGame = useMemo(() => getActiveGame(myGames), [myGames])
-  const playNowPath = activeGame?.game_id ? `/game/${activeGame.game_id}` : "/lobby"
+  const playNowPath = activeGame?.game_id ? `/game/${activeGame.game_id}` : ""
 
   async function refreshOpenGames({ markLoading = false } = {}) {
     if (markLoading) {
@@ -397,7 +397,7 @@ export default function LobbyPage() {
         <p>Signed in as {signedInAs}.</p>
       </div>
       <nav className="inline-links lobby-page__quick-actions" aria-label="Lobby quick actions">
-        <Link to={playNowPath}>Resume active game</Link>
+        {playNowPath ? <Link to={playNowPath}>Resume active game</Link> : null}
         <Link to="/leaderboard">Leaderboard</Link>
         <a href={RULES_URL} target="_blank" rel="noreferrer noopener" aria-label="Read rules (opens external page)">
           Read rules ↗

@@ -50,6 +50,13 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("link", { name: /Read rules/i })).toHaveAttribute("href", "https://kriegspiel.org/rules")
   })
 
+  it("hides_resume_active_game_when_user_has_no_active_game", async () => {
+    renderPage()
+
+    await screen.findByRole("link", { name: "Leaderboard" })
+    expect(screen.queryByRole("link", { name: "Resume active game" })).not.toBeInTheDocument()
+  })
+
   it("orders_join_sections_as_create_open_join", async () => {
     renderPage()
 
