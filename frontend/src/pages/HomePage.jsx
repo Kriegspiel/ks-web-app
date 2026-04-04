@@ -184,6 +184,7 @@ export default function HomePage() {
           <nav className="inline-links" aria-label="Home quick actions">
             <Link to={playNowPath}>{activeGame ? "Resume active game" : "Play now"}</Link>
             <Link to="/lobby">Browse lobby</Link>
+            <Link to="/leaderboard">Leaderboard</Link>
             {renderExternalRulesLink()}
           </nav>
 

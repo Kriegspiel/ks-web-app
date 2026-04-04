@@ -66,6 +66,7 @@ describe("HomePage", () => {
     })
 
     expect(screen.getByRole("link", { name: "Play now" })).toHaveAttribute("href", "/lobby")
+    expect(screen.getByRole("link", { name: "Leaderboard" })).toHaveAttribute("href", "/leaderboard")
     expect(screen.getByText("1337")).toBeInTheDocument()
     expect(screen.getByText("7 (58.3%)")).toBeInTheDocument()
     expect(screen.getByText("3 (25.0%)")).toBeInTheDocument()
