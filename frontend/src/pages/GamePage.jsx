@@ -355,6 +355,20 @@ function splitRefereeTextParts(value) {
     .filter(Boolean)
 }
 
+function getCaptureSquareFromTexts(messages = []) {
+  if (!Array.isArray(messages)) {
+    return ""
+  }
+
+  return messages.map((message) => {
+    if (typeof message !== "string") {
+      return ""
+    }
+    const match = message.match(/capture done at ([a-h][1-8])/i)
+    return match ? formatCaptureSquare(match[1]) : ""
+  }).find(Boolean) ?? ""
+}
+
 function normalizeAnnouncementItem(entry) {
   if (!entry) {
     return null
@@ -366,10 +380,7 @@ function normalizeAnnouncementItem(entry) {
       return null
     }
 
-    const captureSquare = parts.map((part) => {
-      const match = part.match(/capture done at ([a-h][1-8])/i)
-      return match ? formatCaptureSquare(match[1]) : ""
-    }).find(Boolean) ?? ""
+    const captureSquare = getCaptureSquareFromTexts(parts)
 
     return { text: formatRefereeEntryText({ messages: parts }), messages: parts, captureSquare }
   }
@@ -382,7 +393,7 @@ function normalizeAnnouncementItem(entry) {
   const prompt = typeof entry.prompt === "string" && entry.prompt.trim() ? entry.prompt.trim() : ""
   const message = typeof entry.message === "string" && entry.message.trim() ? entry.message.trim() : ""
   const moveUci = typeof entry.move_uci === "string" ? entry.move_uci.trim().toLowerCase() : ""
-  const captureSquare = getEntryCaptureSquare(entry)
+  const captureSquare = getEntryCaptureSquare(entry) || getCaptureSquareFromTexts(texts)
   const text = formatRefereeEntryText({ messages: texts, moveUci })
 
   if (message) {
@@ -411,7 +422,7 @@ function normalizeScoresheetTurnEntry(pair, perspective) {
   const [questionValue, answerValue] = tuple
   const moveUci = perspective === "own" ? getScoresheetMoveUci(questionValue) : ""
   const answerTexts = getLogEntryTexts({ answer: answerValue })
-  const captureSquare = getEntryCaptureSquare(answerValue)
+  const captureSquare = getEntryCaptureSquare(answerValue) || getCaptureSquareFromTexts(answerTexts)
 
   if (!answerTexts.length) {
     return null
@@ -541,7 +552,12 @@ function getRecentCaptureSquaresFromTurns(turns) {
         continue
       }
       if (isCaptureAnnouncementEntry(entry)) {
-        const captureSquare = getEntryCaptureSquare(entry) || getEntryCaptureSquare(entry?.answer) || getEntryCaptureSquare(entry?.response) || getEntryCaptureSquare(entry?.result)
+        const captureSquare =
+          getEntryCaptureSquare(entry) ||
+          getEntryCaptureSquare(entry?.answer) ||
+          getEntryCaptureSquare(entry?.response) ||
+          getEntryCaptureSquare(entry?.result) ||
+          getCaptureSquareFromTexts(rawEntryMessages(entry))
         return captureSquare ? [captureSquare.toLowerCase()] : []
       }
       if (isMoveResolutionEntry(entry)) {
@@ -584,7 +600,12 @@ function getRecentCaptureSquares(gameState) {
       continue
     }
     if (isCaptureAnnouncementEntry(entry)) {
-      const captureSquare = getEntryCaptureSquare(entry) || getEntryCaptureSquare(entry?.answer) || getEntryCaptureSquare(entry?.response) || getEntryCaptureSquare(entry?.result)
+      const captureSquare =
+        getEntryCaptureSquare(entry) ||
+        getEntryCaptureSquare(entry?.answer) ||
+        getEntryCaptureSquare(entry?.response) ||
+        getEntryCaptureSquare(entry?.result) ||
+        getCaptureSquareFromTexts(rawEntryMessages(entry))
       return captureSquare ? [captureSquare.toLowerCase()] : []
     }
     if (isMoveResolutionEntry(entry)) {

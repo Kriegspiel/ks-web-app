@@ -648,6 +648,27 @@ describe("GamePage", () => {
     expect(screen.getAllByRole("button", { name: "Square d5" }).at(-1)).toHaveClass("square--capture")
   })
 
+  it("highlights_capture_squares_from_message_only_scoresheet_entries", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      scoresheet: {
+        viewer_color: "white",
+        turns: [
+          {
+            turn: 1,
+            white: [{ message: "Capture done at F4" }],
+            black: [],
+          },
+        ],
+      },
+    })
+
+    render(<GamePage />)
+
+    await screen.findByText("Capture done at F4")
+    expect(screen.getAllByRole("button", { name: "Square f4" }).at(-1)).toHaveClass("square--capture")
+  })
+
   it("formats_special_referee_announcements_into_friendly_text", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
