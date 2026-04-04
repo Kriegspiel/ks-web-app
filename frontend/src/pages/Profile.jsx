@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link, useParams } from "react-router-dom"
+import VersionStamp from "../components/VersionStamp"
 import { userApi } from "../services/api"
 import { formatUtcDate } from "../utils/dateTime"
 import "./Profile.css"
@@ -179,6 +180,8 @@ export default function ProfilePage() {
         )}
         <Link to={`/user/${profile?.username}/games`} className="profile-all-games-link">View all games</Link>
       </section>
+
+      <VersionStamp />
     </main>
   )
 }
