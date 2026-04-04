@@ -669,6 +669,30 @@ describe("GamePage", () => {
     expect(screen.getAllByRole("button", { name: "Square f4" }).at(-1)).toHaveClass("square--capture")
   })
 
+  it("highlights_capture_squares_from_raw_scoresheet_tuple_entries", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      your_color: "black",
+      engine_state: {
+        game_state: {
+          black_scoresheet: {
+            moves_own: [],
+            moves_opponent: [
+              [
+                [{ move_uci: "c4b5" }, { main: "CAPTURE_DONE", capture_square: "b5" }],
+              ],
+            ],
+          },
+        },
+      },
+    })
+
+    render(<GamePage />)
+
+    await screen.findByText("Capture done at B5")
+    expect(screen.getAllByRole("button", { name: "Square b5" }).at(-1)).toHaveClass("square--capture")
+  })
+
   it("formats_special_referee_announcements_into_friendly_text", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,

@@ -431,6 +431,30 @@ function normalizeScoresheetTurnEntry(pair, perspective) {
   return { text: formatRefereeEntryText({ messages: answerTexts, moveUci }), messages: answerTexts, moveUci, captureSquare }
 }
 
+function normalizeCaptureTrackingEntry(entry) {
+  if (!entry) {
+    return null
+  }
+
+  if (Array.isArray(entry)) {
+    return normalizeScoresheetTurnEntry(entry, "opponent")
+  }
+
+  if (typeof entry === "object") {
+    if (entry.message || entry.messages || entry.prompt) {
+      return normalizeAnnouncementItem(entry)
+    }
+
+    if (entry.answer || entry.response || entry.result || entry.move || entry.question || entry.prompt) {
+      return normalizeScoresheetTurnEntry(entry, "opponent")
+    }
+
+    return normalizeAnnouncementItem(entry)
+  }
+
+  return normalizeAnnouncementItem(entry)
+}
+
 function normalizeTurnSideEntries(entries, normalizer) {
   if (!Array.isArray(entries)) {
     return []
@@ -547,7 +571,7 @@ function getRecentCaptureSquaresFromTurns(turns) {
     const turn = turns[turnIndex]
     const orderedEntries = [...(Array.isArray(turn?.white) ? turn.white : []), ...(Array.isArray(turn?.black) ? turn.black : [])]
     for (let entryIndex = orderedEntries.length - 1; entryIndex >= 0; entryIndex -= 1) {
-      const entry = orderedEntries[entryIndex]
+      const entry = normalizeCaptureTrackingEntry(orderedEntries[entryIndex])
       if (!entry) {
         continue
       }
