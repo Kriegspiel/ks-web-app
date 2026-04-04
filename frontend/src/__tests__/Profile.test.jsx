@@ -56,7 +56,7 @@ describe("ProfilePage", () => {
     expect(screen.getByText("Start 1320")).toBeInTheDocument()
     expect(screen.getByText("Latest 1345")).toBeInTheDocument()
     expect(screen.getAllByText("2026-03-25").length).toBeGreaterThan(0)
-    fireEvent.click(screen.getByRole("button", { name: "Game number" }))
+    fireEvent.click(screen.getByRole("switch", { name: "X-axis mode: Date" }))
     expect(screen.getAllByText("Game 2").length).toBeGreaterThan(0)
     expect(screen.getByText(/win vs amy/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/fil/games")
