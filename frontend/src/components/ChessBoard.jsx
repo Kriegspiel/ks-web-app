@@ -16,6 +16,7 @@ function ChessBoard({
   orientation = "white",
   highlightedSquares = [],
   lastMoveSquares = [],
+  captureSquares = [],
   illegalSquares = [],
   suggestedSquares = [],
   phantomSquares = [],
@@ -49,6 +50,7 @@ function ChessBoard({
             const isLight = (fileIndex + rankIndex) % 2 === 0
             const highlighted = highlightedSquares.includes(square)
             const lastMove = lastMoveSquares.includes(square)
+            const capture = captureSquares.includes(square)
             const illegal = illegalSquares.includes(square)
             const suggested = suggestedSquares.includes(square)
             const phantom = phantomSquares.includes(square)
@@ -63,6 +65,7 @@ function ChessBoard({
                   isLight ? "light" : "dark",
                   highlighted ? "square--highlighted" : "",
                   lastMove ? "square--last-move" : "",
+                  capture ? "square--capture" : "",
                   illegal ? "square--illegal" : "",
                   suggested ? "square--suggested" : "",
                   phantom ? "square--phantom" : "",

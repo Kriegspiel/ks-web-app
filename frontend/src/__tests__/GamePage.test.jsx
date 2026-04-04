@@ -600,6 +600,28 @@ describe("GamePage", () => {
     expect(screen.queryByText("CAPTURE_DONE")).not.toBeInTheDocument()
   })
 
+  it("highlights_the_recent_capture_square_on_the_board", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      referee_log: [
+        {
+          turn: 1,
+          color: "white",
+          answer: {
+            main: "CAPTURE_DONE",
+            capture_square: "c6",
+          },
+        },
+      ],
+    })
+
+    render(<GamePage />)
+
+    await screen.findByText("Capture done at C6")
+    expect(screen.getAllByRole("button", { name: "Square c6" }).at(-1)).toHaveClass("square--capture")
+    expect(screen.getAllByRole("button", { name: "Square c5" }).at(-1)).not.toHaveClass("square--capture")
+  })
+
   it("formats_special_referee_announcements_into_friendly_text", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
