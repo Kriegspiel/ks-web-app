@@ -29,6 +29,27 @@ describe("LobbyPage", () => {
 
   })
 
+  it("shows_lobby_quick_actions", async () => {
+    mockApi.getMyGames.mockResolvedValue({
+      games: [
+        {
+          game_id: "g-active",
+          game_code: "LIVE01",
+          state: "active",
+          move_number: 8,
+          white: { username: "fil", role: "user" },
+          black: { username: "randobot", role: "bot" },
+        },
+      ],
+    })
+
+    renderPage()
+
+    expect(await screen.findByRole("link", { name: "Resume active game" })).toHaveAttribute("href", "/game/g-active")
+    expect(screen.getByRole("link", { name: "Leaderboard" })).toHaveAttribute("href", "/leaderboard")
+    expect(screen.getByRole("link", { name: /Read rules/i })).toHaveAttribute("href", "https://kriegspiel.org/rules")
+  })
+
   it("orders_join_sections_as_create_open_join", async () => {
     renderPage()
 

@@ -14,6 +14,10 @@ const mockApi = vi.hoisted(() => ({
   resignGame: vi.fn(),
 }))
 
+const mockAuth = vi.hoisted(() => ({
+  useAuth: vi.fn(),
+}))
+
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom")
   return {
@@ -24,6 +28,7 @@ vi.mock("react-router-dom", async () => {
 })
 
 vi.mock("../services/api", () => mockApi)
+vi.mock("../hooks/useAuth", () => mockAuth)
 
 const activeState = {
   game_id: "g-123",
@@ -47,6 +52,11 @@ beforeEach(() => {
   window.scrollTo = vi.fn()
   mockNavigate.mockReset()
   Object.values(mockApi).forEach((fn) => fn.mockReset())
+  mockAuth.useAuth.mockReturnValue({
+    user: { username: "notifil", email: "notifil@example.com" },
+    isAuthenticated: true,
+    bootstrapping: false,
+  })
   mockApi.getGame.mockResolvedValue({
     game_id: "g-123",
     game_code: "ABC123",
@@ -71,6 +81,12 @@ afterEach(() => {
 })
 
 describe("GamePage", () => {
+  it("shows_signed_in_user_in_header", async () => {
+    render(<GamePage />)
+
+    expect(await screen.findByText(/signed in as notifil\./i)).toBeInTheDocument()
+  })
+
   it("polls_every_500ms_while_active", async () => {
     render(<GamePage />)
 

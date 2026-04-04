@@ -1,6 +1,7 @@
 .lobby-page { max-width: var(--page-width); }
 .lobby-page__header { display: grid; gap: 0.35rem; }
 .lobby-page__title-block { display: flex; align-items: baseline; gap: 0.65rem; min-width: 0; }
+.lobby-page__quick-actions { margin: 0.2rem 0 1rem; }
 .lobby-page__footer-version {
   margin: 2.75rem 0 2.75rem;
   text-align: center;
