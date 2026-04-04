@@ -14,6 +14,8 @@ const RULESET_OPTIONS = [
   { value: "berkeley", label: "Berkeley" },
   { value: "berkeley_any", label: "Berkeley + Any" },
 ]
+const ACTIVE_STATES = new Set(["active"])
+const RULES_URL = "https://kriegspiel.org/rules"
 
 function normalizeBotDescription(bot) {
   if (!bot || typeof bot !== "object") {
@@ -92,6 +94,10 @@ function isOwnOpenGame(game, username) {
   return String(game?.created_by || "").trim().toLowerCase() === String(username || "").trim().toLowerCase()
 }
 
+function getActiveGame(games) {
+  return games.find((game) => ACTIVE_STATES.has(String(game?.state ?? "").toLowerCase())) ?? null
+}
+
 export default function LobbyPage() {
   const navigate = useNavigate()
   const { user, actionError } = useAuth()
@@ -129,6 +135,8 @@ export default function LobbyPage() {
       ),
     [bots],
   )
+  const activeGame = useMemo(() => getActiveGame(myGames), [myGames])
+  const playNowPath = activeGame?.game_id ? `/game/${activeGame.game_id}` : "/lobby"
 
   async function refreshOpenGames({ markLoading = false } = {}) {
     if (markLoading) {
@@ -388,6 +396,13 @@ export default function LobbyPage() {
         </div>
         <p>Signed in as {signedInAs}.</p>
       </div>
+      <nav className="inline-links lobby-page__quick-actions" aria-label="Lobby quick actions">
+        <Link to={playNowPath}>Resume active game</Link>
+        <Link to="/leaderboard">Leaderboard</Link>
+        <a href={RULES_URL} target="_blank" rel="noreferrer noopener" aria-label="Read rules (opens external page)">
+          Read rules ↗
+        </a>
+      </nav>
 
       {actionError ? <p className="auth-error" role="alert">{actionError}</p> : null}
 

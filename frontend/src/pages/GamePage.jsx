@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom"
 import ChessBoard from "../components/ChessBoard"
 import PromotionModal from "../components/PromotionModal"
 import VersionStamp from "../components/VersionStamp"
+import { useAuth } from "../hooks/useAuth"
 import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
 import { askAny, deleteWaitingGame, getGame, getGameState, resignGame, submitMove } from "../services/api"
 import { getAllowedMoveTargets, PIECE_ASSETS } from "../components/chessboard"
@@ -951,6 +952,7 @@ function getOpponentPhantomPiece(piece, playerColor) {
 export default function GamePage() {
   const navigate = useNavigate()
   const { gameId } = useParams()
+  const { user } = useAuth()
 
   const [gameState, setGameState] = useState(null)
   const [gameMeta, setGameMeta] = useState(null)
@@ -1101,6 +1103,7 @@ export default function GamePage() {
   }, [gameState, loading, submittingAction, actionError])
 
   const possibleActions = gameState?.possible_actions ?? []
+  const signedInAs = user?.username ?? user?.email ?? "player"
   const canMove = gameState?.state === "active" && possibleActions.includes("move") && !submittingAction
   const canAskAny = gameState?.state === "active" && possibleActions.includes("ask_any") && !submittingAction
   const canResign = gameState?.state === "active" && !submittingAction
@@ -1690,6 +1693,7 @@ export default function GamePage() {
         <div className="game-page__title-block">
           <h1>Game</h1>
         </div>
+        <p className="game-page__signed-in">Signed in as {signedInAs}.</p>
       </div>
       <div className="game-page__notices" aria-live="polite">
         <p className={`game-page__notice ${pageNotice ? "" : "game-page__notice--hidden"}`.trim()}>
