@@ -50,8 +50,8 @@ describe("ProfilePage", () => {
     })
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({
       games: [
-        { game_id: "g-1", result: "win", opponent: "amy", played_at: "2026-03-21T12:00:00Z", elo_after: 1320, elo_delta: 16 },
-        { game_id: "g-2", result: "loss", opponent: "bob", played_at: "2026-03-25T12:00:00Z", elo_after: 1345, elo_delta: 25 },
+        { game_id: "g-1", result: "win", opponent: "amy", opponent_role: "user", played_at: "2026-03-21T12:00:00Z", elo_after: 1320, elo_delta: 16 },
+        { game_id: "g-2", result: "loss", opponent: "bob", opponent_role: "bot", played_at: "2026-03-25T12:00:00Z", elo_after: 1345, elo_delta: 25 },
       ],
     })
 
@@ -59,12 +59,12 @@ describe("ProfilePage", () => {
 
     await screen.findByRole("heading", { name: "fil" })
     expect(screen.getByText("Member since 2026-01-01")).toBeInTheDocument()
-    expect(screen.getByText(/games played/i)).toBeInTheDocument()
-    expect(screen.getByText("6 (60.0%)")).toBeInTheDocument()
-    expect(screen.getByText("3 (30.0%)")).toBeInTheDocument()
-    expect(screen.getByText("1 (10.0%)")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Overall rating" })).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "Results" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Overall results" })).toBeInTheDocument()
+    expect(screen.getByText(/games played/i)).toBeInTheDocument()
+    expect(screen.getAllByText("2").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("1 (50.0%)")).toHaveLength(2)
+    expect(screen.getByText("0 (0.0%)")).toBeInTheDocument()
     expect(screen.queryByText(/win rate/i)).not.toBeInTheDocument()
     expect(screen.getByRole("img", { name: "Overall Elo rating over time" })).toBeInTheDocument()
     expect(screen.getByText("Start 1320")).toBeInTheDocument()
@@ -74,10 +74,13 @@ describe("ProfilePage", () => {
     expect(screen.getAllByText("Game 2").length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole("tab", { name: "vs Humans" }))
     expect(screen.getByText("1290")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "vs Humans results" })).toBeInTheDocument()
+    expect(screen.getByText("1 (100.0%)")).toBeInTheDocument()
     fireEvent.click(screen.getByRole("tab", { name: "vs Bots" }))
     expect(screen.getByText("1410")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "vs Bots rating" })).toBeInTheDocument()
     expect(screen.getByRole("img", { name: "vs Bots Elo rating over time" })).toBeInTheDocument()
+    expect(screen.getByText("1 (100.0%)")).toBeInTheDocument()
     expect(screen.getByText(/win vs amy/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/fil/games")
   })

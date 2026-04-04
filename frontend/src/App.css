@@ -256,6 +256,7 @@ button.theme-toggle:active {
   align-items: center;
   justify-content: center;
   gap: 0.7rem;
+  margin: 0.35rem 0 0;
   flex-wrap: wrap;
 }
 
@@ -263,6 +264,7 @@ button.theme-toggle:active {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
+  margin: 0 0 1rem;
   padding: 0.25rem;
   border: 1px solid var(--border);
   border-radius: 999px;

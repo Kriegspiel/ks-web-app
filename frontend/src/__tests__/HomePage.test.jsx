@@ -77,15 +77,15 @@ describe("HomePage", () => {
 
     await waitFor(() => {
       expect(mockApi.getMyGames).toHaveBeenCalledTimes(1)
-      expect(mockApi.userApi.getGameHistory).toHaveBeenCalledWith("fil", 1, 20)
+      expect(mockApi.userApi.getGameHistory).toHaveBeenCalledWith("fil", 1, 100)
     })
 
     expect(screen.getByRole("link", { name: "Play now" })).toHaveAttribute("href", "/lobby")
     expect(screen.getByRole("link", { name: "Leaderboard" })).toHaveAttribute("href", "/leaderboard")
     expect(screen.getByText("1337")).toBeInTheDocument()
-    expect(screen.getByText("7 (58.3%)")).toBeInTheDocument()
-    expect(screen.getByText("3 (25.0%)")).toBeInTheDocument()
-    expect(screen.getByText("2 (16.7%)")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Overall results" })).toBeInTheDocument()
+    expect(screen.getByText("0")).toBeInTheDocument()
+    expect(screen.getAllByText("0 (0.0%)").length).toBeGreaterThanOrEqual(3)
     fireEvent.click(screen.getByRole("tab", { name: "vs Humans" }))
     expect(screen.getByText("1310")).toBeInTheDocument()
     fireEvent.click(screen.getByRole("tab", { name: "vs Bots" }))
@@ -132,8 +132,8 @@ describe("HomePage", () => {
     })
     mockApi.userApi.getGameHistory.mockResolvedValue({
       games: [
-        { game_id: "h1", played_at: "2026-03-21T12:00:00Z", elo_after: 1320, elo_delta: 16 },
-        { game_id: "h2", played_at: "2026-03-25T12:00:00Z", elo_after: 1345, elo_delta: 25 },
+        { game_id: "h1", played_at: "2026-03-21T12:00:00Z", elo_after: 1320, elo_delta: 16, opponent_role: "bot", result: "win" },
+        { game_id: "h2", played_at: "2026-03-25T12:00:00Z", elo_after: 1345, elo_delta: 25, opponent_role: "user", result: "loss" },
       ],
     })
 
@@ -148,15 +148,18 @@ describe("HomePage", () => {
     expect(screen.getAllByRole("link", { name: "fil" })[0]).toHaveAttribute("href", "/user/fil")
     expect(screen.getByText(/2026-03-26 15:00:00 UTC/)).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Overall rating" })).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "Results" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Overall results" })).toBeInTheDocument()
     expect(screen.getByRole("img", { name: "Overall Elo rating over time" })).toBeInTheDocument()
     expect(screen.getByText("Latest 1345")).toBeInTheDocument()
     expect(screen.getAllByText("2026-03-25").length).toBeGreaterThan(0)
+    expect(screen.getByText("2")).toBeInTheDocument()
     fireEvent.click(screen.getByRole("switch", { name: "X-axis mode: Date" }))
     expect(screen.getAllByText("Game 2").length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole("tab", { name: "vs Humans" }))
     expect(screen.getByRole("heading", { name: "vs Humans rating" })).toBeInTheDocument()
     expect(screen.getByText("1321")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "vs Humans results" })).toBeInTheDocument()
+    expect(screen.getAllByText("1").length).toBeGreaterThan(0)
     expect(screen.getByRole("img", { name: "vs Humans Elo rating over time" })).toBeInTheDocument()
   })
 })
