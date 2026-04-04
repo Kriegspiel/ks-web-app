@@ -517,6 +517,16 @@ function isCaptureAnnouncementEntry(entry) {
   return rawEntryMessages(entry).some((message) => typeof message === "string" && message.startsWith("Capture done"))
 }
 
+function isMoveResolutionEntry(entry) {
+  return rawEntryMessages(entry).some(
+    (message) => typeof message === "string" && (
+      message.startsWith("Capture done") ||
+      message.startsWith("Move complete") ||
+      message.startsWith("Illegal move")
+    ),
+  )
+}
+
 function getRecentCaptureSquaresFromTurns(turns) {
   if (!Array.isArray(turns)) {
     return []
@@ -530,11 +540,13 @@ function getRecentCaptureSquaresFromTurns(turns) {
       if (!entry) {
         continue
       }
-      if (!isCaptureAnnouncementEntry(entry)) {
+      if (isCaptureAnnouncementEntry(entry)) {
+        const captureSquare = getEntryCaptureSquare(entry) || getEntryCaptureSquare(entry?.answer) || getEntryCaptureSquare(entry?.response) || getEntryCaptureSquare(entry?.result)
+        return captureSquare ? [captureSquare.toLowerCase()] : []
+      }
+      if (isMoveResolutionEntry(entry)) {
         return []
       }
-      const captureSquare = getEntryCaptureSquare(entry) || getEntryCaptureSquare(entry?.answer) || getEntryCaptureSquare(entry?.response) || getEntryCaptureSquare(entry?.result)
-      return captureSquare ? [captureSquare.toLowerCase()] : []
     }
   }
 
@@ -571,11 +583,13 @@ function getRecentCaptureSquares(gameState) {
     if (!entry) {
       continue
     }
-    if (!isCaptureAnnouncementEntry(entry)) {
+    if (isCaptureAnnouncementEntry(entry)) {
+      const captureSquare = getEntryCaptureSquare(entry) || getEntryCaptureSquare(entry?.answer) || getEntryCaptureSquare(entry?.response) || getEntryCaptureSquare(entry?.result)
+      return captureSquare ? [captureSquare.toLowerCase()] : []
+    }
+    if (isMoveResolutionEntry(entry)) {
       return []
     }
-    const captureSquare = getEntryCaptureSquare(entry) || getEntryCaptureSquare(entry?.answer) || getEntryCaptureSquare(entry?.response) || getEntryCaptureSquare(entry?.result)
-    return captureSquare ? [captureSquare.toLowerCase()] : []
   }
 
   return []
