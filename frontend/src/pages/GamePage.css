@@ -4,10 +4,9 @@
 }
 
 .game-page__header {
-  display: flex;
+  display: grid;
+  gap: 0.2rem;
   justify-content: flex-start;
-  align-items: center;
-  gap: 1rem;
 }
 
 .game-page__signed-in {
