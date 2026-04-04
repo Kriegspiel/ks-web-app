@@ -58,7 +58,7 @@ describe("LobbyPage", () => {
       games: [
         {
           game_code: "ABCD23",
-          created_by: "randobot",
+          created_by: "randobotany",
           available_color: "black",
           created_at: "2026-04-03T23:59:59Z",
         },
@@ -67,7 +67,7 @@ describe("LobbyPage", () => {
 
     renderPage()
 
-    expect(await screen.findByRole("link", { name: "randobot (bot)" })).toHaveAttribute("href", "/user/randobot")
+    expect(await screen.findByRole("link", { name: "randobotany (bot)" })).toHaveAttribute("href", "/user/randobotany")
     expect(await screen.findByText(/2026-04-03 23:59:59 UTC/)).toBeInTheDocument()
   })
 

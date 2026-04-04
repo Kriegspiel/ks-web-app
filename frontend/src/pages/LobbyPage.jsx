@@ -72,14 +72,13 @@ function renderPlayerLink(player, fallback) {
   )
 }
 
-function renderCreatorLink(game) {
+function renderCreatorLink(game, botUsernames) {
   const username = String(game?.created_by || "").trim()
   if (!username) {
     return "Unknown"
   }
 
-  const normalizedBotUsernames = new Set(["randobot", "gptnano"])
-  const isBot = game?.created_by_role === "bot" || normalizedBotUsernames.has(username.toLowerCase())
+  const isBot = game?.created_by_role === "bot" || botUsernames.has(username.toLowerCase())
 
   return (
     <Link to={`/user/${username}`}>
@@ -121,6 +120,15 @@ export default function LobbyPage() {
   const signedInAs = user?.username ?? user?.email ?? "player"
   const supportedBots = useMemo(() => bots.filter((bot) => botSupportsRuleVariant(bot, ruleVariant)), [bots, ruleVariant])
   const selectedBot = supportedBots.find((bot) => bot.bot_id === selectedBotId) ?? null
+  const botUsernames = useMemo(
+    () =>
+      new Set(
+        bots
+          .map((bot) => String(bot?.username || "").trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    [bots],
+  )
 
   async function refreshOpenGames({ markLoading = false } = {}) {
     if (markLoading) {
@@ -466,7 +474,7 @@ export default function LobbyPage() {
               <div>
                 <strong>{game.game_code}</strong>
                 <div className="lobby-meta">
-                  {renderCreatorLink(game)}
+                    {renderCreatorLink(game, botUsernames)}
                   {" · "}
                   {game.available_color}
                   {" · "}
