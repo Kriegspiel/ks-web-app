@@ -22,6 +22,7 @@
 
 .square {
   --square-hover-overlay: transparent;
+  --square-capture-overlay: transparent;
   --square-ring-highlight: inset 0 0 0 0 rgba(0, 0, 0, 0);
   --square-ring-last-move: inset 0 0 0 0 rgba(0, 0, 0, 0);
   --square-ring-capture: inset 0 0 0 0 rgba(0, 0, 0, 0);
@@ -53,11 +54,13 @@
   position: absolute;
   inset: 0.18rem;
   border-radius: 0.18rem;
-  background: var(--square-hover-overlay);
-  opacity: 0;
+  background:
+    linear-gradient(0deg, var(--square-hover-overlay), var(--square-hover-overlay)),
+    linear-gradient(0deg, var(--square-capture-overlay), var(--square-capture-overlay));
+  opacity: 1;
   pointer-events: none;
   z-index: 0;
-  transition: opacity 120ms ease;
+  transition: background 120ms ease;
 }
 
 .square::after {
@@ -133,7 +136,8 @@
 }
 
 .square--capture {
-  --square-ring-capture: inset 0 0 0 0.22rem rgba(185, 28, 28, 0.72);
+  --square-capture-overlay: rgba(185, 28, 28, 0.22);
+  --square-ring-capture: inset 0 0 0 0.22rem rgba(185, 28, 28, 0.62);
 }
 
 .square--suggested {
