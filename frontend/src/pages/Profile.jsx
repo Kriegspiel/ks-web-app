@@ -29,6 +29,29 @@ function normalizeRatings(source) {
   }
 }
 
+function summarizeTrackHistory(historyGames, ratingTrack) {
+  const isTrackMatch = (game) => {
+    if (ratingTrack === "overall") {
+      return true
+    }
+    const opponentRole = String(game?.opponent_role ?? "user").toLowerCase()
+    return ratingTrack === "vs_bots" ? opponentRole === "bot" : opponentRole !== "bot"
+  }
+
+  const matchingGames = Array.isArray(historyGames) ? historyGames.filter(isTrackMatch) : []
+  const wins = matchingGames.filter((game) => game?.result === "win").length
+  const losses = matchingGames.filter((game) => game?.result === "loss").length
+  const draws = matchingGames.filter((game) => game?.result === "draw").length
+  const gamesPlayed = matchingGames.length
+  const formatRate = (value) => `${gamesPlayed > 0 ? ((value / gamesPlayed) * 100).toFixed(1) : "0.0"}%`
+  return {
+    gamesPlayed,
+    winsLabel: `${wins} (${formatRate(wins)})`,
+    lossesLabel: `${losses} (${formatRate(losses)})`,
+    drawsLabel: `${draws} (${formatRate(draws)})`,
+  }
+}
+
 export default function ProfilePage() {
   const { username = "" } = useParams()
   const [loading, setLoading] = useState(true)
@@ -46,7 +69,7 @@ export default function ProfilePage() {
       try {
         const [profileResponse, historyResponse] = await Promise.all([
           userApi.getProfile(username),
-          userApi.getGameHistory(username, 1, 5),
+          userApi.getGameHistory(username, 1, 100),
         ])
         if (cancelled) return
 
@@ -93,6 +116,7 @@ export default function ProfilePage() {
   }, [profile])
   const selectedTrack = ELO_TRACKS.find((track) => track.key === ratingTrack) ?? ELO_TRACKS[0]
   const selectedRating = ratingTrack === "vs_humans" ? stats.ratings.vsHumans : ratingTrack === "vs_bots" ? stats.ratings.vsBots : stats.ratings.overall
+  const selectedHistoryStats = useMemo(() => summarizeTrackHistory(recentGames, ratingTrack), [recentGames, ratingTrack])
   if (loading) {
     return <main className="page-shell profile-page"><h1>Profile</h1><p>Loading profile…</p></main>
   }
@@ -131,15 +155,15 @@ export default function ProfilePage() {
             </dl>
           </section>
           <section className="stats-group-card" aria-labelledby="profile-results-heading">
-            <h3 id="profile-results-heading">Results</h3>
+            <h3 id="profile-results-heading">{selectedTrack.label} results</h3>
             <dl className="profile-stats-grid">
-              <div><dt>Games played</dt><dd>{stats.gamesPlayed}</dd></div>
-              <div><dt>Wins</dt><dd>{stats.winsLabel}</dd></div>
-              <div><dt>Losses</dt><dd>{stats.lossesLabel}</dd></div>
-              <div><dt>Draws</dt><dd>{stats.drawsLabel}</dd></div>
-                </dl>
-              </section>
-            </div>
+              <div><dt>Games played</dt><dd>{selectedHistoryStats.gamesPlayed}</dd></div>
+              <div><dt>Wins</dt><dd>{selectedHistoryStats.winsLabel}</dd></div>
+              <div><dt>Losses</dt><dd>{selectedHistoryStats.lossesLabel}</dd></div>
+              <div><dt>Draws</dt><dd>{selectedHistoryStats.drawsLabel}</dd></div>
+            </dl>
+          </section>
+        </div>
         <EloChart historyGames={recentGames} emptyText="No finished games with rating history yet." ratingTrack={ratingTrack} showTrackToggle={false} />
       </section>
 
@@ -147,7 +171,7 @@ export default function ProfilePage() {
         <h2>Recent games</h2>
         {recentGames.length === 0 ? <p>No completed games yet.</p> : (
           <ul className="profile-recent-list">
-            {recentGames.map((game) => (
+            {recentGames.slice(0, 5).map((game) => (
               <li key={game.game_id}>
                 <span>{game.result} vs {game.opponent ?? "unknown"}</span>
                 <Link to={`/game/${game.game_id}/review`}>Review</Link>

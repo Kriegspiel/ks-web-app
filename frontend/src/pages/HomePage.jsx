@@ -28,6 +28,29 @@ function normalizeRatings(source) {
   }
 }
 
+function summarizeTrackHistory(historyGames, ratingTrack) {
+  const isTrackMatch = (game) => {
+    if (ratingTrack === "overall") {
+      return true
+    }
+    const opponentRole = String(game?.opponent_role ?? "user").toLowerCase()
+    return ratingTrack === "vs_bots" ? opponentRole === "bot" : opponentRole !== "bot"
+  }
+
+  const matchingGames = Array.isArray(historyGames) ? historyGames.filter(isTrackMatch) : []
+  const wins = matchingGames.filter((game) => game?.result === "win").length
+  const losses = matchingGames.filter((game) => game?.result === "loss").length
+  const draws = matchingGames.filter((game) => game?.result === "draw").length
+  const gamesPlayed = matchingGames.length
+  const formatRate = (value) => `${gamesPlayed > 0 ? ((value / gamesPlayed) * 100).toFixed(1) : "0.0"}%`
+  return {
+    gamesPlayed,
+    winsLabel: `${wins} (${formatRate(wins)})`,
+    lossesLabel: `${losses} (${formatRate(losses)})`,
+    drawsLabel: `${draws} (${formatRate(draws)})`,
+  }
+}
+
 function formatUpdatedAt(isoDate) {
   return formatUtcDateTime(isoDate)
 }
@@ -96,7 +119,7 @@ export default function HomePage() {
       try {
         const [gamesResponse, historyResponse] = await Promise.all([
           getMyGames(),
-          user?.username ? userApi.getGameHistory(user.username, 1, 20) : Promise.resolve({ games: [] }),
+          user?.username ? userApi.getGameHistory(user.username, 1, 100) : Promise.resolve({ games: [] }),
         ])
         if (cancelled) {
           return
@@ -146,6 +169,7 @@ export default function HomePage() {
   }, [user?.stats])
   const selectedTrack = ELO_TRACKS.find((track) => track.key === ratingTrack) ?? ELO_TRACKS[0]
   const selectedRating = ratingTrack === "vs_humans" ? stats.ratings.vsHumans : ratingTrack === "vs_bots" ? stats.ratings.vsBots : stats.ratings.overall
+  const selectedHistoryStats = useMemo(() => summarizeTrackHistory(historyGames, ratingTrack), [historyGames, ratingTrack])
   const playNowPath = isAuthenticated
     ? (activeGame?.game_id ? `/game/${activeGame.game_id}` : "/lobby")
     : "/auth/login"
@@ -188,12 +212,12 @@ export default function HomePage() {
                 </dl>
               </section>
               <section className="stats-group-card" aria-labelledby="home-results-heading">
-                <h3 id="home-results-heading">Results</h3>
+                <h3 id="home-results-heading">{selectedTrack.label} results</h3>
                 <dl className="home-stats-grid">
-                  <div><dt>Games</dt><dd>{stats.gamesPlayed}</dd></div>
-                  <div><dt>Wins</dt><dd>{stats.winsLabel}</dd></div>
-                  <div><dt>Losses</dt><dd>{stats.lossesLabel}</dd></div>
-                  <div><dt>Draws</dt><dd>{stats.drawsLabel}</dd></div>
+                  <div><dt>Games</dt><dd>{selectedHistoryStats.gamesPlayed}</dd></div>
+                  <div><dt>Wins</dt><dd>{selectedHistoryStats.winsLabel}</dd></div>
+                  <div><dt>Losses</dt><dd>{selectedHistoryStats.lossesLabel}</dd></div>
+                  <div><dt>Draws</dt><dd>{selectedHistoryStats.drawsLabel}</dd></div>
                 </dl>
               </section>
             </div>
