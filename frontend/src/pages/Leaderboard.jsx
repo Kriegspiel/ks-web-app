@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import VersionStamp from "../components/VersionStamp"
 import { userApi } from "../services/api"
 import "./Leaderboard.css"
 
@@ -68,6 +69,7 @@ export default function LeaderboardPage() {
             <span>Page {pagination.page ?? page} of {pagination.pages ?? 0}</span>
             <button type="button" onClick={() => setPage((current) => current + 1)} disabled={pagination.pages > 0 ? page >= pagination.pages : data.players.length === 0}>Next</button>
           </div>
+          <VersionStamp />
         </>
       ) : null}
     </main>
