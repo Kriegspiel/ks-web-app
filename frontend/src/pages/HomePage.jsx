@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
+import EloChart from "../components/EloChart"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import { getMyGames, userApi } from "../services/api"
@@ -10,48 +11,6 @@ const RULES_URL = "https://kriegspiel.org/rules"
 
 function statOrZero(value) {
   return Number.isFinite(Number(value)) ? Number(value) : 0
-}
-
-function buildEloSeries(historyGames) {
-  if (!Array.isArray(historyGames)) {
-    return []
-  }
-
-  return [...historyGames]
-    .filter((game) => Number.isFinite(Number(game?.elo_after)))
-    .sort((left, right) => Date.parse(left?.played_at ?? "") - Date.parse(right?.played_at ?? ""))
-    .map((game, index) => ({
-      index,
-      label: game?.played_at ? formatUtcDate(game.played_at) : `Game ${index + 1}`,
-      elo: Number(game.elo_after),
-      delta: Number(game?.elo_delta ?? 0),
-    }))
-}
-
-function buildChartPoints(points) {
-  if (!Array.isArray(points) || points.length === 0) {
-    return { polyline: "", circles: [] }
-  }
-
-  const width = 320
-  const height = 112
-  const paddingX = 12
-  const paddingY = 12
-  const minElo = Math.min(...points.map((point) => point.elo))
-  const maxElo = Math.max(...points.map((point) => point.elo))
-  const eloRange = Math.max(1, maxElo - minElo)
-  const xStep = points.length === 1 ? 0 : (width - paddingX * 2) / (points.length - 1)
-
-  const circles = points.map((point, index) => {
-    const x = paddingX + (xStep * index)
-    const y = height - paddingY - (((point.elo - minElo) / eloRange) * (height - paddingY * 2))
-    return { ...point, x, y }
-  })
-
-  return {
-    polyline: circles.map((point) => `${point.x},${point.y}`).join(" "),
-    circles,
-  }
 }
 
 function formatUpdatedAt(isoDate) {
@@ -169,8 +128,6 @@ export default function HomePage() {
       drawsLabel: `${gamesDrawn} (${formatRate(gamesDrawn)})`,
     }
   }, [user?.stats])
-  const eloSeries = useMemo(() => buildEloSeries(historyGames), [historyGames])
-  const eloChart = useMemo(() => buildChartPoints(eloSeries), [eloSeries])
   const playNowPath = isAuthenticated
     ? (activeGame?.game_id ? `/game/${activeGame.game_id}` : "/lobby")
     : "/auth/login"
@@ -202,24 +159,7 @@ export default function HomePage() {
 
           <section className="home-card" aria-labelledby="home-elo-heading">
             <h2 id="home-elo-heading">Elo rating</h2>
-            {eloSeries.length > 0 ? (
-              <div className="home-elo-chart">
-                <svg viewBox="0 0 320 112" role="img" aria-label="Elo rating over time">
-                  <polyline className="home-elo-chart__line" fill="none" points={eloChart.polyline} />
-                  {eloChart.circles.map((point) => (
-                    <circle key={`${point.label}-${point.index}`} className="home-elo-chart__point" cx={point.x} cy={point.y} r="3.5">
-                      <title>{`${point.label}: ${point.elo}${point.delta ? ` (${point.delta > 0 ? "+" : ""}${point.delta})` : ""}`}</title>
-                    </circle>
-                  ))}
-                </svg>
-                <div className="home-elo-chart__summary">
-                  <span>Start {eloSeries[0].elo}</span>
-                  <span>Latest {eloSeries[eloSeries.length - 1].elo}</span>
-                </div>
-              </div>
-            ) : (
-              <p>No finished games with rating history yet.</p>
-            )}
+            <EloChart historyGames={historyGames} emptyText="No finished games with rating history yet." />
           </section>
 
           <section className="home-card" aria-labelledby="home-recent-games-heading">
