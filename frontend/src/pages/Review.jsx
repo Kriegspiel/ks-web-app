@@ -70,10 +70,11 @@ function moveAnnouncements(move) {
   }
 
   const items = []
-  if (move.question_type === "ASK_ANY") {
-    items.push("Ask any pawn captures")
-  } else if (typeof move.uci === "string" && move.uci.trim().length > 0) {
-    items.push(`${move.move_done ? "Move" : "Attempt"} ${move.uci.trim().toLowerCase()}`)
+  const questionType = String(move.question_type ?? "COMMON").toUpperCase()
+  const normalizedUci = typeof move.uci === "string" ? move.uci.trim().toLowerCase() : ""
+
+  if (questionType !== "ASK_ANY" && normalizedUci) {
+    items.push(`[${normalizedUci}]`)
   }
 
   const main = formatCaptureAnnouncement(move)
@@ -86,6 +87,17 @@ function moveAnnouncements(move) {
   }
 
   return [...new Set(items.filter(Boolean))]
+}
+
+function formatPlySummary(group) {
+  if (!group) {
+    return ""
+  }
+
+  return group.moves
+    .map((move) => moveAnnouncements(move).join(" · "))
+    .filter(Boolean)
+    .join(" · ")
 }
 
 function buildPlyGroups(moves) {
@@ -427,9 +439,7 @@ export default function ReviewPage() {
                           onClick={() => setCurrentPly(move.lastPly)}
                         >
                           <span className="review-page__ply-color">{color === "white" ? "White" : "Black"}</span>
-                          <span className="review-page__ply-head">
-                            {move.moves.map((entry) => formatTranscriptMove(entry)).join(" · ")}
-                          </span>
+                          <span className="review-page__ply-head">{formatPlySummary(move)}</span>
                           <ol className="review-page__announcement-list">
                             {announcements.map((announcement, index) => (
                               <li key={`${move.id}-${index}`} className="review-page__announcement-item">

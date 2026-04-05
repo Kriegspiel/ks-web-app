@@ -74,9 +74,9 @@ describe("ReviewPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
     expect(screen.getByText("Ply 1 / 2")).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole("button", { name: /Black Move attempt — Move complete/i }))
+    fireEvent.click(screen.getByRole("button", { name: /Black \[e7e5\] · Move complete/i }))
     expect(screen.getByText("Ply 2 / 2")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Black Move attempt — Move complete/i })).toHaveClass("is-active")
+    expect(screen.getByRole("button", { name: /Black \[e7e5\] · Move complete/i })).toHaveClass("is-active")
     expect(document.querySelectorAll(".review-page__announcement-badge").length).toBeGreaterThan(0)
   })
 
