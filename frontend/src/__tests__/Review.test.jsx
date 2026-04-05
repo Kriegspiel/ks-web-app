@@ -16,6 +16,11 @@ vi.mock("react-router-dom", async () => {
 })
 
 vi.mock("../services/api", () => mockApi)
+vi.mock("../hooks/useAuth", () => ({
+  useAuth: () => ({
+    user: { username: "notifil" },
+  }),
+}))
 
 const transcript = {
   game_id: "g-620",
@@ -102,6 +107,16 @@ function renderReviewPage() {
 }
 
 describe("ReviewPage", () => {
+  it("shows_signed_in_user_in_header", async () => {
+    render(
+      <MemoryRouter>
+        <ReviewPage />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText(/signed in as notifil\./i)).toBeInTheDocument()
+  })
+
   it("loads_transcript_and_navigates_moves", async () => {
     renderReviewPage()
 
