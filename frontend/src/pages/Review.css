@@ -202,7 +202,9 @@
 
 .review-page__player-link {
   color: var(--text);
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.14em;
 }
 
 .review-page__player-link:hover,
