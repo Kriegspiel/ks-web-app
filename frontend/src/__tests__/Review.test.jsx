@@ -74,9 +74,9 @@ describe("ReviewPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
     expect(screen.getByText("Ply 1 / 2")).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole("button", { name: /Black \[e7e5\] · Move complete/i }))
+    fireEvent.click(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i }))
     expect(screen.getByText("Ply 2 / 2")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Black \[e7e5\] · Move complete/i })).toHaveClass("is-active")
+    expect(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i })).toHaveClass("is-active")
     expect(document.querySelectorAll(".review-page__announcement-badge").length).toBeGreaterThan(0)
   })
 
@@ -88,12 +88,12 @@ describe("ReviewPage", () => {
     fireEvent.keyDown(window, { key: "ArrowRight" })
     fireEvent.keyDown(window, { key: "ArrowRight" })
     await waitFor(() => {
-      expect(screen.getByText("Ply 2 / 2")).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i })).toHaveClass("is-active")
     })
 
     fireEvent.keyDown(window, { key: "ArrowLeft" })
     await waitFor(() => {
-      expect(screen.getByText("Ply 1 / 2")).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /White \[e2e4\] Move complete/i })).toHaveClass("is-active")
     })
 
     fireEvent.click(screen.getByRole("tab", { name: "Black" }))
@@ -112,5 +112,38 @@ describe("ReviewPage", () => {
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("Replay transcript is unavailable.")
     })
+  })
+
+  it("combines_move_attempts_with_referee_replies_in_one_announcement", async () => {
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      game_id: "g-620",
+      rule_variant: "berkeley_any",
+      moves: [
+        {
+          ply: 1,
+          color: "white",
+          question_type: "ASK_ANY",
+          uci: null,
+          answer: { main: "NO_ANY", capture_square: null, special: null },
+          move_done: false,
+          replay_fen: transcript.moves[0].replay_fen,
+        },
+        {
+          ply: 2,
+          color: "white",
+          question_type: "COMMON",
+          uci: "b2b4",
+          answer: { main: "REGULAR_MOVE", capture_square: null, special: null },
+          move_done: true,
+          replay_fen: transcript.moves[0].replay_fen,
+        },
+      ],
+    })
+
+    render(<ReviewPage />)
+
+    await screen.findByText(/Move log/i)
+    expect(screen.getByRole("button", { name: /White No pawn captures · \[b2b4\] Move complete/i })).toBeInTheDocument()
+    expect(screen.queryByText("Ask any pawn captures")).not.toBeInTheDocument()
   })
 })
