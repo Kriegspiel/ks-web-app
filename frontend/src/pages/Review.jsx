@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import ChessBoard from "../components/ChessBoard"
 import VersionStamp from "../components/VersionStamp"
+import { useAuth } from "../hooks/useAuth"
 import { getGame, getGameTranscript } from "../services/api"
 import "./Review.css"
 
@@ -385,6 +386,7 @@ function overlaysForPlyGroup(group) {
 export default function ReviewPage() {
   const { gameCode, gameId } = useParams()
   const gameRef = gameCode ?? gameId ?? ""
+  const { user } = useAuth()
 
   const [moves, setMoves] = useState([])
   const [game, setGame] = useState(null)
@@ -492,11 +494,13 @@ export default function ReviewPage() {
   const blackCurrentRatings = normalizeRatings(game?.black)
   const whiteHistoricalRatings = historicalRatingsForColor(game, "white")
   const blackHistoricalRatings = historicalRatingsForColor(game, "black")
+  const signedInAs = user?.username ?? user?.email ?? "player"
 
   return (
     <main className="page-shell review-page" aria-live="polite">
       <div className="review-page__header">
         <h1>Game review</h1>
+        <p className="review-page__signed-in">Signed in as {signedInAs}.</p>
       </div>
 
       {loading ? <p className="review-page__notice">Loading transcript…</p> : null}
