@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import ChessBoard from "../components/ChessBoard"
 import VersionStamp from "../components/VersionStamp"
@@ -396,6 +396,7 @@ export default function ReviewPage() {
   const [currentPly, setCurrentPly] = useState(-1)
   const [perspective, setPerspective] = useState("referee")
   const [boardOrientation, setBoardOrientation] = useState("white")
+  const moveRowsRef = useRef(null)
 
   useEffect(() => {
     let active = true
@@ -462,15 +463,29 @@ export default function ReviewPage() {
       return
     }
 
-    const active = document.querySelector(`[data-ply-index="${currentPly}"]`)
+    const container = moveRowsRef.current
+    const active = container?.querySelector?.(`[data-ply-index="${currentPly}"]`)
     if (!(active instanceof HTMLElement)) {
       return
     }
 
-    if (typeof active.scrollIntoView === "function") {
-      active.scrollIntoView({ block: "nearest", behavior: "smooth" })
+    if (container instanceof HTMLElement) {
+      const containerRect = container.getBoundingClientRect()
+      const activeRect = active.getBoundingClientRect()
+      const topOverflow = activeRect.top < containerRect.top
+      const bottomOverflow = activeRect.bottom > containerRect.bottom
+
+      if (topOverflow || bottomOverflow) {
+        const offsetTop = active.offsetTop
+        const targetTop = topOverflow
+          ? offsetTop
+          : offsetTop - container.clientHeight + active.offsetHeight
+        container.scrollTo({
+          top: Math.max(0, targetTop),
+          behavior: "smooth",
+        })
+      }
     }
-    active.focus({ preventScroll: true })
   }, [currentPly])
 
   const selectedPlyGroup = currentPly >= 0 ? plyGroups[currentPly] ?? null : null
@@ -570,7 +585,7 @@ export default function ReviewPage() {
 
           <aside className="review-page__log-column">
             <h2>Move log</h2>
-            <ol className="review-page__move-rows">
+            <ol className="review-page__move-rows" ref={moveRowsRef}>
               {moveRows.map((row) => (
                 <li key={row.moveNumber} className="review-page__move-row">
                   {(() => {

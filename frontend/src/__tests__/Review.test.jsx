@@ -140,6 +140,9 @@ describe("ReviewPage", () => {
     await screen.findByText(/Move log/i)
 
     fireEvent.keyDown(window, { key: "ArrowRight" })
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /White \[e2e4\] Move complete/i })).toHaveClass("is-active")
+    })
     fireEvent.keyDown(window, { key: "ArrowRight" })
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i })).toHaveClass("is-active")
