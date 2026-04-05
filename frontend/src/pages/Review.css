@@ -114,8 +114,9 @@
 
 .review-page__ply-card.is-active {
   border-width: 3px;
-  border-color: #38bdf8;
-  background: rgba(56, 189, 248, 0.08);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: var(--surface-strong);
+  box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .review-page__ply-card--empty {
