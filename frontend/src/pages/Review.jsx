@@ -477,7 +477,8 @@ export default function ReviewPage() {
   )
   const overlayState = useMemo(() => {
     if (perspective !== "referee" && selectedPlyGroup && perspective !== selectedPlyGroup.color) {
-      return { arrows: [], badges: [], captureSquares: [] }
+      const opponentOverlay = overlaysForPlyGroup(selectedPlyGroup)
+      return { arrows: [], badges: [], captureSquares: opponentOverlay.captureSquares }
     }
     return overlaysForPlyGroup(selectedPlyGroup)
   }, [selectedPlyGroup, perspective])
