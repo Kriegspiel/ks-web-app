@@ -74,9 +74,10 @@ describe("ReviewPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
     expect(screen.getByText("Ply 1 / 2")).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole("button", { name: /2\. Move attempt — Move complete/i }))
+    fireEvent.click(screen.getByRole("button", { name: /Black Move attempt — Move complete/i }))
     expect(screen.getByText("Ply 2 / 2")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /2\. Move attempt — Move complete/i })).toHaveClass("is-active")
+    expect(screen.getByRole("button", { name: /Black Move attempt — Move complete/i })).toHaveClass("is-active")
+    expect(document.querySelectorAll(".review-page__announcement-badge").length).toBeGreaterThan(0)
   })
 
   it("supports_keyboard_navigation_and_perspective_toggle", async () => {
@@ -95,8 +96,10 @@ describe("ReviewPage", () => {
       expect(screen.getByText("Ply 1 / 2")).toBeInTheDocument()
     })
 
-    fireEvent.click(screen.getByLabelText("Black"))
+    fireEvent.click(screen.getByRole("tab", { name: "Black" }))
     const board = document.querySelector(".chess-board")
+    expect(board?.getAttribute("data-orientation")).toBe("white")
+    fireEvent.click(screen.getByRole("tab", { name: "Black bottom" }))
     expect(board?.getAttribute("data-orientation")).toBe("black")
     expect(screen.getByText("Ply 1 / 2")).toBeInTheDocument()
   })

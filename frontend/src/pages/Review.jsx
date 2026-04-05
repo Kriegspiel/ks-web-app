@@ -45,6 +45,84 @@ function formatTranscriptMove(move) {
   return `${prompt} — ${messages.join(" · ") || "UNKNOWN"}`
 }
 
+function formatAnnouncement(code) {
+  if (typeof code !== "string" || code.trim().length === 0) {
+    return ""
+  }
+
+  return ANNOUNCEMENT_TEXT[code] ?? code
+}
+
+function formatCaptureAnnouncement(move) {
+  const main = formatAnnouncement(move?.answer?.main)
+  const captureSquare = typeof move?.answer?.capture_square === "string" ? move.answer.capture_square.trim().toUpperCase() : ""
+  if (main === "Capture done" && captureSquare) {
+    return `${main} at ${captureSquare}`
+  }
+
+  return main
+}
+
+function moveAnnouncements(move) {
+  if (!move) {
+    return []
+  }
+
+  const items = []
+  if (move.question_type === "ASK_ANY") {
+    items.push("Ask any pawn captures")
+  } else if (typeof move.uci === "string" && move.uci.trim().length > 0) {
+    items.push(`${move.move_done ? "Move" : "Attempt"} ${move.uci.trim().toLowerCase()}`)
+  }
+
+  const main = formatCaptureAnnouncement(move)
+  const special = formatAnnouncement(move?.answer?.special)
+  if (main) {
+    items.push(main)
+  }
+  if (special) {
+    items.push(special)
+  }
+
+  return [...new Set(items.filter(Boolean))]
+}
+
+function moveNumberFromPly(ply) {
+  return Math.ceil(Number(ply || 0) / 2)
+}
+
+function groupedMoves(moves) {
+  const rows = new Map()
+
+  for (const move of moves) {
+    const moveNumber = moveNumberFromPly(move?.ply)
+    if (!rows.has(moveNumber)) {
+      rows.set(moveNumber, { moveNumber, white: null, black: null })
+    }
+
+    const row = rows.get(moveNumber)
+    if (move?.color === "black") {
+      row.black = move
+    } else {
+      row.white = move
+    }
+  }
+
+  return [...rows.values()]
+}
+
+function fenForPerspective(replayFen, perspective) {
+  if (!replayFen || typeof replayFen !== "object") {
+    return ""
+  }
+
+  if (perspective === "referee") {
+    return replayFen.full ?? ""
+  }
+
+  return replayFen[perspective] ?? ""
+}
+
 function formatResult(result) {
   if (!result || typeof result !== "object") {
     return "Result unavailable"
@@ -61,11 +139,62 @@ function fenForPly(moves, ply, perspective) {
 
   const entry = moves[ply - 1]
   const replayFen = entry?.replay_fen
-  if (replayFen?.[perspective]) {
-    return replayFen[perspective]
+  const visibleFen = fenForPerspective(replayFen, perspective)
+  if (visibleFen) {
+    return visibleFen
   }
 
   return STARTING_FENS[perspective]
+}
+
+function isCastlingUci(uci) {
+  return ["e1g1", "e1c1", "e8g8", "e8c8"].includes(String(uci ?? "").toLowerCase())
+}
+
+function arrowsForMove(move) {
+  const uci = String(move?.uci ?? "").trim().toLowerCase()
+  if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) {
+    return []
+  }
+
+  if (!move?.move_done) {
+    return [{ from: uci.slice(0, 2), to: uci.slice(2, 4), tone: "illegal" }]
+  }
+
+  if (isCastlingUci(uci)) {
+    if (uci === "e1g1") {
+      return [{ from: "e1", to: "g1", tone: "success" }, { from: "h1", to: "f1", tone: "success" }]
+    }
+    if (uci === "e1c1") {
+      return [{ from: "e1", to: "c1", tone: "success" }, { from: "a1", to: "d1", tone: "success" }]
+    }
+    if (uci === "e8g8") {
+      return [{ from: "e8", to: "g8", tone: "success" }, { from: "h8", to: "f8", tone: "success" }]
+    }
+    return [{ from: "e8", to: "c8", tone: "success" }, { from: "a8", to: "d8", tone: "success" }]
+  }
+
+  return [{ from: uci.slice(0, 2), to: uci.slice(2, 4), tone: "success" }]
+}
+
+function badgesForMove(move) {
+  if (!move || move.move_done) {
+    return []
+  }
+
+  const uci = String(move?.uci ?? "").trim().toLowerCase()
+  if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) {
+    return []
+  }
+
+  const attemptIndex = moveAnnouncements(move).findIndex((item) => item.startsWith("Attempt "))
+  return [
+    {
+      square: uci.slice(2, 4),
+      label: String(attemptIndex >= 0 ? attemptIndex + 1 : 1),
+      tone: "illegal",
+    },
+  ]
 }
 
 export default function ReviewPage() {
@@ -78,6 +207,7 @@ export default function ReviewPage() {
   const [error, setError] = useState("")
   const [currentPly, setCurrentPly] = useState(0)
   const [perspective, setPerspective] = useState("referee")
+  const [boardOrientation, setBoardOrientation] = useState("white")
 
   useEffect(() => {
     let active = true
@@ -118,6 +248,7 @@ export default function ReviewPage() {
   }, [gameId])
 
   const maxPly = moves.length
+  const moveRows = useMemo(() => groupedMoves(moves), [moves])
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -136,7 +267,9 @@ export default function ReviewPage() {
   }, [maxPly])
 
   const boardFen = useMemo(() => fenForPly(moves, currentPly, perspective), [moves, currentPly, perspective])
-  const orientation = perspective === "black" ? "black" : "white"
+  const selectedMove = currentPly > 0 ? moves[currentPly - 1] : null
+  const overlayArrows = useMemo(() => arrowsForMove(selectedMove), [selectedMove])
+  const overlayBadges = useMemo(() => badgesForMove(selectedMove), [selectedMove])
 
   return (
     <main className="page-shell review-page" aria-live="polite">
@@ -151,7 +284,34 @@ export default function ReviewPage() {
       {!loading && !error ? (
         <div className="review-page__layout">
           <section className="review-page__board-column">
-            <ChessBoard boardFen={boardFen} orientation={orientation} disabled />
+            <div className="review-page__top-toggle">
+              <div className="elo-chart__track-toggle review-page__toggle-group" role="tablist" aria-label="Replay perspective">
+                {[
+                  ["referee", "Referee"],
+                  ["white", "White"],
+                  ["black", "Black"],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="tab"
+                    aria-selected={perspective === value}
+                    className={`elo-chart__track-pill${perspective === value ? " is-active" : ""}`}
+                    onClick={() => setPerspective(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <ChessBoard
+              boardFen={boardFen}
+              orientation={boardOrientation}
+              overlayArrows={overlayArrows}
+              overlayBadges={overlayBadges}
+              disabled
+            />
 
             <div className="review-page__controls" role="group" aria-label="Replay controls">
               <button type="button" onClick={() => setCurrentPly(0)} disabled={currentPly === 0}>First</button>
@@ -161,39 +321,62 @@ export default function ReviewPage() {
               <button type="button" onClick={() => setCurrentPly(maxPly)} disabled={currentPly === maxPly}>Last</button>
             </div>
 
-            <fieldset className="review-page__perspective">
-              <legend>Perspective</legend>
-              {[
-                ["referee", "Referee"],
-                ["white", "White"],
-                ["black", "Black"],
-              ].map(([value, label]) => (
-                <label key={value}>
-                  <input
-                    type="radio"
-                    name="perspective"
-                    value={value}
-                    checked={perspective === value}
-                    onChange={() => setPerspective(value)}
-                  />
-                  {label}
-                </label>
-              ))}
-            </fieldset>
+            <div className="review-page__board-footer">
+              <div className="elo-chart__track-toggle elo-chart__mode-toggle review-page__toggle-group" role="tablist" aria-label="Board orientation">
+                {[
+                  ["white", "White bottom"],
+                  ["black", "Black bottom"],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="tab"
+                    aria-selected={boardOrientation === value}
+                    className={`elo-chart__track-pill${boardOrientation === value ? " is-active" : ""}`}
+                    onClick={() => setBoardOrientation(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </section>
 
           <aside className="review-page__log-column">
             <h2>Move log</h2>
-            <ol className="review-page__moves">
-              {moves.map((move, index) => (
-                <li key={`${move.ply}-${index}`}>
-                  <button
-                    type="button"
-                    className={currentPly === index + 1 ? "is-active" : ""}
-                    onClick={() => setCurrentPly(index + 1)}
-                  >
-                    {move.ply}. {formatTranscriptMove(move)}
-                  </button>
+            <ol className="review-page__move-rows">
+              {moveRows.map((row) => (
+                <li key={row.moveNumber} className="review-page__move-row">
+                  <div className="review-page__move-number">{row.moveNumber}</div>
+                  <div className="review-page__ply-grid">
+                    {["white", "black"].map((color) => {
+                      const move = row[color]
+                      if (!move) {
+                        return <div key={color} className="review-page__ply-card review-page__ply-card--empty" />
+                      }
+
+                      const announcements = moveAnnouncements(move)
+                      return (
+                        <button
+                          key={color}
+                          type="button"
+                          className={`review-page__ply-card${currentPly === move.ply ? " is-active" : ""}`}
+                          onClick={() => setCurrentPly(move.ply)}
+                        >
+                          <span className="review-page__ply-color">{color === "white" ? "White" : "Black"}</span>
+                          <span className="review-page__ply-head">{formatTranscriptMove(move)}</span>
+                          <ol className="review-page__announcement-list">
+                            {announcements.map((announcement, index) => (
+                              <li key={`${move.ply}-${index}`} className="review-page__announcement-item">
+                                <span className="review-page__announcement-badge">{index + 1}</span>
+                                <span>{announcement}</span>
+                              </li>
+                            ))}
+                          </ol>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </li>
               ))}
             </ol>
@@ -205,4 +388,3 @@ export default function ReviewPage() {
     </main>
   )
 }
-

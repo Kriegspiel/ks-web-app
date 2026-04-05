@@ -1,9 +1,11 @@
 .chess-board {
+  position: relative;
   width: min(100%, 38rem);
   margin-inline: auto;
 }
 
 .board-grid {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
   width: 100%;
@@ -18,6 +20,59 @@
     0 20px 42px rgba(15, 23, 42, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.32),
     inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.board-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.board-overlay__arrow {
+  stroke-width: 10;
+  stroke-linecap: round;
+  opacity: 0.62;
+}
+
+.board-overlay__arrow--illegal {
+  stroke: rgba(220, 38, 38, 0.9);
+}
+
+.board-overlay__arrow--success {
+  stroke: rgba(34, 197, 94, 0.88);
+}
+
+.board-overlay__marker--illegal {
+  fill: rgba(220, 38, 38, 0.9);
+}
+
+.board-overlay__marker--success {
+  fill: rgba(34, 197, 94, 0.88);
+}
+
+.board-overlay__badge {
+  opacity: 0.92;
+}
+
+.board-overlay__badge--illegal {
+  fill: rgba(220, 38, 38, 0.82);
+  stroke: rgba(255, 245, 245, 0.92);
+  stroke-width: 2;
+}
+
+.board-overlay__badge--success {
+  fill: rgba(34, 197, 94, 0.8);
+  stroke: rgba(240, 253, 244, 0.92);
+  stroke-width: 2;
+}
+
+.board-overlay__badge-label {
+  fill: #fff;
+  font-size: 20px;
+  font-weight: 800;
 }
 
 .square {
