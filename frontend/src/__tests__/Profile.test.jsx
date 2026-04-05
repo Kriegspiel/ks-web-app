@@ -100,6 +100,7 @@ describe("ProfilePage", () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username: "gptnano",
       role: "bot",
+      owner_email: "bot-gpt-nano@kriegspiel.org",
       member_since: "2026-04-03T01:10:41Z",
       stats: {
         elo: 1200,
@@ -116,7 +117,10 @@ describe("ProfilePage", () => {
     renderProfile("/user/gptnano")
 
     await screen.findByRole("heading", { name: "gptnano" })
-    expect(screen.getByText(/User gptnano is a bot\./i)).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "This user is bot" })).toBeInTheDocument()
+    expect(screen.getByText(/On Kriegspiel\.org we allow bots\./i)).toBeInTheDocument()
+    expect(screen.getByText(/You also can create your own bot – more bots, more fun\./i)).toBeInTheDocument()
+    expect(screen.getByText(/Email address of bot owner is bot-gpt-nano@kriegspiel\.org\./i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("href", "https://kriegspiel.org/blog/bot-registration-flow")
     expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("target", "_blank")
   })
