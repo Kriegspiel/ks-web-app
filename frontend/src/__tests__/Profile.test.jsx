@@ -70,7 +70,7 @@ describe("ProfilePage", () => {
     expect(screen.getByText("Start 1320")).toBeInTheDocument()
     expect(screen.getByText("Latest 1345")).toBeInTheDocument()
     expect(screen.getAllByText("2026-03-25").length).toBeGreaterThan(0)
-    fireEvent.click(screen.getByRole("switch", { name: "X-axis mode: Date" }))
+    fireEvent.click(screen.getByRole("tab", { name: "Game number" }))
     expect(screen.getAllByText("Game 2").length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole("tab", { name: "vs Humans" }))
     expect(screen.getByText("1290")).toBeInTheDocument()

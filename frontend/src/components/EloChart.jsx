@@ -7,6 +7,11 @@ export const ELO_TRACKS = [
   { key: "vs_bots", label: "vs Bots" },
 ]
 
+const X_AXIS_MODES = [
+  { key: "date", label: "Date" },
+  { key: "game", label: "Game number" },
+]
+
 function buildBaseEloSeries(historyGames, ratingTrack) {
   if (!Array.isArray(historyGames)) {
     return []
@@ -179,20 +184,20 @@ export default function EloChart({ historyGames, emptyText, ratingTrack = "overa
             ))}
           </div>
         ) : null}
-        <span className={`elo-chart__mode-label${xAxisMode === "date" ? " is-active" : ""}`}>Date</span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={xAxisMode === "game"}
-          aria-label={`X-axis mode: ${xAxisMode === "game" ? "Game number" : "Date"}`}
-          className="elo-chart__switch"
-          onClick={() => setXAxisMode((current) => (current === "date" ? "game" : "date"))}
-        >
-          <span className="elo-chart__switch-track">
-            <span className={`elo-chart__switch-thumb${xAxisMode === "game" ? " is-game" : ""}`} />
-          </span>
-        </button>
-        <span className={`elo-chart__mode-label${xAxisMode === "game" ? " is-active" : ""}`}>Game number</span>
+        <div className="elo-chart__track-toggle elo-chart__mode-toggle" role="tablist" aria-label="X-axis mode">
+          {X_AXIS_MODES.map((mode) => (
+            <button
+              key={mode.key}
+              type="button"
+              role="tab"
+              aria-selected={xAxisMode === mode.key}
+              className={`elo-chart__track-pill${xAxisMode === mode.key ? " is-active" : ""}`}
+              onClick={() => setXAxisMode(mode.key)}
+            >
+              {mode.label}
+            </button>
+          ))}
+        </div>
       </div>
       <div
         className="elo-chart__plot"
