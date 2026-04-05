@@ -141,6 +141,35 @@ function buildMoveRows(moves) {
   return rows
 }
 
+function finalTimestampForGroup(group) {
+  if (!group || !Array.isArray(group.moves) || group.moves.length === 0) {
+    return null
+  }
+
+  const final = new Date(group.moves[group.moves.length - 1]?.timestamp ?? "")
+  if (Number.isNaN(final.getTime())) {
+    return null
+  }
+
+  return final
+}
+
+function formatElapsedBetween(startValue, endValue) {
+  const start = new Date(startValue ?? "")
+  const end = new Date(endValue ?? "")
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+    return "—"
+  }
+
+  let seconds = Math.floor((end.getTime() - start.getTime()) / 1000)
+  const minutes = Math.floor(seconds / 60)
+  seconds -= minutes * 60
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`
+  }
+  return `${seconds}s`
+}
+
 function fenForPerspective(replayFen, perspective) {
   if (!replayFen || typeof replayFen !== "object") {
     return ""
@@ -168,6 +197,13 @@ function formatPerspectiveLabel(group) {
   }
 
   return `${group.turnNumber}${group.color === "black" ? "B" : "W"}`
+}
+
+function formatTurnNumber(group) {
+  if (!group) {
+    return "0"
+  }
+  return String(group.turnNumber)
 }
 
 function formatUtcDateTime(value) {
@@ -519,7 +555,24 @@ export default function ReviewPage() {
             <ol className="review-page__move-rows">
               {moveRows.map((row) => (
                 <li key={row.moveNumber} className="review-page__move-row">
-                  <div className="review-page__move-number">{row.moveNumber}</div>
+                  {(() => {
+                    const whiteCompletedAt = finalTimestampForGroup(row.white)
+                    const blackCompletedAt = finalTimestampForGroup(row.black)
+                    const rowStartedAt =
+                      finalTimestampForGroup(moveRows[row.moveNumber - 2]?.black) ??
+                      finalTimestampForGroup(moveRows[row.moveNumber - 2]?.white) ??
+                      game?.created_at
+                    const whiteElapsed = whiteCompletedAt ? formatElapsedBetween(rowStartedAt, whiteCompletedAt) : "—"
+                    const blackElapsed = blackCompletedAt ? formatElapsedBetween(whiteCompletedAt ?? rowStartedAt, blackCompletedAt) : "—"
+
+                    return (
+                  <div className="review-page__row-header">
+                    <span className="review-page__row-time review-page__row-time--white">{whiteElapsed}</span>
+                    <span className="review-page__move-number">{formatTurnNumber(row.white ?? row.black)}</span>
+                    <span className="review-page__row-time review-page__row-time--black">{blackElapsed}</span>
+                  </div>
+                    )
+                  })()}
                   <div className="review-page__ply-grid">
                     {["white", "black"].map((color) => {
                       const move = row[color]
