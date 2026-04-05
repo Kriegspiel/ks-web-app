@@ -191,8 +191,8 @@
 }
 
 .square--capture {
-  --square-capture-overlay: rgba(185, 28, 28, 0.22);
-  --square-ring-capture: inset 0 0 0 0.22rem rgba(185, 28, 28, 0.62);
+  --square-capture-overlay: rgba(185, 28, 28, 0.34);
+  --square-ring-capture: inset 0 0 0 0.18rem rgba(185, 28, 28, 0.74);
 }
 
 .square--suggested {
