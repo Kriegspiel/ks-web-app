@@ -1795,8 +1795,7 @@ export default function GamePage() {
                 ) : null}
 
                 <div className="game-board-meta">
-                  <p className="game-page__meta">Selected move: <code>{selectedMove || "—"}</code></p>
-                  <p className="game-page__meta">Moves commit immediately when you click or left-drag a real piece. Phantoms: left-drag to move, right-click to remove, long-press or right-click empty squares to add.</p>
+                  <p className="game-page__meta">Phantoms: left-drag to move, right-click to remove, double-click or right-click empty squares to add.</p>
                 </div>
               </section>
 
