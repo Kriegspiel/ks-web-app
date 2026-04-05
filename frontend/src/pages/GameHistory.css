@@ -24,3 +24,10 @@
 .history-table thead th {
   background: rgba(248, 250, 252, 0.92);
 }
+
+.history-opponent-link {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.14em;
+}

@@ -1,11 +1,26 @@
 import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
+import VersionStamp from "../components/VersionStamp"
 import { userApi } from "../services/api"
 import { formatUtcDateTime } from "../utils/dateTime"
 import "./GameHistory.css"
 
 function formatDate(value) {
   return formatUtcDateTime(value) || "—"
+}
+
+function opponentLabel(game) {
+  const name = game?.opponent ?? "—"
+  return String(game?.opponent_role ?? "").toLowerCase() === "bot" ? `${name} (bot)` : name
+}
+
+function turnCount(game) {
+  const explicit = Number(game?.turn_count)
+  if (Number.isFinite(explicit)) {
+    return explicit
+  }
+  const moveCount = Number(game?.move_count)
+  return Number.isFinite(moveCount) ? moveCount : 0
 }
 
 export default function GameHistoryPage() {
@@ -55,17 +70,19 @@ export default function GameHistoryPage() {
               <table className="history-table">
                 <thead>
                   <tr>
-                    <th>Opponent</th><th>Color</th><th>Result</th><th>Reason</th><th>Moves</th><th>Date</th><th>Review</th>
+                    <th>Opponent</th><th>Color</th><th>Result</th><th>Reason</th><th>Turns</th><th>Date</th><th>Review</th>
                   </tr>
                 </thead>
                 <tbody>
                   {history.games.map((game) => (
                     <tr key={game.game_id}>
-                      <td>{game.opponent ?? "—"}</td>
+                      <td>
+                        {game.opponent ? <Link className="history-opponent-link" to={`/user/${game.opponent}`}>{opponentLabel(game)}</Link> : "—"}
+                      </td>
                       <td>{game.play_as}</td>
                       <td>{game.result}</td>
                       <td>{game.reason ?? "—"}</td>
-                      <td>{game.move_count ?? 0}</td>
+                      <td>{turnCount(game)}</td>
                       <td>{formatDate(game.played_at)}</td>
                       <td><Link to={`/game/${game.game_code ?? game.game_id}/review`}>Open</Link></td>
                     </tr>
@@ -81,6 +98,7 @@ export default function GameHistoryPage() {
           </div>
         </>
       ) : null}
+      <VersionStamp />
     </main>
   )
 }
