@@ -41,6 +41,7 @@ describe("LeaderboardPage", () => {
     expect(screen.getByText("1520")).toBeInTheDocument()
     expect(screen.getByText("1470")).toBeInTheDocument()
     expect(screen.getByText("75.0%")).toBeInTheDocument()
+    expect(screen.getByText("Humans appear after 5 completed games. Listed bots can appear earlier.")).toBeInTheDocument()
   })
 
   it("shows_bot_type_for_bot_rows", async () => {

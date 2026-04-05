@@ -45,6 +45,9 @@ export default function LeaderboardPage() {
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
       {!loading && !error ? (
         <>
+          <p className="page-meta-stamp">
+            Humans appear after 5 completed games. Listed bots can appear earlier.
+          </p>
           {data.players.length === 0 ? <p>No ranked players found.</p> : (
             <div className="leaderboard-table-wrap">
               <table className="leaderboard-table">
