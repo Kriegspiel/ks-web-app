@@ -11,6 +11,26 @@ function getPhantomDisplayPiece(piece, orientation) {
   return orientation === "black" ? normalized.toUpperCase() : normalized
 }
 
+function squareCenter(square, orientation) {
+  if (typeof square !== "string" || !/^[a-h][1-8]$/.test(square)) {
+    return null
+  }
+
+  const fileIndex = FILES.indexOf(square[0])
+  const rankIndex = RANKS.indexOf(Number.parseInt(square[1], 10))
+  if (fileIndex < 0 || rankIndex < 0) {
+    return null
+  }
+
+  const displayFileIndex = orientation === "black" ? FILES.length - 1 - fileIndex : fileIndex
+  const displayRankIndex = orientation === "black" ? RANKS.length - 1 - rankIndex : rankIndex
+
+  return {
+    x: (displayFileIndex + 0.5) * 100,
+    y: (displayRankIndex + 0.5) * 100,
+  }
+}
+
 function ChessBoard({
   boardFen,
   orientation = "white",
@@ -21,6 +41,8 @@ function ChessBoard({
   suggestedSquares = [],
   phantomSquares = [],
   phantomPlacements = {},
+  overlayArrows = [],
+  overlayBadges = [],
   disabled = false,
   onSquareClick,
   onSquareRightClick,
@@ -33,6 +55,37 @@ function ChessBoard({
   const board = parseFenBoard(boardFen)
   const files = orientation === "black" ? [...FILES].reverse() : FILES
   const ranks = orientation === "black" ? [...RANKS].reverse() : RANKS
+  const renderedArrows = overlayArrows
+    .map((arrow, index) => {
+      const from = squareCenter(String(arrow?.from ?? "").toLowerCase(), orientation)
+      const to = squareCenter(String(arrow?.to ?? "").toLowerCase(), orientation)
+      if (!from || !to) {
+        return null
+      }
+
+      return {
+        id: `${arrow?.from}-${arrow?.to}-${index}`,
+        from,
+        to,
+        tone: arrow?.tone === "success" ? "success" : "illegal",
+      }
+    })
+    .filter(Boolean)
+  const renderedBadges = overlayBadges
+    .map((badge, index) => {
+      const center = squareCenter(String(badge?.square ?? "").toLowerCase(), orientation)
+      if (!center) {
+        return null
+      }
+
+      return {
+        id: `${badge?.square}-${badge?.label}-${index}`,
+        center,
+        label: String(badge?.label ?? ""),
+        tone: badge?.tone === "success" ? "success" : "illegal",
+      }
+    })
+    .filter(Boolean)
 
   const showFileLabelOnSquare = (file, rank) => rank === ranks[ranks.length - 1]
   const showRankLabelOnSquare = (file) => file === files[0]
@@ -135,6 +188,37 @@ function ChessBoard({
           }),
         )}
       </div>
+      {renderedArrows.length || renderedBadges.length ? (
+        <svg className="board-overlay" viewBox="0 0 800 800" aria-hidden="true">
+          <defs>
+            <marker id="board-overlay-arrow-illegal" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+              <path d="M0 0 L10 5 L0 10 z" className="board-overlay__marker board-overlay__marker--illegal" />
+            </marker>
+            <marker id="board-overlay-arrow-success" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+              <path d="M0 0 L10 5 L0 10 z" className="board-overlay__marker board-overlay__marker--success" />
+            </marker>
+          </defs>
+          {renderedArrows.map((arrow) => (
+            <line
+              key={arrow.id}
+              x1={arrow.from.x}
+              y1={arrow.from.y}
+              x2={arrow.to.x}
+              y2={arrow.to.y}
+              className={`board-overlay__arrow board-overlay__arrow--${arrow.tone}`}
+              markerEnd={`url(#board-overlay-arrow-${arrow.tone})`}
+            />
+          ))}
+          {renderedBadges.map((badge) => (
+            <g key={badge.id} transform={`translate(${badge.center.x}, ${badge.center.y})`}>
+              <circle className={`board-overlay__badge board-overlay__badge--${badge.tone}`} r="18" />
+              <text className="board-overlay__badge-label" textAnchor="middle" dominantBaseline="central">
+                {badge.label}
+              </text>
+            </g>
+          ))}
+        </svg>
+      ) : null}
     </div>
   )
 }

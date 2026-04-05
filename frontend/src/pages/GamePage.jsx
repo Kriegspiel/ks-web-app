@@ -1057,6 +1057,16 @@ export default function GamePage() {
   }, [pollMetadata, pollState])
 
   useEffect(() => {
+    if (!gameId) {
+      return
+    }
+
+    if (gameState?.state === "completed" || gameMeta?.state === "completed") {
+      navigate(`/game/${gameId}/review`, { replace: true })
+    }
+  }, [gameId, gameMeta?.state, gameState?.state, navigate])
+
+  useEffect(() => {
     const rootStyle = document.documentElement.style
     const bodyStyle = document.body.style
     const previousRootScrollBehavior = rootStyle.scrollBehavior
