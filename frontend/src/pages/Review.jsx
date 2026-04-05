@@ -69,16 +69,17 @@ function moveAnnouncements(move) {
     return []
   }
 
-  const items = []
   const questionType = String(move.question_type ?? "COMMON").toUpperCase()
   const normalizedUci = typeof move.uci === "string" ? move.uci.trim().toLowerCase() : ""
-
-  if (questionType !== "ASK_ANY" && normalizedUci) {
-    items.push(`[${normalizedUci}]`)
-  }
-
   const main = formatCaptureAnnouncement(move)
   const special = formatAnnouncement(move?.answer?.special)
+
+  if (questionType !== "ASK_ANY" && normalizedUci) {
+    const combined = [`[${normalizedUci}]`, main, special].filter(Boolean).join(" ")
+    return combined ? [combined] : [`[${normalizedUci}]`]
+  }
+
+  const items = []
   if (main) {
     items.push(main)
   }
