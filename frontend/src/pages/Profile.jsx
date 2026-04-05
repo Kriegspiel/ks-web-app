@@ -6,6 +6,8 @@ import { userApi } from "../services/api"
 import { formatUtcDate } from "../utils/dateTime"
 import "./Profile.css"
 
+const BOT_BLOG_URL = "https://kriegspiel.org/blog/bot-registration-flow"
+
 function formatDate(value) {
   return formatUtcDate(value) || "Unknown"
 }
@@ -129,6 +131,15 @@ export default function ProfilePage() {
     <main className="page-shell profile-page">
       <h1>{profile?.username}</h1>
       <p>Member since {formatDate(profile?.member_since)}</p>
+      {profile?.role === "bot" || profile?.is_bot ? (
+        <p>
+          User {profile?.username} is a bot. To understand the bots better, read our{" "}
+          <a href={BOT_BLOG_URL} target="_blank" rel="noreferrer noopener">
+            blog post about bots ↗
+          </a>
+          .
+        </p>
+      ) : null}
 
       <section className="profile-card" aria-label="User stats">
         <h2>Stats</h2>
