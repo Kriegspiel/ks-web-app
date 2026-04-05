@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { useParams } from "react-router-dom"
+import { Link, useParams } from "react-router-dom"
 import ChessBoard from "../components/ChessBoard"
 import VersionStamp from "../components/VersionStamp"
 import { getGame, getGameTranscript } from "../services/api"
@@ -286,6 +286,13 @@ function ratingValue(value) {
   return Number.isFinite(value) ? String(value) : "—"
 }
 
+function playerLabel(player) {
+  if (!player?.username) {
+    return "—"
+  }
+  return player.role === "bot" ? `${player.username} (bot)` : player.username
+}
+
 function fenForPly(moves, ply, perspective) {
   if (ply <= 0) {
     return STARTING_FENS[perspective]
@@ -468,7 +475,12 @@ export default function ReviewPage() {
     () => fenForPly(moves, selectedPlyGroup?.lastPly ?? 0, perspective),
     [moves, selectedPlyGroup, perspective],
   )
-  const overlayState = useMemo(() => overlaysForPlyGroup(selectedPlyGroup), [selectedPlyGroup])
+  const overlayState = useMemo(() => {
+    if (perspective !== "referee" && selectedPlyGroup && perspective !== selectedPlyGroup.color) {
+      return { arrows: [], badges: [], captureSquares: [] }
+    }
+    return overlaysForPlyGroup(selectedPlyGroup)
+  }, [selectedPlyGroup, perspective])
   const counterLabel = selectedPlyGroup ? formatPerspectiveLabel(selectedPlyGroup) : "Start"
   const maxCounterLabel = finalGroup ? formatPerspectiveLabel(finalGroup) : "0W"
   const startedAt = formatUtcDateTime(game?.created_at)
@@ -620,7 +632,14 @@ export default function ReviewPage() {
               ["black", game.black, blackHistoricalRatings, blackCurrentRatings],
             ].map(([color, player, thenRatings, nowRatings]) => (
               <article key={color} className="review-page__stats-card">
-                <h3>{color === "white" ? "White" : "Black"}: {player?.username ?? "—"}</h3>
+                <h3>
+                  {color === "white" ? "White" : "Black"}:{" "}
+                  {player?.username ? (
+                    <Link className="review-page__player-link" to={`/user/${player.username}`}>
+                      {playerLabel(player)}
+                    </Link>
+                  ) : "—"}
+                </h3>
                 <div className="review-page__rating-columns">
                   <div>
                     <h4>At game</h4>
