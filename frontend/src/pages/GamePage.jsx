@@ -951,7 +951,8 @@ function getOpponentPhantomPiece(piece, playerColor) {
 
 export default function GamePage() {
   const navigate = useNavigate()
-  const { gameId } = useParams()
+  const { gameCode, gameId } = useParams()
+  const gameRef = gameCode ?? gameId ?? ""
   const { user } = useAuth()
 
   const [gameState, setGameState] = useState(null)
@@ -1001,10 +1002,10 @@ export default function GamePage() {
     move,
     removeAt,
     availablePiecesForSquare,
-  } = usePhantoms({ gameId, occupiedSquares })
+  } = usePhantoms({ gameId: gameRef, occupiedSquares })
 
   const pollState = useCallback(async ({ silent = false, preserveViewport = false } = {}) => {
-    if (!gameId) {
+    if (!gameRef) {
       return
     }
 
@@ -1020,7 +1021,7 @@ export default function GamePage() {
     }
 
     try {
-      const state = await getGameState(gameId)
+      const state = await getGameState(gameRef)
       if (requestId !== stateRequestIdRef.current) {
         return
       }
@@ -1036,20 +1037,20 @@ export default function GamePage() {
         setLoading(false)
       }
     }
-  }, [captureViewport, gameId])
+  }, [captureViewport, gameRef])
 
   const pollMetadata = useCallback(async () => {
-    if (!gameId) {
+    if (!gameRef) {
       return
     }
 
     try {
-      const metadata = await getGame(gameId)
+      const metadata = await getGame(gameRef)
       setGameMeta(metadata)
     } catch {
       // Keep the board usable even if metadata fails.
     }
-  }, [gameId])
+  }, [gameRef])
 
   useEffect(() => {
     pollState({ silent: false })
@@ -1057,14 +1058,14 @@ export default function GamePage() {
   }, [pollMetadata, pollState])
 
   useEffect(() => {
-    if (!gameId) {
+    if (!gameRef) {
       return
     }
 
     if (gameState?.state === "completed" || gameMeta?.state === "completed") {
-      navigate(`/game/${gameId}/review`, { replace: true })
+      navigate(`/game/${gameMeta?.game_code ?? gameRef}/review`, { replace: true })
     }
-  }, [gameId, gameMeta?.state, gameState?.state, navigate])
+  }, [gameMeta?.game_code, gameMeta?.state, gameRef, gameState?.state, navigate])
 
   useEffect(() => {
     const rootStyle = document.documentElement.style
@@ -1088,7 +1089,7 @@ export default function GamePage() {
   }, [])
 
   useEffect(() => {
-    if (!gameId || gameState?.state === "completed") {
+    if (!gameRef || gameState?.state === "completed") {
       return undefined
     }
 
@@ -1099,7 +1100,7 @@ export default function GamePage() {
     return () => {
       window.clearInterval(intervalId)
     }
-  }, [gameId, gameState?.state, pollState])
+  }, [gameRef, gameState?.state, pollState])
 
   useLayoutEffect(() => {
     const viewport = viewportRestoreRef.current
@@ -1347,7 +1348,7 @@ export default function GamePage() {
   }
 
   async function commitMove(from, to) {
-    if (!from || !to || !gameId || !canMove) {
+    if (!from || !to || !gameRef || !canMove) {
       return
     }
 
@@ -1612,7 +1613,7 @@ export default function GamePage() {
     captureViewport()
 
     try {
-      const result = await submitMove(gameId, uci)
+      const result = await submitMove(gameRef, uci)
       if (result?.move_done === false) {
         setActionError("Illegal move. Try a different move.")
         setIllegalMoveSquares([uci.slice(0, 2), uci.slice(2, 4)])
@@ -1646,7 +1647,7 @@ export default function GamePage() {
   }
 
   async function handleAskAny() {
-    if (!gameId || !canAskAny) {
+    if (!gameRef || !canAskAny) {
       return
     }
 
@@ -1658,7 +1659,7 @@ export default function GamePage() {
     captureViewport()
 
     try {
-      await askAny(gameId)
+      await askAny(gameRef)
       await pollState({ silent: true, preserveViewport: true })
     } catch (requestError) {
       setActionError(requestError?.message ?? "Unable to ask the referee right now.")
@@ -1668,7 +1669,7 @@ export default function GamePage() {
   }
 
   async function handleResign() {
-    if (!gameId || !canResign) {
+    if (!gameRef || !canResign) {
       return
     }
 
@@ -1679,7 +1680,7 @@ export default function GamePage() {
     captureViewport()
 
     try {
-      await resignGame(gameId)
+      await resignGame(gameRef)
       await pollState({ silent: true, preserveViewport: true })
     } catch (requestError) {
       setActionError(requestError?.message ?? "Unable to resign right now.")
@@ -1689,7 +1690,7 @@ export default function GamePage() {
   }
 
   async function handleCloseWaitingGame() {
-    if (!gameId || !canCloseWaitingGame) {
+    if (!gameRef || !canCloseWaitingGame) {
       return
     }
 
@@ -1699,7 +1700,7 @@ export default function GamePage() {
     captureViewport()
 
     try {
-      await deleteWaitingGame(gameId)
+      await deleteWaitingGame(gameRef)
       navigate("/lobby")
     } catch (requestError) {
       setActionError(requestError?.message ?? "Unable to close this waiting game right now.")
@@ -1851,7 +1852,7 @@ export default function GamePage() {
                 </div>
               </section>
 
-              <p className="game-page__meta game-page__meta--below-board">Game ID: <code>{gameId}</code></p>
+              <p className="game-page__meta game-page__meta--below-board">Game code: <code>{gameMeta?.game_code ?? gameRef}</code></p>
             </div>
 
             <section className="game-card game-card--status" aria-label="Game status">

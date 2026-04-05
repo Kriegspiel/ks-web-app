@@ -45,7 +45,7 @@ describe("LobbyPage", () => {
 
     renderPage()
 
-    expect(await screen.findByRole("link", { name: "Resume active game" })).toHaveAttribute("href", "/game/g-active")
+    expect(await screen.findByRole("link", { name: "Resume active game" })).toHaveAttribute("href", "/game/LIVE01")
     expect(screen.getByRole("link", { name: "Leaderboard" })).toHaveAttribute("href", "/leaderboard")
     expect(screen.getByRole("link", { name: /Read rules/i })).toHaveAttribute("href", "https://kriegspiel.org/rules")
   })
@@ -199,7 +199,7 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("option", { name: "Random Any Bot (1200)" })).toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "Create bot game" }))
     await waitFor(() => expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({ opponent_type: "bot", bot_id: "bot-1" })))
-    expect(mockNavigate).toHaveBeenCalledWith("/game/g-bot-1")
+    expect(mockNavigate).toHaveBeenCalledWith("/game/BOT123")
   })
 
   it("filters_unsupported_bots_for_selected_ruleset", async () => {

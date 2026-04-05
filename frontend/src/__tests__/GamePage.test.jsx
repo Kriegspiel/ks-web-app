@@ -90,7 +90,7 @@ describe("GamePage", () => {
   it("polls_every_500ms_while_active", async () => {
     render(<GamePage />)
 
-    await screen.findByText(/Game ID:/i)
+    await screen.findByText(/Game code:/i)
     expect(screen.getByText(TEST_VERSION_STAMP)).toBeInTheDocument()
     expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
 
@@ -745,7 +745,7 @@ describe("GamePage", () => {
   it("does_not_mark_the_whole_game_page_as_a_live_region", async () => {
     const { container } = render(<GamePage />)
 
-    await screen.findByText(/Game ID:/i)
+    await screen.findByText(/Game code:/i)
     expect(container.querySelector("main.game-page")).not.toHaveAttribute("aria-live")
   })
 

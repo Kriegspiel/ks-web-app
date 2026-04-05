@@ -171,7 +171,7 @@ export default function HomePage() {
   const selectedRating = ratingTrack === "vs_humans" ? stats.ratings.vsHumans : ratingTrack === "vs_bots" ? stats.ratings.vsBots : stats.ratings.overall
   const selectedHistoryStats = useMemo(() => summarizeTrackHistory(historyGames, ratingTrack), [historyGames, ratingTrack])
   const playNowPath = isAuthenticated
-    ? (activeGame?.game_id ? `/game/${activeGame.game_id}` : "/lobby")
+    ? (activeGame?.game_code || activeGame?.game_id ? `/game/${activeGame?.game_code ?? activeGame?.game_id}` : "/lobby")
     : "/auth/login"
 
   return (
@@ -245,7 +245,7 @@ export default function HomePage() {
                         </div>
                         <div className="lobby-meta">Updated {formatUpdatedAt(game.updated_at ?? game.created_at)}</div>
                       </div>
-                      <Link to={`/game/${game.game_id}`}>Open</Link>
+                      <Link to={`/game/${game.game_code ?? game.game_id}`}>Open</Link>
                     </li>
                   )
                 })}
