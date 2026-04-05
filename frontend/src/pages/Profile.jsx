@@ -132,13 +132,18 @@ export default function ProfilePage() {
       <h1>{profile?.username}</h1>
       <p>Member since {formatDate(profile?.member_since)}</p>
       {profile?.role === "bot" || profile?.is_bot ? (
-        <p>
-          User {profile?.username} is a bot. To understand the bots better, read our{" "}
-          <a href={BOT_BLOG_URL} target="_blank" rel="noreferrer noopener">
-            blog post about bots ↗
-          </a>
-          .
-        </p>
+        <section className="profile-card profile-card--bot-note" aria-label="Bot information">
+          <h2>This user is bot</h2>
+          <p>
+            On Kriegspiel.org we allow bots. To understand the bots better, read our{" "}
+            <a href={BOT_BLOG_URL} target="_blank" rel="noreferrer noopener">
+              blog post about bots ↗
+            </a>
+            .
+          </p>
+          <p>You also can create your own bot – more bots, more fun.</p>
+          <p>Email address of bot owner is {profile?.owner_email ?? "unknown"}.</p>
+        </section>
       ) : null}
 
       <section className="profile-card" aria-label="User stats">

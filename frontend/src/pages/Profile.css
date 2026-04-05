@@ -2,6 +2,18 @@
   max-width: var(--content-width);
 }
 
+.profile-card--bot-note {
+  margin-top: 1rem;
+}
+
+.profile-card--bot-note h2 {
+  margin-top: 0;
+}
+
+.profile-card--bot-note p:last-child {
+  margin-bottom: 0;
+}
+
 .profile-stats-grid {
   display: grid;
   gap: 0.75rem;
