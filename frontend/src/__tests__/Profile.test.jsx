@@ -95,4 +95,29 @@ describe("ProfilePage", () => {
       expect(screen.getByRole("alert")).toHaveTextContent("Profile not found.")
     })
   })
+
+  it("shows_bot_note_with_external_blog_link", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "gptnano",
+      role: "bot",
+      member_since: "2026-04-03T01:10:41Z",
+      stats: {
+        elo: 1200,
+        elo_peak: 1200,
+        ratings: {
+          overall: { elo: 1200, peak: 1200 },
+          vs_humans: { elo: 1200, peak: 1200 },
+          vs_bots: { elo: 1200, peak: 1200 },
+        },
+      },
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+
+    renderProfile("/user/gptnano")
+
+    await screen.findByRole("heading", { name: "gptnano" })
+    expect(screen.getByText(/User gptnano is a bot\./i)).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("href", "https://kriegspiel.org/blog/bot-registration-flow")
+    expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("target", "_blank")
+  })
 })
