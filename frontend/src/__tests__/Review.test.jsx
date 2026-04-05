@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { MemoryRouter } from "react-router-dom"
 import ReviewPage from "../pages/Review"
 const mockApi = vi.hoisted(() => ({
   getGame: vi.fn(),
@@ -92,9 +93,17 @@ afterEach(() => {
   cleanup()
 })
 
+function renderReviewPage() {
+  return render(
+    <MemoryRouter>
+      <ReviewPage />
+    </MemoryRouter>,
+  )
+}
+
 describe("ReviewPage", () => {
   it("loads_transcript_and_navigates_moves", async () => {
-    render(<ReviewPage />)
+    renderReviewPage()
 
     await screen.findByText(/Move log/i)
     expect(screen.getByText("Turn Start / 1B")).toBeInTheDocument()
@@ -111,7 +120,7 @@ describe("ReviewPage", () => {
   })
 
   it("supports_keyboard_navigation_and_perspective_toggle", async () => {
-    render(<ReviewPage />)
+    renderReviewPage()
 
     await screen.findByText(/Move log/i)
 
@@ -134,10 +143,21 @@ describe("ReviewPage", () => {
     expect(screen.getByText("Turn 1W / 1B")).toBeInTheDocument()
   })
 
+  it("hides_opponent_overlays_in_private_views", async () => {
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    fireEvent.click(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i }))
+    expect(document.querySelectorAll(".board-overlay__arrow").length).toBeGreaterThan(0)
+
+    fireEvent.click(screen.getByRole("tab", { name: "White" }))
+    expect(document.querySelectorAll(".board-overlay__arrow").length).toBe(0)
+  })
+
   it("shows_controlled_error_for_invalid_transcript", async () => {
     mockApi.getGameTranscript.mockResolvedValueOnce({ game_id: "g-620", moves: null })
 
-    render(<ReviewPage />)
+    renderReviewPage()
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("Replay transcript is unavailable.")
@@ -170,7 +190,7 @@ describe("ReviewPage", () => {
       ],
     })
 
-    render(<ReviewPage />)
+    renderReviewPage()
 
     await screen.findByText(/Move log/i)
     expect(screen.getByRole("button", { name: /White No pawn captures · \[b2b4\] Move complete/i })).toBeInTheDocument()
@@ -178,11 +198,11 @@ describe("ReviewPage", () => {
   })
 
   it("shows_bottom_game_stats", async () => {
-    render(<ReviewPage />)
+    renderReviewPage()
 
     await screen.findByText(/Game stats/i)
-    expect(screen.getByText(/White: notifil/i)).toBeInTheDocument()
-    expect(screen.getByText(/Black: haiku/i)).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "notifil" })).toHaveAttribute("href", "/user/notifil")
+    expect(screen.getByRole("link", { name: "haiku (bot)" })).toHaveAttribute("href", "/user/haiku")
     expect(screen.getByText("2026-04-05 12:00:00 UTC")).toBeInTheDocument()
     expect(screen.getByText("3m 12s")).toBeInTheDocument()
   })
