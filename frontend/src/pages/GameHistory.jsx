@@ -70,16 +70,17 @@ export default function GameHistoryPage() {
               <table className="history-table">
                 <thead>
                   <tr>
-                    <th>Opponent</th><th>Color</th><th>Result</th><th>Reason</th><th>Turns</th><th>Date</th><th>Review</th>
+                    <th>Rule set</th><th>Color</th><th>Opponent</th><th>Result</th><th>Reason</th><th>Turns</th><th>Date and time</th><th>Review</th>
                   </tr>
                 </thead>
                 <tbody>
                   {history.games.map((game) => (
                     <tr key={game.game_id}>
+                      <td>{game.rule_variant ?? "—"}</td>
+                      <td>{game.play_as}</td>
                       <td>
                         {game.opponent ? <Link className="history-opponent-link" to={`/user/${game.opponent}`}>{opponentLabel(game)}</Link> : "—"}
                       </td>
-                      <td>{game.play_as}</td>
                       <td>{game.result}</td>
                       <td>{game.reason ?? "—"}</td>
                       <td>{turnCount(game)}</td>
