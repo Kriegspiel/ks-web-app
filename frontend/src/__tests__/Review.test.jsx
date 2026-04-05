@@ -27,6 +27,7 @@ const transcript = {
       uci: "e2e4",
       answer: { main: "REGULAR_MOVE", capture_square: null, special: null },
       move_done: true,
+      timestamp: "2026-04-05T12:00:11Z",
       replay_fen: {
         full: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
         white: "4K3/PPPP1PPP/8/8/4P3/8/8/8 b - - 0 1",
@@ -40,6 +41,7 @@ const transcript = {
       uci: "e7e5",
       answer: { main: "REGULAR_MOVE", capture_square: null, special: null },
       move_done: true,
+      timestamp: "2026-04-05T12:00:19Z",
       replay_fen: {
         full: "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
         white: "4K3/PPPP1PPP/8/8/4P3/8/8/8 w - - 0 1",
@@ -96,6 +98,8 @@ describe("ReviewPage", () => {
 
     await screen.findByText(/Move log/i)
     expect(screen.getByText("Turn Start / 1B")).toBeInTheDocument()
+    expect(screen.getByText("11s")).toBeInTheDocument()
+    expect(screen.getByText("8s")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
     expect(screen.getByText("Turn 1W / 1B")).toBeInTheDocument()

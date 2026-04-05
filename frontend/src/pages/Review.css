@@ -49,28 +49,48 @@
 
 .review-page__move-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.8rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.45rem;
   align-items: start;
 }
 
+.review-page__row-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0 0.2rem 0.15rem;
+  border-bottom: 1px solid var(--border);
+}
+
 .review-page__move-number {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 999px;
+  min-width: 1.75rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
   color: var(--text);
-  background: color-mix(in srgb, var(--surface-alt) 88%, transparent);
-  border: 1px solid var(--border);
+  font-size: 0.82rem;
+  line-height: 1;
 }
 
 .review-page__ply-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.8rem;
+}
+
+.review-page__row-time {
+  font-size: 0.8rem;
+  color: var(--muted-soft);
+}
+
+.review-page__row-time--white {
+  text-align: left;
+}
+
+.review-page__row-time--black {
+  text-align: right;
 }
 
 .review-page__ply-card {
