@@ -109,7 +109,7 @@
   display: grid;
   gap: 0.55rem;
   align-content: start;
-  border: 2px solid var(--border-strong);
+  border: 3.5px solid var(--border-strong);
   border-radius: 1rem;
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   padding: 0.95rem 1rem;
@@ -122,7 +122,6 @@
 }
 
 .review-page__ply-card.is-active {
-  border-width: 3.5px;
   border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
   background: var(--surface-strong);
 }
