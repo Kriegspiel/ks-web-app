@@ -191,11 +191,11 @@ function ChessBoard({
       {renderedArrows.length || renderedBadges.length ? (
         <svg className="board-overlay" viewBox="0 0 800 800" aria-hidden="true">
           <defs>
-            <marker id="board-overlay-arrow-illegal" markerWidth="6" markerHeight="6" refX="5.2" refY="3" orient="auto">
-              <path d="M0 0 L6 3 L0 6 z" className="board-overlay__marker board-overlay__marker--illegal" />
+            <marker id="board-overlay-arrow-illegal" markerWidth="5" markerHeight="5" refX="4.4" refY="2.5" orient="auto">
+              <path d="M0 0 L5 2.5 L0 5 z" className="board-overlay__marker board-overlay__marker--illegal" />
             </marker>
-            <marker id="board-overlay-arrow-success" markerWidth="6" markerHeight="6" refX="5.2" refY="3" orient="auto">
-              <path d="M0 0 L6 3 L0 6 z" className="board-overlay__marker board-overlay__marker--success" />
+            <marker id="board-overlay-arrow-success" markerWidth="5" markerHeight="5" refX="4.4" refY="2.5" orient="auto">
+              <path d="M0 0 L5 2.5 L0 5 z" className="board-overlay__marker board-overlay__marker--success" />
             </marker>
           </defs>
           {renderedArrows.map((arrow) => (

@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import ReviewPage from "../pages/Review"
-
-const mockNavigate = vi.hoisted(() => vi.fn())
 const mockApi = vi.hoisted(() => ({
   getGame: vi.fn(),
   getGameTranscript: vi.fn(),
@@ -12,7 +10,6 @@ vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom")
   return {
     ...actual,
-    useNavigate: () => mockNavigate,
     useParams: () => ({ gameId: "g-620" }),
   }
 })
@@ -53,11 +50,40 @@ const transcript = {
 }
 
 beforeEach(() => {
-  mockNavigate.mockReset()
   mockApi.getGame.mockReset()
   mockApi.getGameTranscript.mockReset()
   mockApi.getGameTranscript.mockResolvedValue(transcript)
-  mockApi.getGame.mockResolvedValue({ result: { winner: "white", reason: "checkmate" } })
+  mockApi.getGame.mockResolvedValue({
+    created_at: "2026-04-05T12:00:00Z",
+    updated_at: "2026-04-05T12:03:12Z",
+    result: { winner: "white", reason: "checkmate" },
+    white: {
+      username: "notifil",
+      connected: true,
+      role: "user",
+      ratings: {
+        overall: { elo: 1500 },
+        vs_humans: { elo: 1480 },
+        vs_bots: { elo: 1510 },
+      },
+    },
+    black: {
+      username: "haiku",
+      connected: true,
+      role: "bot",
+      ratings: {
+        overall: { elo: 1450 },
+        vs_humans: { elo: 1440 },
+        vs_bots: { elo: 1460 },
+      },
+    },
+    rating_snapshot: {
+      overall: { white_before: 1484, black_before: 1466 },
+      specific: { white_before: 1494, black_before: 1450 },
+      white_track: "vs_bots",
+      black_track: "vs_humans",
+    },
+  })
 })
 
 afterEach(() => {
@@ -69,13 +95,13 @@ describe("ReviewPage", () => {
     render(<ReviewPage />)
 
     await screen.findByText(/Move log/i)
-    expect(screen.getByText("Ply 0 / 2")).toBeInTheDocument()
+    expect(screen.getByText("Turn Start / 1B")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
-    expect(screen.getByText("Ply 1 / 2")).toBeInTheDocument()
+    expect(screen.getByText("Turn 1W / 1B")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i }))
-    expect(screen.getByText("Ply 2 / 2")).toBeInTheDocument()
+    expect(screen.getByText("Turn 1B / 1B")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i })).toHaveClass("is-active")
     expect(document.querySelectorAll(".review-page__announcement-badge").length).toBeGreaterThan(0)
   })
@@ -101,7 +127,7 @@ describe("ReviewPage", () => {
     expect(board?.getAttribute("data-orientation")).toBe("white")
     fireEvent.click(screen.getByRole("tab", { name: "Black bottom" }))
     expect(board?.getAttribute("data-orientation")).toBe("black")
-    expect(screen.getByText("Ply 1 / 2")).toBeInTheDocument()
+    expect(screen.getByText("Turn 1W / 1B")).toBeInTheDocument()
   })
 
   it("shows_controlled_error_for_invalid_transcript", async () => {
@@ -145,5 +171,15 @@ describe("ReviewPage", () => {
     await screen.findByText(/Move log/i)
     expect(screen.getByRole("button", { name: /White No pawn captures · \[b2b4\] Move complete/i })).toBeInTheDocument()
     expect(screen.queryByText("Ask any pawn captures")).not.toBeInTheDocument()
+  })
+
+  it("shows_bottom_game_stats", async () => {
+    render(<ReviewPage />)
+
+    await screen.findByText(/Game stats/i)
+    expect(screen.getByText(/White: notifil/i)).toBeInTheDocument()
+    expect(screen.getByText(/Black: haiku/i)).toBeInTheDocument()
+    expect(screen.getByText("2026-04-05 12:00:00 UTC")).toBeInTheDocument()
+    expect(screen.getByText("3m 12s")).toBeInTheDocument()
   })
 })
