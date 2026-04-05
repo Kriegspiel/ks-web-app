@@ -154,6 +154,34 @@ describe("ReviewPage", () => {
     expect(document.querySelectorAll(".board-overlay__arrow").length).toBe(0)
   })
 
+  it("keeps_capture_highlights_visible_in_private_views", async () => {
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      game_id: "g-620",
+      rule_variant: "berkeley_any",
+      moves: [
+        {
+          ply: 1,
+          color: "black",
+          question_type: "COMMON",
+          uci: "e7e5",
+          answer: { main: "CAPTURE_DONE", capture_square: "e4", special: null },
+          move_done: true,
+          timestamp: "2026-04-05T12:00:19Z",
+          replay_fen: transcript.moves[1].replay_fen,
+        },
+      ],
+    })
+
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    fireEvent.click(screen.getByRole("tab", { name: "White" }))
+    fireEvent.click(screen.getByRole("button", { name: /Black \[e7e5\] Capture done at E4/i }))
+
+    expect(document.querySelectorAll(".board-overlay__arrow").length).toBe(0)
+    expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--capture")
+  })
+
   it("shows_controlled_error_for_invalid_transcript", async () => {
     mockApi.getGameTranscript.mockResolvedValueOnce({ game_id: "g-620", moves: null })
 
