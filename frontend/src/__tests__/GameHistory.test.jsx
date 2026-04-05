@@ -39,6 +39,7 @@ describe("GameHistoryPage", () => {
 
     renderHistory()
 
+    expect(await screen.findByRole("link", { name: "Back to user" })).toHaveAttribute("href", "/user/fil")
     expect(await screen.findByRole("link", { name: "amy (bot)" })).toHaveAttribute("href", "/user/amy")
     expect(screen.getByText("Berkeley + Any")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Open" })).toHaveAttribute("href", "/game/A7K2M9/review")

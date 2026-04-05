@@ -2,6 +2,17 @@
   max-width: var(--page-width);
 }
 
+.history-page__back-link-wrap {
+  margin: 0 0 1rem;
+}
+
+.history-page__back-link {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.14em;
+}
+
 .history-table-wrap {
   overflow-x: auto;
   margin-top: 1rem;
