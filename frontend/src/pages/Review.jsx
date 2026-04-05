@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import ChessBoard from "../components/ChessBoard"
 import VersionStamp from "../components/VersionStamp"
 import { getGame, getGameTranscript } from "../services/api"
@@ -28,22 +28,6 @@ const ANNOUNCEMENT_TEXT = {
   CHECK_SHORT_DIAGONAL: "Check on short diagonal",
   CHECK_KNIGHT: "Check by knight",
   CHECK_DOUBLE: "Double check",
-}
-
-function formatTranscriptMove(move) {
-  const questionType = String(move?.question_type ?? "COMMON").toUpperCase()
-  const prompt = questionType === "ASK_ANY" ? "Ask any pawn captures" : "Move attempt"
-  const main = typeof move?.answer?.main === "string" ? ANNOUNCEMENT_TEXT[move.answer.main] ?? move.answer.main : "UNKNOWN"
-  const special = typeof move?.answer?.special === "string" ? ANNOUNCEMENT_TEXT[move.answer.special] ?? move.answer.special : ""
-  const captureSquare = typeof move?.answer?.capture_square === "string" ? move.answer.capture_square.trim().toUpperCase() : ""
-  const messages = []
-  if (main) {
-    messages.push(move?.answer?.main === "CAPTURE_DONE" && captureSquare ? `${main} at ${captureSquare}` : main)
-  }
-  if (special) {
-    messages.push(special)
-  }
-  return `${prompt} — ${messages.join(" · ") || "UNKNOWN"}`
 }
 
 function formatAnnouncement(code) {
@@ -125,6 +109,7 @@ function buildPlyGroups(moves) {
 
   return groups.map((group, index) => ({
     ...group,
+    index,
     turnNumber: Math.floor(index / 2) + 1,
   }))
 }
@@ -175,6 +160,94 @@ function formatResult(result) {
   const winner = result.winner ? `${result.winner} wins` : "Draw"
   const reason = result.reason ? ` by ${result.reason}` : ""
   return `${winner}${reason}`
+}
+
+function formatPerspectiveLabel(group) {
+  if (!group) {
+    return "Start"
+  }
+
+  return `${group.turnNumber}${group.color === "black" ? "B" : "W"}`
+}
+
+function formatUtcDateTime(value) {
+  if (!value) {
+    return "—"
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return "—"
+  }
+
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0")
+  const day = String(date.getUTCDate()).padStart(2, "0")
+  const hours = String(date.getUTCHours()).padStart(2, "0")
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0")
+  const seconds = String(date.getUTCSeconds()).padStart(2, "0")
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} UTC`
+}
+
+function formatDuration(startValue, endValue) {
+  const start = new Date(startValue)
+  const end = new Date(endValue)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+    return "—"
+  }
+
+  let remaining = Math.floor((end.getTime() - start.getTime()) / 1000)
+  const days = Math.floor(remaining / 86400)
+  remaining -= days * 86400
+  const hours = Math.floor(remaining / 3600)
+  remaining -= hours * 3600
+  const minutes = Math.floor(remaining / 60)
+  const seconds = remaining - minutes * 60
+
+  const parts = []
+  if (days) parts.push(`${days}d`)
+  if (hours || days) parts.push(`${hours}h`)
+  if (minutes || hours || days) parts.push(`${minutes}m`)
+  parts.push(`${seconds}s`)
+  return parts.join(" ")
+}
+
+function normalizeRatings(source) {
+  const ratings = source?.ratings ?? {}
+  const overall = ratings?.overall?.elo ?? source?.elo ?? null
+  const vsHumans = ratings?.vs_humans?.elo ?? null
+  const vsBots = ratings?.vs_bots?.elo ?? null
+  return {
+    overall: overall == null ? null : Number(overall),
+    vsHumans: vsHumans == null ? null : Number(vsHumans),
+    vsBots: vsBots == null ? null : Number(vsBots),
+  }
+}
+
+function historicalRatingsForColor(game, color) {
+  const player = color === "black" ? game?.black : game?.white
+  const current = normalizeRatings(player)
+  const snapshot = game?.rating_snapshot
+  if (!snapshot || typeof snapshot !== "object") {
+    return {
+      overall: null,
+      vsHumans: null,
+      vsBots: null,
+    }
+  }
+
+  const overall = snapshot?.overall?.[`${color}_before`]
+  const specific = snapshot?.specific?.[`${color}_before`]
+  const track = snapshot?.[`${color}_track`]
+  return {
+    overall: overall == null ? null : Number(overall),
+    vsHumans: track === "vs_humans" ? Number(specific) : current.vsHumans,
+    vsBots: track === "vs_bots" ? Number(specific) : current.vsBots,
+  }
+}
+
+function ratingValue(value) {
+  return Number.isFinite(value) ? String(value) : "—"
 }
 
 function fenForPly(moves, ply, perspective) {
@@ -268,13 +341,13 @@ function overlaysForPlyGroup(group) {
 
 export default function ReviewPage() {
   const { gameId } = useParams()
-  const navigate = useNavigate()
 
   const [moves, setMoves] = useState([])
+  const [game, setGame] = useState(null)
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [currentPly, setCurrentPly] = useState(0)
+  const [currentPly, setCurrentPly] = useState(-1)
   const [perspective, setPerspective] = useState("referee")
   const [boardOrientation, setBoardOrientation] = useState("white")
 
@@ -297,6 +370,7 @@ export default function ReviewPage() {
         }
 
         setMoves(transcript.moves)
+        setGame(game ?? null)
         setResult(game?.result ?? null)
       } catch (requestError) {
         if (active) {
@@ -316,16 +390,18 @@ export default function ReviewPage() {
     }
   }, [gameId])
 
-  const maxPly = moves.length
+  const plyGroups = useMemo(() => buildPlyGroups(moves), [moves])
   const moveRows = useMemo(() => buildMoveRows(moves), [moves])
+  const maxGroupIndex = Math.max(plyGroups.length - 1, -1)
+  const finalGroup = maxGroupIndex >= 0 ? plyGroups[maxGroupIndex] : null
 
   useEffect(() => {
     function onKeyDown(event) {
       if (event.key === "ArrowLeft") {
-        setCurrentPly((prev) => Math.max(0, prev - 1))
+        setCurrentPly((prev) => Math.max(-1, prev - 1))
       }
       if (event.key === "ArrowRight") {
-        setCurrentPly((prev) => Math.min(maxPly, prev + 1))
+        setCurrentPly((prev) => Math.min(maxGroupIndex, prev + 1))
       }
     }
 
@@ -333,24 +409,44 @@ export default function ReviewPage() {
     return () => {
       window.removeEventListener("keydown", onKeyDown)
     }
-  }, [maxPly])
+  }, [maxGroupIndex])
 
-  const boardFen = useMemo(() => fenForPly(moves, currentPly, perspective), [moves, currentPly, perspective])
-  const selectedMove = currentPly > 0 ? moves[currentPly - 1] : null
-  const selectedPlyGroup = useMemo(() => {
-    if (!selectedMove) {
-      return null
+  useEffect(() => {
+    if (currentPly < 0) {
+      return
     }
 
-    return buildPlyGroups(moves).find((group) => selectedMove.ply >= group.firstPly && selectedMove.ply <= group.lastPly) ?? null
-  }, [moves, selectedMove])
+    const active = document.querySelector(`[data-ply-index="${currentPly}"]`)
+    if (!(active instanceof HTMLElement)) {
+      return
+    }
+
+    if (typeof active.scrollIntoView === "function") {
+      active.scrollIntoView({ block: "nearest", behavior: "smooth" })
+    }
+    active.focus({ preventScroll: true })
+  }, [currentPly])
+
+  const selectedPlyGroup = currentPly >= 0 ? plyGroups[currentPly] ?? null : null
+  const boardFen = useMemo(
+    () => fenForPly(moves, selectedPlyGroup?.lastPly ?? 0, perspective),
+    [moves, selectedPlyGroup, perspective],
+  )
   const overlayState = useMemo(() => overlaysForPlyGroup(selectedPlyGroup), [selectedPlyGroup])
+  const counterLabel = selectedPlyGroup ? formatPerspectiveLabel(selectedPlyGroup) : "Start"
+  const maxCounterLabel = finalGroup ? formatPerspectiveLabel(finalGroup) : "0W"
+  const startedAt = formatUtcDateTime(game?.created_at)
+  const endedAt = formatUtcDateTime(game?.updated_at)
+  const duration = formatDuration(game?.created_at, game?.updated_at)
+  const whiteCurrentRatings = normalizeRatings(game?.white)
+  const blackCurrentRatings = normalizeRatings(game?.black)
+  const whiteHistoricalRatings = historicalRatingsForColor(game, "white")
+  const blackHistoricalRatings = historicalRatingsForColor(game, "black")
 
   return (
     <main className="page-shell review-page" aria-live="polite">
       <div className="review-page__header">
         <h1>Game review</h1>
-        <button type="button" onClick={() => navigate(`/game/${gameId}`)}>Back to game</button>
       </div>
 
       {loading ? <p className="review-page__notice">Loading transcript…</p> : null}
@@ -390,11 +486,11 @@ export default function ReviewPage() {
             />
 
             <div className="review-page__controls" role="group" aria-label="Replay controls">
-              <button type="button" onClick={() => setCurrentPly(0)} disabled={currentPly === 0}>First</button>
-              <button type="button" onClick={() => setCurrentPly((prev) => Math.max(0, prev - 1))} disabled={currentPly === 0}>Prev</button>
-              <span className="review-page__ply">Ply {currentPly} / {maxPly}</span>
-              <button type="button" onClick={() => setCurrentPly((prev) => Math.min(maxPly, prev + 1))} disabled={currentPly === maxPly}>Next</button>
-              <button type="button" onClick={() => setCurrentPly(maxPly)} disabled={currentPly === maxPly}>Last</button>
+              <button type="button" onClick={() => setCurrentPly(-1)} disabled={currentPly < 0}>First</button>
+              <button type="button" onClick={() => setCurrentPly((prev) => Math.max(-1, prev - 1))} disabled={currentPly < 0}>Prev</button>
+              <span className="review-page__ply">Turn {counterLabel} / {maxCounterLabel}</span>
+              <button type="button" onClick={() => setCurrentPly((prev) => Math.min(maxGroupIndex, prev + 1))} disabled={currentPly >= maxGroupIndex}>Next</button>
+              <button type="button" onClick={() => setCurrentPly(maxGroupIndex)} disabled={currentPly >= maxGroupIndex}>Last</button>
             </div>
 
             <div className="review-page__board-footer">
@@ -437,10 +533,11 @@ export default function ReviewPage() {
                           key={color}
                           type="button"
                           className={`review-page__ply-card${selectedPlyGroup?.id === move.id ? " is-active" : ""}`}
-                          onClick={() => setCurrentPly(move.lastPly)}
+                          data-ply-index={move.index}
+                          aria-label={`${color === "white" ? "White" : "Black"} ${formatPlySummary(move)}`}
+                          onClick={() => setCurrentPly(move.index)}
                         >
                           <span className="review-page__ply-color">{color === "white" ? "White" : "Black"}</span>
-                          <span className="review-page__ply-head">{formatPlySummary(move)}</span>
                           <ol className="review-page__announcement-list">
                             {announcements.map((announcement, index) => (
                               <li key={`${move.id}-${index}`} className="review-page__announcement-item">
@@ -460,6 +557,47 @@ export default function ReviewPage() {
             <p className="review-page__result">Result: {formatResult(result)}</p>
           </aside>
         </div>
+      ) : null}
+      {!loading && !error && game ? (
+        <section className="review-page__stats" aria-labelledby="review-stats-heading">
+          <h2 id="review-stats-heading">Game stats</h2>
+          <div className="review-page__stats-grid">
+            {[
+              ["white", game.white, whiteHistoricalRatings, whiteCurrentRatings],
+              ["black", game.black, blackHistoricalRatings, blackCurrentRatings],
+            ].map(([color, player, thenRatings, nowRatings]) => (
+              <article key={color} className="review-page__stats-card">
+                <h3>{color === "white" ? "White" : "Black"}: {player?.username ?? "—"}</h3>
+                <div className="review-page__rating-columns">
+                  <div>
+                    <h4>At game</h4>
+                    <ul className="review-page__rating-list">
+                      <li><span>Overall</span><strong>{ratingValue(thenRatings?.overall)}</strong></li>
+                      <li><span>vs Humans</span><strong>{ratingValue(thenRatings?.vsHumans)}</strong></li>
+                      <li><span>vs Bots</span><strong>{ratingValue(thenRatings?.vsBots)}</strong></li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4>Now</h4>
+                    <ul className="review-page__rating-list">
+                      <li><span>Overall</span><strong>{ratingValue(nowRatings?.overall)}</strong></li>
+                      <li><span>vs Humans</span><strong>{ratingValue(nowRatings?.vsHumans)}</strong></li>
+                      <li><span>vs Bots</span><strong>{ratingValue(nowRatings?.vsBots)}</strong></li>
+                    </ul>
+                  </div>
+                </div>
+              </article>
+            ))}
+            <article className="review-page__stats-card review-page__stats-card--meta">
+              <h3>Timing</h3>
+              <ul className="review-page__rating-list">
+                <li><span>Started</span><strong>{startedAt}</strong></li>
+                <li><span>Finished</span><strong>{endedAt}</strong></li>
+                <li><span>Duration</span><strong>{duration}</strong></li>
+              </ul>
+            </article>
+          </div>
+        </section>
       ) : null}
       <VersionStamp />
     </main>
