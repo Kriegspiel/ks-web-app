@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import ChessBoard from "../components/ChessBoard"
+import VersionStamp from "../components/VersionStamp"
 import { getGame, getGameTranscript } from "../services/api"
 import "./Review.css"
 
@@ -87,28 +88,59 @@ function moveAnnouncements(move) {
   return [...new Set(items.filter(Boolean))]
 }
 
-function moveNumberFromPly(ply) {
-  return Math.ceil(Number(ply || 0) / 2)
-}
-
-function groupedMoves(moves) {
-  const rows = new Map()
+function buildPlyGroups(moves) {
+  const groups = []
 
   for (const move of moves) {
-    const moveNumber = moveNumberFromPly(move?.ply)
-    if (!rows.has(moveNumber)) {
-      rows.set(moveNumber, { moveNumber, white: null, black: null })
+    const color = move?.color === "black" ? "black" : "white"
+    const previous = groups[groups.length - 1]
+
+    if (previous && previous.color === color) {
+      previous.moves.push(move)
+      previous.lastPly = move?.ply ?? previous.lastPly
+      continue
     }
 
-    const row = rows.get(moveNumber)
-    if (move?.color === "black") {
-      row.black = move
-    } else {
-      row.white = move
-    }
+    groups.push({
+      id: `${color}-${move?.ply ?? groups.length + 1}`,
+      color,
+      moves: [move],
+      firstPly: move?.ply ?? 0,
+      lastPly: move?.ply ?? 0,
+    })
   }
 
-  return [...rows.values()]
+  return groups.map((group, index) => ({
+    ...group,
+    turnNumber: Math.floor(index / 2) + 1,
+  }))
+}
+
+function buildMoveRows(moves) {
+  const groups = buildPlyGroups(moves)
+  const rows = []
+
+  for (let index = 0; index < groups.length; index += 2) {
+    const first = groups[index]
+    const second = groups[index + 1] ?? null
+    const row = {
+      moveNumber: first?.turnNumber ?? rows.length + 1,
+      white: null,
+      black: null,
+    }
+
+    if (first?.color === "white") {
+      row.white = first
+      row.black = second?.color === "black" ? second : null
+    } else {
+      row.black = first
+      row.white = second?.color === "white" ? second : null
+    }
+
+    rows.push(row)
+  }
+
+  return rows
 }
 
 function fenForPerspective(replayFen, perspective) {
@@ -177,24 +209,48 @@ function arrowsForMove(move) {
   return [{ from: uci.slice(0, 2), to: uci.slice(2, 4), tone: "success" }]
 }
 
-function badgesForMove(move) {
-  if (!move || move.move_done) {
+function summarizePlyGroup(group) {
+  if (!group) {
     return []
   }
 
-  const uci = String(move?.uci ?? "").trim().toLowerCase()
-  if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) {
-    return []
+  return group.moves.flatMap((move) => moveAnnouncements(move))
+}
+
+function overlaysForPlyGroup(group) {
+  if (!group) {
+    return { arrows: [], badges: [], captureSquares: [] }
   }
 
-  const attemptIndex = moveAnnouncements(move).findIndex((item) => item.startsWith("Attempt "))
-  return [
-    {
-      square: uci.slice(2, 4),
-      label: String(attemptIndex >= 0 ? attemptIndex + 1 : 1),
-      tone: "illegal",
-    },
-  ]
+  const arrows = []
+  const badges = []
+  const captureSquares = []
+
+  group.moves.forEach((move, index) => {
+    arrows.push(...arrowsForMove(move))
+
+    const captureSquare = typeof move?.answer?.capture_square === "string" ? move.answer.capture_square.trim().toLowerCase() : ""
+    if (captureSquare && /^[a-h][1-8]$/.test(captureSquare)) {
+      captureSquares.push(captureSquare)
+    }
+
+    if (!move?.move_done) {
+      const uci = String(move?.uci ?? "").trim().toLowerCase()
+      if (/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) {
+        badges.push({
+          square: uci.slice(2, 4),
+          label: String(index + 1),
+          tone: "illegal",
+        })
+      }
+    }
+  })
+
+  return {
+    arrows,
+    badges,
+    captureSquares: [...new Set(captureSquares)],
+  }
 }
 
 export default function ReviewPage() {
@@ -248,7 +304,7 @@ export default function ReviewPage() {
   }, [gameId])
 
   const maxPly = moves.length
-  const moveRows = useMemo(() => groupedMoves(moves), [moves])
+  const moveRows = useMemo(() => buildMoveRows(moves), [moves])
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -268,8 +324,14 @@ export default function ReviewPage() {
 
   const boardFen = useMemo(() => fenForPly(moves, currentPly, perspective), [moves, currentPly, perspective])
   const selectedMove = currentPly > 0 ? moves[currentPly - 1] : null
-  const overlayArrows = useMemo(() => arrowsForMove(selectedMove), [selectedMove])
-  const overlayBadges = useMemo(() => badgesForMove(selectedMove), [selectedMove])
+  const selectedPlyGroup = useMemo(() => {
+    if (!selectedMove) {
+      return null
+    }
+
+    return buildPlyGroups(moves).find((group) => selectedMove.ply >= group.firstPly && selectedMove.ply <= group.lastPly) ?? null
+  }, [moves, selectedMove])
+  const overlayState = useMemo(() => overlaysForPlyGroup(selectedPlyGroup), [selectedPlyGroup])
 
   return (
     <main className="page-shell review-page" aria-live="polite">
@@ -308,8 +370,9 @@ export default function ReviewPage() {
             <ChessBoard
               boardFen={boardFen}
               orientation={boardOrientation}
-              overlayArrows={overlayArrows}
-              overlayBadges={overlayBadges}
+              captureSquares={overlayState.captureSquares}
+              overlayArrows={overlayState.arrows}
+              overlayBadges={overlayState.badges}
               disabled
             />
 
@@ -355,19 +418,21 @@ export default function ReviewPage() {
                         return <div key={color} className="review-page__ply-card review-page__ply-card--empty" />
                       }
 
-                      const announcements = moveAnnouncements(move)
+                      const announcements = summarizePlyGroup(move)
                       return (
                         <button
                           key={color}
                           type="button"
-                          className={`review-page__ply-card${currentPly === move.ply ? " is-active" : ""}`}
-                          onClick={() => setCurrentPly(move.ply)}
+                          className={`review-page__ply-card${selectedPlyGroup?.id === move.id ? " is-active" : ""}`}
+                          onClick={() => setCurrentPly(move.lastPly)}
                         >
                           <span className="review-page__ply-color">{color === "white" ? "White" : "Black"}</span>
-                          <span className="review-page__ply-head">{formatTranscriptMove(move)}</span>
+                          <span className="review-page__ply-head">
+                            {move.moves.map((entry) => formatTranscriptMove(entry)).join(" · ")}
+                          </span>
                           <ol className="review-page__announcement-list">
                             {announcements.map((announcement, index) => (
-                              <li key={`${move.ply}-${index}`} className="review-page__announcement-item">
+                              <li key={`${move.id}-${index}`} className="review-page__announcement-item">
                                 <span className="review-page__announcement-badge">{index + 1}</span>
                                 <span>{announcement}</span>
                               </li>
@@ -385,6 +450,7 @@ export default function ReviewPage() {
           </aside>
         </div>
       ) : null}
+      <VersionStamp />
     </main>
   )
 }
