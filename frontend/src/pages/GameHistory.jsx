@@ -9,6 +9,10 @@ function formatDate(value) {
   return formatUtcDateTime(value) || "—"
 }
 
+function formatRuleVariant(value) {
+  return value === "berkeley_any" ? "Berkeley + Any" : value === "berkeley" ? "Berkeley" : "—"
+}
+
 function opponentLabel(game) {
   const name = game?.opponent ?? "—"
   return String(game?.opponent_role ?? "").toLowerCase() === "bot" ? `${name} (bot)` : name
@@ -76,7 +80,7 @@ export default function GameHistoryPage() {
                 <tbody>
                   {history.games.map((game) => (
                     <tr key={game.game_id}>
-                      <td>{game.rule_variant ?? "—"}</td>
+                      <td>{formatRuleVariant(game.rule_variant)}</td>
                       <td>{game.play_as}</td>
                       <td>
                         {game.opponent ? <Link className="history-opponent-link" to={`/user/${game.opponent}`}>{opponentLabel(game)}</Link> : "—"}
