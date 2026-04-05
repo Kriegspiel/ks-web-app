@@ -1315,9 +1315,18 @@ export default function GamePage() {
       return
     }
 
-    const destination = targetSquare || sourceSquare
-    const moved = move(sourceSquare, destination)
-    if (!moved && destination !== sourceSquare) {
+    if (!targetSquare) {
+      removeAt(sourceSquare)
+      setDraggingPhantomFrom("")
+      draggingPhantomFromRef.current = ""
+      setDragHoverSquare("")
+      dragPointerIdRef.current = null
+      clearDragPreview()
+      return
+    }
+
+    const moved = move(sourceSquare, targetSquare)
+    if (!moved && targetSquare !== sourceSquare) {
       setActionError("That square cannot take the phantom piece.")
     }
     setDraggingPhantomFrom("")
@@ -1532,7 +1541,7 @@ export default function GamePage() {
     if (draggingPhantomFromRef.current && dragPointerIdRef.current === event.pointerId) {
       const hoveredSquare = findSquareFromPointerEvent(event)
       event.currentTarget.releasePointerCapture?.(event.pointerId)
-      finishDragPhantom(hoveredSquare || square)
+      finishDragPhantom(hoveredSquare)
       return
     }
   }
@@ -1552,6 +1561,39 @@ export default function GamePage() {
       resetTapState()
     }
   }
+
+  useEffect(() => {
+    function handleGlobalPointerUp(event) {
+      if (draggingMoveFromRef.current && moveDragPointerIdRef.current === event.pointerId) {
+        const hoveredSquare = findSquareFromPointerEvent(event)
+        finishMoveDrag(hoveredSquare)
+        return
+      }
+
+      if (draggingPhantomFromRef.current && dragPointerIdRef.current === event.pointerId) {
+        const hoveredSquare = findSquareFromPointerEvent(event)
+        finishDragPhantom(hoveredSquare)
+      }
+    }
+
+    function handleGlobalPointerCancel(event) {
+      if (draggingMoveFromRef.current && moveDragPointerIdRef.current === event.pointerId) {
+        finishMoveDrag(moveDragHoverSquare)
+      }
+
+      if (draggingPhantomFromRef.current && dragPointerIdRef.current === event.pointerId) {
+        finishDragPhantom(dragHoverSquare)
+      }
+    }
+
+    window.addEventListener("pointerup", handleGlobalPointerUp)
+    window.addEventListener("pointercancel", handleGlobalPointerCancel)
+
+    return () => {
+      window.removeEventListener("pointerup", handleGlobalPointerUp)
+      window.removeEventListener("pointercancel", handleGlobalPointerCancel)
+    }
+  }, [dragHoverSquare, moveDragHoverSquare])
 
   async function submitMoveWithUci(uci) {
     blurActiveInteractiveElement()
