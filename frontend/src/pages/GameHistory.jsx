@@ -65,6 +65,9 @@ export default function GameHistoryPage() {
   return (
     <main className="page-shell history-page">
       <h1>{username}&apos;s game history</h1>
+      <p className="history-page__back-link-wrap">
+        <Link className="history-page__back-link" to={`/user/${username}`}>Back to user</Link>
+      </p>
       {loading ? <p>Loading history…</p> : null}
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
       {!loading && !error ? (
