@@ -39,7 +39,7 @@ export default function JoinPage() {
     async function runJoin() {
       try {
         const joined = await joinGame(normalizedCode)
-        navigate(`/game/${joined.game_id}`, { replace: true })
+        navigate(`/game/${joined.game_code ?? joined.game_id}`, { replace: true })
       } catch (error) {
         if (error?.status === 401) {
           navigate("/auth/login", {

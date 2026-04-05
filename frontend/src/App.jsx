@@ -118,7 +118,7 @@ export function AppRoutes() {
         />
         <Route path="/join/:gameCode" element={<JoinPage />} />
         <Route
-          path="/game/:gameId"
+          path="/game/:gameCode"
           element={(
             <RequireAuth>
               <GamePage />
@@ -126,7 +126,7 @@ export function AppRoutes() {
           )}
         />
         <Route
-          path="/game/:gameId/review"
+          path="/game/:gameCode/review"
           element={(
             <RequireAuth>
               <ReviewPage />

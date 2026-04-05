@@ -185,7 +185,7 @@ export default function ProfilePage() {
             {recentGames.slice(0, 5).map((game) => (
               <li key={game.game_id}>
                 <span>{game.result} vs {game.opponent ?? "unknown"}</span>
-                <Link to={`/game/${game.game_id}/review`}>Review</Link>
+                <Link to={`/game/${game.game_code ?? game.game_id}/review`}>Review</Link>
               </li>
             ))}
           </ul>

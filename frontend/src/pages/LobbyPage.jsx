@@ -136,7 +136,7 @@ export default function LobbyPage() {
     [bots],
   )
   const activeGame = useMemo(() => getActiveGame(myGames), [myGames])
-  const playNowPath = activeGame?.game_id ? `/game/${activeGame.game_id}` : ""
+  const playNowPath = activeGame?.game_code || activeGame?.game_id ? `/game/${activeGame?.game_code ?? activeGame?.game_id}` : ""
 
   async function refreshOpenGames({ markLoading = false } = {}) {
     if (markLoading) {
@@ -255,7 +255,7 @@ export default function LobbyPage() {
 
         if (game?.state === "active") {
           setWaitingGameId(null)
-          navigate(`/game/${waitingGameId}`)
+          navigate(`/game/${game?.game_code ?? waitingGameId}`)
           return
         }
 
@@ -309,7 +309,7 @@ export default function LobbyPage() {
 
       if (created.state === "active") {
         await Promise.all([refreshOpenGames(), refreshMyGames()])
-        navigate(`/game/${created.game_id}`)
+        navigate(`/game/${created.game_code ?? created.game_id}`)
         return
       }
 
@@ -339,7 +339,7 @@ export default function LobbyPage() {
       const joined = await joinGame(normalizedCode)
       setJoinCode("")
       await Promise.all([refreshOpenGames(), refreshMyGames()])
-      navigate(`/game/${joined.game_id}`)
+      navigate(`/game/${joined.game_code ?? joined.game_id}`)
     } catch (error) {
       setJoinError(error?.message ?? "Unable to join that game right now.")
     } finally {
@@ -355,7 +355,7 @@ export default function LobbyPage() {
     try {
       const joined = await joinGame(gameCode)
       await Promise.all([refreshOpenGames(), refreshMyGames()])
-      navigate(`/game/${joined.game_id}`)
+      navigate(`/game/${joined.game_code ?? joined.game_id}`)
     } catch (error) {
       setJoinError(error?.message ?? "Unable to join that game right now.")
     } finally {
@@ -574,7 +574,7 @@ export default function LobbyPage() {
                 </div>
               </div>
               <div className="lobby-list__actions">
-                <button type="button" onClick={() => navigate(`/game/${game.game_id}`)}>Open</button>
+                <button type="button" onClick={() => navigate(`/game/${game.game_code ?? game.game_id}`)}>Open</button>
                 {game.state === "waiting" ? (
                   <button type="button" className="game-danger-button" onClick={() => handleCloseWaitingGame(game.game_id)} disabled={closingWaitingGame}>
                     {closingWaitingGame ? "Closing…" : "Close"}

@@ -141,7 +141,7 @@ describe("HomePage", () => {
 
     await screen.findByRole("link", { name: "Resume active game" })
 
-    expect(screen.getByRole("link", { name: "Resume active game" })).toHaveAttribute("href", "/game/game-1")
+    expect(screen.getByRole("link", { name: "Resume active game" })).toHaveAttribute("href", "/game/ABCD12")
     expect(screen.getByText("ABCD12")).toBeInTheDocument()
     expect(screen.getByText("Active")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "randobot (bot)" })).toHaveAttribute("href", "/user/randobot")

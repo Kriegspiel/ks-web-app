@@ -67,7 +67,7 @@ export default function GameHistoryPage() {
                       <td>{game.reason ?? "—"}</td>
                       <td>{game.move_count ?? 0}</td>
                       <td>{formatDate(game.played_at)}</td>
-                      <td><Link to={`/game/${game.game_id}/review`}>Open</Link></td>
+                      <td><Link to={`/game/${game.game_code ?? game.game_id}/review`}>Open</Link></td>
                     </tr>
                   ))}
                 </tbody>

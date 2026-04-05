@@ -383,7 +383,8 @@ function overlaysForPlyGroup(group) {
 }
 
 export default function ReviewPage() {
-  const { gameId } = useParams()
+  const { gameCode, gameId } = useParams()
+  const gameRef = gameCode ?? gameId ?? ""
 
   const [moves, setMoves] = useState([])
   const [game, setGame] = useState(null)
@@ -402,7 +403,7 @@ export default function ReviewPage() {
       setError("")
 
       try {
-        const [transcript, game] = await Promise.all([getGameTranscript(gameId), getGame(gameId)])
+        const [transcript, game] = await Promise.all([getGameTranscript(gameRef), getGame(gameRef)])
         if (!active) {
           return
         }
@@ -431,7 +432,7 @@ export default function ReviewPage() {
     return () => {
       active = false
     }
-  }, [gameId])
+  }, [gameRef])
 
   const plyGroups = useMemo(() => buildPlyGroups(moves), [moves])
   const moveRows = useMemo(() => buildMoveRows(moves), [moves])
@@ -664,6 +665,7 @@ export default function ReviewPage() {
             <article className="review-page__stats-card review-page__stats-card--meta">
               <h3>Timing</h3>
               <ul className="review-page__rating-list">
+                <li><span>Game code</span><strong>{game?.game_code ?? gameRef}</strong></li>
                 <li><span>Started</span><strong>{startedAt}</strong></li>
                 <li><span>Finished</span><strong>{endedAt}</strong></li>
                 <li><span>Duration</span><strong>{duration}</strong></li>
