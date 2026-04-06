@@ -108,6 +108,7 @@ export default function LobbyPage() {
   const [createError, setCreateError] = useState("")
   const [creatingGame, setCreatingGame] = useState(false)
   const [closingWaitingGame, setClosingWaitingGame] = useState(false)
+  const formatCount = useMemo(() => new Intl.NumberFormat("en-US"), [])
   const [waitingGameId, setWaitingGameId] = useState(null)
   const [opponentType, setOpponentType] = useState("human")
   const [ruleVariant, setRuleVariant] = useState("berkeley_any")
@@ -535,19 +536,19 @@ export default function LobbyPage() {
         {lobbyStats ? (
           <div className="lobby-stats-grid">
             <div className="lobby-stats-tile">
-              <strong>{lobbyStats.active_games_now ?? 0}</strong>
+              <strong>{formatCount.format(lobbyStats.active_games_now ?? 0)}</strong>
               <span>Active games now</span>
             </div>
             <div className="lobby-stats-tile">
-              <strong>{lobbyStats.completed_last_hour ?? 0}</strong>
+              <strong>{formatCount.format(lobbyStats.completed_last_hour ?? 0)}</strong>
               <span>Completed last hour</span>
             </div>
             <div className="lobby-stats-tile">
-              <strong>{lobbyStats.completed_last_24_hours ?? 0}</strong>
+              <strong>{formatCount.format(lobbyStats.completed_last_24_hours ?? 0)}</strong>
               <span>Completed last 24 hours</span>
             </div>
             <div className="lobby-stats-tile">
-              <strong>{lobbyStats.completed_total ?? 0}</strong>
+              <strong>{formatCount.format(lobbyStats.completed_total ?? 0)}</strong>
               <span>Completed total</span>
             </div>
           </div>

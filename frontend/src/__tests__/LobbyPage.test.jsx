@@ -10,7 +10,7 @@ vi.mock("react-router-dom", async () => ({ ...(await vi.importActual("react-rout
 vi.mock("../hooks/useAuth", () => ({ useAuth: () => ({ user: { username: "fil" }, actionError: "" }) }))
 vi.mock("../services/api", () => mockApi)
 
-beforeEach(() => { mockNavigate.mockReset(); Object.values(mockApi).forEach((fn) => fn.mockReset()); mockApi.getOpenGames.mockResolvedValue({ games: [] }); mockApi.getMyGames.mockResolvedValue({ games: [] }); mockApi.getLobbyStats.mockResolvedValue({ active_games_now: 12, completed_last_hour: 3, completed_last_24_hours: 42, completed_total: 314 }); mockApi.getGame.mockResolvedValue({ state: "waiting" }); mockApi.deleteWaitingGame.mockResolvedValue({}); mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-2", username: "gptnano", display_name: "GPT Nano", description: "Model-driven Kriegspiel bot that chooses moves using GPT nano model.", elo: 1342, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-3", username: "randobotany", display_name: "Random Any Bot", description: "Asks any pawn captures first, then plays random legal-looking moves.", elo: 1200, supported_rule_variants: ["berkeley_any"] }] }) })
+beforeEach(() => { mockNavigate.mockReset(); Object.values(mockApi).forEach((fn) => fn.mockReset()); mockApi.getOpenGames.mockResolvedValue({ games: [] }); mockApi.getMyGames.mockResolvedValue({ games: [] }); mockApi.getLobbyStats.mockResolvedValue({ active_games_now: 123456789, completed_last_hour: 3, completed_last_24_hours: 42, completed_total: 314 }); mockApi.getGame.mockResolvedValue({ state: "waiting" }); mockApi.deleteWaitingGame.mockResolvedValue({}); mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-2", username: "gptnano", display_name: "GPT Nano", description: "Model-driven Kriegspiel bot that chooses moves using GPT nano model.", elo: 1342, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-3", username: "randobotany", display_name: "Random Any Bot", description: "Asks any pawn captures first, then plays random legal-looking moves.", elo: 1200, supported_rule_variants: ["berkeley_any"] }] }) })
 afterEach(() => { cleanup(); vi.useRealTimers() })
 
 function renderPage() {
@@ -74,7 +74,7 @@ describe("LobbyPage", () => {
     renderPage()
 
     expect(await screen.findByRole("heading", { name: "Lobby stats" })).toBeInTheDocument()
-    expect(await screen.findByText("12")).toBeInTheDocument()
+    expect(await screen.findByText("123,456,789")).toBeInTheDocument()
     expect(screen.getByText("Active games now")).toBeInTheDocument()
     expect(screen.getByText("Completed last hour")).toBeInTheDocument()
     expect(screen.getByText("Completed last 24 hours")).toBeInTheDocument()
