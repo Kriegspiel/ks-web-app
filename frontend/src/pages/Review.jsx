@@ -702,7 +702,7 @@ export default function ReviewPage() {
               </article>
             ))}
             <article className="review-page__stats-card review-page__stats-card--meta">
-              <h3>Timing</h3>
+              <h3>Game details</h3>
               <ul className="review-page__rating-list">
                 <li><span>Game code</span><strong>{game?.game_code ?? gameRef}</strong></li>
                 <li><span>Started</span><strong>{startedAt}</strong></li>
