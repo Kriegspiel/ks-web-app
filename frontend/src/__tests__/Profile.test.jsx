@@ -50,8 +50,34 @@ describe("ProfilePage", () => {
     })
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({
       games: [
-        { game_id: "g-1", result: "win", opponent: "amy", opponent_role: "user", played_at: "2026-03-21T12:00:00Z", elo_after: 1320, elo_delta: 16 },
-        { game_id: "g-2", result: "loss", opponent: "bob", opponent_role: "bot", played_at: "2026-03-25T12:00:00Z", elo_after: 1345, elo_delta: 25 },
+        {
+          game_id: "g-1",
+          result: "win",
+          opponent: "amy",
+          opponent_role: "user",
+          played_at: "2026-03-21T12:00:00Z",
+          elo_after: 1320,
+          elo_delta: 16,
+          rating_snapshot: {
+            overall: { elo_after: 1320, elo_delta: 16 },
+            vs_humans: { elo_after: 1290, elo_delta: 16 },
+            vs_bots: { elo_after: null, elo_delta: null },
+          },
+        },
+        {
+          game_id: "g-2",
+          result: "loss",
+          opponent: "bob",
+          opponent_role: "bot",
+          played_at: "2026-03-25T12:00:00Z",
+          elo_after: 1345,
+          elo_delta: 25,
+          rating_snapshot: {
+            overall: { elo_after: 1345, elo_delta: 25 },
+            vs_humans: { elo_after: null, elo_delta: null },
+            vs_bots: { elo_after: 1412, elo_delta: 2 },
+          },
+        },
       ],
     })
 
@@ -73,13 +99,14 @@ describe("ProfilePage", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Game number" }))
     expect(screen.getAllByText("Game 2").length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole("tab", { name: "vs Humans" }))
-    expect(screen.getByText("1290")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "vs Humans rating" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "vs Humans results" })).toBeInTheDocument()
     expect(screen.getByText("1 (100.0%)")).toBeInTheDocument()
     fireEvent.click(screen.getByRole("tab", { name: "vs Bots" }))
     expect(screen.getByText("1410")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "vs Bots rating" })).toBeInTheDocument()
     expect(screen.getByRole("img", { name: "vs Bots Elo rating over time" })).toBeInTheDocument()
+    expect(screen.getByText("Latest 1412")).toBeInTheDocument()
     expect(screen.getByText("1 (100.0%)")).toBeInTheDocument()
     expect(screen.getByText(/win vs amy/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/fil/games")
