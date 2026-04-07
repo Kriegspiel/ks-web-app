@@ -165,7 +165,6 @@ button.theme-toggle:active {
   background: var(--surface-strong);
   border-color: var(--border);
   color: var(--text);
-  box-shadow: var(--shadow-soft);
 }
 
 .page-shell {
