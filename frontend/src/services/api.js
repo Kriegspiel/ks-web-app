@@ -38,6 +38,7 @@ export async function resignGame(gameId) { try { const response = await api.post
 export const userApi = {
   async getProfile(username) { const response = await api.get(`/api/user/${encodeURIComponent(username)}`); return response.data },
   async getGameHistory(username, page = 1, perPage = 20) { const response = await api.get(`/api/user/${encodeURIComponent(username)}/games`, { params: { page, per_page: perPage } }); return response.data },
+  async getRatingHistory(username, track = "overall", limit = 100) { const response = await api.get(`/api/user/${encodeURIComponent(username)}/rating-history`, { params: { track, limit } }); return response.data },
   async getLeaderboard(page = 1, perPage = 20) { const response = await api.get('/api/leaderboard', { params: { page, per_page: perPage } }); return response.data },
   async updateSettings(payload) { const response = await api.patch('/api/user/settings', payload); return response.data },
 }

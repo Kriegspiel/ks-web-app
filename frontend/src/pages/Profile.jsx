@@ -31,26 +31,35 @@ function normalizeRatings(source) {
   }
 }
 
-function summarizeTrackHistory(historyGames, ratingTrack) {
-  const isTrackMatch = (game) => {
-    if (ratingTrack === "overall") {
-      return true
+function normalizeResults(source) {
+  const results = source?.results ?? {}
+  const track = (key, fallback) => {
+    const current = results?.[key] ?? fallback
+    return {
+      gamesPlayed: statOrZero(current?.games_played),
+      gamesWon: statOrZero(current?.games_won),
+      gamesLost: statOrZero(current?.games_lost),
+      gamesDrawn: statOrZero(current?.games_drawn),
     }
-    const opponentRole = String(game?.opponent_role ?? "user").toLowerCase()
-    return ratingTrack === "vs_bots" ? opponentRole === "bot" : opponentRole !== "bot"
   }
+  return {
+    overall: track("overall", source),
+    vsHumans: track("vs_humans"),
+    vsBots: track("vs_bots"),
+  }
+}
 
-  const matchingGames = Array.isArray(historyGames) ? historyGames.filter(isTrackMatch) : []
-  const wins = matchingGames.filter((game) => game?.result === "win").length
-  const losses = matchingGames.filter((game) => game?.result === "loss").length
-  const draws = matchingGames.filter((game) => game?.result === "draw").length
-  const gamesPlayed = matchingGames.length
+function formatResultSummary(resultTrack) {
+  const gamesPlayed = statOrZero(resultTrack?.gamesPlayed)
+  const gamesWon = statOrZero(resultTrack?.gamesWon)
+  const gamesLost = statOrZero(resultTrack?.gamesLost)
+  const gamesDrawn = statOrZero(resultTrack?.gamesDrawn)
   const formatRate = (value) => `${gamesPlayed > 0 ? ((value / gamesPlayed) * 100).toFixed(1) : "0.0"}%`
   return {
     gamesPlayed,
-    winsLabel: `${wins} (${formatRate(wins)})`,
-    lossesLabel: `${losses} (${formatRate(losses)})`,
-    drawsLabel: `${draws} (${formatRate(draws)})`,
+    winsLabel: `${gamesWon} (${formatRate(gamesWon)})`,
+    lossesLabel: `${gamesLost} (${formatRate(gamesLost)})`,
+    drawsLabel: `${gamesDrawn} (${formatRate(gamesDrawn)})`,
   }
 }
 
@@ -60,6 +69,7 @@ export default function ProfilePage() {
   const [error, setError] = useState("")
   const [profile, setProfile] = useState(null)
   const [recentGames, setRecentGames] = useState([])
+  const [ratingSeries, setRatingSeries] = useState({ game: [], date: [] })
   const [ratingTrack, setRatingTrack] = useState("overall")
 
   useEffect(() => {
@@ -71,7 +81,7 @@ export default function ProfilePage() {
       try {
         const [profileResponse, historyResponse] = await Promise.all([
           userApi.getProfile(username),
-          userApi.getGameHistory(username, 1, 100),
+          userApi.getGameHistory(username, 1, 20),
         ])
         if (cancelled) return
 
@@ -96,29 +106,40 @@ export default function ProfilePage() {
     }
   }, [username])
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadRatingHistory() {
+      try {
+        const response = await userApi.getRatingHistory(username, ratingTrack, 100)
+        if (!cancelled) {
+          setRatingSeries(response?.series ?? { game: [], date: [] })
+        }
+      } catch {
+        if (!cancelled) {
+          setRatingSeries({ game: [], date: [] })
+        }
+      }
+    }
+
+    loadRatingHistory()
+    return () => {
+      cancelled = true
+    }
+  }, [ratingTrack, username])
+
   const stats = useMemo(() => {
     const source = profile?.stats ?? {}
     const ratings = normalizeRatings(source)
-    const gamesPlayed = statOrZero(source.games_played)
-    const gamesWon = statOrZero(source.games_won)
-    const gamesLost = statOrZero(source.games_lost)
-    const gamesDrawn = statOrZero(source.games_drawn)
-    const formatRate = (value) => `${gamesPlayed > 0 ? ((value / gamesPlayed) * 100).toFixed(1) : "0.0"}%`
-
     return {
-      gamesPlayed,
-      gamesWon,
-      gamesLost,
-      gamesDrawn,
       ratings,
-      winsLabel: `${gamesWon} (${formatRate(gamesWon)})`,
-      lossesLabel: `${gamesLost} (${formatRate(gamesLost)})`,
-      drawsLabel: `${gamesDrawn} (${formatRate(gamesDrawn)})`,
+      results: normalizeResults(source),
     }
   }, [profile])
   const selectedTrack = ELO_TRACKS.find((track) => track.key === ratingTrack) ?? ELO_TRACKS[0]
   const selectedRating = ratingTrack === "vs_humans" ? stats.ratings.vsHumans : ratingTrack === "vs_bots" ? stats.ratings.vsBots : stats.ratings.overall
-  const selectedHistoryStats = useMemo(() => summarizeTrackHistory(recentGames, ratingTrack), [recentGames, ratingTrack])
+  const selectedResults = ratingTrack === "vs_humans" ? stats.results.vsHumans : ratingTrack === "vs_bots" ? stats.results.vsBots : stats.results.overall
+  const selectedHistoryStats = useMemo(() => formatResultSummary(selectedResults), [selectedResults])
   if (loading) {
     return <main className="page-shell profile-page"><h1>Profile</h1><p>Loading profile…</p></main>
   }
@@ -180,7 +201,7 @@ export default function ProfilePage() {
             </dl>
           </section>
         </div>
-        <EloChart historyGames={recentGames} emptyText="No finished games with rating history yet." ratingTrack={ratingTrack} showTrackToggle={false} />
+        <EloChart seriesByMode={ratingSeries} emptyText="No finished games with rating history yet." ratingTrack={ratingTrack} showTrackToggle={false} />
       </section>
 
       <section className="profile-card" aria-label="Recent games">

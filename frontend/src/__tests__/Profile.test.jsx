@@ -7,6 +7,7 @@ const mockApi = vi.hoisted(() => ({
   userApi: {
     getProfile: vi.fn(),
     getGameHistory: vi.fn(),
+    getRatingHistory: vi.fn(),
   },
 }))
 
@@ -17,6 +18,7 @@ afterEach(() => cleanup())
 beforeEach(() => {
   mockApi.userApi.getProfile.mockReset()
   mockApi.userApi.getGameHistory.mockReset()
+  mockApi.userApi.getRatingHistory.mockReset()
 })
 
 function renderProfile(path = "/user/fil") {
@@ -35,12 +37,13 @@ describe("ProfilePage", () => {
       username: "fil",
       member_since: "2026-01-01T00:00:00Z",
       stats: {
-        games_played: 10,
-        games_won: 6,
-        games_lost: 3,
-        games_drawn: 1,
         elo: 1345,
         elo_peak: 1401,
+        results: {
+          overall: { games_played: 10, games_won: 6, games_lost: 3, games_drawn: 1 },
+          vs_humans: { games_played: 1, games_won: 1, games_lost: 0, games_drawn: 0 },
+          vs_bots: { games_played: 9, games_won: 5, games_lost: 3, games_drawn: 1 },
+        },
         ratings: {
           overall: { elo: 1345, peak: 1401 },
           vs_humans: { elo: 1290, peak: 1325 },
@@ -94,6 +97,18 @@ describe("ProfilePage", () => {
         },
       ],
     })
+    mockApi.userApi.getRatingHistory.mockResolvedValue({
+      series: {
+        game: [
+          { label: "Game 1", elo: 1290, delta: 16, played_at: "2026-03-21T12:00:00Z", game_number: 1 },
+          { label: "Game 2", elo: 1412, delta: 2, played_at: "2026-03-25T12:00:00Z", game_number: 2 },
+        ],
+        date: [
+          { label: "2026-03-21", elo: 1290, delta: 16, played_at: "2026-03-21T12:00:00Z", game_number: 1 },
+          { label: "2026-03-25", elo: 1412, delta: 122, played_at: "2026-03-25T12:00:00Z", game_number: 2 },
+        ],
+      },
+    })
 
     renderProfile()
 
@@ -102,18 +117,19 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("heading", { name: "Overall rating" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Overall results" })).toBeInTheDocument()
     expect(screen.getByText(/games played/i)).toBeInTheDocument()
-    expect(screen.getByText("3")).toBeInTheDocument()
-    expect(screen.getByText("2 (66.7%)")).toBeInTheDocument()
-    expect(screen.getByText("1 (33.3%)")).toBeInTheDocument()
-    expect(screen.getByText("0 (0.0%)")).toBeInTheDocument()
+    expect(screen.getByText("10")).toBeInTheDocument()
+    expect(screen.getByText("6 (60.0%)")).toBeInTheDocument()
+    expect(screen.getByText("3 (30.0%)")).toBeInTheDocument()
+    expect(screen.getByText("1 (10.0%)")).toBeInTheDocument()
     expect(screen.queryByText(/win rate/i)).not.toBeInTheDocument()
     expect(screen.getByRole("img", { name: "Overall Elo rating over time" })).toBeInTheDocument()
-    expect(screen.getByText("Start 1500")).toBeInTheDocument()
-    expect(screen.getByText("Latest 1345")).toBeInTheDocument()
+    expect(screen.getByText("Start 1290")).toBeInTheDocument()
+    expect(screen.getByText("Latest 1412")).toBeInTheDocument()
     expect(screen.getAllByText("2026-03-25").length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole("tab", { name: "Game number" }))
-    expect(screen.getAllByText("Game 3").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("Game 2").length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole("tab", { name: "vs Humans" }))
+    await waitFor(() => expect(mockApi.userApi.getRatingHistory).toHaveBeenCalledWith("fil", "vs_humans", 100))
     expect(screen.getByRole("heading", { name: "vs Humans rating" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "vs Humans results" })).toBeInTheDocument()
     expect(screen.getByText("1 (100.0%)")).toBeInTheDocument()
@@ -121,9 +137,9 @@ describe("ProfilePage", () => {
     expect(screen.getByText("1410")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "vs Bots rating" })).toBeInTheDocument()
     expect(screen.getByRole("img", { name: "vs Bots Elo rating over time" })).toBeInTheDocument()
-    expect(screen.getByText("Start 1412")).toBeInTheDocument()
+    expect(screen.getByText("Start 1290")).toBeInTheDocument()
     expect(screen.getByText("Latest 1412")).toBeInTheDocument()
-    expect(screen.getAllByText("1 (50.0%)")).toHaveLength(2)
+    expect(screen.getByText("5 (55.6%)")).toBeInTheDocument()
     expect(screen.getByText(/win vs amy/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/fil/games")
   })
@@ -131,6 +147,7 @@ describe("ProfilePage", () => {
   it("shows_not_found_message_on_404", async () => {
     mockApi.userApi.getProfile.mockRejectedValueOnce({ status: 404, message: "nope" })
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
 
     renderProfile()
 
@@ -156,6 +173,7 @@ describe("ProfilePage", () => {
       },
     })
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
 
     renderProfile("/user/gptnano")
 
