@@ -16,9 +16,9 @@ function buildChartPoints(points) {
     return { polyline: "", areaPath: "", circles: [], minElo: 0, maxElo: 0, ticks: [] }
   }
 
-  const width = 320
+  const width = 332
   const height = 152
-  const paddingX = 18
+  const paddingX = 28
   const paddingY = 18
   const minElo = Math.min(...points.map((point) => point.elo))
   const maxElo = Math.max(...points.map((point) => point.elo))
@@ -54,6 +54,8 @@ function buildChartPoints(points) {
     ticks,
     width,
     height,
+    paddingX,
+    paddingY,
   }
 }
 
@@ -152,12 +154,12 @@ export default function EloChart({ seriesByMode, emptyText, ratingTrack = "overa
           </defs>
           {chart.ticks.map((tick) => (
             <g key={`${tick.value}-${tick.y}`}>
-              <line className="elo-chart__grid" x1="18" x2={chart.width - 18} y1={tick.y} y2={tick.y} />
-              <text className="elo-chart__tick-label" x="-6" y={tick.y + 3.5}>{tick.value}</text>
+              <line className="elo-chart__grid" x1={chart.paddingX} x2={chart.width - chart.paddingX} y1={tick.y} y2={tick.y} />
+              <text className="elo-chart__tick-label" x={chart.paddingX - 8} y={tick.y + 3.5}>{tick.value}</text>
             </g>
           ))}
           <path className="elo-chart__area" d={chart.areaPath} fill={`url(#elo-chart-fill-${ratingTrack})`} />
-          {activePoint ? <line className="elo-chart__focus-line" x1={activePoint.x} x2={activePoint.x} y1="18" y2={chart.height - 18} /> : null}
+          {activePoint ? <line className="elo-chart__focus-line" x1={activePoint.x} x2={activePoint.x} y1={chart.paddingY} y2={chart.height - chart.paddingY} /> : null}
           <polyline className="elo-chart__line" fill="none" points={chart.polyline} />
           {chart.circles.map((point) => (
             <circle
