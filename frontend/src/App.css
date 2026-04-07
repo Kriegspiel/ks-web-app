@@ -207,7 +207,7 @@ button.theme-toggle:active {
 .stats-group-card {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--surface) 86%, white 14%);
+  background: color-mix(in srgb, var(--surface-strong) 94%, var(--surface) 6%);
   padding: 1rem;
   display: grid;
   gap: 0.85rem;
@@ -228,7 +228,7 @@ button.theme-toggle:active {
   padding: 0.9rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: rgba(248, 250, 252, 0.72);
+  background: color-mix(in srgb, var(--surface-alt) 86%, transparent);
 }
 
 .home-stats-grid dt {
@@ -268,7 +268,7 @@ button.theme-toggle:active {
   padding: 0.25rem;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 92%, white 8%);
+  background: color-mix(in srgb, var(--surface-strong) 92%, var(--surface) 8%);
   box-shadow: var(--shadow-soft);
 }
 
@@ -315,7 +315,7 @@ button.theme-toggle:active {
   border-radius: var(--radius-sm);
   background:
     linear-gradient(180deg, rgba(177, 138, 83, 0.12), rgba(177, 138, 83, 0.03) 40%, transparent 100%),
-    rgba(248, 250, 252, 0.82);
+    color-mix(in srgb, var(--surface-alt) 90%, transparent);
   border: 1px solid var(--border);
   padding: 0.35rem;
 }
@@ -369,22 +369,22 @@ button.theme-toggle:active {
   min-width: 9rem;
   padding: 0.65rem 0.72rem;
   border-radius: 0.9rem;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  background: rgba(15, 23, 42, 0.92);
-  color: white;
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.22);
+  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--surface-strong) 96%, var(--bg) 4%);
+  color: var(--text);
+  box-shadow: var(--shadow-soft);
   transform: translate(-50%, calc(-100% - 0.85rem));
   pointer-events: none;
 }
 
 .elo-chart__tooltip strong {
   font-size: 0.88rem;
-  color: white;
+  color: var(--text);
 }
 
 .elo-chart__tooltip span {
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--muted);
 }
 
 .elo-chart__axis {
