@@ -12,6 +12,14 @@ const X_AXIS_MODES = [
   { key: "game", label: "Game number" },
 ]
 
+function normalizeFiniteNumber(value) {
+  if (value == null || value === "") {
+    return null
+  }
+  const numeric = typeof value === "number" ? value : Number(value)
+  return Number.isFinite(numeric) ? numeric : null
+}
+
 function buildBaseEloSeries(historyGames, ratingTrack) {
   if (!Array.isArray(historyGames)) {
     return []
@@ -28,15 +36,19 @@ function buildBaseEloSeries(historyGames, ratingTrack) {
     .map((game) => {
       const snapshot = game?.rating_snapshot
       const trackSnapshot = snapshot?.[ratingTrack]
-      const eloAfter = trackSnapshot?.elo_after ?? game?.elo_after
-      const eloDelta = trackSnapshot?.elo_delta ?? game?.elo_delta
+      const eloAfter = ratingTrack === "overall"
+        ? normalizeFiniteNumber(trackSnapshot?.elo_after ?? game?.elo_after)
+        : normalizeFiniteNumber(trackSnapshot?.elo_after)
+      const eloDelta = ratingTrack === "overall"
+        ? normalizeFiniteNumber(trackSnapshot?.elo_delta ?? game?.elo_delta)
+        : normalizeFiniteNumber(trackSnapshot?.elo_delta)
       return {
         ...game,
         elo_after: eloAfter,
         elo_delta: eloDelta,
       }
     })
-    .filter((game) => Number.isFinite(Number(game?.elo_after)))
+    .filter((game) => Number.isFinite(game?.elo_after))
     .sort((left, right) => Date.parse(left?.played_at ?? "") - Date.parse(right?.played_at ?? ""))
     .map((game, index) => ({
       index,

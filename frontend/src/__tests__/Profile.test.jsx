@@ -51,6 +51,20 @@ describe("ProfilePage", () => {
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({
       games: [
         {
+          game_id: "g-legacy-bot",
+          result: "win",
+          opponent: "legacybot",
+          opponent_role: "bot",
+          played_at: "2026-03-20T12:00:00Z",
+          elo_after: 1500,
+          elo_delta: 30,
+          rating_snapshot: {
+            overall: { elo_after: 1500, elo_delta: 30 },
+            vs_humans: { elo_after: null, elo_delta: null },
+            vs_bots: { elo_after: null, elo_delta: null },
+          },
+        },
+        {
           game_id: "g-1",
           result: "win",
           opponent: "amy",
@@ -88,16 +102,17 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("heading", { name: "Overall rating" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Overall results" })).toBeInTheDocument()
     expect(screen.getByText(/games played/i)).toBeInTheDocument()
-    expect(screen.getAllByText("2").length).toBeGreaterThan(0)
-    expect(screen.getAllByText("1 (50.0%)")).toHaveLength(2)
+    expect(screen.getByText("3")).toBeInTheDocument()
+    expect(screen.getByText("2 (66.7%)")).toBeInTheDocument()
+    expect(screen.getByText("1 (33.3%)")).toBeInTheDocument()
     expect(screen.getByText("0 (0.0%)")).toBeInTheDocument()
     expect(screen.queryByText(/win rate/i)).not.toBeInTheDocument()
     expect(screen.getByRole("img", { name: "Overall Elo rating over time" })).toBeInTheDocument()
-    expect(screen.getByText("Start 1320")).toBeInTheDocument()
+    expect(screen.getByText("Start 1500")).toBeInTheDocument()
     expect(screen.getByText("Latest 1345")).toBeInTheDocument()
     expect(screen.getAllByText("2026-03-25").length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole("tab", { name: "Game number" }))
-    expect(screen.getAllByText("Game 2").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("Game 3").length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole("tab", { name: "vs Humans" }))
     expect(screen.getByRole("heading", { name: "vs Humans rating" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "vs Humans results" })).toBeInTheDocument()
@@ -106,8 +121,9 @@ describe("ProfilePage", () => {
     expect(screen.getByText("1410")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "vs Bots rating" })).toBeInTheDocument()
     expect(screen.getByRole("img", { name: "vs Bots Elo rating over time" })).toBeInTheDocument()
+    expect(screen.getByText("Start 1412")).toBeInTheDocument()
     expect(screen.getByText("Latest 1412")).toBeInTheDocument()
-    expect(screen.getByText("1 (100.0%)")).toBeInTheDocument()
+    expect(screen.getAllByText("1 (50.0%)")).toHaveLength(2)
     expect(screen.getByText(/win vs amy/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/fil/games")
   })

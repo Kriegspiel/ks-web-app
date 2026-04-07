@@ -160,6 +160,6 @@ describe("HomePage", () => {
     expect(screen.getByText("1321")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "vs Humans results" })).toBeInTheDocument()
     expect(screen.getAllByText("1").length).toBeGreaterThan(0)
-    expect(screen.getByRole("img", { name: "vs Humans Elo rating over time" })).toBeInTheDocument()
+    expect(screen.getByText("No finished games with rating history yet.")).toBeInTheDocument()
   })
 })
