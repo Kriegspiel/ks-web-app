@@ -362,22 +362,6 @@ button.theme-toggle:active {
   stroke-dasharray: 3 6;
 }
 
-.elo-chart__point {
-  fill: color-mix(in srgb, var(--accent) 82%, white);
-  stroke: white;
-  stroke-width: 1.4;
-  cursor: pointer;
-  transition: fill 120ms ease, stroke 120ms ease;
-}
-
-.elo-chart__point.is-active,
-.elo-chart__point:hover,
-.elo-chart__point:focus-visible {
-  fill: color-mix(in srgb, var(--accent) 62%, white);
-  stroke: rgba(255, 255, 255, 0.85);
-  outline: none;
-}
-
 .elo-chart__tooltip {
   position: absolute;
   display: grid;

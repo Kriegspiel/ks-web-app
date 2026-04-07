@@ -70,12 +70,12 @@ export default function EloChart({ seriesByMode, emptyText, ratingTrack = "overa
   const [xAxisMode, setXAxisMode] = useState("date")
   const series = useMemo(() => Array.isArray(seriesByMode?.[xAxisMode]) ? seriesByMode[xAxisMode] : [], [seriesByMode, xAxisMode])
   const chart = useMemo(() => buildChartPoints(series), [series])
-  const [activeIndex, setActiveIndex] = useState(series.length > 0 ? series.length - 1 : -1)
+  const [activeIndex, setActiveIndex] = useState(-1)
   const activePoint = activeIndex >= 0 ? chart.circles[activeIndex] : null
   const trackLabel = ELO_TRACKS.find((track) => track.key === ratingTrack)?.label ?? "Overall"
 
   useEffect(() => {
-    setActiveIndex(series.length > 0 ? series.length - 1 : -1)
+    setActiveIndex(-1)
   }, [series, xAxisMode])
 
   if (series.length === 0) {
@@ -144,7 +144,7 @@ export default function EloChart({ seriesByMode, emptyText, ratingTrack = "overa
           ))}
         </div>
       </div>
-      <div className="elo-chart__plot" onMouseMove={handlePlotHover} onMouseLeave={() => setActiveIndex(series.length - 1)}>
+      <div className="elo-chart__plot" onMouseMove={handlePlotHover} onMouseLeave={() => setActiveIndex(-1)}>
         <svg viewBox={`0 0 ${chart.width} ${chart.height}`} role="img" aria-label={`${trackLabel} Elo rating over time`}>
           <defs>
             <linearGradient id={`elo-chart-fill-${ratingTrack}`} x1="0" y1="0" x2="0" y2="1">
@@ -161,20 +161,6 @@ export default function EloChart({ seriesByMode, emptyText, ratingTrack = "overa
           <path className="elo-chart__area" d={chart.areaPath} fill={`url(#elo-chart-fill-${ratingTrack})`} />
           {activePoint ? <line className="elo-chart__focus-line" x1={activePoint.x} x2={activePoint.x} y1={chart.paddingY} y2={chart.height - chart.paddingY} /> : null}
           <polyline className="elo-chart__line" fill="none" points={chart.polyline} />
-          {chart.circles.map((point) => (
-            <circle
-              key={`${point.label}-${point.index}`}
-              className={`elo-chart__point${activePoint?.index === point.index ? " is-active" : ""}`}
-              cx={point.x}
-              cy={point.y}
-              r="2.75"
-              tabIndex="0"
-              onMouseEnter={() => setActiveIndex(point.index)}
-              onFocus={() => setActiveIndex(point.index)}
-            >
-              <title>{`${point.label}: ${point.elo} (${formatDelta(point.delta)})`}</title>
-            </circle>
-          ))}
         </svg>
         {activePoint && tooltipStyle ? (
           <div className="elo-chart__tooltip" style={tooltipStyle} aria-live="polite">
