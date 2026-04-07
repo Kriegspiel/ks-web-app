@@ -28,26 +28,35 @@ function normalizeRatings(source) {
   }
 }
 
-function summarizeTrackHistory(historyGames, ratingTrack) {
-  const isTrackMatch = (game) => {
-    if (ratingTrack === "overall") {
-      return true
+function normalizeResults(source) {
+  const results = source?.results ?? {}
+  const track = (key, fallback) => {
+    const current = results?.[key] ?? fallback
+    return {
+      gamesPlayed: statOrZero(current?.games_played),
+      gamesWon: statOrZero(current?.games_won),
+      gamesLost: statOrZero(current?.games_lost),
+      gamesDrawn: statOrZero(current?.games_drawn),
     }
-    const opponentRole = String(game?.opponent_role ?? "user").toLowerCase()
-    return ratingTrack === "vs_bots" ? opponentRole === "bot" : opponentRole !== "bot"
   }
+  return {
+    overall: track("overall", source),
+    vsHumans: track("vs_humans"),
+    vsBots: track("vs_bots"),
+  }
+}
 
-  const matchingGames = Array.isArray(historyGames) ? historyGames.filter(isTrackMatch) : []
-  const wins = matchingGames.filter((game) => game?.result === "win").length
-  const losses = matchingGames.filter((game) => game?.result === "loss").length
-  const draws = matchingGames.filter((game) => game?.result === "draw").length
-  const gamesPlayed = matchingGames.length
+function formatResultSummary(resultTrack) {
+  const gamesPlayed = statOrZero(resultTrack?.gamesPlayed)
+  const gamesWon = statOrZero(resultTrack?.gamesWon)
+  const gamesLost = statOrZero(resultTrack?.gamesLost)
+  const gamesDrawn = statOrZero(resultTrack?.gamesDrawn)
   const formatRate = (value) => `${gamesPlayed > 0 ? ((value / gamesPlayed) * 100).toFixed(1) : "0.0"}%`
   return {
     gamesPlayed,
-    winsLabel: `${wins} (${formatRate(wins)})`,
-    lossesLabel: `${losses} (${formatRate(losses)})`,
-    drawsLabel: `${draws} (${formatRate(draws)})`,
+    winsLabel: `${gamesWon} (${formatRate(gamesWon)})`,
+    lossesLabel: `${gamesLost} (${formatRate(gamesLost)})`,
+    drawsLabel: `${gamesDrawn} (${formatRate(gamesDrawn)})`,
   }
 }
 
@@ -98,7 +107,8 @@ function renderExternalRulesLink() {
 export default function HomePage() {
   const { isAuthenticated, user } = useAuth()
   const [myGames, setMyGames] = useState([])
-  const [historyGames, setHistoryGames] = useState([])
+  const [profile, setProfile] = useState(null)
+  const [ratingSeries, setRatingSeries] = useState({ game: [], date: [] })
   const [myGamesLoading, setMyGamesLoading] = useState(false)
   const [myGamesError, setMyGamesError] = useState("")
   const [ratingTrack, setRatingTrack] = useState("overall")
@@ -106,7 +116,8 @@ export default function HomePage() {
   useEffect(() => {
     if (!isAuthenticated) {
       setMyGames([])
-      setHistoryGames([])
+      setProfile(null)
+      setRatingSeries({ game: [], date: [] })
       setMyGamesLoading(false)
       setMyGamesError("")
       return
@@ -117,20 +128,23 @@ export default function HomePage() {
     async function loadMyGames() {
       setMyGamesLoading(true)
       try {
-        const [gamesResponse, historyResponse] = await Promise.all([
+        const [gamesResponse, profileResponse, historyResponse] = await Promise.all([
           getMyGames(),
-          user?.username ? userApi.getGameHistory(user.username, 1, 100) : Promise.resolve({ games: [] }),
+          user?.username ? userApi.getProfile(user.username) : Promise.resolve(null),
+          user?.username ? userApi.getRatingHistory(user.username, ratingTrack, 100) : Promise.resolve({ series: { game: [], date: [] } }),
         ])
         if (cancelled) {
           return
         }
         setMyGames(Array.isArray(gamesResponse?.games) ? gamesResponse.games : [])
-        setHistoryGames(Array.isArray(historyResponse?.games) ? historyResponse.games : [])
+        setProfile(profileResponse)
+        setRatingSeries(historyResponse?.series ?? { game: [], date: [] })
         setMyGamesError("")
       } catch (error) {
         if (!cancelled) {
           setMyGamesError(error?.message ?? "Unable to load your games right now.")
-          setHistoryGames([])
+          setProfile(null)
+          setRatingSeries({ game: [], date: [] })
         }
       } finally {
         if (!cancelled) {
@@ -144,32 +158,23 @@ export default function HomePage() {
     return () => {
       cancelled = true
     }
-  }, [isAuthenticated, user?.username])
+  }, [isAuthenticated, ratingTrack, user?.username])
 
   const recentGames = useMemo(() => sortRecentGames(myGames), [myGames])
   const activeGame = useMemo(() => getActiveGame(myGames), [myGames])
   const stats = useMemo(() => {
-    const source = user?.stats ?? {}
+    const source = profile?.stats ?? user?.stats ?? {}
     const ratings = normalizeRatings(source)
-    const gamesPlayed = statOrZero(source.games_played)
-    const gamesWon = statOrZero(source.games_won)
-    const gamesLost = statOrZero(source.games_lost)
-    const gamesDrawn = statOrZero(source.games_drawn)
-    const formatRate = (value) => `${gamesPlayed > 0 ? ((value / gamesPlayed) * 100).toFixed(1) : "0.0"}%`
+    const results = normalizeResults(source)
     return {
-      gamesPlayed,
-      gamesWon,
-      gamesLost,
-      gamesDrawn,
       ratings,
-      winsLabel: `${gamesWon} (${formatRate(gamesWon)})`,
-      lossesLabel: `${gamesLost} (${formatRate(gamesLost)})`,
-      drawsLabel: `${gamesDrawn} (${formatRate(gamesDrawn)})`,
+      results,
     }
-  }, [user?.stats])
+  }, [profile?.stats, user?.stats])
   const selectedTrack = ELO_TRACKS.find((track) => track.key === ratingTrack) ?? ELO_TRACKS[0]
   const selectedRating = ratingTrack === "vs_humans" ? stats.ratings.vsHumans : ratingTrack === "vs_bots" ? stats.ratings.vsBots : stats.ratings.overall
-  const selectedHistoryStats = useMemo(() => summarizeTrackHistory(historyGames, ratingTrack), [historyGames, ratingTrack])
+  const selectedResults = ratingTrack === "vs_humans" ? stats.results.vsHumans : ratingTrack === "vs_bots" ? stats.results.vsBots : stats.results.overall
+  const selectedHistoryStats = useMemo(() => formatResultSummary(selectedResults), [selectedResults])
   const playNowPath = isAuthenticated
     ? (activeGame?.game_code || activeGame?.game_id ? `/game/${activeGame?.game_code ?? activeGame?.game_id}` : "/lobby")
     : "/auth/login"
@@ -221,7 +226,7 @@ export default function HomePage() {
                 </dl>
               </section>
             </div>
-            <EloChart historyGames={historyGames} emptyText="No finished games with rating history yet." ratingTrack={ratingTrack} showTrackToggle={false} />
+            <EloChart seriesByMode={ratingSeries} emptyText="No finished games with rating history yet." ratingTrack={ratingTrack} showTrackToggle={false} />
           </section>
 
           <section className="home-card" aria-labelledby="home-recent-games-heading">

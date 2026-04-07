@@ -12,7 +12,9 @@ const mockAuth = vi.hoisted(() => ({
 const mockApi = vi.hoisted(() => ({
   getMyGames: vi.fn(),
   userApi: {
+    getProfile: vi.fn(),
     getGameHistory: vi.fn(),
+    getRatingHistory: vi.fn(),
   },
 }))
 
@@ -28,8 +30,12 @@ beforeEach(() => {
   mockAuth.user = null
   mockApi.getMyGames.mockReset()
   mockApi.getMyGames.mockResolvedValue({ games: [] })
+  mockApi.userApi.getProfile.mockReset()
+  mockApi.userApi.getProfile.mockResolvedValue({ username: "fil", stats: { ratings: { overall: { elo: 1200, peak: 1200 }, vs_humans: { elo: 1200, peak: 1200 }, vs_bots: { elo: 1200, peak: 1200 } }, results: { overall: { games_played: 0, games_won: 0, games_lost: 0, games_drawn: 0 }, vs_humans: { games_played: 0, games_won: 0, games_lost: 0, games_drawn: 0 }, vs_bots: { games_played: 0, games_won: 0, games_lost: 0, games_drawn: 0 } } } })
   mockApi.userApi.getGameHistory.mockReset()
   mockApi.userApi.getGameHistory.mockResolvedValue({ games: [] })
+  mockApi.userApi.getRatingHistory.mockReset()
+  mockApi.userApi.getRatingHistory.mockResolvedValue({ series: { game: [], date: [] } })
 })
 
 afterEach(() => {
@@ -58,34 +64,44 @@ describe("HomePage", () => {
     mockAuth.isAuthenticated = true
     mockAuth.user = {
       username: "fil",
+      stats: {},
+    }
+    mockApi.userApi.getProfile.mockResolvedValue({
+      username: "fil",
       stats: {
-        elo: 1337,
-        elo_peak: 1402,
         ratings: {
           overall: { elo: 1337, peak: 1402 },
           vs_humans: { elo: 1310, peak: 1360 },
           vs_bots: { elo: 1388, peak: 1400 },
         },
-        games_played: 12,
-        games_won: 7,
-        games_lost: 3,
-        games_drawn: 2,
+        results: {
+          overall: { games_played: 12, games_won: 7, games_lost: 3, games_drawn: 2 },
+          vs_humans: { games_played: 5, games_won: 3, games_lost: 1, games_drawn: 1 },
+          vs_bots: { games_played: 7, games_won: 4, games_lost: 2, games_drawn: 1 },
+        },
       },
-    }
+    })
+    mockApi.userApi.getRatingHistory.mockResolvedValue({
+      series: {
+        game: [],
+        date: [],
+      },
+    })
 
     renderPage()
 
     await waitFor(() => {
       expect(mockApi.getMyGames).toHaveBeenCalledTimes(1)
-      expect(mockApi.userApi.getGameHistory).toHaveBeenCalledWith("fil", 1, 100)
+      expect(mockApi.userApi.getProfile).toHaveBeenCalledWith("fil")
+      expect(mockApi.userApi.getRatingHistory).toHaveBeenCalledWith("fil", "overall", 100)
     })
 
     expect(screen.getByRole("link", { name: "Play now" })).toHaveAttribute("href", "/lobby")
     expect(screen.getByRole("link", { name: "Leaderboard" })).toHaveAttribute("href", "/leaderboard")
     expect(screen.getByText("1337")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Overall results" })).toBeInTheDocument()
-    expect(screen.getByText("0")).toBeInTheDocument()
-    expect(screen.getAllByText("0 (0.0%)").length).toBeGreaterThanOrEqual(3)
+    expect(screen.getByText("12")).toBeInTheDocument()
+    expect(screen.getByText("7 (58.3%)")).toBeInTheDocument()
     fireEvent.click(screen.getByRole("tab", { name: "vs Humans" }))
     expect(screen.getByText("1310")).toBeInTheDocument()
     fireEvent.click(screen.getByRole("tab", { name: "vs Bots" }))
@@ -96,19 +112,7 @@ describe("HomePage", () => {
     mockAuth.isAuthenticated = true
     mockAuth.user = {
       username: "fil",
-      stats: {
-        elo: 1345,
-        elo_peak: 1402,
-        ratings: {
-          overall: { elo: 1345, peak: 1402 },
-          vs_humans: { elo: 1321, peak: 1361 },
-          vs_bots: { elo: 1390, peak: 1404 },
-        },
-        games_played: 12,
-        games_won: 7,
-        games_lost: 3,
-        games_drawn: 2,
-      },
+      stats: {},
     }
     mockApi.getMyGames.mockResolvedValue({
       games: [
@@ -130,11 +134,32 @@ describe("HomePage", () => {
         },
       ],
     })
-    mockApi.userApi.getGameHistory.mockResolvedValue({
-      games: [
-        { game_id: "h1", played_at: "2026-03-21T12:00:00Z", elo_after: 1320, elo_delta: 16, opponent_role: "bot", result: "win" },
-        { game_id: "h2", played_at: "2026-03-25T12:00:00Z", elo_after: 1345, elo_delta: 25, opponent_role: "user", result: "loss" },
-      ],
+    mockApi.userApi.getProfile.mockResolvedValue({
+      username: "fil",
+      stats: {
+        ratings: {
+          overall: { elo: 1345, peak: 1402 },
+          vs_humans: { elo: 1321, peak: 1361 },
+          vs_bots: { elo: 1390, peak: 1404 },
+        },
+        results: {
+          overall: { games_played: 12, games_won: 7, games_lost: 3, games_drawn: 2 },
+          vs_humans: { games_played: 1, games_won: 0, games_lost: 1, games_drawn: 0 },
+          vs_bots: { games_played: 11, games_won: 7, games_lost: 2, games_drawn: 2 },
+        },
+      },
+    })
+    mockApi.userApi.getRatingHistory.mockResolvedValue({
+      series: {
+        game: [
+          { label: "Game 1", elo: 1320, delta: 16, played_at: "2026-03-21T12:00:00Z", game_number: 1 },
+          { label: "Game 2", elo: 1345, delta: 25, played_at: "2026-03-25T12:00:00Z", game_number: 2 },
+        ],
+        date: [
+          { label: "2026-03-21", elo: 1320, delta: 16, played_at: "2026-03-21T12:00:00Z", game_number: 1 },
+          { label: "2026-03-25", elo: 1345, delta: 25, played_at: "2026-03-25T12:00:00Z", game_number: 2 },
+        ],
+      },
     })
 
     renderPage()
@@ -152,14 +177,14 @@ describe("HomePage", () => {
     expect(screen.getByRole("img", { name: "Overall Elo rating over time" })).toBeInTheDocument()
     expect(screen.getByText("Latest 1345")).toBeInTheDocument()
     expect(screen.getAllByText("2026-03-25").length).toBeGreaterThan(0)
-    expect(screen.getByText("2")).toBeInTheDocument()
+    expect(screen.getByText("12")).toBeInTheDocument()
     fireEvent.click(screen.getByRole("tab", { name: "Game number" }))
     expect(screen.getAllByText("Game 2").length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole("tab", { name: "vs Humans" }))
+    await waitFor(() => expect(mockApi.userApi.getRatingHistory).toHaveBeenCalledWith("fil", "vs_humans", 100))
     expect(screen.getByRole("heading", { name: "vs Humans rating" })).toBeInTheDocument()
     expect(screen.getByText("1321")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "vs Humans results" })).toBeInTheDocument()
     expect(screen.getAllByText("1").length).toBeGreaterThan(0)
-    expect(screen.getByText("No finished games with rating history yet.")).toBeInTheDocument()
   })
 })
