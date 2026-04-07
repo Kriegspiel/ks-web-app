@@ -24,7 +24,7 @@
   padding: 0.9rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: rgba(248, 250, 252, 0.72);
+  background: color-mix(in srgb, var(--surface-alt) 86%, transparent);
 }
 
 .profile-stats-grid dt {
@@ -58,7 +58,11 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 0.7rem 0.8rem;
-  background: rgba(248, 250, 252, 0.72);
+  background: color-mix(in srgb, var(--surface-alt) 86%, transparent);
+}
+
+.profile-recent-list li span {
+  color: var(--text);
 }
 
 .profile-all-games-link {
