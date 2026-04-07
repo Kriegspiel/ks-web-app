@@ -13,7 +13,7 @@ const X_AXIS_MODES = [
 
 function buildChartPoints(points) {
   if (!Array.isArray(points) || points.length === 0) {
-    return { polyline: "", circles: [], minElo: 0, maxElo: 0, ticks: [] }
+    return { polyline: "", areaPath: "", circles: [], minElo: 0, maxElo: 0, ticks: [] }
   }
 
   const width = 320
@@ -42,6 +42,12 @@ function buildChartPoints(points) {
 
   return {
     polyline: circles.map((point) => `${point.x},${point.y}`).join(" "),
+    areaPath: [
+      `M ${circles[0].x} ${height - paddingY}`,
+      ...circles.map((point) => `L ${point.x} ${point.y}`),
+      `L ${circles[circles.length - 1].x} ${height - paddingY}`,
+      "Z",
+    ].join(" "),
     circles,
     minElo,
     maxElo,
@@ -138,12 +144,19 @@ export default function EloChart({ seriesByMode, emptyText, ratingTrack = "overa
       </div>
       <div className="elo-chart__plot" onMouseMove={handlePlotHover} onMouseLeave={() => setActiveIndex(series.length - 1)}>
         <svg viewBox={`0 0 ${chart.width} ${chart.height}`} role="img" aria-label={`${trackLabel} Elo rating over time`}>
+          <defs>
+            <linearGradient id={`elo-chart-fill-${ratingTrack}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" className="elo-chart__area-stop elo-chart__area-stop--top" />
+              <stop offset="100%" className="elo-chart__area-stop elo-chart__area-stop--bottom" />
+            </linearGradient>
+          </defs>
           {chart.ticks.map((tick) => (
             <g key={`${tick.value}-${tick.y}`}>
               <line className="elo-chart__grid" x1="18" x2={chart.width - 18} y1={tick.y} y2={tick.y} />
               <text className="elo-chart__tick-label" x="0" y={tick.y + 4}>{tick.value}</text>
             </g>
           ))}
+          <path className="elo-chart__area" d={chart.areaPath} fill={`url(#elo-chart-fill-${ratingTrack})`} />
           {activePoint ? <line className="elo-chart__focus-line" x1={activePoint.x} x2={activePoint.x} y1="18" y2={chart.height - 18} /> : null}
           <polyline className="elo-chart__line" fill="none" points={chart.polyline} />
           {chart.circles.map((point) => (
@@ -152,7 +165,7 @@ export default function EloChart({ seriesByMode, emptyText, ratingTrack = "overa
               className={`elo-chart__point${activePoint?.index === point.index ? " is-active" : ""}`}
               cx={point.x}
               cy={point.y}
-              r="4"
+              r="2.75"
               tabIndex="0"
               onMouseEnter={() => setActiveIndex(point.index)}
               onFocus={() => setActiveIndex(point.index)}
