@@ -328,7 +328,8 @@ button.theme-toggle:active {
 
 .elo-chart__tick-label {
   fill: color-mix(in srgb, var(--muted-soft) 88%, transparent);
-  font-size: 8px;
+  font-size: 7px;
+  text-anchor: end;
 }
 
 .elo-chart__area-stop {
@@ -366,8 +367,7 @@ button.theme-toggle:active {
   stroke: white;
   stroke-width: 1.4;
   cursor: pointer;
-  transition: transform 120ms ease, fill 120ms ease, stroke 120ms ease;
-  transform-origin: center;
+  transition: fill 120ms ease, stroke 120ms ease;
 }
 
 .elo-chart__point.is-active,
@@ -375,7 +375,6 @@ button.theme-toggle:active {
 .elo-chart__point:focus-visible {
   fill: color-mix(in srgb, var(--accent) 62%, white);
   stroke: rgba(255, 255, 255, 0.85);
-  transform: scale(1.14);
   outline: none;
 }
 
