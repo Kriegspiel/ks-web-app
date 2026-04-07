@@ -555,11 +555,31 @@ export default function ReviewPage() {
             />
 
             <div className="review-page__controls" role="group" aria-label="Replay controls">
-              <button type="button" onClick={() => setCurrentPly(-1)} disabled={currentPly < 0}>First</button>
-              <button type="button" onClick={() => setCurrentPly((prev) => Math.max(-1, prev - 1))} disabled={currentPly < 0}>Prev</button>
+              <button type="button" aria-label="First" title="First" onClick={() => setCurrentPly(-1)} disabled={currentPly < 0}>
+                <span aria-hidden="true">«</span>
+              </button>
+              <button
+                type="button"
+                aria-label="Prev"
+                title="Prev"
+                onClick={() => setCurrentPly((prev) => Math.max(-1, prev - 1))}
+                disabled={currentPly < 0}
+              >
+                <span aria-hidden="true">‹</span>
+              </button>
               <span className="review-page__ply">Turn {counterLabel} / {maxCounterLabel}</span>
-              <button type="button" onClick={() => setCurrentPly((prev) => Math.min(maxGroupIndex, prev + 1))} disabled={currentPly >= maxGroupIndex}>Next</button>
-              <button type="button" onClick={() => setCurrentPly(maxGroupIndex)} disabled={currentPly >= maxGroupIndex}>Last</button>
+              <button
+                type="button"
+                aria-label="Next"
+                title="Next"
+                onClick={() => setCurrentPly((prev) => Math.min(maxGroupIndex, prev + 1))}
+                disabled={currentPly >= maxGroupIndex}
+              >
+                <span aria-hidden="true">›</span>
+              </button>
+              <button type="button" aria-label="Last" title="Last" onClick={() => setCurrentPly(maxGroupIndex)} disabled={currentPly >= maxGroupIndex}>
+                <span aria-hidden="true">»</span>
+              </button>
             </div>
 
             <div className="review-page__board-footer">
