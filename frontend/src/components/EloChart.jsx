@@ -153,7 +153,7 @@ export default function EloChart({ seriesByMode, emptyText, ratingTrack = "overa
           {chart.ticks.map((tick) => (
             <g key={`${tick.value}-${tick.y}`}>
               <line className="elo-chart__grid" x1="18" x2={chart.width - 18} y1={tick.y} y2={tick.y} />
-              <text className="elo-chart__tick-label" x="0" y={tick.y + 4}>{tick.value}</text>
+              <text className="elo-chart__tick-label" x="-6" y={tick.y + 3.5}>{tick.value}</text>
             </g>
           ))}
           <path className="elo-chart__area" d={chart.areaPath} fill={`url(#elo-chart-fill-${ratingTrack})`} />
