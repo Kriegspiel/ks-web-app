@@ -1852,7 +1852,6 @@ export default function GamePage() {
                 </div>
               </section>
 
-              <p className="game-page__meta game-page__meta--below-board">Game code: <code>{gameMeta?.game_code ?? gameRef}</code></p>
             </div>
 
             <section className="game-card game-card--status" aria-label="Game status">
@@ -1913,6 +1912,7 @@ export default function GamePage() {
               <div className="game-status-section">
                 <h2>Status</h2>
                 <ul className="game-status-list">
+                  <li><strong>Game code:</strong> <code>{gameMeta?.game_code ?? gameRef}</code></li>
                   <li><strong>State:</strong> {gameState.state}</li>
                   <li><strong>Rules:</strong> {formatRuleVariant(gameMeta?.rule_variant)}</li>
                   <li><strong>Against:</strong> {opponentLabel}</li>
