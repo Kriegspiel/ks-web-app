@@ -12,7 +12,6 @@ export default defineConfig({
       exclude: [
         'src/main.jsx',
         'src/pages/RulesPage.jsx',
-        'src/components/KriegspielGame.jsx',
       ],
       thresholds: {
         lines: 80,
