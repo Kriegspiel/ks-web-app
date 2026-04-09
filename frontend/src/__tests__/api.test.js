@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import api, { askAny, createGame, deleteWaitingGame, getBots, getGame, getGameState, getMyGames, getOpenGames, joinGame, login, logout, me, register, resignGame, submitMove, userApi } from "../services/api"
+import api, { askAny, createGame, deleteWaitingGame, getBots, getGame, getGameState, getMyGames, getOpenGames, joinGame, login, logout, me, register, resignGame, submitMove, techApi, userApi } from "../services/api"
 
 describe("api client", () => {
   it("api_client_uses_relative_base_url", () => { expect(api.defaults.baseURL ?? "").toBe("") })
@@ -27,5 +27,6 @@ describe("game helpers", () => {
 describe("user helpers", () => {
   beforeEach(() => { vi.restoreAllMocks() })
   it("profile_history_and_leaderboard_use_expected_endpoints", async () => { const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: {} }); await userApi.getProfile("fil"); await userApi.getGameHistory("fil", 2, 30); await userApi.getRatingHistory("fil", "vs_bots", 100); await userApi.getLeaderboard(3, 10); expect(getSpy).toHaveBeenNthCalledWith(1, "/api/user/fil"); expect(getSpy).toHaveBeenNthCalledWith(2, "/api/user/fil/games", { params: { page: 2, per_page: 30 } }); expect(getSpy).toHaveBeenNthCalledWith(3, "/api/user/fil/rating-history", { params: { track: "vs_bots", limit: 100 } }); expect(getSpy).toHaveBeenNthCalledWith(4, "/api/leaderboard", { params: { page: 3, per_page: 10 } }) })
+  it("bots_report_uses_expected_endpoint", async () => { const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: {} }); await techApi.getBotsReport(10); expect(getSpy).toHaveBeenCalledWith("/api/tech/bots-report", { params: { days: 10 } }) })
   it("update_settings_patches_expected_endpoint", async () => { const patchSpy = vi.spyOn(api, "patch").mockResolvedValue({ data: { board_theme: "wood" } }); const payload = { board_theme: "wood" }; const result = await userApi.updateSettings(payload); expect(patchSpy).toHaveBeenCalledWith("/api/user/settings", payload); expect(result).toEqual({ board_theme: "wood" }) })
 })
