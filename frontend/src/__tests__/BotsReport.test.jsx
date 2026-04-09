@@ -23,18 +23,44 @@ describe("BotsReportPage", () => {
   it("renders_report_table", async () => {
     techApi.getBotsReport.mockResolvedValue({
       timezone: "America/New_York",
-      bots: ["gptnano", "haiku"],
-      rows: [
-        { date: "2026-04-08", counts: { gptnano: 2, haiku: 4 } },
-        { date: "2026-04-09", counts: { gptnano: 1, haiku: 0 } },
+      bots: [
+        {
+          username: "gptnano",
+          rows: [
+            {
+              date: "2026-04-08",
+              stats: {
+                overall: { total_games: 2, win_rate: 0.5 },
+                vs_humans: { total_games: 0, win_rate: 0.0 },
+                vs_bots: { total_games: 2, win_rate: 0.5 },
+              },
+            },
+          ],
+        },
+        {
+          username: "haiku",
+          rows: [
+            {
+              date: "2026-04-08",
+              stats: {
+                overall: { total_games: 4, win_rate: 0.25 },
+                vs_humans: { total_games: 0, win_rate: 0.0 },
+                vs_bots: { total_games: 4, win_rate: 0.25 },
+              },
+            },
+          ],
+        },
       ],
     })
 
     render(<MemoryRouter><BotsReportPage /></MemoryRouter>)
 
     expect(await screen.findByText("Bots report")).toBeInTheDocument()
-    expect(await screen.findByText("2026-04-08")).toBeInTheDocument()
-    expect(screen.getByText("gptnano")).toBeInTheDocument()
-    expect(screen.getByText("haiku")).toBeInTheDocument()
+    expect((await screen.findAllByText("2026-04-08")).length).toBe(2)
+    expect(screen.getByRole("heading", { name: "gptnano" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "haiku" })).toBeInTheDocument()
+    expect(screen.getAllByText("Overall").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("vs. humans").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("vs. bots").length).toBeGreaterThan(0)
   })
 })
