@@ -42,4 +42,7 @@ export const userApi = {
   async getLeaderboard(page = 1, perPage = 20) { const response = await api.get('/api/leaderboard', { params: { page, per_page: perPage } }); return response.data },
   async updateSettings(payload) { const response = await api.patch('/api/user/settings', payload); return response.data },
 }
+export const techApi = {
+  async getBotsReport(days = 10) { const response = await api.get("/api/tech/bots-report", { params: { days } }); return response.data },
+}
 export default api
