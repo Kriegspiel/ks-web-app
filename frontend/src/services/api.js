@@ -7,7 +7,22 @@ const api = axios.create({
 })
 
 function extractMessage(error, fallback) {
-  const responseMessage = error?.response?.data?.error?.message ?? error?.response?.data?.detail
+  const detail = error?.response?.data?.detail
+  const validationMessages = Array.isArray(detail)
+    ? detail
+      .map((item) => {
+        if (!item || typeof item !== "object") return ""
+        const rawMessage = typeof item.msg === "string" ? item.msg.replace(/^Value error,\s*/, "") : ""
+        const loc = Array.isArray(item.loc) ? item.loc : []
+        const field = typeof loc.at(-1) === "string" ? loc.at(-1) : ""
+        if (!rawMessage) return ""
+        return field ? `${field}: ${rawMessage}` : rawMessage
+      })
+      .filter(Boolean)
+    : []
+  if (validationMessages.length > 0) return validationMessages.join(" ")
+  const responseMessage = error?.response?.data?.error?.message
+    ?? (typeof detail === "string" ? detail : detail?.message)
   if (typeof responseMessage === "string" && responseMessage.trim().length > 0) return responseMessage
   const requestMessage = error?.message
   if (typeof requestMessage === "string" && requestMessage.trim().length > 0) return requestMessage
@@ -15,13 +30,44 @@ function extractMessage(error, fallback) {
 }
 
 function normalizeError(error, fallback) {
-  return { status: error?.response?.status, code: error?.response?.data?.error?.code, message: extractMessage(error, fallback) }
+  return {
+    status: error?.response?.status,
+    code: error?.response?.data?.error?.code ?? error?.response?.data?.detail?.code,
+    message: extractMessage(error, fallback),
+  }
 }
 
-export async function register(payload) { const response = await api.post('/api/auth/register', payload); return response.data }
-export async function login(payload) { const response = await api.post('/api/auth/login', payload); return response.data }
-export async function logout() { await api.post('/api/auth/logout') }
-export async function me() { const response = await api.get('/api/auth/me'); return response.data }
+export async function register(payload) {
+  try {
+    const response = await api.post('/api/auth/register', payload)
+    return response.data
+  } catch (error) {
+    throw normalizeError(error, 'Unable to register right now.')
+  }
+}
+export async function login(payload) {
+  try {
+    const response = await api.post('/api/auth/login', payload)
+    return response.data
+  } catch (error) {
+    throw normalizeError(error, 'Unable to log in right now.')
+  }
+}
+export async function logout() {
+  try {
+    await api.post('/api/auth/logout')
+  } catch (error) {
+    throw normalizeError(error, 'Unable to log out right now.')
+  }
+}
+export async function me() {
+  try {
+    const response = await api.get('/api/auth/me')
+    return response.data
+  } catch (error) {
+    throw normalizeError(error, 'Unable to load auth state.')
+  }
+}
 export async function getBots() { try { const response = await api.get('/api/bots'); return response.data } catch (error) { throw normalizeError(error, 'Unable to load bots right now.') } }
 export async function createGame(payload) { try { const response = await api.post('/api/game/create', payload); return response.data } catch (error) { throw normalizeError(error, 'Unable to create game right now.') } }
 export async function joinGame(gameCode) { try { const response = await api.post(`/api/game/join/${encodeURIComponent(gameCode)}`); return response.data } catch (error) { throw normalizeError(error, 'Unable to join that game right now.') } }
