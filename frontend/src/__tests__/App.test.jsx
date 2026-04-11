@@ -108,7 +108,7 @@ describe("App routes", () => {
   it("register_requires_username_email_password_and_redirects_to_lobby", async () => {
     mockApi.me.mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
     mockApi.register.mockResolvedValueOnce({ user_id: "u-1" })
-    mockApi.me.mockResolvedValueOnce({ username: "new-user", email: "new@example.com" })
+    mockApi.me.mockResolvedValueOnce({ username: "new_user", email: "new@example.com" })
 
     renderRoute("/auth/register")
 
@@ -116,14 +116,14 @@ describe("App routes", () => {
     const email = screen.getByLabelText("Email")
     const password = screen.getByLabelText("Password")
 
-    fireEvent.change(username, { target: { value: "new-user" } })
+    fireEvent.change(username, { target: { value: "new_user" } })
     fireEvent.change(email, { target: { value: "new@example.com" } })
     fireEvent.change(password, { target: { value: "secret123" } })
     fireEvent.click(screen.getByRole("button", { name: "Register" }))
 
     await waitFor(() => {
       expect(mockApi.register).toHaveBeenCalledWith({
-        username: "new-user",
+        username: "new_user",
         email: "new@example.com",
         password: "secret123",
       })
