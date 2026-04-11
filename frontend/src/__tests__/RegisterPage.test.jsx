@@ -55,10 +55,10 @@ describe("RegisterPage", () => {
 
     fireEvent.change(screen.getByLabelText("Username"), { target: { value: "new_user" } })
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "new@example.com" } })
-    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "x".repeat(65) } })
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "x".repeat(513) } })
     fireEvent.click(screen.getByRole("button", { name: "Register" }))
 
-    expect(await screen.findByText("Password must be at most 64 characters.")).toBeInTheDocument()
+    expect(await screen.findByText("Password must be at most 512 characters.")).toBeInTheDocument()
     expect(mockAuth.register).not.toHaveBeenCalled()
   })
 })
