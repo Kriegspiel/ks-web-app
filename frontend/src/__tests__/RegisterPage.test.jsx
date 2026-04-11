@@ -28,15 +28,15 @@ afterEach(() => {
 })
 
 describe("RegisterPage", () => {
-  it("shows_password_complexity_validation_before_submit", async () => {
+  it("shows_username_pattern_validation_before_submit", async () => {
     render(<MemoryRouter><RegisterPage /></MemoryRouter>)
 
-    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "newuser" } })
+    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "new-user" } })
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "new@example.com" } })
-    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "password" } })
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "x" } })
     fireEvent.click(screen.getByRole("button", { name: "Register" }))
 
-    expect(await screen.findByText("Password must include at least one letter and one digit.")).toBeInTheDocument()
+    expect(await screen.findByText("Username can contain only letters, digits, and underscores.")).toBeInTheDocument()
     expect(mockAuth.register).not.toHaveBeenCalled()
   })
   it("shows_email_validation_before_submit", async () => {
@@ -48,6 +48,17 @@ describe("RegisterPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Register" }))
 
     expect(await screen.findByText("Invalid email format.")).toBeInTheDocument()
+    expect(mockAuth.register).not.toHaveBeenCalled()
+  })
+  it("shows_password_max_length_validation_before_submit", async () => {
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>)
+
+    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "new_user" } })
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "new@example.com" } })
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "x".repeat(65) } })
+    fireEvent.click(screen.getByRole("button", { name: "Register" }))
+
+    expect(await screen.findByText("Password must be at most 64 characters.")).toBeInTheDocument()
     expect(mockAuth.register).not.toHaveBeenCalled()
   })
 })
