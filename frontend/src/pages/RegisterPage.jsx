@@ -14,7 +14,7 @@ function getValidationError(formState) {
     return "Invalid email format."
   }
   if (!formState.password) return "Password is required."
-  if (formState.password.length > 64) return "Password must be at most 64 characters."
+  if (formState.password.length > 512) return "Password must be at most 512 characters."
   return ""
 }
 
