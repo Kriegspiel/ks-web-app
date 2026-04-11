@@ -13,6 +13,36 @@ describe("auth helpers", () => {
   it("login_posts_to_auth_login", async () => { const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { ok: true } }); const payload = { username: "new-user", password: "secret123" }; const result = await login(payload); expect(postSpy).toHaveBeenCalledWith("/api/auth/login", payload); expect(result).toEqual({ ok: true }) })
   it("logout_posts_to_auth_logout", async () => { const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: {} }); await logout(); expect(postSpy).toHaveBeenCalledWith("/api/auth/logout") })
   it("me_gets_auth_me", async () => { const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: { username: "test" } }); const result = await me(); expect(getSpy).toHaveBeenCalledWith("/api/auth/me"); expect(result).toEqual({ username: "test" }) })
+  it("register_normalizes_validation_errors", async () => {
+    vi.spyOn(api, "post").mockRejectedValue({ response: { status: 422, data: { detail: "Password must include at least one letter and one digit" } } })
+    await expect(register({ username: "new-user", email: "new@example.com", password: "password" })).rejects.toEqual({ status: 422, code: undefined, message: "Password must include at least one letter and one digit" })
+  })
+  it("register_normalizes_fastapi_validation_error_arrays", async () => {
+    vi.spyOn(api, "post").mockRejectedValue({
+      response: {
+        status: 422,
+        data: {
+          detail: [
+            { loc: ["body", "email"], msg: "Value error, Invalid email format" },
+            { loc: ["body", "password"], msg: "Value error, Password must include at least one letter and one digit" },
+          ],
+        },
+      },
+    })
+    await expect(register({ username: "new-user", email: "bad-email", password: "password" })).rejects.toEqual({
+      status: 422,
+      code: undefined,
+      message: "email: Invalid email format password: Password must include at least one letter and one digit",
+    })
+  })
+  it("register_normalizes_conflict_detail_objects", async () => {
+    vi.spyOn(api, "post").mockRejectedValue({ response: { status: 409, data: { detail: { field: "username", code: "USERNAME_TAKEN", message: "Username already exists" } } } })
+    await expect(register({ username: "taken-user", email: "new@example.com", password: "secret123" })).rejects.toEqual({ status: 409, code: "USERNAME_TAKEN", message: "Username already exists" })
+  })
+  it("login_normalizes_auth_errors", async () => {
+    vi.spyOn(api, "post").mockRejectedValue({ response: { status: 401, data: { detail: "Invalid username or password" } } })
+    await expect(login({ username: "new-user", password: "wrong123" })).rejects.toEqual({ status: 401, code: undefined, message: "Invalid username or password" })
+  })
 })
 
 describe("game helpers", () => {

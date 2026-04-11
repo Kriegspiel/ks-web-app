@@ -6,8 +6,14 @@ import { useAuth } from "../hooks/useAuth"
 function getValidationError(formState) {
   if (!formState.username.trim()) return "Username is required."
   if (!formState.email.trim()) return "Email is required."
+  if (!formState.email.includes("@") || formState.email.startsWith("@") || formState.email.endsWith("@")) {
+    return "Invalid email format."
+  }
   if (!formState.password) return "Password is required."
   if (formState.password.length < 8) return "Password must be at least 8 characters."
+  if (!/[A-Za-z]/.test(formState.password) || !/\d/.test(formState.password)) {
+    return "Password must include at least one letter and one digit."
+  }
   return ""
 }
 
