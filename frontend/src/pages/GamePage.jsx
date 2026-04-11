@@ -5,6 +5,7 @@ import PromotionModal from "../components/PromotionModal"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
+import { announcementSoundCategories, createGameSoundPlayer } from "../gameSounds"
 import { askAny, deleteWaitingGame, getGame, getGameState, resignGame, submitMove } from "../services/api"
 import { getAllowedMoveTargets, PIECE_ASSETS } from "../components/chessboard"
 import "./GamePage.css"
@@ -23,6 +24,7 @@ const PHANTOM_LABELS = {
 const PHANTOM_MENU_WIDTH = 164
 const PHANTOM_MENU_GAP = 6
 const REFEREE_LOG_FOLLOW_THRESHOLD_PX = 24
+const GAME_SOUND_MUTE_STORAGE_KEY = "game_page_sounds_muted"
 const REFEREE_MAIN_ANNOUNCEMENT_TEXT = {
   1: "Illegal move",
   2: "Move complete",
@@ -277,6 +279,34 @@ function groupRefereeLog(entries = []) {
   })
 
   return Array.from(turns.values()).sort((left, right) => left.turn - right.turn)
+}
+
+function flattenGroupedRefereeEntries(turns) {
+  if (!Array.isArray(turns)) {
+    return []
+  }
+
+  const entries = []
+  turns.forEach((turn) => {
+    const turnNumber = Number.isFinite(turn?.turn) ? turn.turn : entries.length + 1
+    ;["white", "black"].forEach((color) => {
+      const sideEntries = Array.isArray(turn?.[color]) ? turn[color] : []
+      sideEntries.forEach((entry, index) => {
+        const text = typeof entry?.text === "string" ? entry.text : typeof entry === "string" ? entry : ""
+        const messages = Array.isArray(entry?.messages)
+          ? entry.messages.filter((message) => typeof message === "string" && message.trim())
+          : text
+            ? [text]
+            : []
+        entries.push({
+          key: `${turnNumber}-${color}-${index}-${messages.join("|")}`,
+          messages,
+        })
+      })
+    })
+  })
+
+  return entries
 }
 
 function getGameScoresheet(gameState, color) {
@@ -973,6 +1003,12 @@ export default function GamePage() {
   const [draggingMoveFrom, setDraggingMoveFrom] = useState("")
   const [moveDragHoverSquare, setMoveDragHoverSquare] = useState("")
   const [dragPreview, setDragPreview] = useState(null)
+  const [soundsMuted, setSoundsMuted] = useState(() => {
+    if (typeof window === "undefined") {
+      return false
+    }
+    return window.localStorage.getItem(GAME_SOUND_MUTE_STORAGE_KEY) === "1"
+  })
 
   const lastTapRef = useRef({ square: "", time: 0 })
   const boardShellRef = useRef(null)
@@ -987,6 +1023,12 @@ export default function GamePage() {
   const lastRefereeEntryCountRef = useRef(0)
   const viewportRestoreRef = useRef(null)
   const stateRequestIdRef = useRef(0)
+  const soundPlayerRef = useRef(null)
+  const lastSoundEntryKeysRef = useRef([])
+
+  if (!soundPlayerRef.current) {
+    soundPlayerRef.current = createGameSoundPlayer()
+  }
 
   const captureViewport = useCallback(() => {
     viewportRestoreRef.current = { x: window.scrollX, y: window.scrollY }
@@ -1056,6 +1098,26 @@ export default function GamePage() {
     pollState({ silent: false })
     pollMetadata()
   }, [pollMetadata, pollState])
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return
+    }
+    window.localStorage.setItem(GAME_SOUND_MUTE_STORAGE_KEY, soundsMuted ? "1" : "0")
+  }, [soundsMuted])
+
+  useEffect(() => {
+    const primeAudio = () => {
+      soundPlayerRef.current?.prime()
+    }
+
+    window.addEventListener("pointerdown", primeAudio, { passive: true })
+    window.addEventListener("keydown", primeAudio)
+    return () => {
+      window.removeEventListener("pointerdown", primeAudio)
+      window.removeEventListener("keydown", primeAudio)
+    }
+  }, [])
 
   useEffect(() => {
     if (!gameRef) {
@@ -1154,6 +1216,7 @@ export default function GamePage() {
 
   const highlightedSquares = [fromSquare, toSquare, movingPhantomFrom, dragHoverSquare, draggingMoveFrom, moveDragHoverSquare].filter(Boolean)
   const groupedRefereeLog = useMemo(() => buildVisibleRefereeLog(gameState), [gameState])
+  const flattenedRefereeEntries = useMemo(() => flattenGroupedRefereeEntries(groupedRefereeLog), [groupedRefereeLog])
   const captureSquares = useMemo(() => getRecentCaptureSquares(gameState), [gameState])
   const latestAskAnyConstraint = useMemo(
     () => getLatestAskAnyConstraint(groupedRefereeLog, gameState?.your_color),
@@ -1184,6 +1247,8 @@ export default function GamePage() {
   }, [draggingMoveFrom, effectiveAllowedMoves, fromSquare])
   const allowedMoveSourceSquares = useMemo(() => getAllowedMoveSources(effectiveAllowedMoves), [effectiveAllowedMoves])
   const waitingForOpponent = gameState?.state === "active" && !possibleActions.includes("move")
+  const soundSettingEnabled = user?.settings?.sound_enabled !== false
+  const soundsEnabled = soundSettingEnabled && !soundsMuted
   const activeClockColor = gameState?.clock?.active_color ?? gameState?.turn
   const opponentLabel = useMemo(() => {
     if (!gameMeta || !gameState?.your_color) {
@@ -1238,6 +1303,23 @@ export default function GamePage() {
 
     lastRefereeEntryCountRef.current = nextEntryCount
   }, [groupedRefereeLog])
+
+  useEffect(() => {
+    const previousKeys = lastSoundEntryKeysRef.current
+    const nextKeys = flattenedRefereeEntries.map((entry) => entry.key)
+    const hasPreviousEntries = previousKeys.length > 0
+    const isAppendOnly =
+      previousKeys.length <= nextKeys.length &&
+      previousKeys.every((key, index) => key === nextKeys[index])
+
+    if (soundsEnabled && hasPreviousEntries && isAppendOnly && nextKeys.length > previousKeys.length) {
+      const appendedEntries = flattenedRefereeEntries.slice(previousKeys.length)
+      const categories = appendedEntries.flatMap((entry) => announcementSoundCategories(entry.messages))
+      soundPlayerRef.current?.playCategories(categories)
+    }
+
+    lastSoundEntryKeysRef.current = nextKeys
+  }, [flattenedRefereeEntries, soundsEnabled])
 
   useEffect(() => {
     if (!fromSquare) {
@@ -1849,6 +1931,14 @@ export default function GamePage() {
 
                 <div className="game-board-meta">
                   <p className="game-page__meta">Phantoms: left-drag to move, right-click to remove, double-click or right-click empty squares to add.</p>
+                  <button
+                    type="button"
+                    className="game-sound-toggle"
+                    onClick={() => setSoundsMuted((value) => !value)}
+                    aria-pressed={soundsMuted}
+                  >
+                    {soundsMuted ? "Sounds off" : "Mute sounds"}
+                  </button>
                 </div>
               </section>
 

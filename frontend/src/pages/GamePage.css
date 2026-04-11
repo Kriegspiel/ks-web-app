@@ -109,6 +109,20 @@
   margin-top: 0.85rem;
 }
 
+.game-sound-toggle {
+  justify-self: start;
+  padding: 0.38rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  line-height: 1.1;
+  box-shadow: none;
+}
+
+.game-sound-toggle[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--surface-strong) 88%, var(--surface));
+  color: var(--muted-soft);
+}
+
 .phantom-menu {
   position: absolute;
   z-index: 12;

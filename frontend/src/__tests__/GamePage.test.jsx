@@ -18,6 +18,16 @@ const mockAuth = vi.hoisted(() => ({
   useAuth: vi.fn(),
 }))
 
+const mockSoundPlayer = vi.hoisted(() => ({
+  prime: vi.fn(),
+  playCategories: vi.fn(),
+}))
+
+const mockGameSounds = vi.hoisted(() => ({
+  createGameSoundPlayer: vi.fn(() => mockSoundPlayer),
+  announcementSoundCategories: vi.fn((messages = []) => messages),
+}))
+
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom")
   return {
@@ -29,6 +39,7 @@ vi.mock("react-router-dom", async () => {
 
 vi.mock("../services/api", () => mockApi)
 vi.mock("../hooks/useAuth", () => mockAuth)
+vi.mock("../gameSounds", () => mockGameSounds)
 
 const activeState = {
   game_id: "g-123",
@@ -52,8 +63,12 @@ beforeEach(() => {
   window.scrollTo = vi.fn()
   mockNavigate.mockReset()
   Object.values(mockApi).forEach((fn) => fn.mockReset())
+  mockSoundPlayer.prime.mockReset()
+  mockSoundPlayer.playCategories.mockReset()
+  mockGameSounds.createGameSoundPlayer.mockClear()
+  mockGameSounds.announcementSoundCategories.mockClear()
   mockAuth.useAuth.mockReturnValue({
-    user: { username: "notifil", email: "notifil@example.com" },
+    user: { username: "notifil", email: "notifil@example.com", settings: { sound_enabled: true } },
     isAuthenticated: true,
     bootstrapping: false,
   })
@@ -251,6 +266,61 @@ describe("GamePage", () => {
     })
 
     expect(log.scrollTop).toBe(100)
+  })
+
+  it("plays_sounds_only_for_new_referee_announcements", async () => {
+    const firstState = {
+      ...activeState,
+      referee_log: [{ turn: 1, color: "white", announcement: "Move complete" }],
+    }
+    const secondState = {
+      ...activeState,
+      referee_log: [
+        { turn: 1, color: "white", announcement: "Move complete" },
+        { turn: 1, color: "black", announcement: "Has pawn captures" },
+      ],
+    }
+
+    mockApi.getGameState.mockResolvedValueOnce(firstState).mockResolvedValueOnce(secondState)
+
+    render(<GamePage />)
+
+    await screen.findByText("Move complete")
+    expect(mockSoundPlayer.playCategories).not.toHaveBeenCalled()
+
+    await sleep(650)
+
+    await waitFor(() => {
+      expect(mockSoundPlayer.playCategories).toHaveBeenCalledWith(["Has pawn captures"])
+    })
+  })
+
+  it("mutes_game_sounds_from_the_board_footer_toggle", async () => {
+    const firstState = {
+      ...activeState,
+      referee_log: [{ turn: 1, color: "white", announcement: "Move complete" }],
+    }
+    const secondState = {
+      ...activeState,
+      referee_log: [
+        { turn: 1, color: "white", announcement: "Move complete" },
+        { turn: 1, color: "black", announcement: "Illegal move" },
+      ],
+    }
+
+    mockApi.getGameState.mockResolvedValueOnce(firstState).mockResolvedValueOnce(secondState)
+
+    render(<GamePage />)
+
+    fireEvent.click(await screen.findByRole("button", { name: "Mute sounds" }))
+    expect(screen.getByRole("button", { name: "Sounds off" })).toBeInTheDocument()
+
+    await sleep(650)
+
+    await waitFor(() => {
+      expect(mockApi.getGameState).toHaveBeenCalledTimes(2)
+    })
+    expect(mockSoundPlayer.playCategories).not.toHaveBeenCalled()
   })
 
   it("shows_rules_and_opponent_in_status_from_metadata", async () => {
