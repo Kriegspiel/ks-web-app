@@ -57,8 +57,8 @@ describe("BotsReportPage", () => {
 
     expect(await screen.findByText("Bots report")).toBeInTheDocument()
     expect((await screen.findAllByText("2026-04-08")).length).toBe(2)
-    expect(screen.getByRole("heading", { name: "gptnano" })).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "haiku" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "gptnano" })).toHaveAttribute("href", "/user/gptnano")
+    expect(screen.getByRole("link", { name: "haiku" })).toHaveAttribute("href", "/user/haiku")
     expect(screen.getAllByText("Overall").length).toBeGreaterThan(0)
     expect(screen.getAllByText("vs. humans").length).toBeGreaterThan(0)
     expect(screen.getAllByText("vs. bots").length).toBeGreaterThan(0)

@@ -112,6 +112,7 @@ button.theme-toggle {
   transition: none;
   transform: none;
   outline: none;
+  box-shadow: none;
 }
 
 button.theme-toggle:hover:not(:disabled),
@@ -121,6 +122,7 @@ button.theme-toggle:active {
   border-color: var(--border);
   transform: none;
   outline: none;
+  box-shadow: none;
 }
 
 .theme-toggle__logo {
@@ -556,6 +558,18 @@ button.theme-toggle:active {
 
 .pagination-controls span {
   color: var(--muted-soft);
+}
+
+.bots-report-table__group,
+.bots-report-table__subhead,
+.bots-report-table__cell--separator {
+  position: relative;
+}
+
+.bots-report-table__group--separator,
+.bots-report-table__subhead--separator,
+.bots-report-table__cell--separator {
+  border-left: 3px solid var(--border);
 }
 
 @media (max-width: 900px) {

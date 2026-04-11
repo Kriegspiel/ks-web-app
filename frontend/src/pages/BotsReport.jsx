@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
 import VersionStamp from "../components/VersionStamp"
 import { techApi } from "../services/api"
 import "./Leaderboard.css"
@@ -48,22 +49,22 @@ export default function BotsReportPage() {
         <>
           {data.bots.map((bot) => (
             <section key={bot.username} className="leaderboard-table-wrap">
-              <h2>{bot.username}</h2>
-              <table className="leaderboard-table">
+              <h2><Link to={`/user/${bot.username}`}>{bot.username}</Link></h2>
+              <table className="leaderboard-table bots-report-table">
                 <thead>
                   <tr>
                     <th rowSpan="2">Date</th>
-                    <th colSpan="2">Overall</th>
-                    <th colSpan="2">vs. humans</th>
-                    <th colSpan="2">vs. bots</th>
+                    <th colSpan="2" className="bots-report-table__group">Overall</th>
+                    <th colSpan="2" className="bots-report-table__group bots-report-table__group--separator">vs. humans</th>
+                    <th colSpan="2" className="bots-report-table__group bots-report-table__group--separator">vs. bots</th>
                   </tr>
                   <tr>
                     <th>Total games</th>
                     <th>Win rate</th>
-                    <th>Total games</th>
-                    <th>Win rate</th>
-                    <th>Total games</th>
-                    <th>Win rate</th>
+                    <th className="bots-report-table__subhead bots-report-table__subhead--separator">Total games</th>
+                    <th className="bots-report-table__subhead">Win rate</th>
+                    <th className="bots-report-table__subhead bots-report-table__subhead--separator">Total games</th>
+                    <th className="bots-report-table__subhead">Win rate</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -72,9 +73,9 @@ export default function BotsReportPage() {
                       <td>{row.date}</td>
                       <td>{Number(row?.stats?.overall?.total_games ?? 0).toLocaleString("en-US")}</td>
                       <td>{(Number(row?.stats?.overall?.win_rate ?? 0) * 100).toFixed(1)}%</td>
-                      <td>{Number(row?.stats?.vs_humans?.total_games ?? 0).toLocaleString("en-US")}</td>
+                      <td className="bots-report-table__cell--separator">{Number(row?.stats?.vs_humans?.total_games ?? 0).toLocaleString("en-US")}</td>
                       <td>{(Number(row?.stats?.vs_humans?.win_rate ?? 0) * 100).toFixed(1)}%</td>
-                      <td>{Number(row?.stats?.vs_bots?.total_games ?? 0).toLocaleString("en-US")}</td>
+                      <td className="bots-report-table__cell--separator">{Number(row?.stats?.vs_bots?.total_games ?? 0).toLocaleString("en-US")}</td>
                       <td>{(Number(row?.stats?.vs_bots?.win_rate ?? 0) * 100).toFixed(1)}%</td>
                     </tr>
                   ))}
