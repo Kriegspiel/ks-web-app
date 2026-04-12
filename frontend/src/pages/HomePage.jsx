@@ -256,7 +256,11 @@ export default function HomePage() {
                     )
                   })}
                 </ul>
-                {user?.username ? <Link to={`/user/${user.username}/games`} className="home-all-games-link">View all games</Link> : null}
+                {user?.username ? (
+                  <div className="home-recent-games-footer">
+                    <Link to={`/user/${user.username}/games`} className="home-all-games-link">View all games</Link>
+                  </div>
+                ) : null}
               </>
             ) : null}
           </section>
