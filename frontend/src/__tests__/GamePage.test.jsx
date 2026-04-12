@@ -454,7 +454,9 @@ describe("GamePage", () => {
 
     expect(await screen.findByText("Turn 1")).toBeInTheDocument()
     expect(screen.getByText("Turn 2")).toBeInTheDocument()
-    expect(screen.getByText("White sees file blocked")).toBeInTheDocument()
+    const whiteEntry = screen.getByText("White sees file blocked").closest(".game-referee-entry")
+    expect(whiteEntry).not.toBeNull()
+    expect(within(whiteEntry).getByText("1")).toBeInTheDocument()
     expect(screen.getByText("Black hears no capture")).toBeInTheDocument()
     expect(screen.getByText("White in check")).toBeInTheDocument()
   })

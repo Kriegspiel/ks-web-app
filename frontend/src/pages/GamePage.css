@@ -368,13 +368,38 @@
 
 .game-referee-column__list {
   margin: 0;
-  padding-left: 1rem;
+  padding: 0;
+  list-style: none;
   display: grid;
-  gap: 0.35rem;
+  gap: 0.45rem;
 }
 
-.game-referee-column__list li {
+.game-referee-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
   color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.game-referee-entry__badge {
+  flex: 0 0 auto;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface-strong) 88%, var(--accent) 12%);
+  border: 1px solid var(--border-strong);
+}
+
+.game-referee-entry__text {
+  min-width: 0;
 }
 
 .game-referee-column__empty {
