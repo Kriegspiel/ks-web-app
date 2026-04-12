@@ -440,6 +440,29 @@ describe("GamePage", () => {
     expect(source).not.toHaveClass("square--phantom")
   })
 
+  it("seeds_default_opponent_phantoms_only_at_the_opening", async () => {
+    render(<GamePage />)
+
+    fireEvent.click(await screen.findByRole("button", { name: "Set opponent phantoms to default" }))
+
+    expect(screen.getByRole("button", { name: "Square a8" })).toHaveClass("square--phantom")
+    expect(screen.getByRole("button", { name: "Square e8" })).toHaveClass("square--phantom")
+    expect(screen.getByRole("button", { name: "Square h7" })).toHaveClass("square--phantom")
+  })
+
+  it("hides_default_opponent_phantom_setup_after_the_opening", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      move_number: 2,
+      referee_log: [{ turn: 1, color: "white", announcement: "Move complete" }],
+    })
+
+    render(<GamePage />)
+
+    await screen.findByText("Move complete")
+    expect(screen.queryByRole("button", { name: "Set opponent phantoms to default" })).not.toBeInTheDocument()
+  })
+
   it("renders_referee_log_grouped_by_turn", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,

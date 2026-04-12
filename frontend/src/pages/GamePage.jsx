@@ -25,6 +25,44 @@ const PHANTOM_MENU_WIDTH = 164
 const PHANTOM_MENU_GAP = 6
 const REFEREE_LOG_FOLLOW_THRESHOLD_PX = 24
 const GAME_SOUND_MUTE_STORAGE_KEY = "game_page_sounds_muted"
+const OPPONENT_STARTING_PHANTOMS = {
+  white: {
+    a1: "r",
+    b1: "n",
+    c1: "b",
+    d1: "q",
+    e1: "k",
+    f1: "b",
+    g1: "n",
+    h1: "r",
+    a2: "p",
+    b2: "p",
+    c2: "p",
+    d2: "p",
+    e2: "p",
+    f2: "p",
+    g2: "p",
+    h2: "p",
+  },
+  black: {
+    a7: "p",
+    b7: "p",
+    c7: "p",
+    d7: "p",
+    e7: "p",
+    f7: "p",
+    g7: "p",
+    h7: "p",
+    a8: "r",
+    b8: "n",
+    c8: "b",
+    d8: "q",
+    e8: "k",
+    f8: "b",
+    g8: "n",
+    h8: "r",
+  },
+}
 const REFEREE_MAIN_ANNOUNCEMENT_TEXT = {
   1: "Illegal move",
   2: "Move complete",
@@ -979,6 +1017,19 @@ function getOpponentPhantomPiece(piece, playerColor) {
   return playerColor === "black" ? normalized.toUpperCase() : normalized
 }
 
+function opponentStartingPhantoms(playerColor) {
+  const normalized = normalizeLogColor(playerColor)
+  if (!normalized) {
+    return {}
+  }
+
+  return OPPONENT_STARTING_PHANTOMS[normalized === "white" ? "black" : "white"] ?? {}
+}
+
+function isOpeningPromptText(text) {
+  return /^(white|black) to move$/i.test(String(text || "").trim())
+}
+
 export default function GamePage() {
   const navigate = useNavigate()
   const { gameCode, gameId } = useParams()
@@ -1043,6 +1094,7 @@ export default function GamePage() {
     setPieceAt,
     move,
     removeAt,
+    replaceAll,
     availablePiecesForSquare,
   } = usePhantoms({ gameId: gameRef, occupiedSquares })
 
@@ -1216,6 +1268,17 @@ export default function GamePage() {
 
   const highlightedSquares = [fromSquare, toSquare, movingPhantomFrom, dragHoverSquare, draggingMoveFrom, moveDragHoverSquare].filter(Boolean)
   const groupedRefereeLog = useMemo(() => buildVisibleRefereeLog(gameState), [gameState])
+  const moveNumberValue = Number.parseInt(gameState?.move_number, 10)
+  const hasOnlyOpeningPrompts = groupedRefereeLog.every((turnEntry) =>
+    ["white", "black"].every((color) =>
+      (Array.isArray(turnEntry?.[color]) ? turnEntry[color] : []).every((entry) => isOpeningPromptText(entry?.text ?? entry)),
+    ),
+  )
+  const canSeedOpponentPhantoms =
+    gameState?.state === "active" &&
+    Number.isFinite(moveNumberValue) &&
+    moveNumberValue <= 1 &&
+    hasOnlyOpeningPrompts
   const flattenedRefereeEntries = useMemo(() => flattenGroupedRefereeEntries(groupedRefereeLog), [groupedRefereeLog])
   const captureSquares = useMemo(() => getRecentCaptureSquares(gameState), [gameState])
   const latestAskAnyConstraint = useMemo(
@@ -1812,6 +1875,11 @@ export default function GamePage() {
     closePhantomMenu()
   }
 
+  function handleSeedOpponentPhantoms() {
+    replaceAll(opponentStartingPhantoms(gameState?.your_color))
+    setActionError("")
+  }
+
   const phantomMenuSquare = phantomMenu?.square ?? ""
   const phantomOnMenuSquare = phantomMenuSquare ? placements[phantomMenuSquare] : ""
   const pageNotice = loading
@@ -1931,6 +1999,15 @@ export default function GamePage() {
 
                 <div className="game-board-meta">
                   <p className="game-page__meta">Phantoms: left-drag to move, right-click to remove, double-click or right-click empty squares to add.</p>
+                  {canSeedOpponentPhantoms ? (
+                    <button
+                      type="button"
+                      className="game-phantom-setup-button"
+                      onClick={handleSeedOpponentPhantoms}
+                    >
+                      Set opponent phantoms to default
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     className="game-sound-toggle"
