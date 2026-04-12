@@ -7,7 +7,7 @@ import { useAuth } from "../hooks/useAuth"
 import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
 import { announcementSoundCategories, createGameSoundPlayer } from "../gameSounds"
 import { askAny, deleteWaitingGame, getGame, getGameState, resignGame, submitMove } from "../services/api"
-import { getAllowedMoveTargets, PIECE_ASSETS } from "../components/chessboard"
+import { getAllowedMoveTargets, PIECE_ASSETS, parseFenBoard } from "../components/chessboard"
 import "./GamePage.css"
 
 const POLL_INTERVAL_MS = 500
@@ -105,6 +105,14 @@ const REFEREE_CODE_KEYS = [
   "special_case",
 ]
 const REFEREE_CAPTURE_SQUARE_KEYS = ["capture_square", "capture_at_square", "captured_square", "target_square", "square"]
+const PIECE_STATUS_ORDER = [
+  ["k", "K"],
+  ["q", "Q"],
+  ["r", "R"],
+  ["b", "B"],
+  ["n", "N"],
+  ["p", "P"],
+]
 
 function normalizeLogColor(value) {
   if (typeof value !== "string") {
@@ -1021,6 +1029,61 @@ function getOpponentPhantomPiece(piece, playerColor) {
   return playerColor === "black" ? normalized.toUpperCase() : normalized
 }
 
+function emptyPieceStatus() {
+  return {
+    total: 0,
+    byType: {
+      k: 0,
+      q: 0,
+      r: 0,
+      b: 0,
+      n: 0,
+      p: 0,
+    },
+  }
+}
+
+function countDisplayedPieces({ fen, placements, yourColor }) {
+  const counts = {
+    white: emptyPieceStatus(),
+    black: emptyPieceStatus(),
+  }
+
+  parseFenBoard(fen).forEach((row) => {
+    row.forEach((piece) => {
+      if (typeof piece !== "string" || !piece) {
+        return
+      }
+
+      const color = piece === piece.toUpperCase() ? "white" : "black"
+      const type = piece.toLowerCase()
+      if (!counts[color].byType[type] && counts[color].byType[type] !== 0) {
+        return
+      }
+      counts[color].byType[type] += 1
+      counts[color].total += 1
+    })
+  })
+
+  const normalizedColor = normalizeLogColor(yourColor)
+  const opponentColor = normalizedColor === "white" ? "black" : normalizedColor === "black" ? "white" : ""
+  if (opponentColor) {
+    Object.values(placements || {}).forEach((piece) => {
+      if (typeof piece !== "string" || !piece) {
+        return
+      }
+      const type = piece.toLowerCase()
+      if (!counts[opponentColor].byType[type] && counts[opponentColor].byType[type] !== 0) {
+        return
+      }
+      counts[opponentColor].byType[type] += 1
+      counts[opponentColor].total += 1
+    })
+  }
+
+  return counts
+}
+
 function opponentStartingPhantoms(playerColor) {
   const normalized = normalizeLogColor(playerColor)
   if (!normalized) {
@@ -1316,6 +1379,10 @@ export default function GamePage() {
   const waitingForOpponent = gameState?.state === "active" && !possibleActions.includes("move")
   const soundSettingEnabled = user?.settings?.sound_enabled !== false
   const soundsEnabled = soundSettingEnabled && !soundsMuted
+  const displayedPieceStatus = useMemo(
+    () => countDisplayedPieces({ fen: gameState?.your_fen, placements, yourColor: gameState?.your_color }),
+    [gameState?.your_color, gameState?.your_fen, placements],
+  )
   const activeClockColor = gameState?.clock?.active_color ?? gameState?.turn
   const opponentLabel = useMemo(() => {
     if (!gameMeta || !gameState?.your_color) {
@@ -2002,6 +2069,22 @@ export default function GamePage() {
                 ) : null}
 
                 <div className="game-board-meta">
+                  <div className="game-piece-status" aria-label="Displayed board piece status">
+                    {["white", "black"].map((color) => {
+                      const status = displayedPieceStatus[color]
+                      return (
+                        <section key={color} className="game-piece-status__card" aria-label={`${color === "white" ? "White" : "Black"} piece status`}>
+                          <h3>{color === "white" ? "White pieces" : "Black pieces"}</h3>
+                          <p className="game-piece-status__total">Total {status.total}</p>
+                          <div className="game-piece-status__breakdown" aria-label={`${color} piece breakdown`}>
+                            {PIECE_STATUS_ORDER.map(([piece, label]) => (
+                              <span key={piece} className="game-piece-status__chip">{label} {status.byType[piece]}</span>
+                            ))}
+                          </div>
+                        </section>
+                      )
+                    })}
+                  </div>
                   <p className="game-page__meta">Phantoms: left-drag to move, right-click to remove, double-click or right-click empty squares to add.</p>
                   <div className="game-board-meta__actions">
                     {canSeedOpponentPhantoms ? (

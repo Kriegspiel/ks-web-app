@@ -443,11 +443,17 @@ describe("GamePage", () => {
   it("seeds_default_opponent_phantoms_only_at_the_opening", async () => {
     render(<GamePage />)
 
+    const whiteStatus = await screen.findByLabelText("White piece status")
+    const blackStatus = screen.getByLabelText("Black piece status")
+    expect(within(whiteStatus).getByText("Total 2")).toBeInTheDocument()
+    expect(within(blackStatus).getByText("Total 0")).toBeInTheDocument()
+
     fireEvent.click(await screen.findByRole("button", { name: "Set opponent phantoms to default" }))
 
     expect(screen.getByRole("button", { name: "Square a8" })).toHaveClass("square--phantom")
     expect(screen.getByRole("button", { name: "Square e8" })).toHaveClass("square--phantom")
     expect(screen.getByRole("button", { name: "Square h7" })).toHaveClass("square--phantom")
+    expect(within(screen.getByLabelText("Black piece status")).getByText("Total 16")).toBeInTheDocument()
   })
 
   it("hides_default_opponent_phantom_setup_after_the_opening", async () => {
