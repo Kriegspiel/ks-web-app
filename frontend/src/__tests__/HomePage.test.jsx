@@ -171,6 +171,7 @@ describe("HomePage", () => {
     expect(screen.getByText("Active")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "randobot (bot)" })).toHaveAttribute("href", "/user/randobot")
     expect(screen.getAllByRole("link", { name: "fil" })[0]).toHaveAttribute("href", "/user/fil")
+    expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/fil/games")
     expect(screen.getByText(/2026-03-26 15:00:00 UTC/)).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Overall rating" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Overall results" })).toBeInTheDocument()

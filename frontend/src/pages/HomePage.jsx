@@ -235,26 +235,29 @@ export default function HomePage() {
             {myGamesError ? <p className="auth-error" role="alert">{myGamesError}</p> : null}
             {!myGamesLoading && !myGamesError && recentGames.length === 0 ? <p>No games yet. Start one from the lobby.</p> : null}
             {recentGames.length > 0 ? (
-              <ul className="lobby-list">
-                {recentGames.map((game) => {
-                  const isActive = ACTIVE_STATES.has(String(game?.state ?? "").toLowerCase())
-                  return (
-                    <li key={`home-${game.game_id ?? game.game_code}`}>
-                      <div>
-                        <strong>{game.game_code ?? game.game_id}</strong> · {game.state}
-                        {isActive ? <span className="status-pill">Active</span> : null}
-                        <div className="lobby-meta">
-                          {renderPlayerLink(game.white, "Waiting…")}
-                          {" vs "}
-                          {renderPlayerLink(game.black, "Waiting…")}
+              <>
+                <ul className="lobby-list">
+                  {recentGames.map((game) => {
+                    const isActive = ACTIVE_STATES.has(String(game?.state ?? "").toLowerCase())
+                    return (
+                      <li key={`home-${game.game_id ?? game.game_code}`}>
+                        <div>
+                          <strong>{game.game_code ?? game.game_id}</strong> · {game.state}
+                          {isActive ? <span className="status-pill">Active</span> : null}
+                          <div className="lobby-meta">
+                            {renderPlayerLink(game.white, "Waiting…")}
+                            {" vs "}
+                            {renderPlayerLink(game.black, "Waiting…")}
+                          </div>
+                          <div className="lobby-meta">Updated {formatUpdatedAt(game.updated_at ?? game.created_at)}</div>
                         </div>
-                        <div className="lobby-meta">Updated {formatUpdatedAt(game.updated_at ?? game.created_at)}</div>
-                      </div>
-                      <Link to={`/game/${game.game_code ?? game.game_id}`}>Open</Link>
-                    </li>
-                  )
-                })}
-              </ul>
+                        <Link to={`/game/${game.game_code ?? game.game_id}`}>Open</Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+                {user?.username ? <Link to={`/user/${user.username}/games`} className="home-all-games-link">View all games</Link> : null}
+              </>
             ) : null}
           </section>
         </>

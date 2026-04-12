@@ -490,6 +490,12 @@ button.theme-toggle:active {
   margin-top: 1rem;
 }
 
+.home-all-games-link {
+  justify-self: start;
+  font-weight: 600;
+  text-underline-offset: 0.14em;
+}
+
 .status-pill {
   display: inline-flex;
   margin-left: 0.5rem;
