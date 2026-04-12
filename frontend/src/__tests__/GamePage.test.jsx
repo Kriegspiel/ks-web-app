@@ -443,17 +443,17 @@ describe("GamePage", () => {
   it("seeds_default_opponent_phantoms_only_at_the_opening", async () => {
     render(<GamePage />)
 
-    const whiteStatus = await screen.findByLabelText("White piece status")
-    const blackStatus = screen.getByLabelText("Black piece status")
-    expect(within(whiteStatus).getByText("Total 2")).toBeInTheDocument()
-    expect(within(blackStatus).getByText("Total 0")).toBeInTheDocument()
+    const whiteStatus = await screen.findByLabelText("White pieces remain")
+    const blackStatus = screen.getByLabelText("Black pieces remain")
+    expect(within(whiteStatus).getByText("16")).toBeInTheDocument()
+    expect(within(blackStatus).getByText("16")).toBeInTheDocument()
 
     fireEvent.click(await screen.findByRole("button", { name: "Set opponent phantoms to default" }))
 
     expect(screen.getByRole("button", { name: "Square a8" })).toHaveClass("square--phantom")
     expect(screen.getByRole("button", { name: "Square e8" })).toHaveClass("square--phantom")
     expect(screen.getByRole("button", { name: "Square h7" })).toHaveClass("square--phantom")
-    expect(within(screen.getByLabelText("Black piece status")).getByText("Total 16")).toBeInTheDocument()
+    expect(within(screen.getByLabelText("Black pieces remain")).getByText("16")).toBeInTheDocument()
   })
 
   it("hides_default_opponent_phantom_setup_after_the_opening", async () => {
@@ -467,6 +467,25 @@ describe("GamePage", () => {
 
     await screen.findByText("Move complete")
     expect(screen.queryByRole("button", { name: "Set opponent phantoms to default" })).not.toBeInTheDocument()
+  })
+
+  it("tracks_remaining_pieces_from_capture_announcements", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      referee_log: [
+        { turn: 1, color: "white", announcement: "Capture at D5" },
+        { turn: 1, color: "black", announcement: "Move complete" },
+        { turn: 2, color: "white", announcement: "Move complete" },
+        { turn: 2, color: "black", announcement: "Capture at E4" },
+        { turn: 3, color: "white", announcement: "Capture at F6" },
+      ],
+    })
+
+    render(<GamePage />)
+
+    expect(await screen.findByText("Capture at D5")).toBeInTheDocument()
+    expect(within(screen.getByLabelText("White pieces remain")).getByText("15")).toBeInTheDocument()
+    expect(within(screen.getByLabelText("Black pieces remain")).getByText("14")).toBeInTheDocument()
   })
 
   it("renders_referee_log_grouped_by_turn", async () => {

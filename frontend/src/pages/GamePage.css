@@ -137,25 +137,7 @@
   margin: 0;
   color: var(--text);
   font-weight: 700;
-  font-size: 0.82rem;
-}
-
-.game-piece-status__breakdown {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.game-piece-status__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  padding: 0.2rem 0.42rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 92%, var(--surface-strong) 8%);
-  color: var(--muted);
-  font-size: 0.74rem;
+  font-size: 1.1rem;
   line-height: 1;
 }
 
