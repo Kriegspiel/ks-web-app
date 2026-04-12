@@ -492,6 +492,7 @@ button.theme-toggle:active {
 
 .home-all-games-link {
   justify-self: start;
+  margin-top: 0.45rem;
   font-weight: 600;
   text-underline-offset: 0.14em;
 }
