@@ -2033,17 +2033,14 @@ export default function GamePage() {
                 ) : null}
 
                 <div className="game-board-meta">
-                  <div className="game-piece-status" aria-label="Remaining piece status">
-                    {["white", "black"].map((color) => {
-                      const total = remainingPieceStatus[color]
-                      return (
-                        <section key={color} className="game-piece-status__card" aria-label={`${color === "white" ? "White" : "Black"} pieces remain`}>
-                          <h3>{color === "white" ? "White pieces remain" : "Black pieces remain"}</h3>
-                          <p className="game-piece-status__total">{total}</p>
-                        </section>
-                      )
-                    })}
-                  </div>
+                  <section className="game-piece-status" aria-label="Remaining piece status">
+                    <p className="game-piece-status__line">
+                      <span className="game-piece-status__label">White pieces remain:</span> {remainingPieceStatus.white}
+                    </p>
+                    <p className="game-piece-status__line">
+                      <span className="game-piece-status__label">Black pieces remain:</span> {remainingPieceStatus.black}
+                    </p>
+                  </section>
                   <p className="game-page__meta">Phantoms: left-drag to move, right-click to remove, double-click or right-click empty squares to add.</p>
                   <div className="game-board-meta__actions">
                     {canSeedOpponentPhantoms ? (
