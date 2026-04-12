@@ -400,8 +400,12 @@ export default function LobbyPage() {
     }
   }
 
-  async function handleCloseWaitingGame(gameId) {
-    if (!gameId) {
+  async function handleCloseWaitingGame(gameRef) {
+    const targetCode = String(gameRef?.game_code || "").trim().toUpperCase()
+    const targetId = String(gameRef?.game_id || "").trim()
+    const target = targetCode || targetId
+
+    if (!target) {
       return
     }
 
@@ -410,11 +414,12 @@ export default function LobbyPage() {
     setJoinError("")
 
     try {
-      await deleteWaitingGame(gameId)
-      if (waitingGameId === gameId) {
+      await deleteWaitingGame(target)
+      setOpenGames((previous) => previous.filter((game) => String(game?.game_code || "").trim().toUpperCase() !== targetCode))
+      if (waitingGameId === targetId || (targetCode && String(createResult?.game_code || "").trim().toUpperCase() === targetCode)) {
         setWaitingGameId(null)
       }
-      if (createResult?.game_id === gameId) {
+      if (createResult?.game_id === targetId || (targetCode && String(createResult?.game_code || "").trim().toUpperCase() === targetCode)) {
         setCreateResult(null)
       }
       await Promise.all([refreshOpenGames(), refreshMyGames()])
@@ -509,7 +514,12 @@ export default function LobbyPage() {
             <p><strong>Join code:</strong> <code>{createResult.game_code}</code></p>
             <p><strong>Share link:</strong> <a href={shareJoinUrl}>{shareJoinUrl}</a></p>
             <p><strong>State:</strong> {waitingGameId ? "Waiting for opponent…" : createResult.state}</p>
-            <button type="button" className="game-danger-button" onClick={() => handleCloseWaitingGame(createResult.game_id)} disabled={closingWaitingGame}>
+            <button
+              type="button"
+              className="game-danger-button"
+              onClick={() => handleCloseWaitingGame({ game_id: createResult.game_id, game_code: createResult.game_code })}
+              disabled={closingWaitingGame}
+            >
               {closingWaitingGame ? "Closing…" : "Close"}
             </button>
           </div>
@@ -534,10 +544,15 @@ export default function LobbyPage() {
                 </div>
               </div>
               <div className="lobby-list__actions">
-                {isOwnOpenGame(game, user?.username) ? (
+                    {isOwnOpenGame(game, user?.username) ? (
                   <>
                     <button type="button" onClick={() => navigate(gamePagePath(game))}>Open</button>
-                    <button type="button" className="game-danger-button" onClick={() => handleCloseWaitingGame(game.game_id)} disabled={closingWaitingGame}>
+                    <button
+                      type="button"
+                      className="game-danger-button"
+                      onClick={() => handleCloseWaitingGame({ game_id: game.game_id, game_code: game.game_code })}
+                      disabled={closingWaitingGame}
+                    >
                       {closingWaitingGame ? "Closing…" : "Close"}
                     </button>
                   </>

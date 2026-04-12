@@ -102,7 +102,6 @@ describe("LobbyPage", () => {
     mockApi.getOpenGames.mockResolvedValue({
       games: [
         {
-          game_id: "g-open-own",
           game_code: "OWN123",
           created_by: "fil",
           available_color: "white",
@@ -120,7 +119,7 @@ describe("LobbyPage", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Close" }))
 
     await waitFor(() => {
-      expect(mockApi.deleteWaitingGame).toHaveBeenCalledWith("g-open-own")
+      expect(mockApi.deleteWaitingGame).toHaveBeenCalledWith("OWN123")
     })
   })
 
@@ -135,7 +134,6 @@ describe("LobbyPage", () => {
           created_at: "2026-04-03T23:59:58Z",
         },
         {
-          game_id: "g-open-own",
           game_code: "OWN123",
           created_by: "fil",
           available_color: "white",
@@ -172,7 +170,34 @@ describe("LobbyPage", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Close" }))
 
     await waitFor(() => {
-      expect(mockApi.deleteWaitingGame).toHaveBeenCalledWith("g-1")
+      expect(mockApi.deleteWaitingGame).toHaveBeenCalledWith("ABCD23")
+    })
+  })
+
+  it("clears_created_waiting_card_when_same_game_is_closed_from_open_games", async () => {
+    mockApi.createGame.mockResolvedValue({ game_id: "g-1", game_code: "OWN123", state: "waiting" })
+    mockApi.getOpenGames.mockResolvedValue({
+      games: [
+        {
+          game_code: "OWN123",
+          created_by: "fil",
+          available_color: "white",
+          created_at: "2026-04-03T23:59:59Z",
+        },
+      ],
+    })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create waiting game" }))
+    await screen.findByText("Join code:")
+    fireEvent.click((await screen.findAllByRole("button", { name: "Close" }))[1])
+
+    await waitFor(() => {
+      expect(mockApi.deleteWaitingGame).toHaveBeenCalledWith("OWN123")
+    })
+    await waitFor(() => {
+      expect(screen.queryByText("Join code:")).not.toBeInTheDocument()
     })
   })
 
