@@ -194,7 +194,7 @@ describe("ReviewPage", () => {
 
     await screen.findByText(/Move log/i)
     fireEvent.click(screen.getByRole("tab", { name: "White" }))
-    fireEvent.click(screen.getByRole("button", { name: /Black \[e7e5\] Capture done at E4/i }))
+    fireEvent.click(screen.getByRole("button", { name: /Black \[e7e5\] Capture at E4/i }))
 
     expect(document.querySelectorAll(".board-overlay__arrow").length).toBe(0)
     expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--capture")

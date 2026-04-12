@@ -522,7 +522,7 @@ describe("GamePage", () => {
           {
             turn: 1,
             white: [{ message: "Move attempt — Move complete" }],
-            black: [{ message: "Opponent move — Capture done at D4 · Check on file" }],
+            black: [{ message: "Opponent move — Capture at D4 · Check on file" }],
           },
         ],
       },
@@ -533,7 +533,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     expect(await screen.findByText("Move complete")).toBeInTheDocument()
-    expect(screen.getByText("Capture done at D4 · Check on file")).toBeInTheDocument()
+    expect(screen.getByText("Capture at D4 · Check on file")).toBeInTheDocument()
     expect(screen.queryByText("Old turn fallback")).not.toBeInTheDocument()
     expect(screen.queryByText("Old log fallback")).not.toBeInTheDocument()
   })
@@ -615,7 +615,7 @@ describe("GamePage", () => {
         turns: [
           {
             turn: 1,
-            white: [{ move_uci: "e4d5", message: "Capture done at D5", answer: { main: "CAPTURE_DONE", capture_square: "d5" } }],
+            white: [{ move_uci: "e4d5", message: "Capture at D5", answer: { main: "CAPTURE_DONE", capture_square: "d5" } }],
             black: [
               { message: "Illegal move", answer: { main: "ILLEGAL_MOVE" } },
               { message: "Illegal move", answer: { main: "ILLEGAL_MOVE" } },
@@ -629,8 +629,8 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    expect(await screen.findByText("[e4d5] Capture done at D5")).toBeInTheDocument()
-    expect(screen.queryByText("[e4d5] Capture done at D5 · Capture done at D5")).not.toBeInTheDocument()
+    expect(await screen.findByText("[e4d5] Capture at D5")).toBeInTheDocument()
+    expect(screen.queryByText("[e4d5] Capture at D5 · Capture at D5")).not.toBeInTheDocument()
     expect(screen.getAllByText("Illegal move")).toHaveLength(3)
     expect(screen.getAllByText("Move complete")).toHaveLength(1)
   })
@@ -704,7 +704,7 @@ describe("GamePage", () => {
 
     expect(await screen.findByText("Illegal move")).toBeInTheDocument()
     expect(screen.getByText("Move complete")).toBeInTheDocument()
-    expect(screen.getByText("Capture done at C6")).toBeInTheDocument()
+    expect(screen.getByText("Capture at C6")).toBeInTheDocument()
     expect(screen.getByText("Has pawn captures")).toBeInTheDocument()
     expect(screen.getByText("No pawn captures")).toBeInTheDocument()
     expect(screen.queryByText("ILLEGAL_MOVE")).not.toBeInTheDocument()
@@ -728,7 +728,7 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    await screen.findByText("Capture done at C6")
+    await screen.findByText("Capture at C6")
     expect(screen.getAllByRole("button", { name: "Square c6" }).at(-1)).toHaveClass("square--capture")
     expect(screen.getAllByRole("button", { name: "Square c5" }).at(-1)).not.toHaveClass("square--capture")
   })
@@ -755,7 +755,7 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    await screen.findByText("Capture done at D5")
+    await screen.findByText("Capture at D5")
     expect(screen.getAllByRole("button", { name: "Square d5" }).at(-1)).toHaveClass("square--capture")
   })
 
@@ -767,7 +767,7 @@ describe("GamePage", () => {
         turns: [
           {
             turn: 1,
-            white: [{ message: "Capture done at F4" }],
+            white: [{ message: "Capture at F4" }],
             black: [],
           },
         ],
@@ -776,7 +776,7 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    await screen.findByText("Capture done at F4")
+    await screen.findByText("Capture at F4")
     expect(screen.getAllByRole("button", { name: "Square f4" }).at(-1)).toHaveClass("square--capture")
   })
 
@@ -800,7 +800,7 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    await screen.findByText("Capture done at B5")
+    await screen.findByText("Capture at B5")
     expect(screen.getAllByRole("button", { name: "Square b5" }).at(-1)).toHaveClass("square--capture")
   })
 

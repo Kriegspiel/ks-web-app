@@ -66,7 +66,7 @@ const OPPONENT_STARTING_PHANTOMS = {
 const REFEREE_MAIN_ANNOUNCEMENT_TEXT = {
   1: "Illegal move",
   2: "Move complete",
-  3: "Capture done",
+  3: "Capture",
   4: "Has pawn captures",
   5: "No pawn captures",
   6: "Check on rank",
@@ -77,7 +77,7 @@ const REFEREE_MAIN_ANNOUNCEMENT_TEXT = {
   11: "Double check",
   ILLEGAL_MOVE: "Illegal move",
   REGULAR_MOVE: "Move complete",
-  CAPTURE_DONE: "Capture done",
+  CAPTURE_DONE: "Capture",
   HAS_ANY: "Has pawn captures",
   NO_ANY: "No pawn captures",
   DRAW_TOOMANYREVERSIBLEMOVES: "Draw by too many reversible moves",
@@ -421,6 +421,8 @@ function splitRefereeTextParts(value) {
     .map((part) => part.trim())
     .filter(Boolean)
     .map((part) => part.replace(/^(Move attempt|Opponent move|Ask any pawn captures|Opponent asked any pawn captures)\s*[—-]\s*/i, "").trim())
+    .map((part) => part.replace(/^Capture done at\s+/i, "Capture at "))
+    .map((part) => part.replace(/^Capture done$/i, "Capture"))
     .filter(Boolean)
 }
 
@@ -433,7 +435,7 @@ function getCaptureSquareFromTexts(messages = []) {
     if (typeof message !== "string") {
       return ""
     }
-    const match = message.match(/capture done at ([a-h][1-8])/i)
+    const match = message.match(/capture(?: done)? at ([a-h][1-8])/i)
     return match ? formatCaptureSquare(match[1]) : ""
   }).find(Boolean) ?? ""
 }
@@ -618,13 +620,15 @@ function rawEntryMessages(entry) {
 }
 
 function isCaptureAnnouncementEntry(entry) {
-  return rawEntryMessages(entry).some((message) => typeof message === "string" && message.startsWith("Capture done"))
+  return rawEntryMessages(entry).some(
+    (message) => typeof message === "string" && /^(Capture|Capture done)( at\b|$)/.test(message),
+  )
 }
 
 function isMoveResolutionEntry(entry) {
   return rawEntryMessages(entry).some(
     (message) => typeof message === "string" && (
-      message.startsWith("Capture done") ||
+      /^(Capture|Capture done)( at\b|$)/.test(message) ||
       message.startsWith("Move complete") ||
       message.startsWith("Illegal move")
     ),

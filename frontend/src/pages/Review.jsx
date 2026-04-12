@@ -15,7 +15,7 @@ const STARTING_FENS = {
 const ANNOUNCEMENT_TEXT = {
   ILLEGAL_MOVE: "Illegal move",
   REGULAR_MOVE: "Move complete",
-  CAPTURE_DONE: "Capture done",
+  CAPTURE_DONE: "Capture",
   HAS_ANY: "Has pawn captures",
   NO_ANY: "No pawn captures",
   DRAW_TOOMANYREVERSIBLEMOVES: "Draw by too many reversible moves",
@@ -42,7 +42,7 @@ function formatAnnouncement(code) {
 function formatCaptureAnnouncement(move) {
   const main = formatAnnouncement(move?.answer?.main)
   const captureSquare = typeof move?.answer?.capture_square === "string" ? move.answer.capture_square.trim().toUpperCase() : ""
-  if (main === "Capture done" && captureSquare) {
+  if (main === "Capture" && captureSquare) {
     return `${main} at ${captureSquare}`
   }
 
