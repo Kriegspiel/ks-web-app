@@ -443,17 +443,17 @@ describe("GamePage", () => {
   it("seeds_default_opponent_phantoms_only_at_the_opening", async () => {
     render(<GamePage />)
 
-    const whiteStatus = await screen.findByLabelText("White pieces remain")
-    const blackStatus = screen.getByLabelText("Black pieces remain")
-    expect(within(whiteStatus).getByText("16")).toBeInTheDocument()
-    expect(within(blackStatus).getByText("16")).toBeInTheDocument()
+    const pieceStatus = await screen.findByLabelText("Remaining piece status")
+    expect(within(pieceStatus).getByText("White pieces remain:")).toBeInTheDocument()
+    expect(within(pieceStatus).getByText("Black pieces remain:")).toBeInTheDocument()
+    expect(within(pieceStatus).getAllByText("16")).toHaveLength(2)
 
     fireEvent.click(await screen.findByRole("button", { name: "Set opponent phantoms to default" }))
 
     expect(screen.getByRole("button", { name: "Square a8" })).toHaveClass("square--phantom")
     expect(screen.getByRole("button", { name: "Square e8" })).toHaveClass("square--phantom")
     expect(screen.getByRole("button", { name: "Square h7" })).toHaveClass("square--phantom")
-    expect(within(screen.getByLabelText("Black pieces remain")).getByText("16")).toBeInTheDocument()
+    expect(within(screen.getByLabelText("Remaining piece status")).getAllByText("16")).toHaveLength(2)
   })
 
   it("hides_default_opponent_phantom_setup_after_the_opening", async () => {
@@ -484,8 +484,9 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     expect(await screen.findByText("Capture at D5")).toBeInTheDocument()
-    expect(within(screen.getByLabelText("White pieces remain")).getByText("15")).toBeInTheDocument()
-    expect(within(screen.getByLabelText("Black pieces remain")).getByText("14")).toBeInTheDocument()
+    const pieceStatus = screen.getByLabelText("Remaining piece status")
+    expect(within(pieceStatus).getByText("15")).toBeInTheDocument()
+    expect(within(pieceStatus).getByText("14")).toBeInTheDocument()
   })
 
   it("renders_referee_log_grouped_by_turn", async () => {
