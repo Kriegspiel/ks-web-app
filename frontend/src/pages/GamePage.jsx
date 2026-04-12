@@ -2003,23 +2003,25 @@ export default function GamePage() {
 
                 <div className="game-board-meta">
                   <p className="game-page__meta">Phantoms: left-drag to move, right-click to remove, double-click or right-click empty squares to add.</p>
-                  {canSeedOpponentPhantoms ? (
+                  <div className="game-board-meta__actions">
+                    {canSeedOpponentPhantoms ? (
+                      <button
+                        type="button"
+                        className="game-phantom-setup-button"
+                        onClick={handleSeedOpponentPhantoms}
+                      >
+                        Set opponent phantoms to default
+                      </button>
+                    ) : null}
                     <button
                       type="button"
-                      className="game-phantom-setup-button"
-                      onClick={handleSeedOpponentPhantoms}
+                      className="game-sound-toggle"
+                      onClick={() => setSoundsMuted((value) => !value)}
+                      aria-pressed={soundsMuted}
                     >
-                      Set opponent phantoms to default
+                      {soundsMuted ? "Sounds off" : "Mute sounds"}
                     </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    className="game-sound-toggle"
-                    onClick={() => setSoundsMuted((value) => !value)}
-                    aria-pressed={soundsMuted}
-                  >
-                    {soundsMuted ? "Sounds off" : "Mute sounds"}
-                  </button>
+                  </div>
                 </div>
               </section>
 

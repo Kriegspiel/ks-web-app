@@ -105,13 +105,26 @@
 
 .game-board-meta {
   display: grid;
-  gap: 0.25rem;
+  gap: 0.45rem;
   margin-top: 0.85rem;
+  justify-items: center;
+  text-align: center;
+}
+
+.game-board-meta .game-page__meta {
+  max-width: 34rem;
+}
+
+.game-board-meta__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  flex-wrap: nowrap;
 }
 
 .game-phantom-setup-button,
 .game-sound-toggle {
-  justify-self: start;
   padding: 0.38rem 0.7rem;
   border-radius: 999px;
   font-size: 0.78rem;
