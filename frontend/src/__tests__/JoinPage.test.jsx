@@ -86,6 +86,16 @@ describe("JoinPage", () => {
     expect(await screen.findByText("That game is already full. Start a new game from the lobby.")).toBeInTheDocument()
   })
 
+  it("opens_my_own_waiting_game_when_backend_rejects_self_join", async () => {
+    mockApi.joinGame.mockRejectedValue({ status: 409, code: "CANNOT_JOIN_OWN_GAME" })
+
+    renderJoin("/join/own123")
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/game/OWN123", { replace: true })
+    })
+  })
+
   it("shows_generic_error_without_backend_details", async () => {
     mockApi.joinGame.mockRejectedValue({ status: 500, message: "backend stack trace" })
 

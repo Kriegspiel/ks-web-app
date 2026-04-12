@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import LobbyPage from "../pages/LobbyPage"
 import { TEST_VERSION_STAMP } from "../version"
@@ -66,11 +66,10 @@ describe("LobbyPage", () => {
       "Open games",
       "Join by code",
       "Lobby stats",
-      "My games",
     ])
   })
 
-  it("shows_lobby_stats_between_join_and_my_games", async () => {
+  it("shows_lobby_stats_after_join_by_code", async () => {
     renderPage()
 
     expect(await screen.findByRole("heading", { name: "Lobby stats" })).toBeInTheDocument()
@@ -114,11 +113,45 @@ describe("LobbyPage", () => {
 
     renderPage()
 
+    fireEvent.click(await screen.findByRole("button", { name: "Open" }))
+
+    expect(mockNavigate).toHaveBeenCalledWith("/game/OWN123")
+
     fireEvent.click(await screen.findByRole("button", { name: "Close" }))
 
     await waitFor(() => {
       expect(mockApi.deleteWaitingGame).toHaveBeenCalledWith("g-open-own")
     })
+  })
+
+  it("keeps_my_open_games_at_the_top_of_open_games", async () => {
+    mockApi.getOpenGames.mockResolvedValue({
+      games: [
+        {
+          game_id: "g-open-other",
+          game_code: "ZZZ999",
+          created_by: "randobot",
+          available_color: "black",
+          created_at: "2026-04-03T23:59:58Z",
+        },
+        {
+          game_id: "g-open-own",
+          game_code: "OWN123",
+          created_by: "fil",
+          available_color: "white",
+          created_at: "2026-04-03T23:59:59Z",
+        },
+      ],
+    })
+
+    renderPage()
+
+    const openGames = await screen.findAllByRole("listitem")
+    expect(within(openGames[0]).getByText("OWN123")).toBeInTheDocument()
+    expect(within(openGames[0]).getByRole("button", { name: "Open" })).toBeInTheDocument()
+    expect(within(openGames[0]).getByRole("button", { name: "Close" })).toBeInTheDocument()
+    expect(within(openGames[1]).getByText("ZZZ999")).toBeInTheDocument()
+    expect(within(openGames[1]).getByRole("button", { name: "Join" })).toBeInTheDocument()
   })
 
   it("creates_waiting_game_and_shows_join_code", async () => {
@@ -140,50 +173,6 @@ describe("LobbyPage", () => {
 
     await waitFor(() => {
       expect(mockApi.deleteWaitingGame).toHaveBeenCalledWith("g-1")
-    })
-  })
-
-  it("shows_profile_links_and_bot_labels_in_my_games", async () => {
-    mockApi.getMyGames.mockResolvedValue({
-      games: [
-        {
-          game_id: "g-1",
-          game_code: "M6QNCP",
-          state: "completed",
-          move_number: 16,
-          white: { username: "randobot", role: "bot" },
-          black: { username: "fil", role: "user" },
-        },
-      ],
-    })
-
-    renderPage()
-
-    expect(await screen.findByRole("link", { name: "randobot (bot)" })).toHaveAttribute("href", "/user/randobot")
-    expect(screen.getByRole("link", { name: "fil" })).toHaveAttribute("href", "/user/fil")
-    expect(screen.getByText(/completed · move 16/i)).toBeInTheDocument()
-  })
-
-  it("shows_close_for_waiting_games_in_my_games", async () => {
-    mockApi.getMyGames.mockResolvedValue({
-      games: [
-        {
-          game_id: "g-waiting",
-          game_code: "WAIT01",
-          state: "waiting",
-          move_number: 0,
-          white: { username: "fil", role: "user" },
-          black: null,
-        },
-      ],
-    })
-
-    renderPage()
-
-    fireEvent.click(await screen.findByRole("button", { name: "Close" }))
-
-    await waitFor(() => {
-      expect(mockApi.deleteWaitingGame).toHaveBeenCalledWith("g-waiting")
     })
   })
 
@@ -210,5 +199,19 @@ describe("LobbyPage", () => {
     expect(screen.queryByRole("option", { name: "Random Any Bot (1200)" })).not.toBeInTheDocument()
     expect(screen.getByRole("option", { name: "Random Bot (1201)" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "GPT Nano (1342)" })).toBeInTheDocument()
+  })
+
+  it("opens_my_own_waiting_game_when_join_by_code_hits_own_game_conflict", async () => {
+    mockApi.joinGame.mockRejectedValue({ status: 409, code: "CANNOT_JOIN_OWN_GAME", message: "You cannot join your own waiting game." })
+
+    renderPage()
+
+    fireEvent.change(await screen.findByLabelText("Game code"), { target: { value: "own123" } })
+    fireEvent.click(screen.getByRole("button", { name: "Join game" }))
+
+    await waitFor(() => {
+      expect(mockApi.joinGame).toHaveBeenCalledWith("OWN123")
+      expect(mockNavigate).toHaveBeenCalledWith("/game/OWN123")
+    })
   })
 })
