@@ -1971,7 +1971,10 @@ export default function GamePage() {
                             {turnEntry.white.length ? (
                               <ul className="game-referee-column__list">
                                 {turnEntry.white.map((entry, index) => (
-                                  <li key={`turn-${turnEntry.turn}-white-${index}`}>{entry.text ?? entry}</li>
+                                  <li key={`turn-${turnEntry.turn}-white-${index}`} className="game-referee-entry">
+                                    <span className="game-referee-entry__badge">{index + 1}</span>
+                                    <span className="game-referee-entry__text">{entry.text ?? entry}</span>
+                                  </li>
                                 ))}
                               </ul>
                             ) : (
@@ -1983,7 +1986,10 @@ export default function GamePage() {
                             {turnEntry.black.length ? (
                               <ul className="game-referee-column__list">
                                 {turnEntry.black.map((entry, index) => (
-                                  <li key={`turn-${turnEntry.turn}-black-${index}`}>{entry.text ?? entry}</li>
+                                  <li key={`turn-${turnEntry.turn}-black-${index}`} className="game-referee-entry">
+                                    <span className="game-referee-entry__badge">{index + 1}</span>
+                                    <span className="game-referee-entry__text">{entry.text ?? entry}</span>
+                                  </li>
                                 ))}
                               </ul>
                             ) : (
