@@ -52,7 +52,7 @@ export function announcementSoundCategories(messages = []) {
     if (!normalized) {
       continue
     }
-    if (normalized.startsWith("capture done")) {
+    if (normalized.startsWith("capture done") || normalized.startsWith("capture at") || normalized === "capture") {
       categories.push("capture")
       continue
     }
