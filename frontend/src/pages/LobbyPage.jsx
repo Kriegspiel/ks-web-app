@@ -98,6 +98,16 @@ function getActiveGame(games) {
   return games.find((game) => ACTIVE_STATES.has(String(game?.state ?? "").toLowerCase())) ?? null
 }
 
+function gamePagePath(gameOrCode) {
+  if (typeof gameOrCode === "string") {
+    const normalized = gameOrCode.trim()
+    return normalized ? `/game/${normalized}` : ""
+  }
+
+  const gameId = gameOrCode?.game_code ?? gameOrCode?.game_id
+  return gameId ? `/game/${gameId}` : ""
+}
+
 export default function LobbyPage() {
   const navigate = useNavigate()
   const { user, actionError } = useAuth()
@@ -137,7 +147,22 @@ export default function LobbyPage() {
     [bots],
   )
   const activeGame = useMemo(() => getActiveGame(myGames), [myGames])
-  const playNowPath = activeGame?.game_code || activeGame?.game_id ? `/game/${activeGame?.game_code ?? activeGame?.game_id}` : ""
+  const playNowPath = gamePagePath(activeGame)
+  const sortedOpenGames = useMemo(() => {
+    const ownUsername = String(user?.username || "").trim().toLowerCase()
+    if (!ownUsername) {
+      return openGames
+    }
+
+    return [...openGames].sort((left, right) => {
+      const leftOwn = isOwnOpenGame(left, ownUsername)
+      const rightOwn = isOwnOpenGame(right, ownUsername)
+      if (leftOwn === rightOwn) {
+        return 0
+      }
+      return leftOwn ? -1 : 1
+    })
+  }, [openGames, user?.username])
 
   async function refreshOpenGames({ markLoading = false } = {}) {
     if (markLoading) {
@@ -340,8 +365,14 @@ export default function LobbyPage() {
       const joined = await joinGame(normalizedCode)
       setJoinCode("")
       await Promise.all([refreshOpenGames(), refreshMyGames()])
-      navigate(`/game/${joined.game_code ?? joined.game_id}`)
+      navigate(gamePagePath(joined))
     } catch (error) {
+      if (error?.status === 409 && error?.code === "CANNOT_JOIN_OWN_GAME") {
+        setJoinCode("")
+        navigate(gamePagePath(normalizedCode))
+        return
+      }
+
       setJoinError(error?.message ?? "Unable to join that game right now.")
     } finally {
       setJoiningGame(false)
@@ -356,8 +387,13 @@ export default function LobbyPage() {
     try {
       const joined = await joinGame(gameCode)
       await Promise.all([refreshOpenGames(), refreshMyGames()])
-      navigate(`/game/${joined.game_code ?? joined.game_id}`)
+      navigate(gamePagePath(joined))
     } catch (error) {
+      if (error?.status === 409 && error?.code === "CANNOT_JOIN_OWN_GAME") {
+        navigate(gamePagePath(gameCode))
+        return
+      }
+
       setJoinError(error?.message ?? "Unable to join that game right now.")
     } finally {
       setJoiningGame(false)
@@ -485,7 +521,7 @@ export default function LobbyPage() {
         {openGamesError ? <p role="alert">{openGamesError}</p> : null}
         {openGamesLoading ? <p>Loading…</p> : null}
         <ul className="lobby-list">
-          {openGames.map((game) => (
+          {sortedOpenGames.map((game) => (
             <li key={game.game_code}>
               <div>
                 <strong>{game.game_code}</strong>
@@ -499,9 +535,12 @@ export default function LobbyPage() {
               </div>
               <div className="lobby-list__actions">
                 {isOwnOpenGame(game, user?.username) ? (
-                  <button type="button" className="game-danger-button" onClick={() => handleCloseWaitingGame(game.game_id)} disabled={closingWaitingGame}>
-                    {closingWaitingGame ? "Closing…" : "Close"}
-                  </button>
+                  <>
+                    <button type="button" onClick={() => navigate(gamePagePath(game))}>Open</button>
+                    <button type="button" className="game-danger-button" onClick={() => handleCloseWaitingGame(game.game_id)} disabled={closingWaitingGame}>
+                      {closingWaitingGame ? "Closing…" : "Close"}
+                    </button>
+                  </>
                 ) : (
                   <button type="button" onClick={() => handleJoinOpenGame(game.game_code)}>Join</button>
                 )}
@@ -553,38 +592,6 @@ export default function LobbyPage() {
             </div>
           </div>
         ) : null}
-      </section>
-
-      <section className="lobby-card">
-        <h2>My games</h2>
-        {myGamesError ? <p role="alert">{myGamesError}</p> : null}
-        {myGamesLoading ? <p>Loading…</p> : null}
-        <ul className="lobby-list">
-          {myGames.map((game) => (
-            <li key={game.game_id}>
-              <div>
-                <strong>{game.game_code}</strong>
-                <div className="lobby-meta">
-                  {renderPlayerLink(game.white, "Waiting…")}
-                  {" vs "}
-                  {renderPlayerLink(game.black, "Waiting…")}
-                  {" · "}
-                  {game.state}
-                  {" · move "}
-                  {game.move_number}
-                </div>
-              </div>
-              <div className="lobby-list__actions">
-                <button type="button" onClick={() => navigate(`/game/${game.game_code ?? game.game_id}`)}>Open</button>
-                {game.state === "waiting" ? (
-                  <button type="button" className="game-danger-button" onClick={() => handleCloseWaitingGame(game.game_id)} disabled={closingWaitingGame}>
-                    {closingWaitingGame ? "Closing…" : "Close"}
-                  </button>
-                ) : null}
-              </div>
-            </li>
-          ))}
-        </ul>
       </section>
 
       <VersionStamp className="lobby-page__footer-version" />

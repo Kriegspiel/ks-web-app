@@ -55,6 +55,11 @@ export default function JoinPage() {
           return
         }
 
+        if (error?.status === 409 && error?.code === "CANNOT_JOIN_OWN_GAME") {
+          navigate(`/game/${normalizedCode}`, { replace: true })
+          return
+        }
+
         setErrorMessage(formatJoinError(error))
         setJoining(false)
       }
