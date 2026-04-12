@@ -41,6 +41,15 @@ function sanitizePlacements(rawPlacements) {
   }, {})
 }
 
+function removeOccupiedPlacements(placements, occupiedSet) {
+  return Object.entries(sanitizePlacements(placements)).reduce((acc, [square, piece]) => {
+    if (!occupiedSet.has(square)) {
+      acc[square] = piece
+    }
+    return acc
+  }, {})
+}
+
 function readPersistedPlacements(gameId) {
   if (!gameId || typeof window === "undefined") {
     return {}
@@ -189,6 +198,10 @@ export default function usePhantoms({ gameId, occupiedSquares = [] }) {
     setPlacements({})
   }
 
+  function replaceAll(nextPlacements) {
+    setPlacements(removeOccupiedPlacements(nextPlacements, occupiedSet))
+  }
+
   function availablePiecesForSquare() {
     return Object.keys(STARTING_TRAY)
   }
@@ -201,6 +214,7 @@ export default function usePhantoms({ gameId, occupiedSquares = [] }) {
     move,
     removeAt,
     clearAll,
+    replaceAll,
     availablePiecesForSquare,
   }
 }
