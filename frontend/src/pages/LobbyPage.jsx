@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
@@ -60,20 +60,6 @@ function botSupportsRuleVariant(bot, ruleVariant) {
   return supported.includes(ruleVariant)
 }
 
-function renderPlayerLink(player, fallback) {
-  const username = String(player?.username || "").trim()
-  if (!username) {
-    return fallback
-  }
-
-  return (
-    <Link to={`/user/${username}`}>
-      {username}
-      {player?.role === "bot" ? " (bot)" : ""}
-    </Link>
-  )
-}
-
 function renderCreatorLink(game, botUsernames) {
   const username = String(game?.created_by || "").trim()
   if (!username) {
@@ -129,8 +115,6 @@ export default function LobbyPage() {
   const [openGamesError, setOpenGamesError] = useState("")
   const [openGamesLoading, setOpenGamesLoading] = useState(true)
   const [myGames, setMyGames] = useState([])
-  const [myGamesError, setMyGamesError] = useState("")
-  const [myGamesLoading, setMyGamesLoading] = useState(true)
   const [lobbyStats, setLobbyStats] = useState(null)
   const [lobbyStatsError, setLobbyStatsError] = useState("")
   const [lobbyStatsLoading, setLobbyStatsLoading] = useState(true)
@@ -182,21 +166,12 @@ export default function LobbyPage() {
     }
   }
 
-  async function refreshMyGames({ markLoading = false } = {}) {
-    if (markLoading) {
-      setMyGamesLoading(true)
-    }
-
+  async function refreshMyGames() {
     try {
       const response = await getMyGames()
       setMyGames(Array.isArray(response?.games) ? response.games : [])
-      setMyGamesError("")
-    } catch (error) {
-      setMyGamesError(error?.message ?? "Unable to load your games right now.")
-    } finally {
-      if (markLoading) {
-        setMyGamesLoading(false)
-      }
+    } catch {
+      setMyGames([])
     }
   }
 
@@ -218,7 +193,7 @@ export default function LobbyPage() {
     }
   }
 
-  async function refreshBots() {
+  const refreshBots = useCallback(async () => {
     try {
       const response = await getBots()
       const available = Array.isArray(response?.bots) ? response.bots : []
@@ -231,7 +206,7 @@ export default function LobbyPage() {
       setBots([])
       setBotsError(error?.message ?? "Unable to load bots right now.")
     }
-  }
+  }, [selectedBotId])
 
   useEffect(() => {
     refreshOpenGames({ markLoading: true })
@@ -240,7 +215,7 @@ export default function LobbyPage() {
   }, [])
 
   useEffect(() => {
-    refreshMyGames({ markLoading: true })
+    refreshMyGames()
     const id = window.setInterval(() => refreshMyGames(), MY_GAMES_POLL_MS)
     return () => window.clearInterval(id)
   }, [])
@@ -253,7 +228,7 @@ export default function LobbyPage() {
 
   useEffect(() => {
     refreshBots()
-  }, [])
+  }, [refreshBots])
 
   useEffect(() => {
     if (opponentType !== "bot") {

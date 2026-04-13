@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
-import EloChart, { ELO_TRACKS } from "../components/EloChart"
+import EloChart from "../components/EloChart"
+import { ELO_TRACKS } from "../components/eloChartConstants"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import { getMyGames, userApi } from "../services/api"
-import { formatUtcDate, formatUtcDateTime } from "../utils/dateTime"
+import { formatUtcDateTime } from "../utils/dateTime"
 
 const ACTIVE_STATES = new Set(["active"])
 const RULES_URL = "https://kriegspiel.org/rules"
