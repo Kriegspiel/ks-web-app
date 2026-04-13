@@ -23,16 +23,19 @@ export default function RegisterPage() {
   const { register, actionLoading, actionError, clearActionError } = useAuth()
   const [formState, setFormState] = useState({ username: "", email: "", password: "" })
   const [submitted, setSubmitted] = useState(false)
+  const [submissionErrors, setSubmissionErrors] = useState({ username: "", email: "", form: "" })
 
   function onChange(event) {
     clearActionError()
     const { name, value } = event.target
     setFormState((current) => ({ ...current, [name]: value }))
+    setSubmissionErrors((current) => ({ ...current, [name]: "", form: "" }))
   }
 
   async function onSubmit(event) {
     event.preventDefault()
     setSubmitted(true)
+    setSubmissionErrors({ username: "", email: "", form: "" })
 
     const error = getValidationError(formState)
     if (error) {
@@ -46,12 +49,21 @@ export default function RegisterPage() {
         password: formState.password,
       })
       navigate("/lobby", { replace: true })
-    } catch {
-      // actionError rendered from context
+    } catch (error) {
+      if (error?.status === 409 && error?.code === "USERNAME_TAKEN") {
+        setSubmissionErrors({ username: error.message || "Username already exists", email: "", form: "" })
+        return
+      }
+      if (error?.status === 409 && error?.code === "EMAIL_TAKEN") {
+        setSubmissionErrors({ username: "", email: error.message || "Email already registered", form: "" })
+        return
+      }
+      setSubmissionErrors({ username: "", email: "", form: error?.message || "" })
     }
   }
 
   const inlineValidationError = submitted ? getValidationError(formState) : ""
+  const visibleActionError = submissionErrors.username || submissionErrors.email || submissionErrors.form ? "" : actionError
 
   return (
     <main className="page-shell">
@@ -59,15 +71,18 @@ export default function RegisterPage() {
       <form className="auth-form" onSubmit={onSubmit} noValidate aria-busy={actionLoading}>
         <label htmlFor="username">Username</label>
         <input id="username" name="username" value={formState.username} onChange={onChange} autoComplete="username" required />
+        {submissionErrors.username ? <p className="auth-error" role="alert">{submissionErrors.username}</p> : null}
 
         <label htmlFor="email">Email</label>
         <input id="email" type="email" name="email" value={formState.email} onChange={onChange} autoComplete="email" required />
+        {submissionErrors.email ? <p className="auth-error" role="alert">{submissionErrors.email}</p> : null}
 
         <label htmlFor="password">Password</label>
         <input id="password" type="password" name="password" value={formState.password} onChange={onChange} autoComplete="new-password" required />
 
         {inlineValidationError ? <p className="auth-error" role="alert">{inlineValidationError}</p> : null}
-        {actionError ? <p className="auth-error" role="alert">{actionError}</p> : null}
+        {submissionErrors.form ? <p className="auth-error" role="alert">{submissionErrors.form}</p> : null}
+        {visibleActionError ? <p className="auth-error" role="alert">{visibleActionError}</p> : null}
 
         <button type="submit" disabled={actionLoading}>
           {actionLoading ? "Registering…" : "Register"}

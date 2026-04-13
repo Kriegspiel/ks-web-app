@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import RegisterPage from "../pages/RegisterPage"
 
@@ -25,6 +25,11 @@ vi.mock("../hooks/useAuth", () => ({
 
 afterEach(() => {
   cleanup()
+  mockNavigate.mockReset()
+  mockAuth.register.mockReset()
+  mockAuth.clearActionError.mockReset()
+  mockAuth.actionError = ""
+  mockAuth.actionLoading = false
 })
 
 describe("RegisterPage", () => {
@@ -60,5 +65,37 @@ describe("RegisterPage", () => {
 
     expect(await screen.findByText("Password must be at most 512 characters.")).toBeInTheDocument()
     expect(mockAuth.register).not.toHaveBeenCalled()
+  })
+
+  it("shows_username_taken_next_to_username_field", async () => {
+    mockAuth.register.mockRejectedValue({ status: 409, code: "USERNAME_TAKEN", message: "Username already exists" })
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>)
+
+    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "taken_user" } })
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "new@example.com" } })
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret123" } })
+    fireEvent.click(screen.getByRole("button", { name: "Register" }))
+
+    expect(await screen.findByText("Username already exists")).toBeInTheDocument()
+    expect(screen.queryByText("Email already registered")).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(mockNavigate).not.toHaveBeenCalled()
+    })
+  })
+
+  it("shows_email_taken_next_to_email_field", async () => {
+    mockAuth.register.mockRejectedValue({ status: 409, code: "EMAIL_TAKEN", message: "Email already registered" })
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>)
+
+    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "new_user" } })
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "used@example.com" } })
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret123" } })
+    fireEvent.click(screen.getByRole("button", { name: "Register" }))
+
+    expect(await screen.findByText("Email already registered")).toBeInTheDocument()
+    expect(screen.queryByText("Username already exists")).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(mockNavigate).not.toHaveBeenCalled()
+    })
   })
 })
