@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link, useParams } from "react-router-dom"
-import EloChart, { ELO_TRACKS } from "../components/EloChart"
+import EloChart from "../components/EloChart"
+import { ELO_TRACKS } from "../components/eloChartConstants"
 import VersionStamp from "../components/VersionStamp"
 import { userApi } from "../services/api"
 import { formatUtcDate } from "../utils/dateTime"

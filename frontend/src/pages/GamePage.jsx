@@ -298,27 +298,6 @@ function getLogEntryTurn(entry, fallbackTurn = 1) {
   return fallbackTurn
 }
 
-function groupRefereeLog(entries = []) {
-  const turns = new Map()
-
-  entries.forEach((entry, index) => {
-    const turn = getLogEntryTurn(entry, Math.floor(index / 2) + 1)
-    const color = getLogEntryColor(entry, index)
-    const texts = getLogEntryTexts(entry)
-    if (!texts.length) {
-      return
-    }
-
-    if (!turns.has(turn)) {
-      turns.set(turn, { turn, white: [], black: [] })
-    }
-
-    turns.get(turn)[color].push(...texts)
-  })
-
-  return Array.from(turns.values()).sort((left, right) => left.turn - right.turn)
-}
-
 function flattenGroupedRefereeEntries(turns) {
   if (!Array.isArray(turns)) {
     return []
@@ -364,19 +343,6 @@ function getScoresheetTurns(value, privateKey, publicKey) {
 
   const turns = value[publicKey] ?? value[privateKey]
   return Array.isArray(turns) ? turns : []
-}
-
-function getScoresheetQuestionType(value) {
-  if (typeof value === "string") {
-    const normalized = value.trim()
-    return normalized ? normalized.toUpperCase() : ""
-  }
-
-  if (!value || typeof value !== "object") {
-    return ""
-  }
-
-  return getScoresheetQuestionType(value.question_type ?? value.type ?? value.question)
 }
 
 function getScoresheetMoveUci(value) {
@@ -1110,6 +1076,8 @@ export default function GamePage() {
   const stateRequestIdRef = useRef(0)
   const soundPlayerRef = useRef(null)
   const lastSoundEntryKeysRef = useRef([])
+  const finishDragPhantomRef = useRef(null)
+  const finishMoveDragRef = useRef(null)
 
   if (!soundPlayerRef.current) {
     soundPlayerRef.current = createGameSoundPlayer()
@@ -1274,31 +1242,6 @@ export default function GamePage() {
     }
     return `${fromSquare}${toSquare}`
   }, [fromSquare, toSquare])
-
-  const pendingPromotion = useMemo(() => {
-    if (!selectedMoveBase || !gameState?.your_fen || !gameState?.your_color) {
-      return false
-    }
-
-    return isPromotionCandidate({
-      fen: gameState.your_fen,
-      fromSquare,
-      toSquare,
-      color: gameState.your_color,
-    })
-  }, [fromSquare, gameState?.your_color, gameState?.your_fen, selectedMoveBase, toSquare])
-
-  const selectedMove = useMemo(() => {
-    if (!selectedMoveBase) {
-      return ""
-    }
-
-    if (pendingPromotion) {
-      return `${selectedMoveBase}?`
-    }
-
-    return selectedMoveBase
-  }, [pendingPromotion, selectedMoveBase])
 
   const highlightedSquares = [fromSquare, toSquare, movingPhantomFrom, dragHoverSquare, draggingMoveFrom, moveDragHoverSquare].filter(Boolean)
   const groupedRefereeLog = useMemo(() => buildVisibleRefereeLog(gameState), [gameState])
@@ -1568,6 +1511,9 @@ export default function GamePage() {
     void commitMove(sourceSquare, destination)
   }
 
+  finishDragPhantomRef.current = finishDragPhantom
+  finishMoveDragRef.current = finishMoveDrag
+
   async function handleSquareClick(square) {
     blurActiveInteractiveElement()
 
@@ -1757,23 +1703,23 @@ export default function GamePage() {
     function handleGlobalPointerUp(event) {
       if (draggingMoveFromRef.current && moveDragPointerIdRef.current === event.pointerId) {
         const hoveredSquare = findSquareFromPointerEvent(event)
-        finishMoveDrag(hoveredSquare)
+        finishMoveDragRef.current?.(hoveredSquare)
         return
       }
 
       if (draggingPhantomFromRef.current && dragPointerIdRef.current === event.pointerId) {
         const hoveredSquare = findSquareFromPointerEvent(event)
-        finishDragPhantom(hoveredSquare)
+        finishDragPhantomRef.current?.(hoveredSquare)
       }
     }
 
     function handleGlobalPointerCancel(event) {
       if (draggingMoveFromRef.current && moveDragPointerIdRef.current === event.pointerId) {
-        finishMoveDrag(moveDragHoverSquare)
+        finishMoveDragRef.current?.(moveDragHoverSquare)
       }
 
       if (draggingPhantomFromRef.current && dragPointerIdRef.current === event.pointerId) {
-        finishDragPhantom(dragHoverSquare)
+        finishDragPhantomRef.current?.(dragHoverSquare)
       }
     }
 

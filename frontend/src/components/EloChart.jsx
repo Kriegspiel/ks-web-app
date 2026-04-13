@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-
-export const ELO_TRACKS = [
-  { key: "overall", label: "Overall" },
-  { key: "vs_humans", label: "vs Humans" },
-  { key: "vs_bots", label: "vs Bots" },
-]
+import { ELO_TRACKS } from "./eloChartConstants"
 
 const X_AXIS_MODES = [
   { key: "date", label: "Date" },
