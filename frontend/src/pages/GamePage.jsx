@@ -8,6 +8,7 @@ import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
 import { announcementSoundCategories, createGameSoundPlayer } from "../gameSounds"
 import { askAny, deleteWaitingGame, getGame, getGameState, resignGame, submitMove } from "../services/api"
 import { getAllowedMoveTargets, PIECE_ASSETS } from "../components/chessboard"
+import { formatClock, projectClock } from "./gameClock"
 import "./GamePage.css"
 
 const POLL_INTERVAL_MS = 500
@@ -25,6 +26,7 @@ const PHANTOM_MENU_WIDTH = 164
 const PHANTOM_MENU_GAP = 6
 const REFEREE_LOG_FOLLOW_THRESHOLD_PX = 24
 const GAME_SOUND_MUTE_STORAGE_KEY = "game_page_sounds_muted"
+const CLOCK_TICK_INTERVAL_MS = 250
 const OPPONENT_STARTING_PHANTOMS = {
   white: {
     a1: "r",
@@ -679,17 +681,6 @@ function getRecentCaptureSquares(gameState) {
   return []
 }
 
-function formatClock(seconds) {
-  if (typeof seconds !== "number" || Number.isNaN(seconds)) {
-    return "--:--"
-  }
-
-  const safeSeconds = Math.max(0, Math.floor(seconds))
-  const minutes = Math.floor(safeSeconds / 60)
-  const remain = safeSeconds % 60
-  return `${minutes}:${String(remain).padStart(2, "0")}`
-}
-
 function formatRuleVariant(value) {
   if (typeof value !== "string" || !value.trim()) {
     return "—"
@@ -1054,6 +1045,8 @@ export default function GamePage() {
   const [draggingMoveFrom, setDraggingMoveFrom] = useState("")
   const [moveDragHoverSquare, setMoveDragHoverSquare] = useState("")
   const [dragPreview, setDragPreview] = useState(null)
+  const [clockSnapshotAtMs, setClockSnapshotAtMs] = useState(() => Date.now())
+  const [clockNowMs, setClockNowMs] = useState(() => Date.now())
   const [soundsMuted, setSoundsMuted] = useState(() => {
     if (typeof window === "undefined") {
       return false
@@ -1121,7 +1114,10 @@ export default function GamePage() {
       if (requestId !== stateRequestIdRef.current) {
         return
       }
+      const syncedAtMs = Date.now()
       setGameState(state)
+      setClockSnapshotAtMs(syncedAtMs)
+      setClockNowMs(syncedAtMs)
       setError("")
     } catch (requestError) {
       if (requestId !== stateRequestIdRef.current) {
@@ -1218,6 +1214,26 @@ export default function GamePage() {
     }
   }, [gameRef, gameState?.state, pollState])
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined
+    }
+
+    if (gameState?.state !== "active" || !gameState?.clock?.active_color) {
+      return undefined
+    }
+
+    const tick = () => {
+      setClockNowMs(Date.now())
+    }
+
+    tick()
+    const intervalId = window.setInterval(tick, CLOCK_TICK_INTERVAL_MS)
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [clockSnapshotAtMs, gameState?.clock?.active_color, gameState?.state])
+
   useLayoutEffect(() => {
     const viewport = viewportRestoreRef.current
     if (!viewport) {
@@ -1290,7 +1306,11 @@ export default function GamePage() {
   const soundSettingEnabled = user?.settings?.sound_enabled !== false
   const soundsEnabled = soundSettingEnabled && !soundsMuted
   const remainingPieceStatus = useMemo(() => countRemainingPieces(groupedRefereeLog), [groupedRefereeLog])
-  const activeClockColor = gameState?.clock?.active_color ?? gameState?.turn
+  const displayClock = useMemo(
+    () => projectClock(gameState?.clock, { gameState: gameState?.state, syncedAtMs: clockSnapshotAtMs, nowMs: clockNowMs }),
+    [clockNowMs, clockSnapshotAtMs, gameState?.clock, gameState?.state]
+  )
+  const activeClockColor = displayClock?.active_color ?? gameState?.turn
   const opponentLabel = useMemo(() => {
     if (!gameMeta || !gameState?.your_color) {
       return "—"
@@ -1894,11 +1914,11 @@ export default function GamePage() {
                 <div className="game-clocks" aria-label="Game clocks">
                   <div className={`game-clock ${activeClockColor === "white" ? "game-clock--active" : ""}`.trim()}>
                     <span className="game-clock__label">White</span>
-                    <strong className="game-clock__time">{formatClock(gameState.clock?.white_remaining)}</strong>
+                    <strong className="game-clock__time">{formatClock(displayClock?.white_remaining)}</strong>
                   </div>
                   <div className={`game-clock ${activeClockColor === "black" ? "game-clock--active" : ""}`.trim()}>
                     <span className="game-clock__label">Black</span>
-                    <strong className="game-clock__time">{formatClock(gameState.clock?.black_remaining)}</strong>
+                    <strong className="game-clock__time">{formatClock(displayClock?.black_remaining)}</strong>
                   </div>
                 </div>
 
