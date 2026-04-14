@@ -1059,6 +1059,7 @@ export default function GamePage() {
   const [dragPreview, setDragPreview] = useState(null)
   const [clockSnapshotAtMs, setClockSnapshotAtMs] = useState(() => Date.now())
   const [clockNowMs, setClockNowMs] = useState(() => Date.now())
+  const [desktopRefereeHeight, setDesktopRefereeHeight] = useState(null)
   const [soundsMuted, setSoundsMuted] = useState(() => {
     if (typeof window === "undefined") {
       return false
@@ -1067,6 +1068,7 @@ export default function GamePage() {
   })
 
   const lastTapRef = useRef({ square: "", time: 0 })
+  const boardCardRef = useRef(null)
   const boardShellRef = useRef(null)
   const dragPointerIdRef = useRef(null)
   const draggingPhantomFromRef = useRef("")
@@ -1361,6 +1363,7 @@ export default function GamePage() {
 
     return Number.isFinite(opponent.elo) ? opponent.elo : null
   }, [gameMeta, gameState?.your_color])
+  const refereePanelStyle = desktopRefereeHeight ? { height: `${desktopRefereeHeight}px`, maxHeight: `${desktopRefereeHeight}px` } : undefined
 
   const handleLogScroll = useCallback(() => {
     const logNode = logScrollRef.current
@@ -1406,6 +1409,43 @@ export default function GamePage() {
 
     lastSoundEntryKeysRef.current = nextKeys
   }, [flattenedRefereeEntries, soundsEnabled])
+
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined
+    }
+
+    const boardNode = boardCardRef.current
+    if (!boardNode) {
+      return undefined
+    }
+
+    const syncHeight = () => {
+      if (window.innerWidth <= 760) {
+        setDesktopRefereeHeight(null)
+        return
+      }
+
+      const nextHeight = Math.round(boardNode.getBoundingClientRect().height)
+      setDesktopRefereeHeight(nextHeight > 0 ? nextHeight : null)
+    }
+
+    syncHeight()
+    const frameId = window.requestAnimationFrame(syncHeight)
+    window.addEventListener("resize", syncHeight)
+
+    let resizeObserver = null
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(syncHeight)
+      resizeObserver.observe(boardNode)
+    }
+
+    return () => {
+      window.cancelAnimationFrame(frameId)
+      window.removeEventListener("resize", syncHeight)
+      resizeObserver?.disconnect()
+    }
+  }, [canSeedOpponentPhantoms, gameState?.state])
 
   useEffect(() => {
     if (!fromSquare) {
@@ -1936,7 +1976,7 @@ export default function GamePage() {
       {gameState ? (
         <>
           <div className="game-layout">
-            <section className="game-card game-card--board" aria-label="Board">
+            <section className="game-card game-card--board" aria-label="Board" ref={boardCardRef}>
               <div className="game-clocks" aria-label="Game clocks">
                 <div className={`game-clock ${activeClockColor === "white" ? "game-clock--active" : ""}`.trim()}>
                   <span className="game-clock__label">White</span>
@@ -2048,7 +2088,7 @@ export default function GamePage() {
               </div>
             </section>
 
-            <section className="game-card game-card--referee" aria-label="Referee panel">
+            <section className="game-card game-card--referee" aria-label="Referee panel" style={refereePanelStyle}>
               <div className="game-actions" aria-label="Game actions">
                 <button type="button" onClick={handleAskAny} disabled={!canAskAny}>
                   Any pawn captures?
