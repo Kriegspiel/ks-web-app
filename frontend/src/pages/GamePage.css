@@ -377,15 +377,6 @@
   margin-top: 0;
 }
 
-.game-action-error-slot {
-  min-height: 2rem;
-}
-
-.game-action-error-slot__placeholder {
-  margin: 0;
-  visibility: hidden;
-}
-
 .game-referee-log {
   display: grid;
   gap: 0.75rem;

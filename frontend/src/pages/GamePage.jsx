@@ -1901,9 +1901,11 @@ export default function GamePage() {
     ? "Loading game state…"
     : submittingAction
       ? "Submitting action…"
-      : waitingForOpponent
-        ? "Waiting for opponent move…"
-        : ""
+      : actionError
+        ? actionError
+        : waitingForOpponent
+          ? "Waiting for opponent move…"
+          : ""
 
   return (
     <main className="page-shell game-page" onClick={() => phantomMenu && closePhantomMenu()}>
@@ -1913,8 +1915,8 @@ export default function GamePage() {
         </div>
         <p className="game-page__signed-in">Signed in as {signedInAs}.</p>
       </div>
-      <div className="game-page__notices" aria-live="polite">
-        <p className={`game-page__notice ${pageNotice ? "" : "game-page__notice--hidden"}`.trim()}>
+      <div className="game-page__notices" aria-live={actionError ? "assertive" : "polite"}>
+        <p className={`game-page__notice ${pageNotice ? "" : "game-page__notice--hidden"}`.trim()} role={actionError ? "alert" : undefined}>
           {pageNotice || "\u00A0"}
         </p>
       </div>
@@ -2053,10 +2055,6 @@ export default function GamePage() {
                 <button type="button" onClick={handleAskAny} disabled={!canAskAny}>
                   Any pawn captures?
                 </button>
-              </div>
-
-              <div className="game-action-error-slot" aria-live="assertive">
-                {actionError ? <p className="auth-error" role="alert">{actionError}</p> : <p className="game-action-error-slot__placeholder" aria-hidden="true">{"\u00A0"}</p>}
               </div>
 
               <div className="game-referee-log">
