@@ -530,6 +530,17 @@
   font-weight: 700;
 }
 
+.game-status-card__link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.game-status-card__link:hover,
+.game-status-card__link:focus-visible {
+  color: var(--accent);
+}
+
 .game-status-card__turn--active {
   color: #047857;
   font-weight: 600;

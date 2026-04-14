@@ -1360,6 +1360,7 @@ export default function GamePage() {
 
     return `${opponent.username}${opponent.role === "bot" ? " (bot)" : ""}`
   }, [gameMeta?.opponent_type, opponent])
+  const opponentProfilePath = opponent?.username ? `/user/${opponent.username}` : ""
 
   const opponentRatings = useMemo(() => normalizeRatings(opponent), [opponent])
   const opponentRating = opponentRatings.overall
@@ -2164,7 +2165,16 @@ export default function GamePage() {
               <article className="game-card game-status-card">
                 <h2 className="game-status-card__title">Opponent</h2>
                 <ul className="game-status-card__list">
-                  <li><strong>Against:</strong> {opponentLabel}</li>
+                  <li>
+                    <strong>Against:</strong>{" "}
+                    {opponentProfilePath ? (
+                      <a className="game-status-card__link" href={opponentProfilePath}>
+                        {opponentLabel}
+                      </a>
+                    ) : (
+                      opponentLabel
+                    )}
+                  </li>
                   <li><strong>Opponent rating:</strong> {ratingValue(opponentRating)}</li>
                   <li><strong>vs Humans:</strong> {ratingValue(opponentRatings.vsHumans)}</li>
                   <li><strong>vs Bots:</strong> {ratingValue(opponentRatings.vsBots)}</li>
