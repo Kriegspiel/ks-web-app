@@ -164,7 +164,7 @@ export default function ProfilePage() {
             .
           </p>
           <p>You also can create your own bot – more bots, more fun.</p>
-          <p>Email address of bot owner is {profile?.owner_email ?? "unknown"}.</p>
+          <p>Email address of this bot owner is {profile?.owner_email ?? "unknown"}.</p>
         </section>
       ) : null}
 
