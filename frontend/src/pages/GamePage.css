@@ -149,10 +149,12 @@
   display: grid;
   gap: 0.22rem;
   text-align: center;
+  cursor: pointer;
+  box-shadow: none;
 }
 
 .game-opening-callout__eyebrow {
-  margin: 0;
+  display: block;
   font-size: 0.74rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -161,7 +163,7 @@
 }
 
 .game-opening-callout__body {
-  margin: 0;
+  display: block;
   font-size: 0.94rem;
   line-height: 1.35;
   color: var(--text);
@@ -175,26 +177,12 @@
   flex-wrap: nowrap;
 }
 
-.game-phantom-setup-button,
 .game-sound-toggle {
   padding: 0.38rem 0.7rem;
   border-radius: 999px;
   font-size: 0.78rem;
   line-height: 1.1;
   box-shadow: none;
-}
-
-.game-phantom-setup-button {
-  padding: 0.5rem 0.95rem;
-  font-size: 0.83rem;
-  font-weight: 700;
-  background: color-mix(in srgb, var(--accent) 86%, white 14%);
-  color: white;
-  border-color: color-mix(in srgb, var(--accent) 82%, black 18%);
-}
-
-:root[data-theme="dark"] .game-phantom-setup-button {
-  color: #110d09;
 }
 
 .game-sound-toggle[aria-pressed="true"] {

@@ -2008,22 +2008,18 @@ export default function GamePage() {
                     </p>
                   </section>
                   {canSeedOpponentPhantoms ? (
-                    <section className="game-opening-callout" aria-label="Opening phantom setup">
-                      <p className="game-opening-callout__eyebrow">Opening setup</p>
-                      <p className="game-opening-callout__body">Seed the opponent&apos;s starting pieces as phantoms in one click.</p>
-                    </section>
+                    <button
+                      type="button"
+                      className="game-opening-callout"
+                      aria-label="Opening setup. Seed the opponent's starting pieces as phantoms in one click."
+                      onClick={handleSeedOpponentPhantoms}
+                    >
+                      <span className="game-opening-callout__eyebrow">Opening setup</span>
+                      <span className="game-opening-callout__body">Seed the opponent&apos;s starting pieces as phantoms in one click.</span>
+                    </button>
                   ) : null}
                   <p className="game-page__meta">Phantoms: left-drag to move, right-click to remove, double-click or right-click empty squares to add.</p>
                   <div className="game-board-meta__actions">
-                    {canSeedOpponentPhantoms ? (
-                      <button
-                        type="button"
-                        className="game-phantom-setup-button"
-                        onClick={handleSeedOpponentPhantoms}
-                      >
-                        Set opponent phantoms to default
-                      </button>
-                    ) : null}
                     <button
                       type="button"
                       className="game-sound-toggle"
