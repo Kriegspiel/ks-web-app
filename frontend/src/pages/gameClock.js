@@ -24,6 +24,55 @@ export function projectClock(clock, { gameState = "active", syncedAtMs, nowMs } 
   }
 }
 
+export function reconcileClockSnapshot(previousState, nextState, { previousSyncedAtMs, nextSyncedAtMs } = {}) {
+  const nextClock = nextState?.clock
+  if (!nextClock || typeof nextClock !== "object") {
+    return nextClock ?? null
+  }
+
+  const previousClock = previousState?.clock
+  const nextActiveColor = nextClock.active_color === "white" || nextClock.active_color === "black" ? nextClock.active_color : null
+  const sameActiveStretch =
+    previousState?.state === "active" &&
+    nextState?.state === "active" &&
+    previousState?.move_number === nextState?.move_number &&
+    previousState?.turn === nextState?.turn &&
+    previousClock?.active_color === nextActiveColor &&
+    nextActiveColor
+
+  if (!sameActiveStretch) {
+    return nextClock
+  }
+
+  const projectedPreviousClock = projectClock(previousClock, {
+    gameState: previousState?.state,
+    syncedAtMs: previousSyncedAtMs,
+    nowMs: nextSyncedAtMs,
+  })
+
+  if (!projectedPreviousClock) {
+    return nextClock
+  }
+
+  if (nextActiveColor === "white") {
+    return {
+      ...nextClock,
+      white_remaining: Math.min(
+        Number(nextClock.white_remaining),
+        Number(projectedPreviousClock.white_remaining),
+      ),
+    }
+  }
+
+  return {
+    ...nextClock,
+    black_remaining: Math.min(
+      Number(nextClock.black_remaining),
+      Number(projectedPreviousClock.black_remaining),
+    ),
+  }
+}
+
 export function formatClock(seconds) {
   if (typeof seconds !== "number" || Number.isNaN(seconds)) {
     return "--:--"
