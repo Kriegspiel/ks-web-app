@@ -140,6 +140,33 @@
   max-width: 34rem;
 }
 
+.game-opening-callout {
+  width: min(100%, 34rem);
+  padding: 0.9rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--border) 65%, var(--accent));
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface-strong) 78%, var(--accent) 22%);
+  display: grid;
+  gap: 0.22rem;
+  text-align: center;
+}
+
+.game-opening-callout__eyebrow {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text) 72%, var(--accent));
+}
+
+.game-opening-callout__body {
+  margin: 0;
+  font-size: 0.94rem;
+  line-height: 1.35;
+  color: var(--text);
+}
+
 .game-board-meta__actions {
   display: flex;
   align-items: center;
@@ -158,8 +185,16 @@
 }
 
 .game-phantom-setup-button {
-  background: color-mix(in srgb, var(--surface-strong) 88%, var(--accent) 12%);
-  border-color: color-mix(in srgb, var(--border) 82%, var(--accent));
+  padding: 0.5rem 0.95rem;
+  font-size: 0.83rem;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--accent) 86%, white 14%);
+  color: white;
+  border-color: color-mix(in srgb, var(--accent) 82%, black 18%);
+}
+
+:root[data-theme="dark"] .game-phantom-setup-button {
+  color: #110d09;
 }
 
 .game-sound-toggle[aria-pressed="true"] {

@@ -2007,6 +2007,12 @@ export default function GamePage() {
                       <span className="game-piece-status__label">Black pieces remain:</span> {remainingPieceStatus.black}
                     </p>
                   </section>
+                  {canSeedOpponentPhantoms ? (
+                    <section className="game-opening-callout" aria-label="Opening phantom setup">
+                      <p className="game-opening-callout__eyebrow">Opening setup</p>
+                      <p className="game-opening-callout__body">Seed the opponent&apos;s starting pieces as phantoms in one click.</p>
+                    </section>
+                  ) : null}
                   <p className="game-page__meta">Phantoms: left-drag to move, right-click to remove, double-click or right-click empty squares to add.</p>
                   <div className="game-board-meta__actions">
                     {canSeedOpponentPhantoms ? (
