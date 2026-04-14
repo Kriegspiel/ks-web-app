@@ -79,7 +79,17 @@ beforeEach(() => {
     state: "active",
     opponent_type: "bot",
     white: { username: "fil", role: "user", connected: true },
-    black: { username: "gptnano", role: "bot", connected: true },
+    black: {
+      username: "gptnano",
+      role: "bot",
+      connected: true,
+      elo: 1342,
+      ratings: {
+        overall: { elo: 1342 },
+        vs_humans: { elo: 1301 },
+        vs_bots: { elo: 1333 },
+      },
+    },
     turn: "white",
     move_number: 1,
     created_at: "2026-04-02T12:00:00Z",
@@ -369,7 +379,16 @@ describe("GamePage", () => {
       state: "active",
       opponent_type: "bot",
       white: { username: "fil", role: "user", elo: 1400 },
-      black: { username: "gptnano", role: "bot", elo: 1342 },
+      black: {
+        username: "gptnano",
+        role: "bot",
+        elo: 1342,
+        ratings: {
+          overall: { elo: 1342 },
+          vs_humans: { elo: 1301 },
+          vs_bots: { elo: 1333 },
+        },
+      },
       turn: "white",
       move_number: 1,
       created_at: "2026-04-02T12:00:00Z",
@@ -380,6 +399,8 @@ describe("GamePage", () => {
     expect(await screen.findByText("Berkeley Any")).toBeInTheDocument()
     expect(screen.getByText("gptnano (bot)")).toBeInTheDocument()
     expect(screen.getByText("1342")).toBeInTheDocument()
+    expect(screen.getByText("1301")).toBeInTheDocument()
+    expect(screen.getByText("1333")).toBeInTheDocument()
   })
 
   it("shows_close_for_waiting_games_and_returns_to_lobby", async () => {
