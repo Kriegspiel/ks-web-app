@@ -1021,6 +1021,18 @@ function isOpeningPromptText(text) {
   return /^(white|black) to move$/i.test(String(text || "").trim())
 }
 
+function hasPlayerTakenFirstTurn(turns, playerColor) {
+  const normalizedColor = normalizeLogColor(playerColor)
+  if (!Array.isArray(turns) || !normalizedColor) {
+    return false
+  }
+
+  const sideKey = normalizedColor === "black" ? "black" : "white"
+  return turns.some((turnEntry) =>
+    (Array.isArray(turnEntry?.[sideKey]) ? turnEntry[sideKey] : []).some((entry) => !isOpeningPromptText(entry?.text ?? entry)),
+  )
+}
+
 export default function GamePage() {
   const navigate = useNavigate()
   const { gameCode, gameId } = useParams()
@@ -1261,17 +1273,9 @@ export default function GamePage() {
 
   const highlightedSquares = [fromSquare, toSquare, movingPhantomFrom, dragHoverSquare, draggingMoveFrom, moveDragHoverSquare].filter(Boolean)
   const groupedRefereeLog = useMemo(() => buildVisibleRefereeLog(gameState), [gameState])
-  const moveNumberValue = Number.parseInt(gameState?.move_number, 10)
-  const hasOnlyOpeningPrompts = groupedRefereeLog.every((turnEntry) =>
-    ["white", "black"].every((color) =>
-      (Array.isArray(turnEntry?.[color]) ? turnEntry[color] : []).every((entry) => isOpeningPromptText(entry?.text ?? entry)),
-    ),
-  )
   const canSeedOpponentPhantoms =
     gameState?.state === "active" &&
-    Number.isFinite(moveNumberValue) &&
-    moveNumberValue <= 1 &&
-    hasOnlyOpeningPrompts
+    !hasPlayerTakenFirstTurn(groupedRefereeLog, gameState?.your_color)
   const flattenedRefereeEntries = useMemo(() => flattenGroupedRefereeEntries(groupedRefereeLog), [groupedRefereeLog])
   const captureSquares = useMemo(() => getRecentCaptureSquares(gameState), [gameState])
   const latestAskAnyConstraint = useMemo(

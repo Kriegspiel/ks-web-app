@@ -472,6 +472,27 @@ describe("GamePage", () => {
     expect(screen.queryByRole("button", { name: /Opening setup\. Seed the opponent's starting pieces as phantoms in one click\./i })).not.toBeInTheDocument()
   })
 
+  it("keeps_default_opponent_phantom_setup_visible_for_black_until_black_moves", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      your_color: "black",
+      turn: "black",
+      move_number: 2,
+      referee_turns: [
+        {
+          turn: 1,
+          white: [{ text: "Move complete", messages: ["Move complete"] }],
+          black: [{ text: "Black to move", messages: ["Black to move"] }],
+        },
+      ],
+    })
+
+    render(<GamePage />)
+
+    await screen.findByText("Move complete")
+    expect(screen.getByRole("button", { name: /Opening setup\. Seed the opponent's starting pieces as phantoms in one click\./i })).toBeInTheDocument()
+  })
+
   it("tracks_remaining_pieces_from_capture_announcements", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
