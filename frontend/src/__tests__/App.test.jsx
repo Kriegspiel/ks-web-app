@@ -158,7 +158,7 @@ describe("App routes", () => {
     fireEvent.click(screen.getByRole("button", { name: "Login" }))
 
     await screen.findByRole("heading", { name: "Game", level: 1 })
-    expect(screen.getByText(/Loading game state/i)).toBeInTheDocument()
+    expect(screen.getByText(/Signed in as fil\./i)).toBeInTheDocument()
   })
 
   it("logs_out_from_header_and_returns_to_login", async () => {

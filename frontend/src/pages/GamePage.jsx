@@ -1948,15 +1948,16 @@ export default function GamePage() {
 
   const phantomMenuSquare = phantomMenu?.square ?? ""
   const phantomOnMenuSquare = phantomMenuSquare ? placements[phantomMenuSquare] : ""
-  const pageNotice = loading
+  const transientGameMessage = loading
     ? "Loading game state…"
     : submittingAction
       ? "Submitting action…"
       : actionError
         ? actionError
         : waitingForOpponent
-          ? "Waiting for opponent move…"
+          ? "Waiting for opponent's move."
           : ""
+  const currentMessageText = transientGameMessage || latestAnnouncementText
 
   return (
     <main className="page-shell game-page" onClick={() => phantomMenu && closePhantomMenu()}>
@@ -1965,11 +1966,6 @@ export default function GamePage() {
           <h1>Game</h1>
         </div>
         <p className="game-page__signed-in">Signed in as {signedInAs}.</p>
-      </div>
-      <div className="game-page__notices" aria-live={actionError ? "assertive" : "polite"}>
-        <p className={`game-page__notice ${pageNotice ? "" : "game-page__notice--hidden"}`.trim()} role={actionError ? "alert" : undefined}>
-          {pageNotice || "\u00A0"}
-        </p>
       </div>
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
 
@@ -2094,9 +2090,9 @@ export default function GamePage() {
                   Any pawn captures?
                 </button>
               </div>
-              <section className="game-referee-latest" aria-label="Last announcement">
-                <div className="game-referee-latest__label">Last announcement</div>
-                <p className="game-referee-latest__value">{latestAnnouncementText}</p>
+              <section className="game-referee-latest" aria-label="Current message" aria-live={actionError ? "assertive" : "polite"}>
+                <div className="game-referee-latest__label">Current message</div>
+                <p className="game-referee-latest__value" role={actionError ? "alert" : undefined}>{currentMessageText}</p>
               </section>
 
               <div className="game-referee-log">

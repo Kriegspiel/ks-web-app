@@ -102,11 +102,23 @@ describe("GamePage", () => {
     expect(await screen.findByText(/signed in as notifil\./i)).toBeInTheDocument()
   })
 
-  it("shows_last_announcement_above_the_referee_log", async () => {
+  it("shows_current_message_above_the_referee_log", async () => {
     render(<GamePage />)
 
-    const latestAnnouncement = await screen.findByLabelText("Last announcement")
-    expect(within(latestAnnouncement).getByText("White to move")).toBeInTheDocument()
+    const currentMessage = await screen.findByLabelText("Current message")
+    expect(within(currentMessage).getByText("White to move")).toBeInTheDocument()
+  })
+
+  it("shows_waiting_message_in_the_current_message_box", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      possible_actions: [],
+    })
+
+    render(<GamePage />)
+
+    const currentMessage = await screen.findByLabelText("Current message")
+    expect(within(currentMessage).getByText("Waiting for opponent's move.")).toBeInTheDocument()
   })
 
   it("polls_every_500ms_while_active", async () => {
@@ -204,7 +216,8 @@ describe("GamePage", () => {
 
     expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--illegal")
     expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--illegal")
-    expect(screen.getByText("Illegal move. Try a different move.")).toBeInTheDocument()
+    const currentMessage = screen.getByLabelText("Current message")
+    expect(within(currentMessage).getByText("Illegal move. Try a different move.")).toBeInTheDocument()
   })
 
   it("gates_promotion_with_modal_and_appends_suffix", async () => {
