@@ -541,9 +541,40 @@
   align-content: start;
 }
 
+.game-status-card__actions button {
+  width: 100%;
+  min-height: 2.55rem;
+  padding: 0.65rem 0.95rem;
+  border-radius: 0.9rem;
+  justify-self: stretch;
+  justify-content: center;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
 .game-status-card__actions .game-sound-toggle,
 .game-status-card__actions .game-danger-button {
-  justify-self: start;
+  justify-self: stretch;
+}
+
+.game-status-card__actions .game-sound-toggle {
+  background: var(--surface-strong);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.game-status-card__actions .game-sound-toggle:hover:not(:disabled),
+.game-status-card__actions .game-sound-toggle:focus-visible {
+  background: color-mix(in srgb, var(--surface-strong) 70%, var(--accent) 30%);
+  border-color: color-mix(in srgb, var(--border) 55%, var(--accent));
+  color: var(--text);
+  box-shadow: none;
+}
+
+.game-status-card__actions .game-sound-toggle[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--surface-strong) 84%, var(--surface));
+  border-color: color-mix(in srgb, var(--border) 88%, var(--surface));
+  color: var(--muted-soft);
 }
 
 @media (max-width: 760px) {
