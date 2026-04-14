@@ -397,7 +397,8 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     expect(await screen.findByText("Berkeley Any")).toBeInTheDocument()
-    expect(screen.getByText("gptnano (bot)")).toBeInTheDocument()
+    const opponentLink = screen.getByRole("link", { name: "gptnano (bot)" })
+    expect(opponentLink).toHaveAttribute("href", "/user/gptnano")
     expect(screen.getByText("1342")).toBeInTheDocument()
     expect(screen.getByText("1301")).toBeInTheDocument()
     expect(screen.getByText("1333")).toBeInTheDocument()
