@@ -121,6 +121,21 @@ describe("GamePage", () => {
     expect(within(currentMessage).getByText("Waiting for opponent's move.")).toBeInTheDocument()
   })
 
+  it("adds_your_turn_when_the_latest_opponent_announcement_passes_control_to_you", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      referee_log: [
+        { turn: 1, color: "white", announcement: "Move complete" },
+        { turn: 1, color: "black", announcement: "Capture at F5" },
+      ],
+    })
+
+    render(<GamePage />)
+
+    const currentMessage = await screen.findByLabelText("Current message")
+    expect(within(currentMessage).getByText("Capture at F5 → your turn.")).toBeInTheDocument()
+  })
+
   it("polls_every_500ms_while_active", async () => {
     render(<GamePage />)
 
@@ -250,7 +265,7 @@ describe("GamePage", () => {
     expect(screen.getByText("9:58")).toBeInTheDocument()
   })
 
-  it("auto_follows_new_referee_entries_only_while_log_is_near_bottom", async () => {
+  it("always_follows_new_referee_entries_to_the_bottom", async () => {
     const firstState = {
       ...activeState,
       referee_log: [{ turn: 1, color: "white", announcement: "White to move" }],
@@ -279,13 +294,14 @@ describe("GamePage", () => {
     })
 
     log.scrollTop = 100
-    fireEvent.scroll(log)
 
     await waitFor(() => {
       expect(mockApi.getGameState).toHaveBeenCalledTimes(2)
     })
 
-    expect(log.scrollTop).toBe(100)
+    await waitFor(() => {
+      expect(log.scrollTop).toBe(500)
+    })
   })
 
   it("plays_sounds_only_for_new_referee_announcements", async () => {

@@ -24,7 +24,6 @@ const PHANTOM_LABELS = {
 }
 const PHANTOM_MENU_WIDTH = 164
 const PHANTOM_MENU_GAP = 6
-const REFEREE_LOG_FOLLOW_THRESHOLD_PX = 24
 const GAME_SOUND_MUTE_STORAGE_KEY = "game_page_sounds_muted"
 const CLOCK_TICK_INTERVAL_MS = 250
 const OPPONENT_STARTING_PHANTOMS = {
@@ -319,6 +318,7 @@ function flattenGroupedRefereeEntries(turns) {
             : []
         entries.push({
           key: `${turnNumber}-${color}-${index}-${messages.join("|")}`,
+          color,
           messages,
         })
       })
@@ -1077,8 +1077,6 @@ export default function GamePage() {
   const suppressClickRef = useRef(false)
   const suppressContextMenuRef = useRef(false)
   const logScrollRef = useRef(null)
-  const shouldFollowLogRef = useRef(true)
-  const lastRefereeEntryCountRef = useRef(0)
   const viewportRestoreRef = useRef(null)
   const stateRequestIdRef = useRef(0)
   const clockSnapshotAtMsRef = useRef(Date.now())
@@ -1289,17 +1287,6 @@ export default function GamePage() {
     gameState?.state === "active" &&
     !hasPlayerTakenFirstTurn(groupedRefereeLog, gameState?.your_color)
   const flattenedRefereeEntries = useMemo(() => flattenGroupedRefereeEntries(groupedRefereeLog), [groupedRefereeLog])
-  const latestAnnouncementText = useMemo(() => {
-    const lastEntry = flattenedRefereeEntries.at(-1)
-    if (!lastEntry) {
-      return "No referee responses yet."
-    }
-
-    const messages = Array.isArray(lastEntry.messages)
-      ? lastEntry.messages.filter((message) => typeof message === "string" && message.trim())
-      : []
-    return messages.at(-1) ?? "No referee responses yet."
-  }, [flattenedRefereeEntries])
   const captureSquares = useMemo(() => getRecentCaptureSquares(gameState), [gameState])
   const latestAskAnyConstraint = useMemo(
     () => getLatestAskAnyConstraint(groupedRefereeLog, gameState?.your_color),
@@ -1363,17 +1350,25 @@ export default function GamePage() {
 
     return Number.isFinite(opponent.elo) ? opponent.elo : null
   }, [gameMeta, gameState?.your_color])
-  const refereePanelStyle = desktopRefereeHeight ? { height: `${desktopRefereeHeight}px`, maxHeight: `${desktopRefereeHeight}px` } : undefined
-
-  const handleLogScroll = useCallback(() => {
-    const logNode = logScrollRef.current
-    if (!logNode) {
-      return
+  const latestRefereeEntry = flattenedRefereeEntries.at(-1) ?? null
+  const latestAnnouncementText = useMemo(() => {
+    if (!latestRefereeEntry) {
+      return "No referee responses yet."
     }
 
-    const distanceFromBottom = logNode.scrollHeight - logNode.clientHeight - logNode.scrollTop
-    shouldFollowLogRef.current = distanceFromBottom <= REFEREE_LOG_FOLLOW_THRESHOLD_PX
-  }, [])
+    const messages = Array.isArray(latestRefereeEntry.messages)
+      ? latestRefereeEntry.messages.filter((message) => typeof message === "string" && message.trim())
+      : []
+    const lastMessage = messages.at(-1) ?? "No referee responses yet."
+    const latestColor = normalizeLogColor(latestRefereeEntry.color)
+    const yourColor = normalizeLogColor(gameState?.your_color)
+    if (gameState?.state === "active" && canMove && latestColor && yourColor && latestColor !== yourColor) {
+      return `${lastMessage} \u2192 your turn.`
+    }
+
+    return lastMessage
+  }, [canMove, gameState?.state, gameState?.your_color, latestRefereeEntry])
+  const refereePanelStyle = desktopRefereeHeight ? { height: `${desktopRefereeHeight}px`, maxHeight: `${desktopRefereeHeight}px` } : undefined
 
   useEffect(() => {
     const logNode = logScrollRef.current
@@ -1381,16 +1376,13 @@ export default function GamePage() {
       return
     }
 
-    const nextEntryCount = groupedRefereeLog.reduce((total, turnEntry) => total + turnEntry.white.length + turnEntry.black.length, 0)
-    const hadPreviousEntries = lastRefereeEntryCountRef.current > 0
-    const hasNewEntries = nextEntryCount > lastRefereeEntryCountRef.current
-
-    if (!hadPreviousEntries || (hasNewEntries && shouldFollowLogRef.current)) {
+    const frameId = window.requestAnimationFrame(() => {
       logNode.scrollTop = logNode.scrollHeight
-      shouldFollowLogRef.current = true
-    }
+    })
 
-    lastRefereeEntryCountRef.current = nextEntryCount
+    return () => {
+      window.cancelAnimationFrame(frameId)
+    }
   }, [groupedRefereeLog])
 
   useEffect(() => {
@@ -2101,7 +2093,7 @@ export default function GamePage() {
                 </div>
 
                 {groupedRefereeLog.length ? (
-                  <div className="game-referee-log__scroll" role="log" aria-label="Referee log by turn" ref={logScrollRef} onScroll={handleLogScroll}>
+                  <div className="game-referee-log__scroll" role="log" aria-label="Referee log by turn" ref={logScrollRef}>
                     {groupedRefereeLog.map((turnEntry) => (
                       <section key={`turn-${turnEntry.turn}`} className="game-referee-turn">
                         <div className="game-referee-turn__title">Turn {turnEntry.turn}</div>
