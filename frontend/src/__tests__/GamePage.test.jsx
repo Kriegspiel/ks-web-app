@@ -444,6 +444,8 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     const pieceStatus = await screen.findByLabelText("Remaining piece status")
+    expect(screen.getByLabelText("Opening phantom setup")).toBeInTheDocument()
+    expect(screen.getByText(/Seed the opponent's starting pieces as phantoms in one click\./i)).toBeInTheDocument()
     expect(within(pieceStatus).getByText("White pieces remain:")).toBeInTheDocument()
     expect(within(pieceStatus).getByText("Black pieces remain:")).toBeInTheDocument()
     expect(within(pieceStatus).getAllByText("16")).toHaveLength(2)
@@ -466,6 +468,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByText("Move complete")
+    expect(screen.queryByLabelText("Opening phantom setup")).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Set opponent phantoms to default" })).not.toBeInTheDocument()
   })
 
