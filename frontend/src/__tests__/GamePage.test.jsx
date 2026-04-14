@@ -102,6 +102,13 @@ describe("GamePage", () => {
     expect(await screen.findByText(/signed in as notifil\./i)).toBeInTheDocument()
   })
 
+  it("shows_last_announcement_above_the_referee_log", async () => {
+    render(<GamePage />)
+
+    const latestAnnouncement = await screen.findByLabelText("Last announcement")
+    expect(within(latestAnnouncement).getByText("White to move")).toBeInTheDocument()
+  })
+
   it("polls_every_500ms_while_active", async () => {
     render(<GamePage />)
 
@@ -285,7 +292,9 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    await screen.findByText("Move complete")
+    await waitFor(() => {
+      expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
+    })
     expect(mockSoundPlayer.playCategories).not.toHaveBeenCalled()
 
     await sleep(650)
@@ -468,7 +477,7 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    await screen.findByText("Move complete")
+    await screen.findByLabelText("Remaining piece status")
     expect(screen.queryByRole("button", { name: /Opening setup\. Seed the opponent's starting pieces as phantoms in one click\./i })).not.toBeInTheDocument()
   })
 
@@ -489,7 +498,7 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    await screen.findByText("Move complete")
+    await screen.findByLabelText("Remaining piece status")
     expect(screen.getByRole("button", { name: /Opening setup\. Seed the opponent's starting pieces as phantoms in one click\./i })).toBeInTheDocument()
   })
 
@@ -507,8 +516,7 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    expect(await screen.findByText("Capture at D5")).toBeInTheDocument()
-    const pieceStatus = screen.getByLabelText("Remaining piece status")
+    const pieceStatus = await screen.findByLabelText("Remaining piece status")
     expect(within(pieceStatus).getByText("15")).toBeInTheDocument()
     expect(within(pieceStatus).getByText("14")).toBeInTheDocument()
   })
@@ -525,13 +533,14 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    expect(await screen.findByText("Turn 1")).toBeInTheDocument()
-    expect(screen.getByText("Turn 2")).toBeInTheDocument()
-    const whiteEntry = screen.getByText("White sees file blocked").closest(".game-referee-entry")
+    const refereeLog = await screen.findByRole("log", { name: "Referee log by turn" })
+    expect(within(refereeLog).getByText("Turn 1")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Turn 2")).toBeInTheDocument()
+    const whiteEntry = within(refereeLog).getByText("White sees file blocked").closest(".game-referee-entry")
     expect(whiteEntry).not.toBeNull()
     expect(within(whiteEntry).getByText("1")).toBeInTheDocument()
-    expect(screen.getByText("Black hears no capture")).toBeInTheDocument()
-    expect(screen.getByText("White in check")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Black hears no capture")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("White in check")).toBeInTheDocument()
   })
 
   it("prefers_explicit_referee_turns_from_the_api_when_available", async () => {
@@ -554,9 +563,10 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    expect(await screen.findByText("Turn 1")).toBeInTheDocument()
-    expect(screen.getByText("Turn 2")).toBeInTheDocument()
-    expect(screen.getAllByText("Move complete").length).toBeGreaterThanOrEqual(3)
+    const refereeLog = await screen.findByRole("log", { name: "Referee log by turn" })
+    expect(within(refereeLog).getByText("Turn 1")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Turn 2")).toBeInTheDocument()
+    expect(within(refereeLog).getAllByText("Move complete").length).toBeGreaterThanOrEqual(3)
 
     expect(screen.queryByText("Old fallback log")).not.toBeInTheDocument()
     expect(screen.queryByText("a2a3 — Move complete")).not.toBeInTheDocument()
@@ -582,8 +592,9 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    expect(await screen.findByText("Move complete")).toBeInTheDocument()
-    expect(screen.getByText("Capture at D4 · Check on file")).toBeInTheDocument()
+    const refereeLog = await screen.findByRole("log", { name: "Referee log by turn" })
+    expect(within(refereeLog).getByText("Move complete")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Capture at D4 · Check on file")).toBeInTheDocument()
     expect(screen.queryByText("Old turn fallback")).not.toBeInTheDocument()
     expect(screen.queryByText("Old log fallback")).not.toBeInTheDocument()
   })
@@ -617,14 +628,14 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    expect(await screen.findByText("Turn 1")).toBeInTheDocument()
-    expect(screen.getByText("Turn 2")).toBeInTheDocument()
-    expect(screen.getByText("[e2e4] Move complete")).toBeInTheDocument()
-    expect(screen.getByText("No pawn captures")).toBeInTheDocument()
-    expect(screen.getByText("Move complete")).toBeInTheDocument()
-    expect(screen.getByText("[g1f3] Illegal move")).toBeInTheDocument()
-    expect(screen.getByText("[f1b5] Move complete · Check on file")).toBeInTheDocument()
-    expect(screen.getByText(/Check on file/)).toBeInTheDocument()
+    const refereeLog = await screen.findByRole("log", { name: "Referee log by turn" })
+    expect(within(refereeLog).getByText("Turn 1")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Turn 2")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("[e2e4] Move complete")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("No pawn captures")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Move complete")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("[g1f3] Illegal move")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("[f1b5] Move complete · Check on file")).toBeInTheDocument()
     expect(screen.queryByText("Old fallback log")).not.toBeInTheDocument()
   })
 
@@ -650,11 +661,12 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    expect(await screen.findByText("White move accepted")).toBeInTheDocument()
-    expect(screen.getByText("White gives check")).toBeInTheDocument()
-    expect(screen.getByText("White hears no capture")).toBeInTheDocument()
-    expect(screen.getByText("Black in check")).toBeInTheDocument()
-    expect(screen.getByText("Black must respond")).toBeInTheDocument()
+    const refereeLog = await screen.findByRole("log", { name: "Referee log by turn" })
+    expect(within(refereeLog).getByText("White move accepted")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("White gives check")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("White hears no capture")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Black in check")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Black must respond")).toBeInTheDocument()
   })
 
   it("deduplicates_repeated_referee_messages_within_a_single_entry", async () => {
@@ -679,10 +691,11 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    expect(await screen.findByText("[e4d5] Capture at D5")).toBeInTheDocument()
+    const refereeLog = await screen.findByRole("log", { name: "Referee log by turn" })
+    expect(within(refereeLog).getByText("[e4d5] Capture at D5")).toBeInTheDocument()
     expect(screen.queryByText("[e4d5] Capture at D5 · Capture at D5")).not.toBeInTheDocument()
-    expect(screen.getAllByText("Illegal move")).toHaveLength(3)
-    expect(screen.getAllByText("Move complete")).toHaveLength(1)
+    expect(within(refereeLog).getAllByText("Illegal move")).toHaveLength(3)
+    expect(within(refereeLog).getAllByText("Move complete")).toHaveLength(1)
   })
 
   it("strips_ask_any_prefixes_and_deduplicates_the_response", async () => {
@@ -702,7 +715,8 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    expect(await screen.findByText("Has pawn captures")).toBeInTheDocument()
+    const refereeLog = await screen.findByRole("log", { name: "Referee log by turn" })
+    expect(within(refereeLog).getByText("Has pawn captures")).toBeInTheDocument()
     expect(screen.queryByText("Ask any pawn captures — Has pawn captures")).not.toBeInTheDocument()
     expect(screen.queryByText("Has pawn captures · Has pawn captures")).not.toBeInTheDocument()
   })
@@ -752,11 +766,12 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    expect(await screen.findByText("Illegal move")).toBeInTheDocument()
-    expect(screen.getByText("Move complete")).toBeInTheDocument()
-    expect(screen.getByText("Capture at C6")).toBeInTheDocument()
-    expect(screen.getByText("Has pawn captures")).toBeInTheDocument()
-    expect(screen.getByText("No pawn captures")).toBeInTheDocument()
+    const refereeLog = await screen.findByRole("log", { name: "Referee log by turn" })
+    expect(within(refereeLog).getByText("Illegal move")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Move complete")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Capture at C6")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Has pawn captures")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("No pawn captures")).toBeInTheDocument()
     expect(screen.queryByText("ILLEGAL_MOVE")).not.toBeInTheDocument()
     expect(screen.queryByText("CAPTURE_DONE")).not.toBeInTheDocument()
   })
@@ -778,7 +793,7 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    await screen.findByText("Capture at C6")
+    await screen.findByRole("log", { name: "Referee log by turn" })
     expect(screen.getAllByRole("button", { name: "Square c6" }).at(-1)).toHaveClass("square--capture")
     expect(screen.getAllByRole("button", { name: "Square c5" }).at(-1)).not.toHaveClass("square--capture")
   })
@@ -805,7 +820,7 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    await screen.findByText("Capture at D5")
+    await screen.findByRole("log", { name: "Referee log by turn" })
     expect(screen.getAllByRole("button", { name: "Square d5" }).at(-1)).toHaveClass("square--capture")
   })
 
@@ -826,7 +841,7 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    await screen.findByText("Capture at F4")
+    await screen.findByRole("log", { name: "Referee log by turn" })
     expect(screen.getAllByRole("button", { name: "Square f4" }).at(-1)).toHaveClass("square--capture")
   })
 
@@ -850,7 +865,7 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    await screen.findByText("Capture at B5")
+    await screen.findByRole("log", { name: "Referee log by turn" })
     expect(screen.getAllByRole("button", { name: "Square b5" }).at(-1)).toHaveClass("square--capture")
   })
 
@@ -874,17 +889,18 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    expect(await screen.findByText("Check on rank")).toBeInTheDocument()
-    expect(screen.getByText("Check on file")).toBeInTheDocument()
-    expect(screen.getByText("Check on long diagonal")).toBeInTheDocument()
-    expect(screen.getByText("Check on short diagonal")).toBeInTheDocument()
-    expect(screen.getByText("Check by knight")).toBeInTheDocument()
-    expect(screen.getByText("Double check")).toBeInTheDocument()
-    expect(screen.getByText("Draw by too many reversible moves")).toBeInTheDocument()
-    expect(screen.getByText("Draw by stalemate")).toBeInTheDocument()
-    expect(screen.getByText("Draw by insufficient material")).toBeInTheDocument()
-    expect(screen.getByText("Checkmate — White wins")).toBeInTheDocument()
-    expect(screen.getByText("Checkmate — Black wins")).toBeInTheDocument()
+    const refereeLog = await screen.findByRole("log", { name: "Referee log by turn" })
+    expect(within(refereeLog).getByText("Check on rank")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Check on file")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Check on long diagonal")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Check on short diagonal")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Check by knight")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Double check")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Draw by too many reversible moves")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Draw by stalemate")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Draw by insufficient material")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Checkmate — White wins")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Checkmate — Black wins")).toBeInTheDocument()
   })
 
   it("does_not_mark_the_whole_game_page_as_a_live_region", async () => {

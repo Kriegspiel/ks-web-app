@@ -1287,6 +1287,17 @@ export default function GamePage() {
     gameState?.state === "active" &&
     !hasPlayerTakenFirstTurn(groupedRefereeLog, gameState?.your_color)
   const flattenedRefereeEntries = useMemo(() => flattenGroupedRefereeEntries(groupedRefereeLog), [groupedRefereeLog])
+  const latestAnnouncementText = useMemo(() => {
+    const lastEntry = flattenedRefereeEntries.at(-1)
+    if (!lastEntry) {
+      return "No referee responses yet."
+    }
+
+    const messages = Array.isArray(lastEntry.messages)
+      ? lastEntry.messages.filter((message) => typeof message === "string" && message.trim())
+      : []
+    return messages.at(-1) ?? "No referee responses yet."
+  }, [flattenedRefereeEntries])
   const captureSquares = useMemo(() => getRecentCaptureSquares(gameState), [gameState])
   const latestAskAnyConstraint = useMemo(
     () => getLatestAskAnyConstraint(groupedRefereeLog, gameState?.your_color),
@@ -1925,137 +1936,128 @@ export default function GamePage() {
       {gameState ? (
         <>
           <div className="game-layout">
-            <div className="game-layout__board-column">
-              <section className="game-card game-card--board" aria-label="Board">
-                <div className="game-clocks" aria-label="Game clocks">
-                  <div className={`game-clock ${activeClockColor === "white" ? "game-clock--active" : ""}`.trim()}>
-                    <span className="game-clock__label">White</span>
-                    <strong className="game-clock__time">{formatClock(displayClock?.white_remaining)}</strong>
-                  </div>
-                  <div className={`game-clock ${activeClockColor === "black" ? "game-clock--active" : ""}`.trim()}>
-                    <span className="game-clock__label">Black</span>
-                    <strong className="game-clock__time">{formatClock(displayClock?.black_remaining)}</strong>
-                  </div>
+            <section className="game-card game-card--board" aria-label="Board">
+              <div className="game-clocks" aria-label="Game clocks">
+                <div className={`game-clock ${activeClockColor === "white" ? "game-clock--active" : ""}`.trim()}>
+                  <span className="game-clock__label">White</span>
+                  <strong className="game-clock__time">{formatClock(displayClock?.white_remaining)}</strong>
                 </div>
+                <div className={`game-clock ${activeClockColor === "black" ? "game-clock--active" : ""}`.trim()}>
+                  <span className="game-clock__label">Black</span>
+                  <strong className="game-clock__time">{formatClock(displayClock?.black_remaining)}</strong>
+                </div>
+              </div>
 
-                <div className="game-board-shell" ref={boardShellRef}>
-                  <ChessBoard
-                    boardFen={gameState.your_fen}
-                    orientation={gameState.your_color}
-                    highlightedSquares={highlightedSquares}
-                    lastMoveSquares={lastMoveSquares}
-                    captureSquares={captureSquares}
-                    illegalSquares={illegalMoveSquares}
-                    suggestedSquares={moveSuggestionSquares}
-                    phantomSquares={phantomSquares}
-                    phantomPlacements={placements}
-                    disabled={false}
-                    onSquareClick={handleSquareClick}
-                    onSquareRightClick={handleSquareRightClick}
-                    onSquarePointerDown={handleSquarePointerDown}
-                    onSquarePointerEnter={handleSquarePointerEnter}
-                    onSquarePointerMove={handleSquarePointerMove}
-                    onSquarePointerUp={handleSquarePointerUp}
-                    onSquarePointerCancel={handleSquarePointerCancel}
-                  />
+              <div className="game-board-shell" ref={boardShellRef}>
+                <ChessBoard
+                  boardFen={gameState.your_fen}
+                  orientation={gameState.your_color}
+                  highlightedSquares={highlightedSquares}
+                  lastMoveSquares={lastMoveSquares}
+                  captureSquares={captureSquares}
+                  illegalSquares={illegalMoveSquares}
+                  suggestedSquares={moveSuggestionSquares}
+                  phantomSquares={phantomSquares}
+                  phantomPlacements={placements}
+                  disabled={false}
+                  onSquareClick={handleSquareClick}
+                  onSquareRightClick={handleSquareRightClick}
+                  onSquarePointerDown={handleSquarePointerDown}
+                  onSquarePointerEnter={handleSquarePointerEnter}
+                  onSquarePointerMove={handleSquarePointerMove}
+                  onSquarePointerUp={handleSquarePointerUp}
+                  onSquarePointerCancel={handleSquarePointerCancel}
+                />
 
-                  {phantomMenu ? (
-                    <div
-                      className={`phantom-menu ${phantomMenu.x == null ? "phantom-menu--sheet" : ""}`.trim()}
-                      style={phantomMenu.x == null ? undefined : { left: phantomMenu.x, top: phantomMenu.y }}
-                      role="dialog"
-                      aria-label={`Phantom options for ${phantomMenu.square}`}
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      <div className="phantom-menu__header">
-                        <div className="phantom-menu__intro">
-                          <strong>{phantomMenu.square}</strong>
-                          <span>Add a phantom piece.</span>
-                        </div>
-                        <button type="button" className="phantom-menu__close" onClick={closePhantomMenu} aria-label="Close phantom menu">×</button>
+                {phantomMenu ? (
+                  <div
+                    className={`phantom-menu ${phantomMenu.x == null ? "phantom-menu--sheet" : ""}`.trim()}
+                    style={phantomMenu.x == null ? undefined : { left: phantomMenu.x, top: phantomMenu.y }}
+                    role="dialog"
+                    aria-label={`Phantom options for ${phantomMenu.square}`}
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <div className="phantom-menu__header">
+                      <div className="phantom-menu__intro">
+                        <strong>{phantomMenu.square}</strong>
+                        <span>Add a phantom piece.</span>
                       </div>
-
-                      <div className="phantom-menu__piece-grid">
-                        {PHANTOM_PIECES.map((piece) => {
-                          const disabled = !phantomMenu.availablePieces.includes(piece)
-                          const pieceKey = getOpponentPhantomPiece(piece, gameState?.your_color)
-                          return (
-                            <button
-                              type="button"
-                              key={piece}
-                              className="phantom-menu__piece-button"
-                              disabled={disabled}
-                              onClick={() => handleMenuChoosePiece(piece)}
-                              aria-label={`${PHANTOM_LABELS[piece]} (${trayCounts[piece]} left)`}
-                              title={`${PHANTOM_LABELS[piece]} · ${trayCounts[piece]} left`}
-                            >
-                              <span className="phantom-menu__piece-symbol" aria-hidden="true">
-                                <img src={PIECE_ASSETS[pieceKey]} alt="" draggable="false" />
-                              </span>
-                              <small>{trayCounts[piece]}</small>
-                            </button>
-                          )
-                        })}
-                      </div>
-
-                      {phantomOnMenuSquare ? (
-                        <div className="phantom-menu__footer">
-                          <button type="button" className="phantom-menu__secondary phantom-menu__danger" onClick={handleMenuDeletePhantom}>Remove</button>
-                          <button type="button" className="phantom-menu__secondary" onClick={() => beginMovePhantom(phantomMenu.square)}>Tap destination</button>
-                        </div>
-                      ) : null}
+                      <button type="button" className="phantom-menu__close" onClick={closePhantomMenu} aria-label="Close phantom menu">×</button>
                     </div>
-                  ) : null}
-                </div>
 
-                {dragPreview ? (
-                  <div className="game-drag-preview" style={{ left: dragPreview.x, top: dragPreview.y }} aria-hidden="true">
-                    <img src={PIECE_ASSETS[dragPreview.piece]} alt="" draggable="false" />
+                    <div className="phantom-menu__piece-grid">
+                      {PHANTOM_PIECES.map((piece) => {
+                        const disabled = !phantomMenu.availablePieces.includes(piece)
+                        const pieceKey = getOpponentPhantomPiece(piece, gameState?.your_color)
+                        return (
+                          <button
+                            type="button"
+                            key={piece}
+                            className="phantom-menu__piece-button"
+                            disabled={disabled}
+                            onClick={() => handleMenuChoosePiece(piece)}
+                            aria-label={`${PHANTOM_LABELS[piece]} (${trayCounts[piece]} left)`}
+                            title={`${PHANTOM_LABELS[piece]} · ${trayCounts[piece]} left`}
+                          >
+                            <span className="phantom-menu__piece-symbol" aria-hidden="true">
+                              <img src={PIECE_ASSETS[pieceKey]} alt="" draggable="false" />
+                            </span>
+                            <small>{trayCounts[piece]}</small>
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {phantomOnMenuSquare ? (
+                      <div className="phantom-menu__footer">
+                        <button type="button" className="phantom-menu__secondary phantom-menu__danger" onClick={handleMenuDeletePhantom}>Remove</button>
+                        <button type="button" className="phantom-menu__secondary" onClick={() => beginMovePhantom(phantomMenu.square)}>Tap destination</button>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
+              </div>
 
-                <div className="game-board-meta">
-                  <section className="game-piece-status" aria-label="Remaining piece status">
-                    <p className="game-piece-status__line">
-                      <span className="game-piece-status__label">White pieces remain:</span> {remainingPieceStatus.white}
-                    </p>
-                    <p className="game-piece-status__line">
-                      <span className="game-piece-status__label">Black pieces remain:</span> {remainingPieceStatus.black}
-                    </p>
-                  </section>
-                  {canSeedOpponentPhantoms ? (
-                    <button
-                      type="button"
-                      className="game-opening-callout"
-                      aria-label="Opening setup. Seed the opponent's starting pieces as phantoms in one click."
-                      onClick={handleSeedOpponentPhantoms}
-                    >
-                      <span className="game-opening-callout__eyebrow">Opening setup</span>
-                      <span className="game-opening-callout__body">Seed the opponent&apos;s starting pieces as phantoms in one click.</span>
-                    </button>
-                  ) : null}
-                  <p className="game-page__meta">Phantoms: left-drag to move, right-click to remove, double-click or right-click empty squares to add.</p>
-                  <div className="game-board-meta__actions">
-                    <button
-                      type="button"
-                      className="game-sound-toggle"
-                      onClick={() => setSoundsMuted((value) => !value)}
-                      aria-pressed={soundsMuted}
-                    >
-                      {soundsMuted ? "Sounds off" : "Mute sounds"}
-                    </button>
-                  </div>
+              {dragPreview ? (
+                <div className="game-drag-preview" style={{ left: dragPreview.x, top: dragPreview.y }} aria-hidden="true">
+                  <img src={PIECE_ASSETS[dragPreview.piece]} alt="" draggable="false" />
                 </div>
-              </section>
+              ) : null}
 
-            </div>
+              <div className="game-board-meta">
+                <section className="game-piece-status" aria-label="Remaining piece status">
+                  <p className="game-piece-status__line">
+                    <span className="game-piece-status__label">White pieces remain:</span> {remainingPieceStatus.white}
+                  </p>
+                  <p className="game-piece-status__line">
+                    <span className="game-piece-status__label">Black pieces remain:</span> {remainingPieceStatus.black}
+                  </p>
+                </section>
+                {canSeedOpponentPhantoms ? (
+                  <button
+                    type="button"
+                    className="game-opening-callout"
+                    aria-label="Opening setup. Seed the opponent's starting pieces as phantoms in one click."
+                    onClick={handleSeedOpponentPhantoms}
+                  >
+                    <span className="game-opening-callout__eyebrow">Opening setup</span>
+                    <span className="game-opening-callout__body">Seed the opponent&apos;s starting pieces as phantoms in one click.</span>
+                  </button>
+                ) : null}
+                <p className="game-page__meta">Phantoms: left-drag to move, right-click to remove, double-click or right-click empty squares to add.</p>
+              </div>
+            </section>
 
-            <section className="game-card game-card--status" aria-label="Game status">
+            <section className="game-card game-card--referee" aria-label="Referee panel">
               <div className="game-actions" aria-label="Game actions">
                 <button type="button" onClick={handleAskAny} disabled={!canAskAny}>
                   Any pawn captures?
                 </button>
               </div>
+              <section className="game-referee-latest" aria-label="Last announcement">
+                <div className="game-referee-latest__label">Last announcement</div>
+                <p className="game-referee-latest__value">{latestAnnouncementText}</p>
+              </section>
 
               <div className="game-referee-log">
                 <div className="game-referee-log__header">
@@ -2106,7 +2108,9 @@ export default function GamePage() {
                   <p className="game-referee-column__empty">No referee responses yet.</p>
                 )}
               </div>
+            </section>
 
+            <section className="game-card game-card--status" aria-label="Game status">
               <div className="game-status-section">
                 <h2>Status</h2>
                 <ul className="game-status-list">
@@ -2121,15 +2125,26 @@ export default function GamePage() {
                 </ul>
               </div>
 
-              {canCloseWaitingGame ? (
-                <button type="button" className="game-danger-button" onClick={handleCloseWaitingGame} disabled={!canCloseWaitingGame}>
-                  Close
+              <div className="game-status-controls">
+                <button
+                  type="button"
+                  className="game-sound-toggle"
+                  onClick={() => setSoundsMuted((value) => !value)}
+                  aria-pressed={soundsMuted}
+                >
+                  {soundsMuted ? "Sounds off" : "Mute sounds"}
                 </button>
-              ) : (
-                <button type="button" className="game-danger-button" onClick={handleResign} disabled={!canResign}>
-                  Resign
-                </button>
-              )}
+
+                {canCloseWaitingGame ? (
+                  <button type="button" className="game-danger-button" onClick={handleCloseWaitingGame} disabled={!canCloseWaitingGame}>
+                    Close
+                  </button>
+                ) : (
+                  <button type="button" className="game-danger-button" onClick={handleResign} disabled={!canResign}>
+                    Resign
+                  </button>
+                )}
+              </div>
             </section>
           </div>
 
