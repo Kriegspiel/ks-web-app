@@ -690,6 +690,22 @@ function formatRuleVariant(value) {
   return normalized.replace(/\b\w/g, (char) => char.toUpperCase())
 }
 
+function normalizeRatings(source) {
+  const ratings = source?.ratings ?? {}
+  const overall = ratings?.overall?.elo ?? source?.elo ?? null
+  const vsHumans = ratings?.vs_humans?.elo ?? null
+  const vsBots = ratings?.vs_bots?.elo ?? null
+  return {
+    overall: overall == null ? null : Number(overall),
+    vsHumans: vsHumans == null ? null : Number(vsHumans),
+    vsBots: vsBots == null ? null : Number(vsBots),
+  }
+}
+
+function ratingValue(value) {
+  return Number.isFinite(value) ? String(value) : "—"
+}
+
 function pieceAtSquare(fen, square) {
   if (!fen || !square) {
     return ""
@@ -1325,31 +1341,28 @@ export default function GamePage() {
     [clockNowMs, clockSnapshotAtMs, gameState?.clock, gameState?.state]
   )
   const activeClockColor = displayClock?.active_color ?? gameState?.turn
-  const opponentLabel = useMemo(() => {
+  const opponent = useMemo(() => {
     if (!gameMeta || !gameState?.your_color) {
-      return "—"
+      return null
     }
 
-    const opponent = gameState.your_color === "white" ? gameMeta.black : gameMeta.white
+    return gameState.your_color === "white" ? gameMeta.black : gameMeta.white
+  }, [gameMeta, gameState?.your_color])
+
+  const opponentLabel = useMemo(() => {
+    if (!opponent) {
+      return gameMeta?.opponent_type === "bot" ? "Bot" : "Waiting…"
+    }
+
     if (!opponent?.username) {
-      return gameMeta.opponent_type === "bot" ? "Bot" : "Waiting…"
+      return gameMeta?.opponent_type === "bot" ? "Bot" : "Waiting…"
     }
 
     return `${opponent.username}${opponent.role === "bot" ? " (bot)" : ""}`
-  }, [gameMeta, gameState?.your_color])
+  }, [gameMeta?.opponent_type, opponent])
 
-  const opponentRating = useMemo(() => {
-    if (!gameMeta || !gameState?.your_color) {
-      return null
-    }
-
-    const opponent = gameState.your_color === "white" ? gameMeta.black : gameMeta.white
-    if (!opponent) {
-      return null
-    }
-
-    return Number.isFinite(opponent.elo) ? opponent.elo : null
-  }, [gameMeta, gameState?.your_color])
+  const opponentRatings = useMemo(() => normalizeRatings(opponent), [opponent])
+  const opponentRating = opponentRatings.overall
   const latestRefereeEntry = flattenedRefereeEntries.at(-1) ?? null
   const latestAnnouncementText = useMemo(() => {
     if (!latestRefereeEntry) {
@@ -2138,41 +2151,58 @@ export default function GamePage() {
               </div>
             </section>
 
-            <section className="game-card game-card--status" aria-label="Game status">
-              <div className="game-status-section">
-                <h2>Status</h2>
-                <ul className="game-status-list">
+            <section className="game-status-grid" aria-label="Game details">
+              <article className="game-card game-status-card">
+                <h2 className="game-status-card__title">Game</h2>
+                <ul className="game-status-card__list">
                   <li><strong>Game code:</strong> <code>{gameMeta?.game_code ?? gameRef}</code></li>
                   <li><strong>State:</strong> {gameState.state}</li>
                   <li><strong>Rules:</strong> {formatRuleVariant(gameMeta?.rule_variant)}</li>
+                </ul>
+              </article>
+
+              <article className="game-card game-status-card">
+                <h2 className="game-status-card__title">Opponent</h2>
+                <ul className="game-status-card__list">
                   <li><strong>Against:</strong> {opponentLabel}</li>
-                  <li><strong>Opponent rating:</strong> {opponentRating ?? "—"}</li>
+                  <li><strong>Opponent rating:</strong> {ratingValue(opponentRating)}</li>
+                  <li><strong>vs Humans:</strong> {ratingValue(opponentRatings.vsHumans)}</li>
+                  <li><strong>vs Bots:</strong> {ratingValue(opponentRatings.vsBots)}</li>
+                </ul>
+              </article>
+
+              <article className="game-card game-status-card">
+                <h2 className="game-status-card__title">Status</h2>
+                <ul className="game-status-card__list">
                   <li><strong>Your color:</strong> {gameState.your_color}</li>
-                  <li className={canMove ? "game-status-list__turn game-status-list__turn--active" : "game-status-list__turn"}><strong>Turn:</strong> {gameState.turn ?? "—"}</li>
+                  <li className={canMove ? "game-status-card__turn game-status-card__turn--active" : "game-status-card__turn"}><strong>Turn:</strong> {gameState.turn ?? "—"}</li>
                   <li><strong>Move number:</strong> {gameState.move_number}</li>
                 </ul>
-              </div>
+              </article>
 
-              <div className="game-status-controls">
-                <button
-                  type="button"
-                  className="game-sound-toggle"
-                  onClick={() => setSoundsMuted((value) => !value)}
-                  aria-pressed={soundsMuted}
-                >
-                  {soundsMuted ? "Sounds off" : "Mute sounds"}
-                </button>
+              <article className="game-card game-status-card">
+                <h2 className="game-status-card__title">Actions</h2>
+                <div className="game-status-card__actions">
+                  <button
+                    type="button"
+                    className="game-sound-toggle"
+                    onClick={() => setSoundsMuted((value) => !value)}
+                    aria-pressed={soundsMuted}
+                  >
+                    {soundsMuted ? "Sounds off" : "Mute sounds"}
+                  </button>
 
-                {canCloseWaitingGame ? (
-                  <button type="button" className="game-danger-button" onClick={handleCloseWaitingGame} disabled={!canCloseWaitingGame}>
-                    Close
-                  </button>
-                ) : (
-                  <button type="button" className="game-danger-button" onClick={handleResign} disabled={!canResign}>
-                    Resign
-                  </button>
-                )}
-              </div>
+                  {canCloseWaitingGame ? (
+                    <button type="button" className="game-danger-button" onClick={handleCloseWaitingGame} disabled={!canCloseWaitingGame}>
+                      Close
+                    </button>
+                  ) : (
+                    <button type="button" className="game-danger-button" onClick={handleResign} disabled={!canResign}>
+                      Resign
+                    </button>
+                  )}
+                </div>
+              </article>
             </section>
           </div>
 
