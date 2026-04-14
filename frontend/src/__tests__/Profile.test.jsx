@@ -181,7 +181,7 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("heading", { name: "This user is bot" })).toBeInTheDocument()
     expect(screen.getByText(/On Kriegspiel\.org we allow bots\./i)).toBeInTheDocument()
     expect(screen.getByText(/You also can create your own bot – more bots, more fun\./i)).toBeInTheDocument()
-    expect(screen.getByText(/Email address of bot owner is bot-gpt-nano@kriegspiel\.org\./i)).toBeInTheDocument()
+    expect(screen.getByText(/Email address of this bot owner is bot-gpt-nano@kriegspiel\.org\./i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("href", "https://kriegspiel.org/blog/bot-registration-flow")
     expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("target", "_blank")
   })

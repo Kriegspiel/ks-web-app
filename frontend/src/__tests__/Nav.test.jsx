@@ -21,6 +21,17 @@ beforeEach(() => {
   mockAuth.user = null
   mockAuth.actionLoading = false
   mockAuth.logout.mockReset()
+  window.localStorage.clear()
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: vi.fn().mockImplementation(() => ({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+    })),
+  })
 })
 
 afterEach(() => {
@@ -65,6 +76,19 @@ describe("Nav", () => {
 })
 
 describe("theme toggle", () => {
+  it("defaults_to_light_even_if_system_prefers_dark", () => {
+    render(
+      <ThemeProvider>
+        <MemoryRouter>
+          <AppHeader />
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    expect(screen.getByRole("button", { name: /toggle color theme/i })).toHaveAttribute("aria-pressed", "false")
+    expect(window.localStorage.getItem("kriegspiel-theme")).toBe("light")
+  })
+
   it("toggles_aria_label_when_pressed", () => {
     render(
       <ThemeProvider>
