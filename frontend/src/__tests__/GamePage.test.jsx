@@ -226,7 +226,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByLabelText(/Game clocks/i)
-    expect(screen.getByText("10:01")).toBeInTheDocument()
+    expect(screen.getByText(/^10:0[01]$/)).toBeInTheDocument()
     expect(screen.getByText("9:58")).toBeInTheDocument()
   })
 

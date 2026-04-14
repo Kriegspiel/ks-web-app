@@ -8,7 +8,7 @@ import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
 import { announcementSoundCategories, createGameSoundPlayer } from "../gameSounds"
 import { askAny, deleteWaitingGame, getGame, getGameState, resignGame, submitMove } from "../services/api"
 import { getAllowedMoveTargets, PIECE_ASSETS } from "../components/chessboard"
-import { formatClock, projectClock } from "./gameClock"
+import { formatClock, projectClock, reconcileClockSnapshot } from "./gameClock"
 import "./GamePage.css"
 
 const POLL_INTERVAL_MS = 500
@@ -1079,6 +1079,7 @@ export default function GamePage() {
   const lastRefereeEntryCountRef = useRef(0)
   const viewportRestoreRef = useRef(null)
   const stateRequestIdRef = useRef(0)
+  const clockSnapshotAtMsRef = useRef(Date.now())
   const soundPlayerRef = useRef(null)
   const lastSoundEntryKeysRef = useRef([])
   const finishDragPhantomRef = useRef(null)
@@ -1110,6 +1111,7 @@ export default function GamePage() {
       return
     }
 
+    const requestedAtMs = Date.now()
     const requestId = stateRequestIdRef.current + 1
     stateRequestIdRef.current = requestId
 
@@ -1126,10 +1128,18 @@ export default function GamePage() {
       if (requestId !== stateRequestIdRef.current) {
         return
       }
-      const syncedAtMs = Date.now()
-      setGameState(state)
+      const receivedAtMs = Date.now()
+      const syncedAtMs = requestedAtMs + ((receivedAtMs - requestedAtMs) / 2)
+      setGameState((previousState) => ({
+        ...state,
+        clock: reconcileClockSnapshot(previousState, state, {
+          previousSyncedAtMs: clockSnapshotAtMsRef.current,
+          nextSyncedAtMs: syncedAtMs,
+        }),
+      }))
+      clockSnapshotAtMsRef.current = syncedAtMs
       setClockSnapshotAtMs(syncedAtMs)
-      setClockNowMs(syncedAtMs)
+      setClockNowMs(receivedAtMs)
       setError("")
     } catch (requestError) {
       if (requestId !== stateRequestIdRef.current) {
