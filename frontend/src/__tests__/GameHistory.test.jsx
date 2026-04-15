@@ -34,7 +34,7 @@ describe("GameHistoryPage", () => {
   it("renders_rows_and_review_links", async () => {
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({
       games: [{ game_id: "g-20", game_code: "A7K2M9", rule_variant: "berkeley_any", opponent: "amy", opponent_role: "bot", play_as: "white", result: "win", reason: "checkmate", move_count: 22, turn_count: 10, played_at: "2026-01-02T00:00:00Z" }],
-      pagination: { page: 1, pages: 2, total: 21 },
+      pagination: { page: 1, pages: 2, total: 121 },
     })
 
     renderHistory()
@@ -50,9 +50,9 @@ describe("GameHistoryPage", () => {
 
   it("handles_prev_next_pagination", async () => {
     mockApi.userApi.getGameHistory
-      .mockResolvedValueOnce({ games: [{ game_id: "g-1", opponent: "amy" }], pagination: { page: 1, pages: 3, total: 41 } })
-      .mockResolvedValueOnce({ games: [{ game_id: "g-2", opponent: "bob" }], pagination: { page: 2, pages: 3, total: 41 } })
-      .mockResolvedValueOnce({ games: [{ game_id: "g-1", opponent: "amy" }], pagination: { page: 1, pages: 3, total: 41 } })
+      .mockResolvedValueOnce({ games: [{ game_id: "g-1", opponent: "amy" }], pagination: { page: 1, pages: 3, total: 241 } })
+      .mockResolvedValueOnce({ games: [{ game_id: "g-2", opponent: "bob" }], pagination: { page: 2, pages: 3, total: 241 } })
+      .mockResolvedValueOnce({ games: [{ game_id: "g-1", opponent: "amy" }], pagination: { page: 1, pages: 3, total: 241 } })
 
     renderHistory()
 
@@ -60,10 +60,21 @@ describe("GameHistoryPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
 
     await screen.findByText("bob")
-    expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(2, "fil", 2, 20)
+    expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(2, "fil", 2, 100)
 
     fireEvent.click(screen.getByRole("button", { name: "Prev" }))
-    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(3, "fil", 1, 20))
+    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(3, "fil", 1, 100))
+  })
+
+  it("falls_back_to_full_turns_when_only_move_count_is_present", async () => {
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
+      games: [{ game_id: "g-21", move_count: 7 }],
+      pagination: { page: 1, pages: 1, total: 1 },
+    })
+
+    renderHistory()
+
+    expect(await screen.findByText("4")).toBeInTheDocument()
   })
 
 
@@ -77,7 +88,7 @@ describe("GameHistoryPage", () => {
   })
 
   it("shows_empty_state_for_out_of_range_page", async () => {
-    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [], pagination: { page: 5, pages: 4, total: 70 } })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [], pagination: { page: 5, pages: 4, total: 301 } })
     renderHistory()
     await screen.findByText("No games found on this page.")
   })
