@@ -5,6 +5,8 @@ import { userApi } from "../services/api"
 import { formatUtcDateTime } from "../utils/dateTime"
 import "./GameHistory.css"
 
+const HISTORY_PAGE_SIZE = 100
+
 function formatDate(value) {
   return formatUtcDateTime(value) || "—"
 }
@@ -24,7 +26,7 @@ function turnCount(game) {
     return explicit
   }
   const moveCount = Number(game?.move_count)
-  return Number.isFinite(moveCount) ? moveCount : 0
+  return Number.isFinite(moveCount) ? Math.ceil(moveCount / 2) : 0
 }
 
 export default function GameHistoryPage() {
@@ -40,7 +42,7 @@ export default function GameHistoryPage() {
       setLoading(true)
       setError("")
       try {
-        const payload = await userApi.getGameHistory(username, page, 20)
+        const payload = await userApi.getGameHistory(username, page, HISTORY_PAGE_SIZE)
         if (!cancelled) {
           setHistory({
             games: Array.isArray(payload?.games) ? payload.games : [],
