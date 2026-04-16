@@ -72,6 +72,36 @@ describe("LobbyPage", () => {
     expect(screen.queryByRole("link", { name: "Resume active game" })).not.toBeInTheDocument()
   })
 
+  it("falls_back_to_player_when_the_auth_user_has_no_username_or_email", async () => {
+    mockAuth.user = {}
+
+    renderPage()
+
+    expect(await screen.findByText("Signed in as player.")).toBeInTheDocument()
+  })
+
+  it("uses_game_id_fallbacks_for_active_games_and_created_active_games", async () => {
+    mockApi.getMyGames.mockResolvedValue({
+      games: [
+        {
+          game_id: "g-active-only",
+          state: "active",
+        },
+      ],
+    })
+    mockApi.createGame.mockResolvedValueOnce({ game_id: "g-created-only", state: "active" })
+
+    renderPage()
+
+    expect(await screen.findByRole("link", { name: "Resume active game" })).toHaveAttribute("href", "/game/g-active-only")
+
+    fireEvent.click(screen.getByRole("button", { name: "Create waiting game" }))
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/game/g-created-only")
+    })
+  })
+
   it("orders_join_sections_as_create_open_join", async () => {
     renderPage()
 
@@ -156,6 +186,29 @@ describe("LobbyPage", () => {
 
     const openGames = await screen.findAllByRole("listitem")
     expect(within(openGames[0]).getByText(/Unknown/)).toBeInTheDocument()
+  })
+
+  it("uses_game_id_fallbacks_when_opening_and_closing_an_owned_waiting_game_without_a_code", async () => {
+    mockApi.getOpenGames.mockResolvedValue({
+      games: [
+        {
+          game_id: "g-owned-only",
+          created_by: "fil",
+          available_color: "white",
+          created_at: "2026-04-03T23:59:59Z",
+        },
+      ],
+    })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Open" }))
+    expect(mockNavigate).toHaveBeenCalledWith("/game/g-owned-only")
+
+    fireEvent.click(await screen.findByRole("button", { name: "Close" }))
+    await waitFor(() => {
+      expect(mockApi.deleteWaitingGame).toHaveBeenCalledWith("g-owned-only")
+    })
   })
 
   it("shows_close_for_my_open_waiting_game", async () => {
@@ -328,6 +381,18 @@ describe("LobbyPage", () => {
     expect(await screen.findByText("Unable to load bots right now.")).toBeInTheDocument()
     expect(screen.getByText("Unable to load open games right now.")).toBeInTheDocument()
     expect(screen.getByText("Unable to load lobby stats right now.")).toBeInTheDocument()
+  })
+
+  it("falls_back_to_empty_open_games_and_bots_when_payload_arrays_are_missing", async () => {
+    mockApi.getOpenGames.mockResolvedValueOnce({})
+    mockApi.getBots.mockResolvedValueOnce({})
+
+    renderPage()
+
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    expect(await screen.findByLabelText("Bot opponent")).toHaveValue("")
+    expect(screen.getByText("No bots support this ruleset.")).toBeInTheDocument()
+    expect(screen.queryAllByRole("listitem")).toHaveLength(0)
   })
 
   it("opens_my_own_waiting_game_when_join_by_code_hits_own_game_conflict", async () => {
@@ -508,6 +573,20 @@ describe("LobbyPage", () => {
     })
   })
 
+  it("uses_the_waiting_game_id_when_polling_promotes_a_game_without_a_game_code", async () => {
+    mockApi.createGame.mockResolvedValueOnce({ game_id: "g-2", state: "waiting" })
+    mockApi.getGame.mockResolvedValueOnce({ state: "active" })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create waiting game" }))
+
+    await waitFor(() => {
+      expect(mockApi.getGame).toHaveBeenCalledWith("g-2")
+      expect(mockNavigate).toHaveBeenCalledWith("/game/g-2")
+    })
+  })
+
   it("restores_the_waiting_card_state_when_waiting_game_polling_fails", async () => {
     mockApi.createGame.mockResolvedValueOnce({ game_id: "g-1", game_code: "ABCD23", state: "waiting" })
     mockApi.getGame.mockRejectedValueOnce({})
@@ -525,6 +604,15 @@ describe("LobbyPage", () => {
 
   it("falls_back_to_no_active_games_when_refreshing_my_games_fails", async () => {
     mockApi.getMyGames.mockRejectedValueOnce(new Error("My games exploded"))
+
+    renderPage()
+
+    await screen.findByRole("link", { name: "Leaderboard" })
+    expect(screen.queryByRole("link", { name: "Resume active game" })).not.toBeInTheDocument()
+  })
+
+  it("falls_back_to_no_active_games_when_my_games_payload_is_not_an_array", async () => {
+    mockApi.getMyGames.mockResolvedValueOnce({})
 
     renderPage()
 
