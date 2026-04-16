@@ -239,4 +239,115 @@ describe("LobbyPage", () => {
       expect(mockNavigate).toHaveBeenCalledWith("/game/OWN123")
     })
   })
+
+  it("shows_an_error_when_no_supported_bot_is_available_for_the_selected_ruleset", async () => {
+    mockApi.getBots.mockResolvedValueOnce({
+      bots: [
+        {
+          bot_id: "bot-only-any",
+          username: "randobotany",
+          display_name: "Random Any Bot",
+          description: "Asks any pawn captures first.",
+          elo: 1200,
+          supported_rule_variants: ["berkeley_any"],
+        },
+      ],
+    })
+
+    renderPage()
+
+    fireEvent.change(await screen.findByLabelText("Ruleset"), { target: { value: "berkeley" } })
+    fireEvent.click(screen.getByLabelText("Bot"))
+
+    expect(await screen.findByText("No bots support this ruleset.")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "Create bot game" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Pick a bot before creating the game.")
+  })
+
+  it("surfaces_create_errors_when_game_creation_fails", async () => {
+    mockApi.createGame.mockRejectedValueOnce({ message: "Create exploded" })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create waiting game" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Create exploded")
+  })
+
+  it("validates_blank_join_codes_and_surfaces_join_errors", async () => {
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Join game" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("Enter a game code to join.")
+
+    mockApi.joinGame.mockRejectedValueOnce({ message: "Join failed" })
+    fireEvent.change(screen.getByLabelText("Game code"), { target: { value: "fail01" } })
+    fireEvent.click(screen.getByRole("button", { name: "Join game" }))
+
+    await waitFor(() => {
+      expect(mockApi.joinGame).toHaveBeenCalledWith("FAIL01")
+    })
+    expect(await screen.findByRole("alert")).toHaveTextContent("Join failed")
+  })
+
+  it("handles_open_game_join_conflicts_and_failures", async () => {
+    mockApi.getOpenGames.mockResolvedValueOnce({
+      games: [
+        {
+          game_code: "ZZZ999",
+          created_by: "randobot",
+          available_color: "black",
+          created_at: "2026-04-03T23:59:58Z",
+        },
+      ],
+    })
+    mockApi.joinGame
+      .mockRejectedValueOnce({ status: 409, code: "CANNOT_JOIN_OWN_GAME", message: "Open your own waiting game." })
+      .mockRejectedValueOnce({ message: "Open join failed" })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Join" }))
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/game/ZZZ999")
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "Join" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("Open join failed")
+  })
+
+  it("polls_a_created_waiting_game_until_it_becomes_active", async () => {
+    mockApi.createGame.mockResolvedValueOnce({ game_id: "g-1", game_code: "ABCD23", state: "waiting" })
+    mockApi.getGame.mockResolvedValueOnce({ state: "active", game_code: "ABCD23" })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create waiting game" }))
+
+    await waitFor(() => {
+      expect(mockApi.getGame).toHaveBeenCalledWith("g-1")
+      expect(mockNavigate).toHaveBeenCalledWith("/game/ABCD23")
+    })
+  })
+
+  it("shows_an_error_when_closing_a_waiting_game_fails", async () => {
+    mockApi.getOpenGames.mockResolvedValueOnce({
+      games: [
+        {
+          game_code: "OWN123",
+          created_by: "fil",
+          available_color: "white",
+          created_at: "2026-04-03T23:59:59Z",
+        },
+      ],
+    })
+    mockApi.deleteWaitingGame.mockRejectedValueOnce({ message: "Close failed" })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Close" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Close failed")
+  })
 })

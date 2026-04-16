@@ -503,6 +503,101 @@ describe("GamePage", () => {
     expect(source).not.toHaveClass("square--phantom")
   })
 
+  it("submits_dragged_piece_moves_with_pointer_events", async () => {
+    render(<GamePage />)
+
+    const source = await screen.findByRole("button", { name: "Square e2" })
+    const target = screen.getByRole("button", { name: "Square e4" })
+    source.setPointerCapture = vi.fn()
+    source.releasePointerCapture = vi.fn()
+    const elementFromPointSpy = vi.spyOn(document, "elementFromPoint").mockReturnValue(target)
+
+    fireEvent.pointerDown(source, { button: 0, pointerId: 11, pointerType: "mouse", clientX: 120, clientY: 180 })
+    expect(document.querySelector(".game-drag-preview")).toBeTruthy()
+
+    fireEvent.pointerEnter(source, { buttons: 1, pointerId: 11, pointerType: "mouse" })
+    fireEvent.pointerMove(source, { buttons: 1, pointerId: 11, pointerType: "mouse", clientX: 180, clientY: 220 })
+    fireEvent.pointerUp(source, { pointerId: 11, pointerType: "mouse", clientX: 180, clientY: 220 })
+
+    await waitFor(() => {
+      expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
+    })
+    expect(source.setPointerCapture).toHaveBeenCalledWith(11)
+    expect(source.releasePointerCapture).toHaveBeenCalledWith(11)
+
+    elementFromPointSpy.mockRestore()
+  })
+
+  it("moves_phantoms_with_pointer_drag_and_drops_them_off_board", async () => {
+    render(<GamePage />)
+
+    const source = await screen.findByRole("button", { name: "Square d5" })
+    fireEvent.contextMenu(source, { clientX: 120, clientY: 180 })
+    fireEvent.click(screen.getByRole("button", { name: /Queen \(1 left\)/i }))
+    expect(source).toHaveClass("square--phantom")
+
+    source.setPointerCapture = vi.fn()
+    source.releasePointerCapture = vi.fn()
+    const target = screen.getByRole("button", { name: "Square f5" })
+    const elementFromPointSpy = vi.spyOn(document, "elementFromPoint").mockReturnValue(target)
+
+    fireEvent.pointerDown(source, { button: 0, pointerId: 21, pointerType: "mouse", clientX: 140, clientY: 200 })
+    expect(document.querySelector(".game-drag-preview")).toBeTruthy()
+    fireEvent.pointerEnter(source, { buttons: 2, pointerId: 21, pointerType: "mouse" })
+    fireEvent.pointerMove(source, { pointerId: 21, pointerType: "mouse", clientX: 200, clientY: 200 })
+    fireEvent.pointerUp(source, { pointerId: 21, pointerType: "mouse", clientX: 200, clientY: 200 })
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--phantom")
+    })
+
+    const movedPhantom = screen.getByRole("button", { name: "Square f5" })
+    movedPhantom.setPointerCapture = vi.fn()
+    movedPhantom.releasePointerCapture = vi.fn()
+    elementFromPointSpy.mockReturnValue(null)
+
+    fireEvent.pointerDown(movedPhantom, { button: 0, pointerId: 22, pointerType: "mouse", clientX: 200, clientY: 200 })
+    fireEvent.pointerUp(window, { pointerId: 22, pointerType: "mouse", clientX: 4, clientY: 4 })
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Square f5" })).not.toHaveClass("square--phantom")
+    })
+
+    elementFromPointSpy.mockRestore()
+  })
+
+  it("supports_tap_destination_mode_for_phantoms_and_surfaces_invalid_targets", async () => {
+    let now = new Date("2026-04-03T10:00:00Z").valueOf()
+    const nowSpy = vi.spyOn(Date, "now").mockImplementation(() => now)
+
+    render(<GamePage />)
+
+    const source = await screen.findByRole("button", { name: "Square d5" })
+    fireEvent.contextMenu(source, { clientX: 120, clientY: 180 })
+    fireEvent.click(screen.getByRole("button", { name: /Queen \(1 left\)/i }))
+
+    fireEvent.click(source)
+    now += 150
+    fireEvent.click(source)
+    fireEvent.click(await screen.findByRole("button", { name: "Tap destination" }))
+    fireEvent.click(source)
+    expect(source).toHaveClass("square--phantom")
+
+    now += 150
+    fireEvent.click(source)
+    now += 150
+    fireEvent.click(source)
+    fireEvent.click(await screen.findByRole("button", { name: "Tap destination" }))
+    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("That square cannot take the phantom piece.")
+    })
+    expect(source).toHaveClass("square--phantom")
+
+    nowSpy.mockRestore()
+  })
+
   it("seeds_default_opponent_phantoms_only_at_the_opening", async () => {
     render(<GamePage />)
 
