@@ -503,27 +503,27 @@ describe("GamePage", () => {
     expect(source).not.toHaveClass("square--phantom")
   })
 
-  it("submits_dragged_piece_moves_with_pointer_events", async () => {
+  it("switches_selected_move_source_when_you_click_another_legal_origin", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      your_fen: "8/8/8/8/8/8/4PP2/4K3",
+      allowed_moves: ["e2e4", "f2f4"],
+    })
+
     render(<GamePage />)
 
     const source = await screen.findByRole("button", { name: "Square e2" })
-    const target = screen.getByRole("button", { name: "Square e4" })
-    const originalElementFromPoint = document.elementFromPoint
-    Object.defineProperty(document, "elementFromPoint", { configurable: true, value: vi.fn(() => target) })
+    const alternateSource = screen.getByRole("button", { name: "Square f2" })
 
-    fireEvent.pointerDown(source, { button: 0, buttons: 1, pointerId: 11, pointerType: "mouse", clientX: 120, clientY: 180 })
-    fireEvent.pointerEnter(source, { buttons: 1, pointerId: 11, pointerType: "mouse" })
-    fireEvent.pointerMove(source, { buttons: 1, pointerId: 11, pointerType: "mouse", clientX: 180, clientY: 220 })
-    fireEvent.pointerUp(source, { pointerId: 11, pointerType: "mouse", clientX: 180, clientY: 220 })
+    fireEvent.click(source)
+    expect(source).toHaveClass("square--highlighted")
 
-    await waitFor(() => {
-      expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
-    })
-
-    Object.defineProperty(document, "elementFromPoint", { configurable: true, value: originalElementFromPoint })
+    fireEvent.click(alternateSource)
+    expect(alternateSource).toHaveClass("square--highlighted")
+    expect(source).not.toHaveClass("square--highlighted")
   })
 
-  it("moves_phantoms_with_pointer_drag_and_drops_them_off_board", async () => {
+  it("moves_phantoms_via_tap_destination_and_handles_invalid_targets", async () => {
     render(<GamePage />)
 
     const source = await screen.findByRole("button", { name: "Square d5" })
@@ -531,31 +531,52 @@ describe("GamePage", () => {
     fireEvent.click(screen.getByRole("button", { name: /Queen \(1 left\)/i }))
     expect(source).toHaveClass("square--phantom")
 
-    const target = screen.getByRole("button", { name: "Square f5" })
-    const originalElementFromPoint = document.elementFromPoint
-    const elementFromPoint = vi.fn(() => target)
-    Object.defineProperty(document, "elementFromPoint", { configurable: true, value: elementFromPoint })
+    fireEvent.contextMenu(source, { clientX: 120, clientY: 180 })
+    fireEvent.click(screen.getByRole("button", { name: /Tap destination/i }))
+    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
 
-    fireEvent.pointerDown(source, { button: 0, buttons: 1, pointerId: 21, pointerType: "mouse", clientX: 140, clientY: 200 })
-    fireEvent.pointerEnter(source, { buttons: 2, pointerId: 21, pointerType: "mouse" })
-    fireEvent.pointerMove(source, { pointerId: 21, pointerType: "mouse", clientX: 200, clientY: 200 })
-    fireEvent.pointerUp(source, { pointerId: 21, pointerType: "mouse", clientX: 200, clientY: 200 })
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("That square cannot take the phantom piece.")
+    })
+    expect(source).toHaveClass("square--phantom")
+
+    fireEvent.contextMenu(source, { clientX: 120, clientY: 180 })
+    fireEvent.click(screen.getByRole("button", { name: /Tap destination/i }))
+    fireEvent.click(screen.getByRole("button", { name: "Square f5" }))
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--phantom")
     })
+    expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--phantom")
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
 
-    const movedPhantom = screen.getByRole("button", { name: "Square f5" })
-    elementFromPoint.mockReturnValue(null)
+  it("keeps_a_phantom_in_place_when_tap_destination_returns_to_the_same_square", async () => {
+    render(<GamePage />)
 
-    fireEvent.pointerDown(movedPhantom, { button: 0, pointerId: 22, pointerType: "mouse", clientX: 200, clientY: 200 })
-    fireEvent.pointerUp(window, { pointerId: 22, pointerType: "mouse", clientX: 4, clientY: 4 })
+    const source = await screen.findByRole("button", { name: "Square d5" })
+    fireEvent.contextMenu(source, { clientX: 120, clientY: 180 })
+    fireEvent.click(screen.getByRole("button", { name: /Queen \(1 left\)/i }))
 
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Square f5" })).not.toHaveClass("square--phantom")
-    })
+    fireEvent.contextMenu(source, { clientX: 120, clientY: 180 })
+    fireEvent.click(screen.getByRole("button", { name: /Tap destination/i }))
+    fireEvent.click(source)
 
-    Object.defineProperty(document, "elementFromPoint", { configurable: true, value: originalElementFromPoint })
+    expect(source).toHaveClass("square--phantom")
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
+  it("removes_phantoms_from_the_menu_footer", async () => {
+    render(<GamePage />)
+
+    const source = await screen.findByRole("button", { name: "Square d5" })
+    fireEvent.contextMenu(source, { clientX: 120, clientY: 180 })
+    fireEvent.click(screen.getByRole("button", { name: /Queen \(1 left\)/i }))
+
+    fireEvent.contextMenu(source, { clientX: 120, clientY: 180 })
+    fireEvent.click(screen.getByRole("button", { name: /Remove/i }))
+
+    expect(source).not.toHaveClass("square--phantom")
   })
 
   it("seeds_default_opponent_phantoms_only_at_the_opening", async () => {
