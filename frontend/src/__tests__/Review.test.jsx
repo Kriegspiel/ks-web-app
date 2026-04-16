@@ -263,6 +263,56 @@ describe("ReviewPage", () => {
     expect(screen.getByText("3m 12s")).toBeInTheDocument()
   })
 
+  it("renders_sparse_review_metadata_and_black_first_move_rows", async () => {
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      game_id: "g-620",
+      rule_variant: "berkeley_any",
+      moves: [
+        {
+          ply: 1,
+          color: "black",
+          question_type: "ASK_ANY",
+          uci: null,
+          answer: { main: null, capture_square: null, special: "CHECK_DOUBLE" },
+          move_done: false,
+          timestamp: "2026-04-05T12:01:10Z",
+          replay_fen: null,
+        },
+        {
+          ply: 2,
+          color: "white",
+          question_type: "COMMON",
+          uci: "??",
+          answer: { main: "REGULAR_MOVE", capture_square: null, special: null },
+          move_done: true,
+          timestamp: "2026-04-05T12:02:20Z",
+          replay_fen: null,
+        },
+      ],
+    })
+    mockApi.getGame.mockResolvedValueOnce({
+      created_at: "2026-04-05T12:00:00Z",
+      updated_at: "not-a-date",
+      result: null,
+      white: { username: "", role: "user" },
+      black: {},
+    })
+
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    expect(screen.getByRole("button", { name: /Black Double check/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /White Move complete/i })).toBeInTheDocument()
+    expect(screen.getByText("2m 20s")).toBeInTheDocument()
+    expect(screen.getByText("Result: Result unavailable")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "White: —" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Black: —" })).toBeInTheDocument()
+    expect(screen.getAllByText("—").length).toBeGreaterThan(3)
+
+    fireEvent.click(screen.getByRole("button", { name: /White Move complete/i }))
+    expect(document.querySelectorAll(".board-overlay__arrow")).toHaveLength(0)
+  })
+
   it("renders_castling_arrows_and_illegal_move_badges", async () => {
     mockApi.getGameTranscript.mockResolvedValueOnce({
       game_id: "g-620",
@@ -297,6 +347,30 @@ describe("ReviewPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Black \[e7e5\] Illegal move/i }))
     expect(document.querySelectorAll(".board-overlay__badge").length).toBeGreaterThan(0)
+  })
+
+  it("renders_black_queenside_castling_arrows", async () => {
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      game_id: "g-620",
+      rule_variant: "berkeley_any",
+      moves: [
+        {
+          ply: 1,
+          color: "black",
+          question_type: "COMMON",
+          uci: "e8c8",
+          answer: { main: "REGULAR_MOVE", capture_square: null, special: null },
+          move_done: true,
+          replay_fen: transcript.moves[1].replay_fen,
+        },
+      ],
+    })
+
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    fireEvent.click(screen.getByRole("button", { name: /Black \[e8c8\] Move complete/i }))
+    expect(document.querySelectorAll(".board-overlay__arrow")).toHaveLength(2)
   })
 
   it("scrolls_the_active_move_into_view_when_it_overflows_the_log", async () => {
