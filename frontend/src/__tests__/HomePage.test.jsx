@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import HomePage from "../pages/HomePage"
 import { TEST_VERSION_STAMP } from "../version"
@@ -187,5 +187,108 @@ describe("HomePage", () => {
     expect(screen.getByText("1321")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "vs Humans results" })).toBeInTheDocument()
     expect(screen.getAllByText("1").length).toBeGreaterThan(0)
+  })
+
+  it("sorts_recent_games_by_fallback_dates_limits_them_to_five_and_uses_game_id_links", async () => {
+    mockAuth.isAuthenticated = true
+    mockAuth.user = {
+      username: "fil",
+      stats: {},
+    }
+    mockApi.getMyGames.mockResolvedValue({
+      games: [
+        { game_id: "game-old", game_code: "OLD001", state: "completed", updated_at: "2026-03-20T15:00:00Z", white: { username: "fil" }, black: { username: "amy" } },
+        { game_id: "game-fallback", state: "waiting", created_at: "2026-03-27T12:00:00Z", white: {}, black: null },
+        { game_id: "game-new", game_code: "NEW001", state: "completed", updated_at: "2026-03-28T15:00:00Z", white: { username: "fil" }, black: { username: "botty", role: "bot" } },
+        { game_id: "game-invalid", game_code: "BAD001", state: "completed", updated_at: "not-a-date", white: { username: "fil" }, black: { username: "sam" } },
+        { game_id: "game-mid", game_code: "MID001", state: "completed", updated_at: "2026-03-25T15:00:00Z", white: { username: "fil" }, black: { username: "zoe" } },
+        { game_id: "game-drop", game_code: "DROP01", state: "completed", updated_at: "2026-03-21T15:00:00Z", white: { username: "fil" }, black: { username: "max" } },
+      ],
+    })
+
+    renderPage()
+
+    await waitFor(() => {
+      expect(screen.queryByText("Loading your recent games…")).not.toBeInTheDocument()
+    })
+
+    const recentGames = screen.getAllByRole("listitem")
+    expect(recentGames).toHaveLength(5)
+    expect(within(recentGames[0]).getByText("NEW001")).toBeInTheDocument()
+    expect(within(recentGames[1]).getByText("game-fallback")).toBeInTheDocument()
+    expect(within(recentGames[1]).getByRole("link", { name: "Open" })).toHaveAttribute("href", "/game/game-fallback")
+    expect(within(recentGames[1]).queryByText("Active")).not.toBeInTheDocument()
+    expect(screen.getByText("DROP01")).toBeInTheDocument()
+    expect(screen.queryByText("BAD001")).not.toBeInTheDocument()
+  })
+
+  it("skips_profile_requests_when_the_authenticated_user_has_no_username", async () => {
+    mockAuth.isAuthenticated = true
+    mockAuth.user = {
+      stats: {
+        ratings: { overall: { elo: 1200, peak: 1200 } },
+        results: { overall: { games_played: 0, games_won: 0, games_lost: 0, games_drawn: 0 } },
+      },
+    }
+    mockApi.getMyGames.mockResolvedValue({
+      games: [
+        {
+          game_id: "game-no-code",
+          state: "active",
+          white: {},
+          black: null,
+        },
+      ],
+    })
+
+    renderPage()
+
+    await waitFor(() => {
+      expect(mockApi.getMyGames).toHaveBeenCalledTimes(1)
+    })
+    await waitFor(() => {
+      expect(screen.queryByText("Loading your recent games…")).not.toBeInTheDocument()
+    })
+
+    expect(mockApi.userApi.getProfile).not.toHaveBeenCalled()
+    expect(mockApi.userApi.getRatingHistory).not.toHaveBeenCalled()
+    expect(screen.getByText("Welcome back, player.")).toBeInTheDocument()
+    expect(await screen.findByRole("link", { name: "Resume active game" })).toHaveAttribute("href", "/game/game-no-code")
+    expect(screen.queryByRole("link", { name: "View all games" })).not.toBeInTheDocument()
+    expect(screen.getByText(/Waiting… vs Waiting…/)).toBeInTheDocument()
+  })
+
+  it("shows_the_default_recent_games_error_when_loading_fails_without_details", async () => {
+    mockAuth.isAuthenticated = true
+    mockAuth.user = {
+      username: "fil",
+      stats: {},
+    }
+    mockApi.getMyGames.mockRejectedValue({})
+
+    renderPage()
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Unable to load your games right now.")
+  })
+
+  it("falls_back_when_games_payloads_and_rating_series_are_missing", async () => {
+    mockAuth.isAuthenticated = true
+    mockAuth.user = {
+      username: "fil",
+      stats: {},
+    }
+    mockApi.getMyGames.mockResolvedValue({})
+    mockApi.userApi.getProfile.mockResolvedValue({ username: "fil", stats: {} })
+    mockApi.userApi.getRatingHistory.mockResolvedValue(null)
+
+    renderPage()
+
+    await screen.findByRole("link", { name: "Play now" })
+    await waitFor(() => {
+      expect(screen.queryByText("Loading your recent games…")).not.toBeInTheDocument()
+    })
+
+    expect(screen.getByText("No games yet. Start one from the lobby.")).toBeInTheDocument()
+    expect(mockApi.userApi.getRatingHistory).toHaveBeenCalledWith("fil", "overall", 100)
   })
 })

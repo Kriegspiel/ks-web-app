@@ -77,7 +77,43 @@ describe("GameHistoryPage", () => {
     expect(await screen.findByText("4")).toBeInTheDocument()
   })
 
+  it("renders_human_opponents_with_the_berkeley_ruleset_and_disables_next_on_the_last_page", async () => {
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
+      games: [
+        {
+          game_id: "g-22",
+          game_code: "HUMN22",
+          rule_variant: "berkeley",
+          opponent: "bob",
+          opponent_role: "user",
+          play_as: "black",
+          result: "loss",
+          reason: "timeout",
+          turn_count: 12,
+          played_at: "2026-01-03T00:00:00Z",
+        },
+      ],
+      pagination: { page: 1, pages: 1, total: 1 },
+    })
 
+    renderHistory()
+
+    expect(await screen.findByRole("link", { name: "bob" })).toHaveAttribute("href", "/user/bob")
+    expect(screen.getByText("Berkeley")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled()
+  })
+
+  it("falls_back_to_an_empty_history_when_the_games_payload_is_not_an_array", async () => {
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
+      games: null,
+      pagination: { page: 1, pages: 0, total: 0 },
+    })
+
+    renderHistory()
+
+    expect(await screen.findByText("No games found on this page.")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled()
+  })
 
   it("shows_user_not_found_error", async () => {
     mockApi.userApi.getGameHistory.mockRejectedValueOnce({ status: 404, message: "missing" })
@@ -91,5 +127,40 @@ describe("GameHistoryPage", () => {
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [], pagination: { page: 5, pages: 4, total: 301 } })
     renderHistory()
     await screen.findByText("No games found on this page.")
+  })
+
+  it("falls_back_for_unknown_rules_missing_opponents_and_missing_pagination", async () => {
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
+      games: [
+        {
+          game_id: "g-unknown",
+          rule_variant: "mystery",
+          opponent: "",
+          play_as: "black",
+          result: "draw",
+          reason: null,
+          move_count: "oops",
+          played_at: null,
+        },
+      ],
+      pagination: null,
+    })
+
+    renderHistory()
+
+    expect((await screen.findAllByText("—")).length).toBeGreaterThan(0)
+    expect(screen.getByRole("link", { name: "Open" })).toHaveAttribute("href", "/game/g-unknown/review")
+    expect(screen.getByText(/Page 1 of 0/)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Next" })).not.toBeDisabled()
+  })
+
+  it("shows_the_default_error_message_when_history_loading_fails_without_details", async () => {
+    mockApi.userApi.getGameHistory.mockRejectedValueOnce({})
+
+    renderHistory()
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Unable to load game history.")
+    })
   })
 })

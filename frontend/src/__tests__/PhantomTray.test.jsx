@@ -41,4 +41,27 @@ describe("PhantomTray", () => {
     fireEvent.click(screen.getByRole("button", { name: /Clear phantoms/i }))
     expect(onClear).toHaveBeenCalled()
   })
+
+  it("uses_white_piece_styling_and_keeps_the_selected_empty_slot_enabled", () => {
+    const onSelectPiece = vi.fn()
+
+    render(
+      <PhantomTray
+        selectedPiece="p"
+        pieceColor="white"
+        onSelectPiece={onSelectPiece}
+        onClear={vi.fn()}
+      />,
+    )
+
+    const selectedPawn = screen.getByRole("button", { name: /P × 0/i })
+    const emptyQueen = screen.getByRole("button", { name: /Q × 0/i })
+
+    expect(selectedPawn).not.toBeDisabled()
+    expect(emptyQueen).toBeDisabled()
+    expect(document.querySelector(".phantom-piece__symbol--white")).toBeInTheDocument()
+
+    fireEvent.click(selectedPawn)
+    expect(onSelectPiece).toHaveBeenCalledWith("p")
+  })
 })

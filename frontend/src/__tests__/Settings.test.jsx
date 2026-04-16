@@ -56,4 +56,43 @@ describe("SettingsPage", () => {
       expect(screen.getByRole("alert")).toHaveTextContent("Nope")
     })
   })
+
+  it("shows_the_default_error_message_when_settings_loading_fails_without_details", async () => {
+    mockApi.me.mockRejectedValueOnce({})
+
+    render(<SettingsPage />)
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Unable to load your settings.")
+    })
+  })
+
+  it("falls_back_to_default_settings_when_the_server_returns_no_saved_payload", async () => {
+    mockApi.me.mockResolvedValueOnce({})
+    mockApi.userApi.updateSettings.mockResolvedValueOnce(null)
+
+    render(<SettingsPage />)
+
+    const boardTheme = await screen.findByLabelText("Board theme")
+    fireEvent.change(boardTheme, { target: { value: "wood" } })
+    fireEvent.click(screen.getByRole("button", { name: "Save settings" }))
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Settings saved.")
+    expect(screen.getByLabelText("Board theme")).toHaveValue("default")
+    expect(screen.getByLabelText("Piece set")).toHaveValue("cburnett")
+  })
+
+  it("shows_the_default_error_message_when_saving_fails_without_details", async () => {
+    mockApi.me.mockResolvedValueOnce({ settings: {} })
+    mockApi.userApi.updateSettings.mockRejectedValueOnce({})
+
+    render(<SettingsPage />)
+
+    await screen.findByLabelText("Board theme")
+    fireEvent.click(screen.getByRole("button", { name: "Save settings" }))
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Unable to save settings.")
+    })
+  })
 })

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import api, { askAny, createGame, deleteWaitingGame, getBots, getGame, getGameState, getMyGames, getOpenGames, joinGame, login, logout, me, register, resignGame, submitMove, techApi, userApi } from "../services/api"
+import api, { askAny, createGame, deleteWaitingGame, getBots, getGame, getGameState, getGameTranscript, getLobbyStats, getMyGames, getOpenGames, joinGame, login, logout, me, register, resignGame, submitMove, techApi, userApi } from "../services/api"
 
 describe("api client", () => {
   it("api_client_uses_relative_base_url", () => { expect(api.defaults.baseURL ?? "").toBe("") })
@@ -43,6 +43,25 @@ describe("auth helpers", () => {
       message: "email: Invalid email format username: String should match pattern '^[a-zA-Z0-9_]+$'",
     })
   })
+  it("register_ignores_invalid_validation_items_and_keeps_fieldless_messages", async () => {
+    vi.spyOn(api, "post").mockRejectedValue({
+      response: {
+        status: 422,
+        data: {
+          detail: [
+            null,
+            { loc: ["body", 1], msg: "Value error, Invalid payload" },
+            { loc: ["body", "email"], msg: "" },
+          ],
+        },
+      },
+    })
+    await expect(register({ username: "new-user", email: "bad-email", password: "password" })).rejects.toEqual({
+      status: 422,
+      code: undefined,
+      message: "Invalid payload",
+    })
+  })
   it("register_normalizes_conflict_detail_objects", async () => {
     vi.spyOn(api, "post").mockRejectedValue({ response: { status: 409, data: { detail: { field: "username", code: "USERNAME_TAKEN", message: "Username already exists" } } } })
     await expect(register({ username: "taken-user", email: "new@example.com", password: "secret123" })).rejects.toEqual({ status: 409, code: "USERNAME_TAKEN", message: "Username already exists" })
@@ -60,6 +79,24 @@ describe("game helpers", () => {
   it("move_ask_any_resign_use_expected_endpoints", async () => { const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { ok: true } }); await submitMove("g-123", "e2e4"); await askAny("g-123"); await resignGame("g-123"); expect(postSpy).toHaveBeenNthCalledWith(1, "/api/game/g-123/move", { uci: "e2e4" }); expect(postSpy).toHaveBeenNthCalledWith(2, "/api/game/g-123/ask-any"); expect(postSpy).toHaveBeenNthCalledWith(3, "/api/game/g-123/resign") })
   it("delete_waiting_game_uses_expected_endpoint", async () => { const deleteSpy = vi.spyOn(api, "delete").mockResolvedValue({ data: {} }); await deleteWaitingGame("g-123"); expect(deleteSpy).toHaveBeenCalledWith("/api/game/g-123") })
   it("normalizes_nested_game_error_shape", async () => { vi.spyOn(api, "post").mockRejectedValue({ response: { status: 409, data: { error: { code: "GAME_ALREADY_JOINED", message: "You already joined this game." } } } }); await expect(joinGame("ABC123")).rejects.toEqual({ status: 409, code: "GAME_ALREADY_JOINED", message: "You already joined this game." }) })
+  it.each([
+    ["getBots", "get", () => getBots(), "Unable to load bots right now."],
+    ["createGame", "post", () => createGame({ rule_variant: "berkeley", opponent_type: "human" }), "Unable to create game right now."],
+    ["joinGame", "post", () => joinGame("ABC123"), "Unable to join that game right now."],
+    ["getOpenGames", "get", () => getOpenGames(), "Unable to load open games right now."],
+    ["getLobbyStats", "get", () => getLobbyStats(), "Unable to load lobby stats right now."],
+    ["getMyGames", "get", () => getMyGames(), "Unable to load your games right now."],
+    ["getGame", "get", () => getGame("g-123"), "Unable to load game details right now."],
+    ["getGameTranscript", "get", () => getGameTranscript("g-123"), "Unable to load game transcript right now."],
+    ["getGameState", "get", () => getGameState("g-123"), "Unable to load game state right now."],
+    ["deleteWaitingGame", "delete", () => deleteWaitingGame("g-123"), "Unable to close this waiting game right now."],
+    ["submitMove", "post", () => submitMove("g-123", "e2e4"), "Unable to submit move right now."],
+    ["askAny", "post", () => askAny("g-123"), "Unable to ask any-captures right now."],
+    ["resignGame", "post", () => resignGame("g-123"), "Unable to resign this game right now."],
+  ])("%s_uses_the_default_fallback_when_requests_fail_without_details", async (_name, method, invoke, message) => {
+    vi.spyOn(api, method).mockRejectedValue({})
+    await expect(invoke()).rejects.toEqual({ status: undefined, code: undefined, message })
+  })
 })
 
 describe("user helpers", () => {
