@@ -213,11 +213,14 @@ describe("HomePage", () => {
     await waitFor(() => {
       expect(mockApi.getMyGames).toHaveBeenCalledTimes(1)
     })
+    await waitFor(() => {
+      expect(screen.queryByText("Loading your recent games…")).not.toBeInTheDocument()
+    })
 
     expect(mockApi.userApi.getProfile).not.toHaveBeenCalled()
     expect(mockApi.userApi.getRatingHistory).not.toHaveBeenCalled()
     expect(screen.getByText("Welcome back, player.")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Resume active game" })).toHaveAttribute("href", "/game/game-no-code")
+    expect(await screen.findByRole("link", { name: "Resume active game" })).toHaveAttribute("href", "/game/game-no-code")
     expect(screen.queryByRole("link", { name: "View all games" })).not.toBeInTheDocument()
     expect(screen.getByText(/Waiting… vs Waiting…/)).toBeInTheDocument()
   })
