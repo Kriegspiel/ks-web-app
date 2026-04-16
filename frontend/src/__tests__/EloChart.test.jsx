@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react"
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import EloChart from "../components/EloChart"
 
 const SERIES_BY_MODE = {
@@ -28,6 +28,10 @@ function stubPlotBounds(plot) {
     toJSON: () => ({}),
   })
 }
+
+afterEach(() => {
+  cleanup()
+})
 
 describe("EloChart", () => {
   it("renders_empty_state_when_no_series_are_available", () => {

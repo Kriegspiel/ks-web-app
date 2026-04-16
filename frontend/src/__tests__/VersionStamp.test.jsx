@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { render, screen, waitFor } from "@testing-library/react"
+import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import VersionStamp from "../components/VersionStamp"
 import { BACKEND_VERSION_FALLBACK, FRONTEND_VERSION } from "../version"
 
@@ -12,6 +12,7 @@ vi.mock("../services/api", () => ({
 }))
 
 afterEach(() => {
+  cleanup()
   mockApiGet.mockReset()
   vi.unstubAllEnvs()
 })

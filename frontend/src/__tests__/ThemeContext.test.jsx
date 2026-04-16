@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
-import { fireEvent, render, renderHook, screen } from "@testing-library/react"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { cleanup, fireEvent, render, renderHook, screen } from "@testing-library/react"
 import { THEME_STORAGE_KEY, ThemeProvider } from "../context/ThemeContext"
 import { useTheme } from "../hooks/useTheme"
 
@@ -23,6 +23,10 @@ beforeEach(() => {
   document.documentElement.style.colorScheme = ""
   document.body.removeAttribute("data-theme")
   document.head.innerHTML = ""
+})
+
+afterEach(() => {
+  cleanup()
 })
 
 describe("ThemeProvider", () => {

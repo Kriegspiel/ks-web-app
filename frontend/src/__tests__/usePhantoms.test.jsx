@@ -88,6 +88,9 @@ describe("usePhantoms", () => {
       expect(result.current.setPieceAt("z9", "q")).toBe(false)
       expect(result.current.setPieceAt("d4", "x")).toBe(false)
       expect(result.current.setPieceAt("d4", "q")).toBe(true)
+    })
+
+    act(() => {
       expect(result.current.setPieceAt("d4", "q")).toBe(false)
       expect(result.current.move("d4", "d4")).toBe(false)
       expect(result.current.move("e4", "e5")).toBe(false)
