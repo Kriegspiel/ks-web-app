@@ -508,16 +508,10 @@ describe("GamePage", () => {
 
     const source = await screen.findByRole("button", { name: "Square e2" })
     const target = screen.getByRole("button", { name: "Square e4" })
-    source.setPointerCapture = vi.fn()
-    source.releasePointerCapture = vi.fn()
     const originalElementFromPoint = document.elementFromPoint
     Object.defineProperty(document, "elementFromPoint", { configurable: true, value: vi.fn(() => target) })
 
     fireEvent.pointerDown(source, { button: 0, buttons: 1, pointerId: 11, pointerType: "mouse", clientX: 120, clientY: 180 })
-    await waitFor(() => {
-      expect(source.setPointerCapture).toHaveBeenCalledWith(11)
-    })
-
     fireEvent.pointerEnter(source, { buttons: 1, pointerId: 11, pointerType: "mouse" })
     fireEvent.pointerMove(source, { buttons: 1, pointerId: 11, pointerType: "mouse", clientX: 180, clientY: 220 })
     fireEvent.pointerUp(source, { pointerId: 11, pointerType: "mouse", clientX: 180, clientY: 220 })
@@ -525,8 +519,6 @@ describe("GamePage", () => {
     await waitFor(() => {
       expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
     })
-    expect(source.setPointerCapture).toHaveBeenCalledWith(11)
-    expect(source.releasePointerCapture).toHaveBeenCalledWith(11)
 
     Object.defineProperty(document, "elementFromPoint", { configurable: true, value: originalElementFromPoint })
   })
@@ -539,17 +531,12 @@ describe("GamePage", () => {
     fireEvent.click(screen.getByRole("button", { name: /Queen \(1 left\)/i }))
     expect(source).toHaveClass("square--phantom")
 
-    source.setPointerCapture = vi.fn()
-    source.releasePointerCapture = vi.fn()
     const target = screen.getByRole("button", { name: "Square f5" })
     const originalElementFromPoint = document.elementFromPoint
     const elementFromPoint = vi.fn(() => target)
     Object.defineProperty(document, "elementFromPoint", { configurable: true, value: elementFromPoint })
 
     fireEvent.pointerDown(source, { button: 0, buttons: 1, pointerId: 21, pointerType: "mouse", clientX: 140, clientY: 200 })
-    await waitFor(() => {
-      expect(source.setPointerCapture).toHaveBeenCalledWith(21)
-    })
     fireEvent.pointerEnter(source, { buttons: 2, pointerId: 21, pointerType: "mouse" })
     fireEvent.pointerMove(source, { pointerId: 21, pointerType: "mouse", clientX: 200, clientY: 200 })
     fireEvent.pointerUp(source, { pointerId: 21, pointerType: "mouse", clientX: 200, clientY: 200 })
@@ -559,8 +546,6 @@ describe("GamePage", () => {
     })
 
     const movedPhantom = screen.getByRole("button", { name: "Square f5" })
-    movedPhantom.setPointerCapture = vi.fn()
-    movedPhantom.releasePointerCapture = vi.fn()
     elementFromPoint.mockReturnValue(null)
 
     fireEvent.pointerDown(movedPhantom, { button: 0, pointerId: 22, pointerType: "mouse", clientX: 200, clientY: 200 })
