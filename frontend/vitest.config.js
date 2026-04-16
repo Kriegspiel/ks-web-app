@@ -10,8 +10,13 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       exclude: [
+        'coverage/**',
+        'dist/**',
+        'eslint.config.js',
         'src/main.jsx',
         'src/pages/RulesPage.jsx',
+        'vite.config.js',
+        'vitest.config.js',
       ],
       thresholds: {
         lines: 80,

@@ -78,10 +78,50 @@ describe("usePhantoms", () => {
     })
     expect(result.current.placements).toEqual({ d5: "q" })
   })
+
+  it("returns_false_for_invalid_operations_and_supports_replace_and_clear", () => {
+    const { result } = renderHook(() => usePhantoms({ gameId: "g-534", occupiedSquares: "not-an-array" }))
+
+    expect(result.current.availablePiecesForSquare()).toEqual(["p", "r", "n", "b", "q", "k"])
+
+    act(() => {
+      expect(result.current.setPieceAt("z9", "q")).toBe(false)
+      expect(result.current.setPieceAt("d4", "x")).toBe(false)
+      expect(result.current.setPieceAt("d4", "q")).toBe(true)
+      expect(result.current.setPieceAt("d4", "q")).toBe(false)
+      expect(result.current.move("d4", "d4")).toBe(false)
+      expect(result.current.move("e4", "e5")).toBe(false)
+      expect(result.current.removeAt("e4")).toBe(false)
+    })
+
+    expect(result.current.placements).toEqual({ d4: "q" })
+
+    act(() => {
+      result.current.replaceAll({ a1: "R", e4: "q", h8: "n", bad: "x" })
+    })
+    expect(result.current.placements).toEqual({ a1: "r", e4: "q", h8: "n" })
+
+    act(() => {
+      result.current.clearAll()
+    })
+    expect(result.current.placements).toEqual({})
+  })
+
+  it("ignores_invalid_persisted_state", () => {
+    window.localStorage.setItem("phantoms_g-535", "{oops")
+
+    const { result } = renderHook(() => usePhantoms({ gameId: "g-535", occupiedSquares: [] }))
+
+    expect(result.current.placements).toEqual({})
+  })
 })
 
 describe("occupiedSquaresFromFen", () => {
   it("extracts_occupied_squares", () => {
     expect(occupiedSquaresFromFen("8/8/8/3k4/8/8/8/4K3 w - - 0 1")).toEqual(["d5", "e1"])
+  })
+
+  it("returns_an_empty_list_for_an_empty_board", () => {
+    expect(occupiedSquaresFromFen("8/8/8/8/8/8/8/8 w - - 0 1")).toEqual([])
   })
 })
