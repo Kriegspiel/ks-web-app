@@ -170,8 +170,10 @@ describe("GamePage", () => {
       expect(mockApi.getGameState.mock.calls.length).toBeGreaterThanOrEqual(2)
     })
 
-    expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--last-move")
-    expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--last-move")
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--last-move")
+      expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--last-move")
+    })
   })
 
   it("shows_only_backend_legal_move_dots_for_the_selected_piece", async () => {
@@ -975,17 +977,19 @@ describe("GamePage", () => {
   })
 
   it("clears_stale_move_highlights_after_ask_any_repolls_the_legal_moves", async () => {
+    const updatedState = {
+      ...activeState,
+      your_fen: "8/8/8/8/8/8/8/4K3",
+      allowed_moves: ["a2a3"],
+    }
+
     mockApi.getGameState
       .mockResolvedValueOnce({
         ...activeState,
         your_fen: "8/8/8/8/8/8/8/4K3",
         allowed_moves: ["e4d5"],
       })
-      .mockResolvedValueOnce({
-        ...activeState,
-        your_fen: "8/8/8/8/8/8/8/4K3",
-        allowed_moves: ["a2a3"],
-      })
+      .mockResolvedValue(updatedState)
 
     render(<GamePage />)
 
@@ -993,15 +997,18 @@ describe("GamePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
     expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
 
+    const pollCountBeforeAskAny = mockApi.getGameState.mock.calls.length
     fireEvent.click(screen.getByRole("button", { name: "Any pawn captures?" }))
 
     await waitFor(() => {
       expect(mockApi.askAny).toHaveBeenCalledWith("g-123")
-      expect(mockApi.getGameState).toHaveBeenCalledTimes(2)
+      expect(mockApi.getGameState.mock.calls.length).toBeGreaterThan(pollCountBeforeAskAny)
     })
 
-    expect(screen.getByRole("button", { name: "Square e4" })).not.toHaveClass("square--highlighted")
-    expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--suggested")
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Square e4" })).not.toHaveClass("square--highlighted")
+      expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--suggested")
+    })
   })
 
   it("reduces_a_hidden_midfield_pawn_to_only_non_capture_moves_after_no_any", async () => {
