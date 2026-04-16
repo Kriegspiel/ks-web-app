@@ -1027,9 +1027,10 @@ describe("GamePage", () => {
       referee_log: [{ turn: 1, color: "white", announcement: "No pawn captures" }],
     })
 
+    const pollCountBeforeAskAny = mockApi.getGameState.mock.calls.length
     fireEvent.click(screen.getByRole("button", { name: "Any pawn captures?" }))
 
-    await waitFor(() => expect(mockApi.getGameState).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(mockApi.getGameState.mock.calls.length).toBeGreaterThan(pollCountBeforeAskAny))
 
     fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
     expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
@@ -1060,9 +1061,10 @@ describe("GamePage", () => {
       referee_log: [{ turn: 1, color: "white", announcement: "Has pawn captures" }],
     })
 
+    const pollCountBeforeAskAny = mockApi.getGameState.mock.calls.length
     fireEvent.click(screen.getByRole("button", { name: "Any pawn captures?" }))
 
-    await waitFor(() => expect(mockApi.getGameState).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(mockApi.getGameState.mock.calls.length).toBeGreaterThan(pollCountBeforeAskAny))
 
     fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
     expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
