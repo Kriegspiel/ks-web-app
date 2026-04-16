@@ -92,4 +92,39 @@ describe("GameHistoryPage", () => {
     renderHistory()
     await screen.findByText("No games found on this page.")
   })
+
+  it("falls_back_for_unknown_rules_missing_opponents_and_missing_pagination", async () => {
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
+      games: [
+        {
+          game_id: "g-unknown",
+          rule_variant: "mystery",
+          opponent: "",
+          play_as: "black",
+          result: "draw",
+          reason: null,
+          move_count: "oops",
+          played_at: null,
+        },
+      ],
+      pagination: null,
+    })
+
+    renderHistory()
+
+    expect(await screen.findByText("—")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Open" })).toHaveAttribute("href", "/game/g-unknown/review")
+    expect(screen.getByText(/Page 1 of 0/)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Next" })).not.toBeDisabled()
+  })
+
+  it("shows_the_default_error_message_when_history_loading_fails_without_details", async () => {
+    mockApi.userApi.getGameHistory.mockRejectedValueOnce({})
+
+    renderHistory()
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Unable to load game history.")
+    })
+  })
 })

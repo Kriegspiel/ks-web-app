@@ -83,4 +83,25 @@ describe("LeaderboardPage", () => {
     await screen.findByText("bob")
     await waitFor(() => expect(mockApi.userApi.getLeaderboard).toHaveBeenNthCalledWith(2, 2, 20))
   })
+
+  it("falls_back_to_empty_results_when_payload_fields_are_missing", async () => {
+    mockApi.userApi.getLeaderboard.mockResolvedValueOnce({})
+
+    render(<MemoryRouter><LeaderboardPage /></MemoryRouter>)
+
+    await screen.findByText("No ranked players found.")
+    expect(screen.getByText(/Page 1 of 0/)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Prev" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled()
+  })
+
+  it("shows_the_default_error_message_when_leaderboard_loading_fails_without_details", async () => {
+    mockApi.userApi.getLeaderboard.mockRejectedValueOnce({})
+
+    render(<MemoryRouter><LeaderboardPage /></MemoryRouter>)
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Unable to load leaderboard.")
+    })
+  })
 })

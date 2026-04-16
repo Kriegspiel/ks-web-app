@@ -67,6 +67,29 @@ describe("RegisterPage", () => {
     expect(mockAuth.register).not.toHaveBeenCalled()
   })
 
+  it("shows_username_max_length_validation_before_submit", async () => {
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>)
+
+    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "x".repeat(34) } })
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "new@example.com" } })
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret123" } })
+    fireEvent.click(screen.getByRole("button", { name: "Register" }))
+
+    expect(await screen.findByText("Username must be at most 33 characters.")).toBeInTheDocument()
+    expect(mockAuth.register).not.toHaveBeenCalled()
+  })
+
+  it("shows_required_password_validation_before_submit", async () => {
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>)
+
+    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "new_user" } })
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "new@example.com" } })
+    fireEvent.click(screen.getByRole("button", { name: "Register" }))
+
+    expect(await screen.findByText("Password is required.")).toBeInTheDocument()
+    expect(mockAuth.register).not.toHaveBeenCalled()
+  })
+
   it("shows_username_taken_next_to_username_field", async () => {
     mockAuth.register.mockRejectedValue({ status: 409, code: "USERNAME_TAKEN", message: "Username already exists" })
     render(<MemoryRouter><RegisterPage /></MemoryRouter>)
@@ -97,5 +120,28 @@ describe("RegisterPage", () => {
     await waitFor(() => {
       expect(mockNavigate).not.toHaveBeenCalled()
     })
+  })
+
+  it("shows_generic_submission_errors_in_the_form_and_hides_context_action_errors", async () => {
+    mockAuth.actionError = "Context boom"
+    mockAuth.register.mockRejectedValue({ message: "Server exploded" })
+
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>)
+
+    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "new_user" } })
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "new@example.com" } })
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret123" } })
+    fireEvent.click(screen.getByRole("button", { name: "Register" }))
+
+    expect(await screen.findByText("Server exploded")).toBeInTheDocument()
+    expect(screen.queryByText("Context boom")).not.toBeInTheDocument()
+  })
+
+  it("shows_context_action_errors_when_there_is_no_submission_error", () => {
+    mockAuth.actionError = "Context boom"
+
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>)
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Context boom")
   })
 })

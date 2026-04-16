@@ -188,4 +188,68 @@ describe("HomePage", () => {
     expect(screen.getByRole("heading", { name: "vs Humans results" })).toBeInTheDocument()
     expect(screen.getAllByText("1").length).toBeGreaterThan(0)
   })
+
+  it("skips_profile_requests_when_the_authenticated_user_has_no_username", async () => {
+    mockAuth.isAuthenticated = true
+    mockAuth.user = {
+      stats: {
+        ratings: { overall: { elo: 1200, peak: 1200 } },
+        results: { overall: { games_played: 0, games_won: 0, games_lost: 0, games_drawn: 0 } },
+      },
+    }
+    mockApi.getMyGames.mockResolvedValue({
+      games: [
+        {
+          game_id: "game-no-code",
+          state: "active",
+          white: {},
+          black: null,
+        },
+      ],
+    })
+
+    renderPage()
+
+    await waitFor(() => {
+      expect(mockApi.getMyGames).toHaveBeenCalledTimes(1)
+    })
+
+    expect(mockApi.userApi.getProfile).not.toHaveBeenCalled()
+    expect(mockApi.userApi.getRatingHistory).not.toHaveBeenCalled()
+    expect(screen.getByText("Welcome back, player.")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Resume active game" })).toHaveAttribute("href", "/game/game-no-code")
+    expect(screen.queryByRole("link", { name: "View all games" })).not.toBeInTheDocument()
+    expect(screen.getAllByText("Waiting…")).toHaveLength(2)
+  })
+
+  it("shows_the_default_recent_games_error_when_loading_fails_without_details", async () => {
+    mockAuth.isAuthenticated = true
+    mockAuth.user = {
+      username: "fil",
+      stats: {},
+    }
+    mockApi.getMyGames.mockRejectedValue({})
+
+    renderPage()
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Unable to load your games right now.")
+  })
+
+  it("falls_back_when_games_payloads_and_rating_series_are_missing", async () => {
+    mockAuth.isAuthenticated = true
+    mockAuth.user = {
+      username: "fil",
+      stats: {},
+    }
+    mockApi.getMyGames.mockResolvedValue({})
+    mockApi.userApi.getProfile.mockResolvedValue({ username: "fil", stats: {} })
+    mockApi.userApi.getRatingHistory.mockResolvedValue(null)
+
+    renderPage()
+
+    await screen.findByRole("link", { name: "Play now" })
+
+    expect(screen.getByText("No games yet. Start one from the lobby.")).toBeInTheDocument()
+    expect(mockApi.userApi.getRatingHistory).toHaveBeenCalledWith("fil", "overall", 100)
+  })
 })

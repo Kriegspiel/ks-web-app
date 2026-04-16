@@ -185,4 +185,44 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("href", "https://kriegspiel.org/blog/bot-registration-flow")
     expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("target", "_blank")
   })
+
+  it("shows_the_default_error_message_when_profile_loading_fails_without_details", async () => {
+    mockApi.userApi.getProfile.mockRejectedValueOnce({})
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile()
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Unable to load profile.")
+    })
+  })
+
+  it("falls_back_to_unknown_bot_values_and_recent_game_labels", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "haiku",
+      is_bot: true,
+      owner_email: null,
+      member_since: null,
+      stats: {},
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
+      games: [
+        {
+          game_id: "g-3",
+          result: "draw",
+          opponent: null,
+        },
+      ],
+    })
+    mockApi.userApi.getRatingHistory.mockRejectedValueOnce(new Error("history failed"))
+
+    renderProfile("/user/haiku")
+
+    await screen.findByRole("heading", { name: "haiku" })
+    expect(screen.getByText("Member since Unknown")).toBeInTheDocument()
+    expect(screen.getByText(/Email address of this bot owner is unknown\./i)).toBeInTheDocument()
+    expect(screen.getByText(/draw vs unknown/i)).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/haiku/games")
+  })
 })

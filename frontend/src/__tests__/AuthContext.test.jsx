@@ -69,6 +69,18 @@ describe("AuthProvider", () => {
     expect(result.current.actionError).toBe("network down")
   })
 
+  it("uses_the_default_bootstrap_message_when_bootstrap_fails_without_details", async () => {
+    mockMeRequest.mockRejectedValueOnce({})
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.bootstrapping).toBe(false)
+    })
+    expect(result.current.user).toBe(null)
+    expect(result.current.actionError).toBe("Unable to load auth state.")
+  })
+
   it("logs_in_and_refreshes_the_session", async () => {
     mockMeRequest
       .mockResolvedValueOnce(null)
@@ -90,6 +102,32 @@ describe("AuthProvider", () => {
     expect(returnedUser).toEqual({ username: "captain" })
     expect(result.current.user).toEqual({ username: "captain" })
     expect(result.current.actionError).toBe("")
+    expect(result.current.actionLoading).toBe(false)
+  })
+
+  it("surfaces_refresh_session_errors_after_login", async () => {
+    mockMeRequest
+      .mockResolvedValueOnce(null)
+      .mockRejectedValueOnce({ status: 500, message: "Session boom" })
+    mockLoginRequest.mockResolvedValueOnce({})
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.bootstrapping).toBe(false)
+    })
+
+    let caughtError = null
+    await act(async () => {
+      try {
+        await result.current.login({ username: "captain", password: "secret" })
+      } catch (error) {
+        caughtError = error
+      }
+    })
+
+    expect(caughtError).toEqual({ status: 500, message: "Session boom" })
+    expect(result.current.actionError).toBe("Session boom")
     expect(result.current.actionLoading).toBe(false)
   })
 
@@ -136,6 +174,30 @@ describe("AuthProvider", () => {
 
     expect(caughtError).toEqual({ message: "Bad credentials" })
     expect(result.current.actionError).toBe("Bad credentials")
+    expect(result.current.actionLoading).toBe(false)
+  })
+
+  it("uses_the_default_login_message_when_login_fails_without_details", async () => {
+    mockMeRequest.mockResolvedValueOnce(null)
+    mockLoginRequest.mockRejectedValueOnce({})
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.bootstrapping).toBe(false)
+    })
+
+    let caughtError = null
+    await act(async () => {
+      try {
+        await result.current.login({ username: "captain", password: "wrong" })
+      } catch (error) {
+        caughtError = error
+      }
+    })
+
+    expect(caughtError).toEqual({})
+    expect(result.current.actionError).toBe("Login failed.")
     expect(result.current.actionLoading).toBe(false)
   })
 
@@ -197,6 +259,34 @@ describe("AuthProvider", () => {
     expect(result.current.actionLoading).toBe(false)
   })
 
+  it("uses_the_default_registration_message_when_registration_fails_without_details", async () => {
+    mockMeRequest.mockResolvedValueOnce(null)
+    mockRegisterRequest.mockRejectedValueOnce({})
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.bootstrapping).toBe(false)
+    })
+
+    let caughtError = null
+    await act(async () => {
+      try {
+        await result.current.register({
+          username: "new-user",
+          email: "new@example.com",
+          password: "strong-pass",
+        })
+      } catch (error) {
+        caughtError = error
+      }
+    })
+
+    expect(caughtError).toEqual({})
+    expect(result.current.actionError).toBe("Registration failed.")
+    expect(result.current.actionLoading).toBe(false)
+  })
+
   it("logs_out_successfully", async () => {
     mockMeRequest.mockResolvedValueOnce({ username: "fil" })
     mockLogoutRequest.mockResolvedValueOnce({})
@@ -245,5 +335,30 @@ describe("AuthProvider", () => {
     })
 
     expect(result.current.actionError).toBe("")
+  })
+
+  it("uses_the_default_logout_message_when_logout_fails_without_details", async () => {
+    mockMeRequest.mockResolvedValueOnce({ username: "fil" })
+    mockLogoutRequest.mockRejectedValueOnce({})
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.bootstrapping).toBe(false)
+    })
+
+    let caughtError = null
+    await act(async () => {
+      try {
+        await result.current.logout()
+      } catch (error) {
+        caughtError = error
+      }
+    })
+
+    expect(caughtError).toEqual({})
+    expect(result.current.user).toEqual({ username: "fil" })
+    expect(result.current.actionError).toBe("Logout failed.")
+    expect(result.current.actionLoading).toBe(false)
   })
 })
