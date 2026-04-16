@@ -397,6 +397,7 @@ export default function ReviewPage() {
   const [perspective, setPerspective] = useState("referee")
   const [boardOrientation, setBoardOrientation] = useState("white")
   const moveRowsRef = useRef(null)
+  const maxGroupIndexRef = useRef(-1)
 
   useEffect(() => {
     let active = true
@@ -441,6 +442,7 @@ export default function ReviewPage() {
   const moveRows = useMemo(() => buildMoveRows(moves), [moves])
   const maxGroupIndex = Math.max(plyGroups.length - 1, -1)
   const finalGroup = maxGroupIndex >= 0 ? plyGroups[maxGroupIndex] : null
+  maxGroupIndexRef.current = maxGroupIndex
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -448,7 +450,7 @@ export default function ReviewPage() {
         setCurrentPly((prev) => Math.max(-1, prev - 1))
       }
       if (event.key === "ArrowRight") {
-        setCurrentPly((prev) => Math.min(maxGroupIndex, prev + 1))
+        setCurrentPly((prev) => Math.min(maxGroupIndexRef.current, prev + 1))
       }
     }
 
@@ -456,7 +458,7 @@ export default function ReviewPage() {
     return () => {
       window.removeEventListener("keydown", onKeyDown)
     }
-  }, [maxGroupIndex])
+  }, [])
 
   useEffect(() => {
     if (currentPly < 0) {
