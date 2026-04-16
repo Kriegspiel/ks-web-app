@@ -241,7 +241,7 @@ describe("LobbyPage", () => {
   })
 
   it("shows_an_error_when_no_supported_bot_is_available_for_the_selected_ruleset", async () => {
-    mockApi.getBots.mockResolvedValueOnce({
+    mockApi.getBots.mockResolvedValue({
       bots: [
         {
           bot_id: "bot-only-any",
