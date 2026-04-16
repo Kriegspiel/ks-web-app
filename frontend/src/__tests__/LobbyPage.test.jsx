@@ -98,6 +98,23 @@ describe("LobbyPage", () => {
     expect(await screen.findByText(/2026-04-03 23:59:59 UTC/)).toBeInTheDocument()
   })
 
+  it("shows_unknown_creator_when_an_open_game_has_no_owner", async () => {
+    mockApi.getOpenGames.mockResolvedValue({
+      games: [
+        {
+          game_code: "UNK001",
+          available_color: "white",
+          created_at: "2026-04-03T23:59:59Z",
+        },
+      ],
+    })
+
+    renderPage()
+
+    const openGames = await screen.findAllByRole("listitem")
+    expect(within(openGames[0]).getByText(/Unknown/)).toBeInTheDocument()
+  })
+
   it("shows_close_for_my_open_waiting_game", async () => {
     mockApi.getOpenGames.mockResolvedValue({
       games: [
@@ -216,6 +233,16 @@ describe("LobbyPage", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/game/BOT123")
   })
 
+  it("updates_the_bot_description_when_selecting_gpt_nano", async () => {
+    renderPage()
+
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    const botSelect = await screen.findByLabelText("Bot opponent")
+    fireEvent.change(botSelect, { target: { value: "bot-2" } })
+
+    expect(screen.getByText("Model-driven Kriegspiel bot that chooses moves using GPT nano model.")).toBeInTheDocument()
+  })
+
   it("filters_unsupported_bots_for_selected_ruleset", async () => {
     renderPage()
     fireEvent.change(await screen.findByLabelText("Ruleset"), { target: { value: "berkeley" } })
@@ -238,5 +265,172 @@ describe("LobbyPage", () => {
       expect(mockApi.joinGame).toHaveBeenCalledWith("OWN123")
       expect(mockNavigate).toHaveBeenCalledWith("/game/OWN123")
     })
+  })
+
+  it("joins_a_game_by_code_and_clears_the_input_on_success", async () => {
+    mockApi.joinGame.mockResolvedValueOnce({ game_code: "PLAY01" })
+
+    renderPage()
+
+    const codeInput = await screen.findByLabelText("Game code")
+    fireEvent.change(codeInput, { target: { value: "play01" } })
+    fireEvent.click(screen.getByRole("button", { name: "Join game" }))
+
+    await waitFor(() => {
+      expect(mockApi.joinGame).toHaveBeenCalledWith("PLAY01")
+      expect(mockNavigate).toHaveBeenCalledWith("/game/PLAY01")
+    })
+    expect(codeInput).toHaveValue("")
+  })
+
+  it("shows_an_error_when_no_supported_bot_is_available_for_the_selected_ruleset", async () => {
+    mockApi.getBots.mockResolvedValue({
+      bots: [
+        {
+          bot_id: "bot-only-any",
+          username: "randobotany",
+          display_name: "Random Any Bot",
+          description: "Asks any pawn captures first.",
+          elo: 1200,
+          supported_rule_variants: ["berkeley_any"],
+        },
+      ],
+    })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    await screen.findByLabelText("Bot opponent")
+    fireEvent.change(screen.getByLabelText("Ruleset"), { target: { value: "berkeley" } })
+    fireEvent.change(screen.getByLabelText("Bot opponent"), { target: { value: "" } })
+    fireEvent.click(screen.getByRole("button", { name: "Create bot game" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Pick a bot before creating the game.")
+  })
+
+  it("surfaces_create_errors_when_game_creation_fails", async () => {
+    mockApi.createGame.mockRejectedValueOnce({ message: "Create exploded" })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create waiting game" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Create exploded")
+  })
+
+  it("validates_blank_join_codes_and_surfaces_join_errors", async () => {
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Join game" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("Enter a game code to join.")
+
+    mockApi.joinGame.mockRejectedValueOnce({ message: "Join failed" })
+    fireEvent.change(screen.getByLabelText("Game code"), { target: { value: "fail01" } })
+    fireEvent.click(screen.getByRole("button", { name: "Join game" }))
+
+    await waitFor(() => {
+      expect(mockApi.joinGame).toHaveBeenCalledWith("FAIL01")
+    })
+    expect(await screen.findByRole("alert")).toHaveTextContent("Join failed")
+  })
+
+  it("handles_open_game_join_conflicts_and_failures", async () => {
+    mockApi.getOpenGames.mockResolvedValueOnce({
+      games: [
+        {
+          game_code: "ZZZ999",
+          created_by: "randobot",
+          available_color: "black",
+          created_at: "2026-04-03T23:59:58Z",
+        },
+      ],
+    })
+    mockApi.joinGame
+      .mockRejectedValueOnce({ status: 409, code: "CANNOT_JOIN_OWN_GAME", message: "Open your own waiting game." })
+      .mockRejectedValueOnce({ message: "Open join failed" })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Join" }))
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/game/ZZZ999")
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "Join" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("Open join failed")
+  })
+
+  it("joins_an_open_game_directly_on_success", async () => {
+    mockApi.getOpenGames.mockResolvedValueOnce({
+      games: [
+        {
+          game_code: "ZZZ999",
+          created_by: "randobot",
+          available_color: "black",
+          created_at: "2026-04-03T23:59:58Z",
+        },
+      ],
+    })
+    mockApi.joinGame.mockResolvedValueOnce({ game_code: "ZZZ999" })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Join" }))
+
+    await waitFor(() => {
+      expect(mockApi.joinGame).toHaveBeenCalledWith("ZZZ999")
+      expect(mockNavigate).toHaveBeenCalledWith("/game/ZZZ999")
+    })
+  })
+
+  it("polls_a_created_waiting_game_until_it_becomes_active", async () => {
+    mockApi.createGame.mockResolvedValueOnce({ game_id: "g-1", game_code: "ABCD23", state: "waiting" })
+    mockApi.getGame.mockResolvedValueOnce({ state: "active", game_code: "ABCD23" })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create waiting game" }))
+
+    await waitFor(() => {
+      expect(mockApi.getGame).toHaveBeenCalledWith("g-1")
+      expect(mockNavigate).toHaveBeenCalledWith("/game/ABCD23")
+    })
+  })
+
+  it("falls_back_to_no_active_games_when_refreshing_my_games_fails", async () => {
+    mockApi.getMyGames.mockRejectedValueOnce(new Error("My games exploded"))
+
+    renderPage()
+
+    await screen.findByRole("link", { name: "Leaderboard" })
+    expect(screen.queryByRole("link", { name: "Resume active game" })).not.toBeInTheDocument()
+  })
+
+  it("shows_an_error_when_closing_a_waiting_game_fails", async () => {
+    mockApi.getOpenGames.mockResolvedValueOnce({
+      games: [
+        {
+          game_code: "OWN123",
+          created_by: "fil",
+          available_color: "white",
+          created_at: "2026-04-03T23:59:59Z",
+        },
+      ],
+    })
+    mockApi.deleteWaitingGame.mockRejectedValueOnce({ message: "Close failed" })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Close" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Close failed")
+  })
+
+  it("shows_an_error_when_open_games_fail_to_load", async () => {
+    mockApi.getOpenGames.mockRejectedValueOnce({ message: "Open exploded" })
+
+    renderPage()
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Open exploded")
   })
 })

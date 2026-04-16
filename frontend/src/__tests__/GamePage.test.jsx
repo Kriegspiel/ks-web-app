@@ -503,6 +503,105 @@ describe("GamePage", () => {
     expect(source).not.toHaveClass("square--phantom")
   })
 
+  it("switches_selected_move_source_when_you_click_another_legal_origin", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      your_fen: "8/8/8/8/8/8/4PP2/4K3",
+      allowed_moves: ["e2e4", "f2f4"],
+    })
+
+    render(<GamePage />)
+
+    const source = await screen.findByRole("button", { name: "Square e2" })
+    const alternateSource = screen.getByRole("button", { name: "Square f2" })
+
+    fireEvent.click(source)
+    expect(source).toHaveClass("square--highlighted")
+
+    fireEvent.click(alternateSource)
+    expect(alternateSource).toHaveClass("square--highlighted")
+    expect(source).not.toHaveClass("square--highlighted")
+  })
+
+  it("moves_phantoms_via_tap_destination_and_handles_invalid_targets", async () => {
+    let now = new Date("2026-04-03T10:10:00Z").valueOf()
+    const nowSpy = vi.spyOn(Date, "now").mockImplementation(() => now)
+
+    render(<GamePage />)
+
+    const source = await screen.findByRole("button", { name: "Square d5" })
+    fireEvent.contextMenu(source, { clientX: 120, clientY: 180 })
+    fireEvent.click(screen.getByRole("button", { name: /Queen \(1 left\)/i }))
+    expect(source).toHaveClass("square--phantom")
+
+    fireEvent.click(source)
+    now += 150
+    fireEvent.click(source)
+    fireEvent.click(screen.getByRole("button", { name: /Tap destination/i }))
+    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("That square cannot take the phantom piece.")
+    })
+    expect(source).toHaveClass("square--phantom")
+
+    fireEvent.click(source)
+    now += 150
+    fireEvent.click(source)
+    fireEvent.click(screen.getByRole("button", { name: /Tap destination/i }))
+    fireEvent.click(screen.getByRole("button", { name: "Square f5" }))
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--phantom")
+    })
+    expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--phantom")
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+
+    nowSpy.mockRestore()
+  })
+
+  it("keeps_a_phantom_in_place_when_tap_destination_returns_to_the_same_square", async () => {
+    let now = new Date("2026-04-03T10:20:00Z").valueOf()
+    const nowSpy = vi.spyOn(Date, "now").mockImplementation(() => now)
+
+    render(<GamePage />)
+
+    const source = await screen.findByRole("button", { name: "Square d5" })
+    fireEvent.contextMenu(source, { clientX: 120, clientY: 180 })
+    fireEvent.click(screen.getByRole("button", { name: /Queen \(1 left\)/i }))
+
+    fireEvent.click(source)
+    now += 150
+    fireEvent.click(source)
+    fireEvent.click(screen.getByRole("button", { name: /Tap destination/i }))
+    fireEvent.click(source)
+
+    expect(source).toHaveClass("square--phantom")
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+
+    nowSpy.mockRestore()
+  })
+
+  it("removes_phantoms_from_the_menu_footer", async () => {
+    let now = new Date("2026-04-03T10:30:00Z").valueOf()
+    const nowSpy = vi.spyOn(Date, "now").mockImplementation(() => now)
+
+    render(<GamePage />)
+
+    const source = await screen.findByRole("button", { name: "Square d5" })
+    fireEvent.contextMenu(source, { clientX: 120, clientY: 180 })
+    fireEvent.click(screen.getByRole("button", { name: /Queen \(1 left\)/i }))
+
+    fireEvent.click(source)
+    now += 150
+    fireEvent.click(source)
+    fireEvent.click(screen.getByRole("button", { name: /Remove/i }))
+
+    expect(source).not.toHaveClass("square--phantom")
+
+    nowSpy.mockRestore()
+  })
+
   it("seeds_default_opponent_phantoms_only_at_the_opening", async () => {
     render(<GamePage />)
 
