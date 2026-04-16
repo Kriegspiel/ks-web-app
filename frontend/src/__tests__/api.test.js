@@ -13,6 +13,14 @@ describe("auth helpers", () => {
   it("login_posts_to_auth_login", async () => { const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { ok: true } }); const payload = { username: "new-user", password: "secret123" }; const result = await login(payload); expect(postSpy).toHaveBeenCalledWith("/api/auth/login", payload); expect(result).toEqual({ ok: true }) })
   it("logout_posts_to_auth_logout", async () => { const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: {} }); await logout(); expect(postSpy).toHaveBeenCalledWith("/api/auth/logout") })
   it("me_gets_auth_me", async () => { const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: { username: "test" } }); const result = await me(); expect(getSpy).toHaveBeenCalledWith("/api/auth/me"); expect(result).toEqual({ username: "test" }) })
+  it("logout_uses_the_default_fallback_when_the_transport_error_has_no_message", async () => {
+    vi.spyOn(api, "post").mockRejectedValue({})
+    await expect(logout()).rejects.toEqual({ status: undefined, code: undefined, message: "Unable to log out right now." })
+  })
+  it("me_surfaces_plain_request_messages_when_no_response_payload_exists", async () => {
+    vi.spyOn(api, "get").mockRejectedValue({ message: "Socket closed" })
+    await expect(me()).rejects.toEqual({ status: undefined, code: undefined, message: "Socket closed" })
+  })
   it("register_normalizes_validation_errors", async () => {
     vi.spyOn(api, "post").mockRejectedValue({ response: { status: 422, data: { detail: "Invalid email format" } } })
     await expect(register({ username: "new_user", email: "bad-email", password: "password" })).rejects.toEqual({ status: 422, code: undefined, message: "Invalid email format" })
