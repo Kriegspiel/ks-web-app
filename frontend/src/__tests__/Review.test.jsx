@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import ReviewPage from "../pages/Review"
 const mockApi = vi.hoisted(() => ({
@@ -373,6 +373,42 @@ describe("ReviewPage", () => {
     expect(document.querySelectorAll(".board-overlay__arrow")).toHaveLength(2)
   })
 
+  it("renders_white_queenside_and_black_kingside_castling_arrows", async () => {
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      game_id: "g-620",
+      rule_variant: "berkeley_any",
+      moves: [
+        {
+          ply: 1,
+          color: "white",
+          question_type: "COMMON",
+          uci: "e1c1",
+          answer: { main: "REGULAR_MOVE", capture_square: null, special: null },
+          move_done: true,
+          replay_fen: transcript.moves[0].replay_fen,
+        },
+        {
+          ply: 2,
+          color: "black",
+          question_type: "COMMON",
+          uci: "e8g8",
+          answer: { main: "REGULAR_MOVE", capture_square: null, special: null },
+          move_done: true,
+          replay_fen: transcript.moves[1].replay_fen,
+        },
+      ],
+    })
+
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    fireEvent.click(screen.getByRole("button", { name: /White \[e1c1\] Move complete/i }))
+    expect(document.querySelectorAll(".board-overlay__arrow")).toHaveLength(2)
+
+    fireEvent.click(screen.getByRole("button", { name: /Black \[e8g8\] Move complete/i }))
+    expect(document.querySelectorAll(".board-overlay__arrow")).toHaveLength(2)
+  })
+
   it("scrolls_the_active_move_into_view_when_it_overflows_the_log", async () => {
     const { container } = renderReviewPage()
 
@@ -413,6 +449,99 @@ describe("ReviewPage", () => {
     await waitFor(() => {
       expect(moveRows.scrollTo).toHaveBeenCalledWith({
         top: 120,
+        behavior: "smooth",
+      })
+    })
+  })
+
+  it("returns_early_when_the_review_load_resolves_after_unmount", async () => {
+    let resolveTranscript
+    let resolveGame
+    const transcriptPromise = new Promise((resolve) => {
+      resolveTranscript = resolve
+    })
+    const gamePromise = new Promise((resolve) => {
+      resolveGame = resolve
+    })
+    mockApi.getGameTranscript.mockReturnValueOnce(transcriptPromise)
+    mockApi.getGame.mockReturnValueOnce(gamePromise)
+
+    const { unmount } = renderReviewPage()
+    expect(screen.getByText("Loading transcript…")).toBeInTheDocument()
+
+    unmount()
+
+    await act(async () => {
+      resolveTranscript(transcript)
+      resolveGame({
+        created_at: "2026-04-05T12:00:00Z",
+        updated_at: "2026-04-05T12:03:12Z",
+        result: { winner: "white", reason: "checkmate" },
+      })
+      await Promise.all([transcriptPromise, gamePromise])
+    })
+  })
+
+  it("skips_scrolling_when_the_active_row_lookup_returns_a_non_element", async () => {
+    const { container } = renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+
+    const moveRows = container.querySelector(".review-page__move-rows")
+    moveRows.scrollTo = vi.fn()
+    Object.defineProperty(moveRows, "querySelector", {
+      configurable: true,
+      value: vi.fn(() => ({})),
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /White \[e2e4\] Move complete/i }))
+
+    await waitFor(() => {
+      expect(moveRows.querySelector).toHaveBeenCalledWith('[data-ply-index="0"]')
+    })
+    expect(moveRows.scrollTo).not.toHaveBeenCalled()
+  })
+
+  it("scrolls_the_active_move_to_the_top_when_it_sits_above_the_log", async () => {
+    const { container } = renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+
+    const moveRows = container.querySelector(".review-page__move-rows")
+    moveRows.scrollTo = vi.fn()
+    moveRows.getBoundingClientRect = () => ({
+      top: 40,
+      bottom: 140,
+      left: 0,
+      right: 300,
+      width: 300,
+      height: 100,
+      x: 0,
+      y: 40,
+      toJSON: () => ({}),
+    })
+    Object.defineProperty(moveRows, "clientHeight", { configurable: true, value: 100 })
+
+    const activeButton = screen.getByRole("button", { name: /White \[e2e4\] Move complete/i })
+    activeButton.getBoundingClientRect = () => ({
+      top: 20,
+      bottom: 40,
+      left: 0,
+      right: 300,
+      width: 300,
+      height: 20,
+      x: 0,
+      y: 20,
+      toJSON: () => ({}),
+    })
+    Object.defineProperty(activeButton, "offsetTop", { configurable: true, value: 24 })
+    Object.defineProperty(activeButton, "offsetHeight", { configurable: true, value: 20 })
+
+    fireEvent.click(activeButton)
+
+    await waitFor(() => {
+      expect(moveRows.scrollTo).toHaveBeenCalledWith({
+        top: 24,
         behavior: "smooth",
       })
     })

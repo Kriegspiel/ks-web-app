@@ -425,4 +425,12 @@ describe("LobbyPage", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Close failed")
   })
+
+  it("shows_an_error_when_open_games_fail_to_load", async () => {
+    mockApi.getOpenGames.mockRejectedValueOnce({ message: "Open exploded" })
+
+    renderPage()
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Open exploded")
+  })
 })
