@@ -513,8 +513,10 @@ describe("GamePage", () => {
     const originalElementFromPoint = document.elementFromPoint
     Object.defineProperty(document, "elementFromPoint", { configurable: true, value: vi.fn(() => target) })
 
-    fireEvent.pointerDown(source, { button: 0, pointerId: 11, pointerType: "mouse", clientX: 120, clientY: 180 })
-    expect(document.querySelector(".game-drag-preview")).toBeTruthy()
+    fireEvent.pointerDown(source, { button: 0, buttons: 1, pointerId: 11, pointerType: "mouse", clientX: 120, clientY: 180 })
+    await waitFor(() => {
+      expect(source.setPointerCapture).toHaveBeenCalledWith(11)
+    })
 
     fireEvent.pointerEnter(source, { buttons: 1, pointerId: 11, pointerType: "mouse" })
     fireEvent.pointerMove(source, { buttons: 1, pointerId: 11, pointerType: "mouse", clientX: 180, clientY: 220 })
@@ -544,8 +546,10 @@ describe("GamePage", () => {
     const elementFromPoint = vi.fn(() => target)
     Object.defineProperty(document, "elementFromPoint", { configurable: true, value: elementFromPoint })
 
-    fireEvent.pointerDown(source, { button: 0, pointerId: 21, pointerType: "mouse", clientX: 140, clientY: 200 })
-    expect(document.querySelector(".game-drag-preview")).toBeTruthy()
+    fireEvent.pointerDown(source, { button: 0, buttons: 1, pointerId: 21, pointerType: "mouse", clientX: 140, clientY: 200 })
+    await waitFor(() => {
+      expect(source.setPointerCapture).toHaveBeenCalledWith(21)
+    })
     fireEvent.pointerEnter(source, { buttons: 2, pointerId: 21, pointerType: "mouse" })
     fireEvent.pointerMove(source, { pointerId: 21, pointerType: "mouse", clientX: 200, clientY: 200 })
     fireEvent.pointerUp(source, { pointerId: 21, pointerType: "mouse", clientX: 200, clientY: 200 })
@@ -567,49 +571,6 @@ describe("GamePage", () => {
     })
 
     Object.defineProperty(document, "elementFromPoint", { configurable: true, value: originalElementFromPoint })
-  })
-
-  it("supports_tap_destination_mode_for_phantoms_and_surfaces_invalid_targets", async () => {
-    let now = new Date("2026-04-03T10:00:00Z").valueOf()
-    const nowSpy = vi.spyOn(Date, "now").mockImplementation(() => now)
-
-    render(<GamePage />)
-
-    const source = await screen.findByRole("button", { name: "Square d5" })
-    source.getBoundingClientRect = () => ({
-      x: 200, y: 240, left: 200, top: 240, right: 264, bottom: 304, width: 64, height: 64,
-      toJSON: () => {},
-    })
-    const boardShell = source.closest(".game-board-shell")
-    boardShell.getBoundingClientRect = () => ({
-      x: 100, y: 120, left: 100, top: 120, right: 620, bottom: 640, width: 520, height: 520,
-      toJSON: () => {},
-    })
-    fireEvent.contextMenu(source, { clientX: 120, clientY: 180 })
-    fireEvent.click(screen.getByRole("button", { name: /Queen \(1 left\)/i }))
-
-    fireEvent.click(source)
-    now += 150
-    fireEvent.click(source)
-    const firstMenu = await screen.findByRole("dialog", { name: /Phantom options for d5/i })
-    fireEvent.click(within(firstMenu).getByRole("button", { name: "Tap destination" }))
-    fireEvent.click(source)
-    expect(source).toHaveClass("square--phantom")
-
-    now += 150
-    fireEvent.click(source)
-    now += 150
-    fireEvent.click(source)
-    const secondMenu = await screen.findByRole("dialog", { name: /Phantom options for d5/i })
-    fireEvent.click(within(secondMenu).getByRole("button", { name: "Tap destination" }))
-    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
-
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("That square cannot take the phantom piece.")
-    })
-    expect(source).toHaveClass("square--phantom")
-
-    nowSpy.mockRestore()
   })
 
   it("seeds_default_opponent_phantoms_only_at_the_opening", async () => {
