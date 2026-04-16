@@ -510,7 +510,8 @@ describe("GamePage", () => {
     const target = screen.getByRole("button", { name: "Square e4" })
     source.setPointerCapture = vi.fn()
     source.releasePointerCapture = vi.fn()
-    const elementFromPointSpy = vi.spyOn(document, "elementFromPoint").mockReturnValue(target)
+    const originalElementFromPoint = document.elementFromPoint
+    Object.defineProperty(document, "elementFromPoint", { configurable: true, value: vi.fn(() => target) })
 
     fireEvent.pointerDown(source, { button: 0, pointerId: 11, pointerType: "mouse", clientX: 120, clientY: 180 })
     expect(document.querySelector(".game-drag-preview")).toBeTruthy()
@@ -525,7 +526,7 @@ describe("GamePage", () => {
     expect(source.setPointerCapture).toHaveBeenCalledWith(11)
     expect(source.releasePointerCapture).toHaveBeenCalledWith(11)
 
-    elementFromPointSpy.mockRestore()
+    Object.defineProperty(document, "elementFromPoint", { configurable: true, value: originalElementFromPoint })
   })
 
   it("moves_phantoms_with_pointer_drag_and_drops_them_off_board", async () => {
@@ -539,7 +540,9 @@ describe("GamePage", () => {
     source.setPointerCapture = vi.fn()
     source.releasePointerCapture = vi.fn()
     const target = screen.getByRole("button", { name: "Square f5" })
-    const elementFromPointSpy = vi.spyOn(document, "elementFromPoint").mockReturnValue(target)
+    const originalElementFromPoint = document.elementFromPoint
+    const elementFromPoint = vi.fn(() => target)
+    Object.defineProperty(document, "elementFromPoint", { configurable: true, value: elementFromPoint })
 
     fireEvent.pointerDown(source, { button: 0, pointerId: 21, pointerType: "mouse", clientX: 140, clientY: 200 })
     expect(document.querySelector(".game-drag-preview")).toBeTruthy()
@@ -554,7 +557,7 @@ describe("GamePage", () => {
     const movedPhantom = screen.getByRole("button", { name: "Square f5" })
     movedPhantom.setPointerCapture = vi.fn()
     movedPhantom.releasePointerCapture = vi.fn()
-    elementFromPointSpy.mockReturnValue(null)
+    elementFromPoint.mockReturnValue(null)
 
     fireEvent.pointerDown(movedPhantom, { button: 0, pointerId: 22, pointerType: "mouse", clientX: 200, clientY: 200 })
     fireEvent.pointerUp(window, { pointerId: 22, pointerType: "mouse", clientX: 4, clientY: 4 })
@@ -563,7 +566,7 @@ describe("GamePage", () => {
       expect(screen.getByRole("button", { name: "Square f5" })).not.toHaveClass("square--phantom")
     })
 
-    elementFromPointSpy.mockRestore()
+    Object.defineProperty(document, "elementFromPoint", { configurable: true, value: originalElementFromPoint })
   })
 
   it("supports_tap_destination_mode_for_phantoms_and_surfaces_invalid_targets", async () => {
@@ -573,13 +576,23 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     const source = await screen.findByRole("button", { name: "Square d5" })
+    source.getBoundingClientRect = () => ({
+      x: 200, y: 240, left: 200, top: 240, right: 264, bottom: 304, width: 64, height: 64,
+      toJSON: () => {},
+    })
+    const boardShell = source.closest(".game-board-shell")
+    boardShell.getBoundingClientRect = () => ({
+      x: 100, y: 120, left: 100, top: 120, right: 620, bottom: 640, width: 520, height: 520,
+      toJSON: () => {},
+    })
     fireEvent.contextMenu(source, { clientX: 120, clientY: 180 })
     fireEvent.click(screen.getByRole("button", { name: /Queen \(1 left\)/i }))
 
     fireEvent.click(source)
     now += 150
     fireEvent.click(source)
-    fireEvent.click(await screen.findByRole("button", { name: "Tap destination" }))
+    const firstMenu = await screen.findByRole("dialog", { name: /Phantom options for d5/i })
+    fireEvent.click(within(firstMenu).getByRole("button", { name: "Tap destination" }))
     fireEvent.click(source)
     expect(source).toHaveClass("square--phantom")
 
@@ -587,7 +600,8 @@ describe("GamePage", () => {
     fireEvent.click(source)
     now += 150
     fireEvent.click(source)
-    fireEvent.click(await screen.findByRole("button", { name: "Tap destination" }))
+    const secondMenu = await screen.findByRole("dialog", { name: /Phantom options for d5/i })
+    fireEvent.click(within(secondMenu).getByRole("button", { name: "Tap destination" }))
     fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
 
     await waitFor(() => {

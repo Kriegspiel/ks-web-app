@@ -256,10 +256,13 @@ describe("LobbyPage", () => {
 
     renderPage()
 
-    fireEvent.change(await screen.findByLabelText("Ruleset"), { target: { value: "berkeley" } })
-    fireEvent.click(screen.getByLabelText("Bot"))
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    await screen.findByLabelText("Bot opponent")
+    fireEvent.change(screen.getByLabelText("Ruleset"), { target: { value: "berkeley" } })
 
-    expect(await screen.findByText("No bots support this ruleset.")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByLabelText("Bot opponent")).toHaveValue("")
+    })
     fireEvent.click(screen.getByRole("button", { name: "Create bot game" }))
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Pick a bot before creating the game.")
