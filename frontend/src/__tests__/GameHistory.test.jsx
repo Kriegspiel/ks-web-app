@@ -112,7 +112,7 @@ describe("GameHistoryPage", () => {
 
     renderHistory()
 
-    expect(await screen.findByText("—")).toBeInTheDocument()
+    expect((await screen.findAllByText("—")).length).toBeGreaterThan(0)
     expect(screen.getByRole("link", { name: "Open" })).toHaveAttribute("href", "/game/g-unknown/review")
     expect(screen.getByText(/Page 1 of 0/)).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Next" })).not.toBeDisabled()

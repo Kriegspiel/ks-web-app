@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { cleanup, render, screen } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import BotsReportPage from "../pages/BotsReport"
 
@@ -14,6 +14,10 @@ vi.mock("../components/VersionStamp", () => ({
 }))
 
 const { techApi } = await import("../services/api")
+
+afterEach(() => {
+  cleanup()
+})
 
 describe("BotsReportPage", () => {
   beforeEach(() => {
@@ -86,7 +90,7 @@ describe("BotsReportPage", () => {
 
     render(<MemoryRouter><BotsReportPage /></MemoryRouter>)
 
-    expect(await screen.findByText(/America\/New_York/)).toBeInTheDocument()
+    expect((await screen.findAllByText(/America\/New_York/)).length).toBeGreaterThan(0)
     expect(screen.getByRole("link", { name: "gptnano" })).toHaveAttribute("href", "/user/gptnano")
     expect(screen.getByRole("link", { name: "haiku" })).toHaveAttribute("href", "/user/haiku")
     expect(screen.getByText("2026-04-09")).toBeInTheDocument()

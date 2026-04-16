@@ -219,7 +219,7 @@ describe("HomePage", () => {
     expect(screen.getByText("Welcome back, player.")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Resume active game" })).toHaveAttribute("href", "/game/game-no-code")
     expect(screen.queryByRole("link", { name: "View all games" })).not.toBeInTheDocument()
-    expect(screen.getAllByText("Waiting…")).toHaveLength(2)
+    expect(screen.getByText(/Waiting… vs Waiting…/)).toBeInTheDocument()
   })
 
   it("shows_the_default_recent_games_error_when_loading_fails_without_details", async () => {
