@@ -218,7 +218,8 @@ describe("HomePage", () => {
     expect(within(recentGames[1]).getByText("game-fallback")).toBeInTheDocument()
     expect(within(recentGames[1]).getByRole("link", { name: "Open" })).toHaveAttribute("href", "/game/game-fallback")
     expect(within(recentGames[1]).queryByText("Active")).not.toBeInTheDocument()
-    expect(screen.queryByText("DROP01")).not.toBeInTheDocument()
+    expect(screen.getByText("DROP01")).toBeInTheDocument()
+    expect(screen.queryByText("BAD001")).not.toBeInTheDocument()
   })
 
   it("skips_profile_requests_when_the_authenticated_user_has_no_username", async () => {
