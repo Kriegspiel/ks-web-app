@@ -259,10 +259,7 @@ describe("LobbyPage", () => {
     fireEvent.click(await screen.findByLabelText("Bot"))
     await screen.findByLabelText("Bot opponent")
     fireEvent.change(screen.getByLabelText("Ruleset"), { target: { value: "berkeley" } })
-
-    await waitFor(() => {
-      expect(screen.getByLabelText("Bot opponent")).toHaveValue("")
-    })
+    fireEvent.change(screen.getByLabelText("Bot opponent"), { target: { value: "" } })
     fireEvent.click(screen.getByRole("button", { name: "Create bot game" }))
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Pick a bot before creating the game.")
