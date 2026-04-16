@@ -302,14 +302,14 @@ describe("ReviewPage", () => {
 
     await screen.findByText(/Move log/i)
     expect(screen.getByRole("button", { name: /Black Double check/i })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /White Move complete/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /White \[\?\?\] Move complete/i })).toBeInTheDocument()
     expect(screen.getByText("2m 20s")).toBeInTheDocument()
     expect(screen.getByText("Result: Result unavailable")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "White: —" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Black: —" })).toBeInTheDocument()
     expect(screen.getAllByText("—").length).toBeGreaterThan(3)
 
-    fireEvent.click(screen.getByRole("button", { name: /White Move complete/i }))
+    fireEvent.click(screen.getByRole("button", { name: /White \[\?\?\] Move complete/i }))
     expect(document.querySelectorAll(".board-overlay__arrow")).toHaveLength(0)
   })
 

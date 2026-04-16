@@ -111,7 +111,7 @@ describe("LobbyPage", () => {
 
     renderPage()
 
-    expect(await screen.findByText("Unknown")).toBeInTheDocument()
+    expect(await screen.findByText((_, node) => node?.textContent?.includes("Unknown · white · 2026-04-03 23:59:59 UTC") ?? false)).toBeInTheDocument()
   })
 
   it("shows_close_for_my_open_waiting_game", async () => {
