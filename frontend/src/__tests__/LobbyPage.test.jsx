@@ -131,6 +131,7 @@ describe("LobbyPage", () => {
     renderPage()
 
     expect(await screen.findByRole("heading", { name: "Lobby stats" })).toBeInTheDocument()
+    expect(await screen.findByText("Active games now")).toBeInTheDocument()
     expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(4)
   })
 
