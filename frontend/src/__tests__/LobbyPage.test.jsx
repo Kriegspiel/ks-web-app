@@ -125,6 +125,15 @@ describe("LobbyPage", () => {
     expect(screen.getByText("Completed total")).toBeInTheDocument()
   })
 
+  it("renders_zeroes_when_lobby_stat_counts_are_missing", async () => {
+    mockApi.getLobbyStats.mockResolvedValueOnce({})
+
+    renderPage()
+
+    expect(await screen.findByRole("heading", { name: "Lobby stats" })).toBeInTheDocument()
+    expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(4)
+  })
+
   it("falls_back_to_email_for_the_signed_in_label_and_keeps_open_games_order_when_username_is_missing", async () => {
     mockAuth.user = { email: "fil@example.com" }
     mockApi.getOpenGames.mockResolvedValue({
@@ -604,6 +613,22 @@ describe("LobbyPage", () => {
 
   it("falls_back_to_no_active_games_when_refreshing_my_games_fails", async () => {
     mockApi.getMyGames.mockRejectedValueOnce(new Error("My games exploded"))
+
+    renderPage()
+
+    await screen.findByRole("link", { name: "Leaderboard" })
+    expect(screen.queryByRole("link", { name: "Resume active game" })).not.toBeInTheDocument()
+  })
+
+  it("keeps_resume_active_game_hidden_when_my_games_only_include_waiting_entries", async () => {
+    mockApi.getMyGames.mockResolvedValueOnce({
+      games: [
+        {
+          game_id: "g-waiting-only",
+          state: "waiting",
+        },
+      ],
+    })
 
     renderPage()
 
