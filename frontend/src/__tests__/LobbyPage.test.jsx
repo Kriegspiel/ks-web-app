@@ -5,12 +5,27 @@ import LobbyPage from "../pages/LobbyPage"
 import { TEST_VERSION_STAMP } from "../version"
 
 const mockNavigate = vi.hoisted(() => vi.fn())
+const mockAuth = vi.hoisted(() => ({
+  user: { username: "fil" },
+  actionError: "",
+}))
 const mockApi = vi.hoisted(() => ({ createGame: vi.fn(), deleteWaitingGame: vi.fn(), joinGame: vi.fn(), getOpenGames: vi.fn(), getMyGames: vi.fn(), getGame: vi.fn(), getBots: vi.fn(), getLobbyStats: vi.fn() }))
 vi.mock("react-router-dom", async () => ({ ...(await vi.importActual("react-router-dom")), useNavigate: () => mockNavigate }))
-vi.mock("../hooks/useAuth", () => ({ useAuth: () => ({ user: { username: "fil" }, actionError: "" }) }))
+vi.mock("../hooks/useAuth", () => ({ useAuth: () => mockAuth }))
 vi.mock("../services/api", () => mockApi)
 
-beforeEach(() => { mockNavigate.mockReset(); Object.values(mockApi).forEach((fn) => fn.mockReset()); mockApi.getOpenGames.mockResolvedValue({ games: [] }); mockApi.getMyGames.mockResolvedValue({ games: [] }); mockApi.getLobbyStats.mockResolvedValue({ active_games_now: 123456789, completed_last_hour: 3, completed_last_24_hours: 42, completed_total: 314 }); mockApi.getGame.mockResolvedValue({ state: "waiting" }); mockApi.deleteWaitingGame.mockResolvedValue({}); mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-2", username: "gptnano", display_name: "GPT Nano", description: "Model-driven Kriegspiel bot that chooses moves using GPT nano model.", elo: 1342, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-3", username: "randobotany", display_name: "Random Any Bot", description: "Asks any pawn captures first, then plays random legal-looking moves.", elo: 1200, supported_rule_variants: ["berkeley_any"] }] }) })
+beforeEach(() => {
+  mockNavigate.mockReset()
+  mockAuth.user = { username: "fil" }
+  mockAuth.actionError = ""
+  Object.values(mockApi).forEach((fn) => fn.mockReset())
+  mockApi.getOpenGames.mockResolvedValue({ games: [] })
+  mockApi.getMyGames.mockResolvedValue({ games: [] })
+  mockApi.getLobbyStats.mockResolvedValue({ active_games_now: 123456789, completed_last_hour: 3, completed_last_24_hours: 42, completed_total: 314 })
+  mockApi.getGame.mockResolvedValue({ state: "waiting" })
+  mockApi.deleteWaitingGame.mockResolvedValue({})
+  mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-2", username: "gptnano", display_name: "GPT Nano", description: "Model-driven Kriegspiel bot that chooses moves using GPT nano model.", elo: 1342, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-3", username: "randobotany", display_name: "Random Any Bot", description: "Asks any pawn captures first, then plays random legal-looking moves.", elo: 1200, supported_rule_variants: ["berkeley_any"] }] })
+})
 afterEach(() => { cleanup(); vi.useRealTimers() })
 
 function renderPage() {
@@ -78,6 +93,34 @@ describe("LobbyPage", () => {
     expect(screen.getByText("Completed last hour")).toBeInTheDocument()
     expect(screen.getByText("Completed last 24 hours")).toBeInTheDocument()
     expect(screen.getByText("Completed total")).toBeInTheDocument()
+  })
+
+  it("falls_back_to_email_for_the_signed_in_label_and_keeps_open_games_order_when_username_is_missing", async () => {
+    mockAuth.user = { email: "fil@example.com" }
+    mockApi.getOpenGames.mockResolvedValue({
+      games: [
+        {
+          game_code: "FIRST01",
+          created_by: "fil",
+          available_color: "white",
+          created_at: "2026-04-03T23:59:59Z",
+        },
+        {
+          game_code: "SECOND2",
+          created_by: "amy",
+          available_color: "black",
+          created_at: "2026-04-03T23:59:58Z",
+        },
+      ],
+    })
+
+    renderPage()
+
+    expect(await screen.findByText("Signed in as fil@example.com.")).toBeInTheDocument()
+    const openGames = await screen.findAllByRole("listitem")
+    expect(within(openGames[0]).getByText("FIRST01")).toBeInTheDocument()
+    expect(within(openGames[0]).getByRole("button", { name: "Join" })).toBeInTheDocument()
+    expect(within(openGames[1]).getByText("SECOND2")).toBeInTheDocument()
   })
 
   it("formats_open_game_dates_in_utc", async () => {
@@ -253,6 +296,40 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("option", { name: "GPT Nano (1342)" })).toBeInTheDocument()
   })
 
+  it("falls_back_to_the_first_supported_bot_and_its_raw_description", async () => {
+    mockApi.getBots.mockResolvedValue({
+      bots: [
+        {
+          bot_id: "bot-custom",
+          username: "custombot",
+          display_name: "Custom Bot",
+          description: "Prefers puzzles.",
+        },
+      ],
+    })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    expect(await screen.findByLabelText("Bot opponent")).toHaveValue("bot-custom")
+    expect(screen.getByText("Prefers puzzles.")).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "Custom Bot (1200)" })).toBeInTheDocument()
+  })
+
+  it("shows_default_errors_when_loading_bots_open_games_and_lobby_stats_fail_without_details", async () => {
+    mockApi.getBots.mockRejectedValueOnce({})
+    mockApi.getOpenGames.mockRejectedValueOnce({})
+    mockApi.getLobbyStats.mockRejectedValueOnce({})
+
+    renderPage()
+
+    fireEvent.click(await screen.findByLabelText("Bot"))
+
+    expect(await screen.findByText("Unable to load bots right now.")).toBeInTheDocument()
+    expect(screen.getByText("Unable to load open games right now.")).toBeInTheDocument()
+    expect(screen.getByText("Unable to load lobby stats right now.")).toBeInTheDocument()
+  })
+
   it("opens_my_own_waiting_game_when_join_by_code_hits_own_game_conflict", async () => {
     mockApi.joinGame.mockRejectedValue({ status: 409, code: "CANNOT_JOIN_OWN_GAME", message: "You cannot join your own waiting game." })
 
@@ -334,6 +411,20 @@ describe("LobbyPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Join failed")
   })
 
+  it("shows_the_default_join_error_when_join_by_code_fails_without_details", async () => {
+    mockApi.joinGame.mockRejectedValueOnce({})
+
+    renderPage()
+
+    fireEvent.change(await screen.findByLabelText("Game code"), { target: { value: "fail01" } })
+    fireEvent.click(screen.getByRole("button", { name: "Join game" }))
+
+    await waitFor(() => {
+      expect(mockApi.joinGame).toHaveBeenCalledWith("FAIL01")
+    })
+    expect(await screen.findByText("Unable to join that game right now.")).toBeInTheDocument()
+  })
+
   it("handles_open_game_join_conflicts_and_failures", async () => {
     mockApi.getOpenGames.mockResolvedValueOnce({
       games: [
@@ -383,6 +474,26 @@ describe("LobbyPage", () => {
     })
   })
 
+  it("shows_the_default_error_when_joining_an_open_game_fails_without_details", async () => {
+    mockApi.getOpenGames.mockResolvedValueOnce({
+      games: [
+        {
+          game_code: "ZZZ999",
+          created_by: "randobot",
+          available_color: "black",
+          created_at: "2026-04-03T23:59:58Z",
+        },
+      ],
+    })
+    mockApi.joinGame.mockRejectedValueOnce({})
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Join" }))
+
+    expect(await screen.findByText("Unable to join that game right now.")).toBeInTheDocument()
+  })
+
   it("polls_a_created_waiting_game_until_it_becomes_active", async () => {
     mockApi.createGame.mockResolvedValueOnce({ game_id: "g-1", game_code: "ABCD23", state: "waiting" })
     mockApi.getGame.mockResolvedValueOnce({ state: "active", game_code: "ABCD23" })
@@ -395,6 +506,21 @@ describe("LobbyPage", () => {
       expect(mockApi.getGame).toHaveBeenCalledWith("g-1")
       expect(mockNavigate).toHaveBeenCalledWith("/game/ABCD23")
     })
+  })
+
+  it("restores_the_waiting_card_state_when_waiting_game_polling_fails", async () => {
+    mockApi.createGame.mockResolvedValueOnce({ game_id: "g-1", game_code: "ABCD23", state: "waiting" })
+    mockApi.getGame.mockRejectedValueOnce({})
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create waiting game" }))
+
+    await waitFor(() => {
+      expect(mockApi.getGame).toHaveBeenCalledWith("g-1")
+    })
+    expect(await screen.findByText("waiting")).toBeInTheDocument()
+    expect(screen.queryByText("Waiting for opponent…")).not.toBeInTheDocument()
   })
 
   it("falls_back_to_no_active_games_when_refreshing_my_games_fails", async () => {
@@ -426,11 +552,58 @@ describe("LobbyPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Close failed")
   })
 
+  it("shows_the_default_error_when_closing_a_waiting_game_fails_without_details", async () => {
+    mockApi.getOpenGames.mockResolvedValueOnce({
+      games: [
+        {
+          game_code: "OWN123",
+          created_by: "fil",
+          available_color: "white",
+          created_at: "2026-04-03T23:59:59Z",
+        },
+      ],
+    })
+    mockApi.deleteWaitingGame.mockRejectedValueOnce({})
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Close" }))
+
+    expect(await screen.findByText("Unable to close this waiting game right now.")).toBeInTheDocument()
+  })
+
   it("shows_an_error_when_open_games_fail_to_load", async () => {
     mockApi.getOpenGames.mockRejectedValueOnce({ message: "Open exploded" })
 
     renderPage()
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Open exploded")
+  })
+
+  it("shows_the_default_error_when_creating_a_game_fails_without_details", async () => {
+    mockApi.createGame.mockRejectedValueOnce({})
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create waiting game" }))
+
+    expect(await screen.findByText("Unable to create game right now.")).toBeInTheDocument()
+  })
+
+  it("shows_the_default_action_error_when_the_auth_context_has_one", async () => {
+    mockAuth.actionError = "Session drifted."
+
+    renderPage()
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Session drifted.")
+  })
+
+  it("hides_lobby_stats_tiles_when_the_stats_payload_is_null", async () => {
+    mockApi.getLobbyStats.mockResolvedValueOnce(null)
+
+    renderPage()
+
+    await screen.findByRole("heading", { name: "Lobby stats" })
+    expect(screen.queryByText("Active games now")).not.toBeInTheDocument()
   })
 })

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import HomePage from "../pages/HomePage"
 import { TEST_VERSION_STAMP } from "../version"
@@ -187,6 +187,38 @@ describe("HomePage", () => {
     expect(screen.getByText("1321")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "vs Humans results" })).toBeInTheDocument()
     expect(screen.getAllByText("1").length).toBeGreaterThan(0)
+  })
+
+  it("sorts_recent_games_by_fallback_dates_limits_them_to_five_and_uses_game_id_links", async () => {
+    mockAuth.isAuthenticated = true
+    mockAuth.user = {
+      username: "fil",
+      stats: {},
+    }
+    mockApi.getMyGames.mockResolvedValue({
+      games: [
+        { game_id: "game-old", game_code: "OLD001", state: "completed", updated_at: "2026-03-20T15:00:00Z", white: { username: "fil" }, black: { username: "amy" } },
+        { game_id: "game-fallback", state: "waiting", created_at: "2026-03-27T12:00:00Z", white: {}, black: null },
+        { game_id: "game-new", game_code: "NEW001", state: "completed", updated_at: "2026-03-28T15:00:00Z", white: { username: "fil" }, black: { username: "botty", role: "bot" } },
+        { game_id: "game-invalid", game_code: "BAD001", state: "completed", updated_at: "not-a-date", white: { username: "fil" }, black: { username: "sam" } },
+        { game_id: "game-mid", game_code: "MID001", state: "completed", updated_at: "2026-03-25T15:00:00Z", white: { username: "fil" }, black: { username: "zoe" } },
+        { game_id: "game-drop", game_code: "DROP01", state: "completed", updated_at: "2026-03-21T15:00:00Z", white: { username: "fil" }, black: { username: "max" } },
+      ],
+    })
+
+    renderPage()
+
+    await waitFor(() => {
+      expect(screen.queryByText("Loading your recent games…")).not.toBeInTheDocument()
+    })
+
+    const recentGames = screen.getAllByRole("listitem")
+    expect(recentGames).toHaveLength(5)
+    expect(within(recentGames[0]).getByText("NEW001")).toBeInTheDocument()
+    expect(within(recentGames[1]).getByText("game-fallback")).toBeInTheDocument()
+    expect(within(recentGames[1]).getByRole("link", { name: "Open" })).toHaveAttribute("href", "/game/game-fallback")
+    expect(within(recentGames[1]).queryByText("Active")).not.toBeInTheDocument()
+    expect(screen.queryByText("DROP01")).not.toBeInTheDocument()
   })
 
   it("skips_profile_requests_when_the_authenticated_user_has_no_username", async () => {

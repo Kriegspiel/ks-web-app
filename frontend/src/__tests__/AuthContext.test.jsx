@@ -81,6 +81,42 @@ describe("AuthProvider", () => {
     expect(result.current.actionError).toBe("Unable to load auth state.")
   })
 
+  it("ignores_bootstrap_results_that_arrive_after_unmount", async () => {
+    let resolveBootstrap
+    const bootstrapPromise = new Promise((resolve) => {
+      resolveBootstrap = resolve
+    })
+    mockMeRequest.mockReturnValueOnce(bootstrapPromise)
+
+    const { unmount } = renderHook(() => useAuth(), { wrapper })
+    unmount()
+
+    await act(async () => {
+      resolveBootstrap({ username: "late-user" })
+      await bootstrapPromise
+    })
+  })
+
+  it("ignores_bootstrap_errors_that_arrive_after_unmount", async () => {
+    let rejectBootstrap
+    const bootstrapPromise = new Promise((_, reject) => {
+      rejectBootstrap = reject
+    })
+    mockMeRequest.mockReturnValueOnce(bootstrapPromise)
+
+    const { unmount } = renderHook(() => useAuth(), { wrapper })
+    unmount()
+
+    await act(async () => {
+      rejectBootstrap({ message: "late failure" })
+      try {
+        await bootstrapPromise
+      } catch {
+        // expected
+      }
+    })
+  })
+
   it("logs_in_and_refreshes_the_session", async () => {
     mockMeRequest
       .mockResolvedValueOnce(null)
@@ -257,6 +293,62 @@ describe("AuthProvider", () => {
     expect(caughtError).toEqual({ message: "Username taken" })
     expect(result.current.actionError).toBe("Username taken")
     expect(result.current.actionLoading).toBe(false)
+  })
+
+  it("surfaces_refresh_session_errors_after_registration", async () => {
+    mockMeRequest
+      .mockResolvedValueOnce(null)
+      .mockRejectedValueOnce({ status: 500, message: "Registration refresh failed" })
+    mockRegisterRequest.mockResolvedValueOnce({})
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.bootstrapping).toBe(false)
+    })
+
+    let caughtError = null
+    await act(async () => {
+      try {
+        await result.current.register({
+          username: "new-user",
+          email: "new@example.com",
+          password: "strong-pass",
+        })
+      } catch (error) {
+        caughtError = error
+      }
+    })
+
+    expect(caughtError).toEqual({ status: 500, message: "Registration refresh failed" })
+    expect(result.current.actionError).toBe("Registration refresh failed")
+    expect(result.current.actionLoading).toBe(false)
+  })
+
+  it("returns_null_when_register_refresh_hits_a_401", async () => {
+    mockMeRequest
+      .mockResolvedValueOnce(null)
+      .mockRejectedValueOnce({ status: 401 })
+    mockRegisterRequest.mockResolvedValueOnce({})
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.bootstrapping).toBe(false)
+    })
+
+    let returnedUser = Symbol("unset")
+    await act(async () => {
+      returnedUser = await result.current.register({
+        username: "new-user",
+        email: "new@example.com",
+        password: "strong-pass",
+      })
+    })
+
+    expect(returnedUser).toBe(null)
+    expect(result.current.user).toBe(null)
+    expect(result.current.actionError).toBe("")
   })
 
   it("uses_the_default_registration_message_when_registration_fails_without_details", async () => {
