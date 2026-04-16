@@ -248,6 +248,9 @@ describe("HomePage", () => {
     renderPage()
 
     await screen.findByRole("link", { name: "Play now" })
+    await waitFor(() => {
+      expect(screen.queryByText("Loading your recent games…")).not.toBeInTheDocument()
+    })
 
     expect(screen.getByText("No games yet. Start one from the lobby.")).toBeInTheDocument()
     expect(mockApi.userApi.getRatingHistory).toHaveBeenCalledWith("fil", "overall", 100)
