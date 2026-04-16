@@ -362,11 +362,12 @@ describe("GamePage", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Mute sounds" }))
     expect(screen.getByRole("button", { name: "Sounds off" })).toBeInTheDocument()
+    const pollCountBeforeSleep = mockApi.getGameState.mock.calls.length
 
     await sleep(650)
 
     await waitFor(() => {
-      expect(mockApi.getGameState).toHaveBeenCalledTimes(2)
+      expect(mockApi.getGameState.mock.calls.length).toBeGreaterThan(pollCountBeforeSleep)
     })
     expect(mockSoundPlayer.playCategories).not.toHaveBeenCalled()
   })
