@@ -1005,11 +1005,19 @@ describe("GamePage", () => {
   })
 
   it("reduces_a_hidden_midfield_pawn_to_only_non_capture_moves_after_no_any", async () => {
+    const updatedState = {
+      ...activeState,
+      your_fen: "8/8/8/8/8/8/8/4K3",
+      allowed_moves: ["e4e5"],
+      referee_log: [{ turn: 1, color: "white", announcement: "No pawn captures" }],
+    }
+
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
       your_fen: "8/8/8/8/8/8/8/4K3",
       allowed_moves: ["e4d5", "e4e5", "e4f5"],
     })
+    mockApi.getGameState.mockResolvedValue(updatedState)
 
     render(<GamePage />)
 
@@ -1019,13 +1027,6 @@ describe("GamePage", () => {
     expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
     expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
     expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
-
-    mockApi.getGameState.mockResolvedValueOnce({
-      ...activeState,
-      your_fen: "8/8/8/8/8/8/8/4K3",
-      allowed_moves: ["e4e5"],
-      referee_log: [{ turn: 1, color: "white", announcement: "No pawn captures" }],
-    })
 
     const pollCountBeforeAskAny = mockApi.getGameState.mock.calls.length
     fireEvent.click(screen.getByRole("button", { name: "Any pawn captures?" }))
@@ -1039,11 +1040,19 @@ describe("GamePage", () => {
   })
 
   it("reduces_a_hidden_midfield_pawn_to_only_capture_moves_after_has_any", async () => {
+    const updatedState = {
+      ...activeState,
+      your_fen: "8/8/8/8/8/8/8/4K3",
+      allowed_moves: ["e4d5", "e4f5"],
+      referee_log: [{ turn: 1, color: "white", announcement: "Has pawn captures" }],
+    }
+
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
       your_fen: "8/8/8/8/8/8/8/4K3",
       allowed_moves: ["e4d5", "e4e5", "e4f5"],
     })
+    mockApi.getGameState.mockResolvedValue(updatedState)
 
     render(<GamePage />)
 
@@ -1053,13 +1062,6 @@ describe("GamePage", () => {
     expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
     expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
     expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
-
-    mockApi.getGameState.mockResolvedValueOnce({
-      ...activeState,
-      your_fen: "8/8/8/8/8/8/8/4K3",
-      allowed_moves: ["e4d5", "e4f5"],
-      referee_log: [{ turn: 1, color: "white", announcement: "Has pawn captures" }],
-    })
 
     const pollCountBeforeAskAny = mockApi.getGameState.mock.calls.length
     fireEvent.click(screen.getByRole("button", { name: "Any pawn captures?" }))
