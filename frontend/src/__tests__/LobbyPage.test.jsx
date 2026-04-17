@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
@@ -37,6 +39,13 @@ function renderPage() {
 }
 
 describe("LobbyPage", () => {
+  it("uses_theme_surface_tokens_for_lobby_list_cards", () => {
+    const css = readFileSync(resolve(process.cwd(), "src/pages/Lobby.css"), "utf8")
+
+    expect(css).toContain("background: color-mix(in srgb, var(--surface-strong) 92%, var(--surface) 8%);")
+    expect(css).not.toContain("background: rgba(248, 250, 252, 0.72);")
+  })
+
   it("shows_lobby_version_badge", async () => {
     renderPage()
 
