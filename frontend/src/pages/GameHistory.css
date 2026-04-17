@@ -29,11 +29,12 @@
 .history-table td {
   text-align: left;
   padding: 0.8rem;
-  border-bottom: 1px solid #e5eaf2;
+  border-bottom: 1px solid var(--border);
 }
 
 .history-table thead th {
-  background: rgba(248, 250, 252, 0.92);
+  background: color-mix(in srgb, var(--surface-strong) 94%, var(--surface) 6%);
+  color: var(--text);
 }
 
 .history-opponent-link {

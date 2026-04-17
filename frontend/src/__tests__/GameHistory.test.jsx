@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
@@ -31,6 +33,15 @@ function renderHistory(path = "/user/fil/games") {
 }
 
 describe("GameHistoryPage", () => {
+  it("uses_theme_surface_tokens_for_history_table_headers", () => {
+    const css = readFileSync(resolve(process.cwd(), "src/pages/GameHistory.css"), "utf8")
+
+    expect(css).toContain("background: color-mix(in srgb, var(--surface-strong) 94%, var(--surface) 6%);")
+    expect(css).toContain("color: var(--text);")
+    expect(css).not.toContain("background: rgba(248, 250, 252, 0.92);")
+    expect(css).not.toContain("border-bottom: 1px solid #e5eaf2;")
+  })
+
   it("renders_rows_and_review_links", async () => {
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({
       games: [{ game_id: "g-20", game_code: "A7K2M9", rule_variant: "berkeley_any", opponent: "amy", opponent_role: "bot", play_as: "white", result: "win", reason: "checkmate", move_count: 22, turn_count: 10, played_at: "2026-01-02T00:00:00Z" }],
