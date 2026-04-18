@@ -11,8 +11,13 @@ const absoluteFooterLinks = new Map([
   ["/terms", "https://kriegspiel.org/terms"],
 ])
 
+function normalizeFooterLabel(label) {
+  return label === "hi@kriegspiel.org" ? "any@kriegspiel.org" : label
+}
+
 function normalizeFooterHref(href) {
-  return absoluteFooterLinks.get(href) ?? href
+  const normalized = absoluteFooterLinks.get(href) ?? href
+  return normalized === "mailto:hi@kriegspiel.org" ? "mailto:any@kriegspiel.org" : normalized
 }
 
 function parseFooterMarkdown(markdown) {
@@ -38,7 +43,7 @@ function parseFooterMarkdown(markdown) {
 
     const linkMatch = line.match(/^-\s+\[(.+?)\]\((.+?)\)$/)
     if (linkMatch) {
-      currentGroup.links.push({ label: linkMatch[1], href: normalizeFooterHref(linkMatch[2]) })
+      currentGroup.links.push({ label: normalizeFooterLabel(linkMatch[1]), href: normalizeFooterHref(linkMatch[2]) })
     }
   }
 
