@@ -38,6 +38,10 @@
   gap: 1rem;
 }
 
+.game-complete-summary + .game-layout {
+  margin-top: 0.85rem;
+}
+
 .game-complete-summary--won {
   border-color: color-mix(in srgb, var(--success-border) 70%, var(--success));
   background: color-mix(in srgb, var(--surface) 90%, var(--success-bg) 10%);
