@@ -63,6 +63,44 @@
 
 .game-board-shell {
   position: relative;
+  border-radius: 1.45rem;
+  padding: 0.3rem;
+  isolation: isolate;
+  transition:
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.game-board-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease;
+}
+
+.game-board-shell--your-turn {
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--success) 16%, transparent), transparent 68%),
+    color-mix(in srgb, var(--success-bg) 72%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--success) 20%, transparent),
+    0 0 0 0.38rem color-mix(in srgb, var(--success) 12%, transparent);
+}
+
+.game-board-shell--your-turn::before {
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--success-border) 58%, var(--success));
+  box-shadow:
+    0 0 0 0.16rem color-mix(in srgb, var(--success-bg) 82%, transparent),
+    0 0 1.5rem color-mix(in srgb, var(--success) 18%, transparent);
+  animation: game-board-your-turn-pulse 1.75s ease-in-out infinite;
 }
 
 .game-clocks {
@@ -588,6 +626,32 @@
   background: color-mix(in srgb, var(--surface-strong) 84%, var(--surface));
   border-color: color-mix(in srgb, var(--border) 88%, var(--surface));
   color: var(--muted-soft);
+}
+
+@keyframes game-board-your-turn-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0.16rem color-mix(in srgb, var(--success-bg) 82%, transparent),
+      0 0 1.35rem color-mix(in srgb, var(--success) 14%, transparent);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 0.24rem color-mix(in srgb, var(--success-bg) 92%, transparent),
+      0 0 1.9rem color-mix(in srgb, var(--success) 22%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-board-shell,
+  .game-board-shell::before {
+    transition: none;
+  }
+
+  .game-board-shell--your-turn::before {
+    animation: none;
+  }
 }
 
 @media (max-width: 760px) {

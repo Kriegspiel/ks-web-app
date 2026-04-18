@@ -1990,7 +1990,10 @@ export default function GamePage() {
                 </div>
               </div>
 
-              <div className="game-board-shell" ref={boardShellRef}>
+              <div
+                className={`game-board-shell ${canMove ? "game-board-shell--your-turn" : ""}`.trim()}
+                ref={boardShellRef}
+              >
                 <ChessBoard
                   boardFen={gameState.your_fen}
                   orientation={gameState.your_color}
