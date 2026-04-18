@@ -25,6 +25,7 @@ vi.mock("../hooks/useAuth", () => ({
 const transcript = {
   game_id: "g-620",
   rule_variant: "berkeley_any",
+  viewer_color: "white",
   moves: [
     {
       ply: 1,

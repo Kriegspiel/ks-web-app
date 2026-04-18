@@ -417,7 +417,9 @@ export default function ReviewPage() {
           return
         }
 
+        const initialOrientation = transcript?.viewer_color === "black" ? "black" : "white"
         setMoves(transcript.moves)
+        setBoardOrientation(initialOrientation)
         setGame(game ?? null)
         setResult(game?.result ?? null)
       } catch (requestError) {
