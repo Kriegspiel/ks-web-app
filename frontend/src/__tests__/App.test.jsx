@@ -196,7 +196,7 @@ describe("App routes", () => {
     expect(screen.getByRole("heading", { name: "Policy" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Development" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Social" })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "hi@kriegspiel.org" })).toHaveAttribute("href", "mailto:hi@kriegspiel.org")
+    expect(screen.getByRole("link", { name: "any@kriegspiel.org" })).toHaveAttribute("href", "mailto:any@kriegspiel.org")
   })
 
   it("join_route_auto_joins_after_login", async () => {
