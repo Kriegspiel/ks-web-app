@@ -131,6 +131,25 @@ describe("GamePage", () => {
     expect(within(currentMessage).getByText("Waiting for opponent's move.")).toBeInTheDocument()
   })
 
+  it("highlights_the_board_shell_when_it_is_your_turn", async () => {
+    render(<GamePage />)
+
+    const boardSection = await screen.findByLabelText("Board")
+    expect(boardSection.querySelector(".game-board-shell")).toHaveClass("game-board-shell--your-turn")
+  })
+
+  it("removes_the_board_shell_highlight_while_waiting_for_the_opponent", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      possible_actions: [],
+    })
+
+    render(<GamePage />)
+
+    const boardSection = await screen.findByLabelText("Board")
+    expect(boardSection.querySelector(".game-board-shell")).not.toHaveClass("game-board-shell--your-turn")
+  })
+
   it("adds_your_turn_when_the_latest_opponent_announcement_passes_control_to_you", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
