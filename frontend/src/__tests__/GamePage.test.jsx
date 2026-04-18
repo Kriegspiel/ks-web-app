@@ -641,7 +641,10 @@ describe("GamePage", () => {
     now += 150
     fireEvent.click(source)
     fireEvent.click(screen.getByRole("button", { name: /Tap destination/i }))
-    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
+    const invalidTarget = screen.getByRole("button", { name: "Square e2" })
+    fireEvent.pointerDown(invalidTarget, { button: 0, pointerId: 7, pointerType: "mouse" })
+    fireEvent.pointerUp(invalidTarget, { button: 0, pointerId: 7, pointerType: "mouse" })
+    fireEvent.click(invalidTarget)
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("That square cannot take the phantom piece.")
@@ -652,13 +655,17 @@ describe("GamePage", () => {
     now += 150
     fireEvent.click(source)
     fireEvent.click(screen.getByRole("button", { name: /Tap destination/i }))
-    fireEvent.click(screen.getByRole("button", { name: "Square f5" }))
+    const validTarget = screen.getByRole("button", { name: "Square f5" })
+    fireEvent.pointerDown(validTarget, { button: 0, pointerId: 8, pointerType: "mouse" })
+    fireEvent.pointerUp(validTarget, { button: 0, pointerId: 8, pointerType: "mouse" })
+    fireEvent.click(validTarget)
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--phantom")
     })
     expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--phantom")
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    expect(screen.queryByRole("dialog", { name: "Choose promotion piece" })).not.toBeInTheDocument()
 
     nowSpy.mockRestore()
   })

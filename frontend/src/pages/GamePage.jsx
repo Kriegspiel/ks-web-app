@@ -1850,6 +1850,10 @@ export default function GamePage() {
   function handleSquarePointerDown(square, event) {
     blurActiveInteractiveElement()
 
+    if (movingPhantomFrom) {
+      return
+    }
+
     if (event.button === 0 && placements[square] && !isTouchLikePointer(event)) {
       setActionError("")
       setDraggingPhantomFrom(square)
