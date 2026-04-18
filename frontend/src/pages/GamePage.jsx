@@ -706,6 +706,143 @@ function ratingValue(value) {
   return Number.isFinite(value) ? String(value) : "—"
 }
 
+function formatUtcDateTime(value) {
+  if (!value) {
+    return "—"
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return "—"
+  }
+
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0")
+  const day = String(date.getUTCDate()).padStart(2, "0")
+  const hours = String(date.getUTCHours()).padStart(2, "0")
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0")
+  const seconds = String(date.getUTCSeconds()).padStart(2, "0")
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} UTC`
+}
+
+function formatDuration(startValue, endValue) {
+  const start = new Date(startValue)
+  const end = new Date(endValue)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+    return "—"
+  }
+
+  let remaining = Math.floor((end.getTime() - start.getTime()) / 1000)
+  const days = Math.floor(remaining / 86400)
+  remaining -= days * 86400
+  const hours = Math.floor(remaining / 3600)
+  remaining -= hours * 3600
+  const minutes = Math.floor(remaining / 60)
+  const seconds = remaining - minutes * 60
+
+  const parts = []
+  if (days) parts.push(`${days}d`)
+  if (hours || days) parts.push(`${hours}h`)
+  if (minutes || hours || days) parts.push(`${minutes}m`)
+  parts.push(`${seconds}s`)
+  return parts.join(" ")
+}
+
+function formatResultReason(value) {
+  if (typeof value !== "string" || !value.trim()) {
+    return ""
+  }
+
+  const normalized = value.trim().toLowerCase()
+  const known = {
+    checkmate: "checkmate",
+    resignation: "resignation",
+    timeout: "timeout",
+    time: "timeout",
+    stalemate: "stalemate",
+    insufficient: "insufficient material",
+    too_many_reversible_moves: "too many reversible moves",
+  }
+  if (known[normalized]) {
+    return known[normalized]
+  }
+
+  return normalized.replace(/[_-]+/g, " ")
+}
+
+function formatCompletedResult(result) {
+  if (!result || typeof result !== "object") {
+    return "Result unavailable"
+  }
+
+  const winner = result.winner
+    ? `${String(result.winner).charAt(0).toUpperCase()}${String(result.winner).slice(1)} wins`
+    : "Draw"
+  const reason = formatResultReason(result.reason)
+  return reason ? `${winner} by ${reason}` : winner
+}
+
+function formatViewerOutcome(result, yourColor) {
+  if (!result || typeof result !== "object") {
+    return "Game finished"
+  }
+
+  const reason = formatResultReason(result.reason)
+  if (!result.winner) {
+    return reason ? `Draw by ${reason}` : "Draw"
+  }
+
+  if (yourColor && result.winner === yourColor) {
+    return reason ? `You won by ${reason}` : "You won"
+  }
+
+  return reason ? `You lost by ${reason}` : "You lost"
+}
+
+function playerLabel(player) {
+  if (!player?.username) {
+    return "—"
+  }
+
+  return player.role === "bot" ? `${player.username} (bot)` : player.username
+}
+
+function historicalRatingsForColor(game, color) {
+  const player = color === "black" ? game?.black : game?.white
+  const current = normalizeRatings(player)
+  const snapshot = game?.rating_snapshot
+  if (!snapshot || typeof snapshot !== "object") {
+    return {
+      overall: null,
+      vsHumans: null,
+      vsBots: null,
+    }
+  }
+
+  const overall = snapshot?.overall?.[`${color}_before`]
+  const specific = snapshot?.specific?.[`${color}_before`]
+  const track = snapshot?.[`${color}_track`]
+  return {
+    overall: overall == null ? null : Number(overall),
+    vsHumans: track === "vs_humans" ? Number(specific) : current.vsHumans,
+    vsBots: track === "vs_bots" ? Number(specific) : current.vsBots,
+  }
+}
+
+function formatRatingTransition(before, after) {
+  if (!Number.isFinite(after)) {
+    return "—"
+  }
+
+  if (!Number.isFinite(before)) {
+    return String(after)
+  }
+
+  const delta = after - before
+  const deltaLabel = delta === 0 ? "no change" : `${delta > 0 ? "+" : ""}${delta}`
+  return `${before} → ${after} (${deltaLabel})`
+}
+
 function pieceAtSquare(fen, square) {
   if (!fen || !square) {
     return ""
@@ -1095,6 +1232,7 @@ export default function GamePage() {
   const logScrollRef = useRef(null)
   const viewportRestoreRef = useRef(null)
   const stateRequestIdRef = useRef(0)
+  const metadataRequestIdRef = useRef(0)
   const clockSnapshotAtMsRef = useRef(Date.now())
   const soundPlayerRef = useRef(null)
   const lastSoundEntryKeysRef = useRef([])
@@ -1174,8 +1312,14 @@ export default function GamePage() {
       return
     }
 
+    const requestId = metadataRequestIdRef.current + 1
+    metadataRequestIdRef.current = requestId
+
     try {
       const metadata = await getGame(gameRef)
+      if (requestId !== metadataRequestIdRef.current) {
+        return
+      }
       setGameMeta(metadata)
     } catch {
       // Keep the board usable even if metadata fails.
@@ -1212,10 +1356,10 @@ export default function GamePage() {
       return
     }
 
-    if (gameState?.state === "completed" || gameMeta?.state === "completed") {
-      navigate(`/game/${gameMeta?.game_code ?? gameRef}/review`, { replace: true })
+    if (gameState?.state === "completed" && gameMeta?.state !== "completed") {
+      pollMetadata()
     }
-  }, [gameMeta?.game_code, gameMeta?.state, gameRef, gameState?.state, navigate])
+  }, [gameMeta?.state, gameRef, gameState?.state, pollMetadata])
 
   useEffect(() => {
     const rootStyle = document.documentElement.style
@@ -1285,6 +1429,7 @@ export default function GamePage() {
 
   const possibleActions = gameState?.possible_actions ?? []
   const signedInAs = user?.username ?? user?.email ?? "player"
+  const isCompleted = gameState?.state === "completed" || gameMeta?.state === "completed"
   const canMove = gameState?.state === "active" && possibleActions.includes("move") && !submittingAction
   const canAskAny = gameState?.state === "active" && possibleActions.includes("ask_any") && !submittingAction
   const canResign = gameState?.state === "active" && !submittingAction
@@ -1364,6 +1509,15 @@ export default function GamePage() {
 
   const opponentRatings = useMemo(() => normalizeRatings(opponent), [opponent])
   const opponentRating = opponentRatings.overall
+  const completedResult = gameMeta?.result ?? gameState?.result
+  const whiteCurrentRatings = useMemo(() => normalizeRatings(gameMeta?.white), [gameMeta?.white])
+  const blackCurrentRatings = useMemo(() => normalizeRatings(gameMeta?.black), [gameMeta?.black])
+  const whiteHistoricalRatings = useMemo(() => historicalRatingsForColor(gameMeta, "white"), [gameMeta])
+  const blackHistoricalRatings = useMemo(() => historicalRatingsForColor(gameMeta, "black"), [gameMeta])
+  const completedFinishedAt = formatUtcDateTime(gameMeta?.updated_at)
+  const completedDuration = formatDuration(gameMeta?.created_at, gameMeta?.updated_at)
+  const completedHeading = formatViewerOutcome(completedResult, gameState?.your_color)
+  const completedSummary = formatCompletedResult(completedResult)
   const latestRefereeEntry = flattenedRefereeEntries.at(-1) ?? null
   const latestAnnouncementText = useMemo(() => {
     if (!latestRefereeEntry) {
@@ -1960,6 +2114,8 @@ export default function GamePage() {
       ? "Submitting action…"
       : actionError
         ? actionError
+        : isCompleted
+          ? completedSummary
         : waitingForOpponent
           ? "Waiting for opponent's move."
           : ""
@@ -1977,6 +2133,60 @@ export default function GamePage() {
 
       {gameState ? (
         <>
+          {isCompleted ? (
+            <section
+              className={`game-card game-complete-summary ${completedResult?.winner === gameState?.your_color ? "game-complete-summary--won" : completedResult?.winner ? "game-complete-summary--lost" : "game-complete-summary--draw"}`.trim()}
+              aria-label="Completed game summary"
+            >
+              <div className="game-complete-summary__topline">Game finished</div>
+              <div className="game-complete-summary__hero">
+                <div className="game-complete-summary__copy">
+                  <h2>{completedHeading}</h2>
+                  <p>{completedSummary}</p>
+                </div>
+                <button
+                  type="button"
+                  className="button-link button-link--primary game-complete-summary__review-button"
+                  onClick={() => navigate(`/game/${gameMeta?.game_code ?? gameRef}/review`)}
+                >
+                  Watch review
+                </button>
+              </div>
+
+              <div className="game-complete-summary__meta">
+                <div><span>Finished</span><strong>{completedFinishedAt}</strong></div>
+                <div><span>Duration</span><strong>{completedDuration}</strong></div>
+                <div><span>Rules</span><strong>{formatRuleVariant(gameMeta?.rule_variant)}</strong></div>
+                <div><span>Game code</span><strong>{gameMeta?.game_code ?? gameRef}</strong></div>
+              </div>
+
+              <div className="game-complete-summary__ratings">
+                {[
+                  ["white", gameMeta?.white, whiteHistoricalRatings, whiteCurrentRatings],
+                  ["black", gameMeta?.black, blackHistoricalRatings, blackCurrentRatings],
+                ].map(([color, player, historicalRatings, currentRatings]) => (
+                  <article key={color} className="game-complete-summary__player-card">
+                    <h3>
+                      {color === "white" ? "White" : "Black"}:{" "}
+                      {player?.username ? (
+                        <a className="game-complete-summary__player-link" href={`/user/${player.username}`}>
+                          {playerLabel(player)}
+                        </a>
+                      ) : (
+                        "—"
+                      )}
+                    </h3>
+                    <ul className="game-complete-summary__rating-list">
+                      <li><span>Overall</span><strong>{formatRatingTransition(historicalRatings?.overall, currentRatings?.overall)}</strong></li>
+                      <li><span>vs Humans</span><strong>{formatRatingTransition(historicalRatings?.vsHumans, currentRatings?.vsHumans)}</strong></li>
+                      <li><span>vs Bots</span><strong>{formatRatingTransition(historicalRatings?.vsBots, currentRatings?.vsBots)}</strong></li>
+                    </ul>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
           <div className="game-layout">
             <section className="game-card game-card--board" aria-label="Board" ref={boardCardRef}>
               <div className="game-clocks" aria-label="Game clocks">
@@ -2094,11 +2304,13 @@ export default function GamePage() {
             </section>
 
             <section className="game-card game-card--referee" aria-label="Referee panel" style={refereePanelStyle}>
-              <div className="game-actions" aria-label="Game actions">
-                <button type="button" onClick={handleAskAny} disabled={!canAskAny}>
-                  Any pawn captures?
-                </button>
-              </div>
+              {gameState.state === "active" ? (
+                <div className="game-actions" aria-label="Game actions">
+                  <button type="button" onClick={handleAskAny} disabled={!canAskAny}>
+                    Any pawn captures?
+                  </button>
+                </div>
+              ) : null}
               <section className="game-referee-latest" aria-label="Current message" aria-live={actionError ? "assertive" : "polite"}>
                 <div className="game-referee-latest__label">Current message</div>
                 <p className="game-referee-latest__value" role={actionError ? "alert" : undefined}>{currentMessageText}</p>
@@ -2205,7 +2417,11 @@ export default function GamePage() {
                     {soundsMuted ? "Sounds off" : "Mute sounds"}
                   </button>
 
-                  {canCloseWaitingGame ? (
+                  {isCompleted ? (
+                    <button type="button" className="button-link button-link--primary" onClick={() => navigate(`/game/${gameMeta?.game_code ?? gameRef}/review`)}>
+                      Watch review
+                    </button>
+                  ) : canCloseWaitingGame ? (
                     <button type="button" className="game-danger-button" onClick={handleCloseWaitingGame} disabled={!canCloseWaitingGame}>
                       Close
                     </button>

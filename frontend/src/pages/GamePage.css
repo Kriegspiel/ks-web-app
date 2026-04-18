@@ -32,6 +32,142 @@
   font-size: 0.76rem;
 }
 
+.game-complete-summary {
+  margin-top: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.game-complete-summary--won {
+  border-color: color-mix(in srgb, var(--success-border) 70%, var(--success));
+  background: color-mix(in srgb, var(--surface) 90%, var(--success-bg) 10%);
+}
+
+.game-complete-summary--lost {
+  border-color: color-mix(in srgb, var(--danger-border) 70%, var(--danger));
+  background: color-mix(in srgb, var(--surface) 90%, var(--danger-bg) 10%);
+}
+
+.game-complete-summary--draw {
+  border-color: color-mix(in srgb, var(--border) 65%, var(--accent));
+  background: color-mix(in srgb, var(--surface) 94%, var(--surface-strong) 6%);
+}
+
+.game-complete-summary__topline {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-soft);
+}
+
+.game-complete-summary__hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.game-complete-summary__copy {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.game-complete-summary__copy h2,
+.game-complete-summary__player-card h3 {
+  margin: 0;
+}
+
+.game-complete-summary__copy p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.game-complete-summary__review-button {
+  min-width: 12rem;
+  padding-inline: 1.25rem;
+  font-size: 1rem;
+  flex: 0 0 auto;
+}
+
+.game-complete-summary__meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.game-complete-summary__meta div {
+  display: grid;
+  gap: 0.22rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.95rem;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-strong) 94%, transparent);
+}
+
+.game-complete-summary__meta span {
+  color: var(--muted-soft);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.game-complete-summary__meta strong {
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.game-complete-summary__ratings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.game-complete-summary__player-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface-strong) 96%, transparent);
+}
+
+.game-complete-summary__player-link {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.14em;
+}
+
+.game-complete-summary__player-link:hover,
+.game-complete-summary__player-link:focus-visible {
+  color: var(--accent);
+}
+
+.game-complete-summary__rating-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.game-complete-summary__rating-list li {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.game-complete-summary__rating-list span {
+  color: var(--muted-soft);
+  font-size: 0.8rem;
+}
+
+.game-complete-summary__rating-list strong {
+  color: var(--text);
+  font-size: 0.96rem;
+}
+
 .game-layout {
   display: grid;
   gap: 0.85rem;
@@ -655,6 +791,20 @@
 }
 
 @media (max-width: 760px) {
+  .game-complete-summary__hero,
+  .game-complete-summary__ratings {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .game-complete-summary__review-button {
+    width: 100%;
+  }
+
+  .game-complete-summary__meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .game-layout {
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -673,6 +823,10 @@
 }
 
 @media (max-width: 1120px) and (min-width: 761px) {
+  .game-complete-summary__meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .game-status-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

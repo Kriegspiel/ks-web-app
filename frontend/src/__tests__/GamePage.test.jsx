@@ -426,6 +426,90 @@ describe("GamePage", () => {
     expect(screen.getByText("1333")).toBeInTheDocument()
   })
 
+  it("shows_a_completed_game_summary_with_rating_changes_and_review_cta", async () => {
+    mockApi.getGame
+      .mockResolvedValueOnce({
+        game_id: "g-123",
+        game_code: "ABC123",
+        rule_variant: "berkeley_any",
+        state: "active",
+        opponent_type: "bot",
+        white: { username: "notifil", role: "user", connected: true },
+        black: { username: "haiku", role: "bot", connected: true },
+        turn: "black",
+        move_number: 32,
+        created_at: "2026-04-05T12:00:00Z",
+      })
+      .mockResolvedValue({
+        game_id: "g-123",
+        game_code: "ABC123",
+        rule_variant: "berkeley_any",
+        state: "completed",
+        opponent_type: "bot",
+        white: {
+          username: "notifil",
+          role: "user",
+          connected: true,
+          elo: 1516,
+          ratings: {
+            overall: { elo: 1516 },
+            vs_humans: { elo: 1490 },
+            vs_bots: { elo: 1524 },
+          },
+        },
+        black: {
+          username: "haiku",
+          role: "bot",
+          connected: true,
+          elo: 1326,
+          ratings: {
+            overall: { elo: 1326 },
+            vs_humans: { elo: 1301 },
+            vs_bots: { elo: 1333 },
+          },
+        },
+        turn: "black",
+        move_number: 32,
+        created_at: "2026-04-05T12:00:00Z",
+        updated_at: "2026-04-05T12:03:12Z",
+        result: { winner: "white", reason: "checkmate" },
+        rating_snapshot: {
+          overall: { white_before: 1500, black_before: 1342 },
+          specific: { white_before: 1508, black_before: 1317 },
+          white_track: "vs_bots",
+          black_track: "vs_humans",
+        },
+      })
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      state: "completed",
+      possible_actions: [],
+      result: { winner: "white", reason: "checkmate" },
+    })
+
+    render(<GamePage />)
+
+    await waitFor(() => expect(mockApi.getGame).toHaveBeenCalledTimes(2))
+
+    const summary = await screen.findByLabelText("Completed game summary")
+    expect(within(summary).getByText("You won by checkmate")).toBeInTheDocument()
+    expect(within(summary).getByText("White wins by checkmate")).toBeInTheDocument()
+    expect(within(summary).getByText("2026-04-05 12:03:12 UTC")).toBeInTheDocument()
+    expect(within(summary).getByText("3m 12s")).toBeInTheDocument()
+    expect(within(summary).getByRole("link", { name: "notifil" })).toHaveAttribute("href", "/user/notifil")
+    expect(within(summary).getByRole("link", { name: "haiku (bot)" })).toHaveAttribute("href", "/user/haiku")
+    expect(within(summary).getByText("1500 → 1516 (+16)")).toBeInTheDocument()
+    expect(within(summary).getByText("1490 → 1490 (no change)")).toBeInTheDocument()
+    expect(within(summary).getByText("1508 → 1524 (+16)")).toBeInTheDocument()
+    expect(within(summary).getByText("1342 → 1326 (-16)")).toBeInTheDocument()
+    expect(within(summary).getByText("1317 → 1301 (-16)")).toBeInTheDocument()
+    expect(within(summary).getByText("1333 → 1333 (no change)")).toBeInTheDocument()
+    expect(mockNavigate).not.toHaveBeenCalled()
+
+    fireEvent.click(within(summary).getByRole("button", { name: "Watch review" }))
+    expect(mockNavigate).toHaveBeenCalledWith("/game/ABC123/review")
+  })
+
   it("shows_close_for_waiting_games_and_returns_to_lobby", async () => {
     mockApi.getGame.mockResolvedValueOnce({
       game_id: "g-123",
