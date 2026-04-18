@@ -55,6 +55,15 @@ function preferredBotId(bots) {
   return randomBot?.bot_id || bots[0]?.bot_id || ""
 }
 
+function botRating(bot) {
+  const elo = Number(bot?.elo)
+  return Number.isFinite(elo) ? elo : 1200
+}
+
+function formatBotPickerLabel(bot) {
+  return `${botRating(bot)} - ${bot?.display_name ?? "Unknown bot"}`
+}
+
 function botSupportsRuleVariant(bot, ruleVariant) {
   const supported = Array.isArray(bot?.supported_rule_variants) ? bot.supported_rule_variants : ["berkeley", "berkeley_any"]
   return supported.includes(ruleVariant)
@@ -119,7 +128,19 @@ export default function LobbyPage() {
   const [lobbyStatsError, setLobbyStatsError] = useState("")
   const [lobbyStatsLoading, setLobbyStatsLoading] = useState(true)
   const signedInAs = user?.username ?? user?.email ?? "player"
-  const supportedBots = useMemo(() => bots.filter((bot) => botSupportsRuleVariant(bot, ruleVariant)), [bots, ruleVariant])
+  const supportedBots = useMemo(
+    () =>
+      bots
+        .filter((bot) => botSupportsRuleVariant(bot, ruleVariant))
+        .sort((left, right) => {
+          const ratingDelta = botRating(right) - botRating(left)
+          if (ratingDelta !== 0) {
+            return ratingDelta
+          }
+          return String(left?.display_name ?? left?.username ?? "").localeCompare(String(right?.display_name ?? right?.username ?? ""))
+        }),
+    [bots, ruleVariant],
+  )
   const selectedBot = supportedBots.find((bot) => bot.bot_id === selectedBotId) ?? null
   const botUsernames = useMemo(
     () =>
@@ -465,7 +486,7 @@ export default function LobbyPage() {
                     <select id="bot-picker" value={selectedBotId} onChange={(event) => setSelectedBotId(event.target.value)}>
                       <option value="">Select a bot</option>
                       {supportedBots.map((bot) => (
-                        <option key={bot.bot_id} value={bot.bot_id}>{`${bot.display_name} (${bot.elo ?? 1200})`}</option>
+                        <option key={bot.bot_id} value={bot.bot_id}>{formatBotPickerLabel(bot)}</option>
                       ))}
                     </select>
                     {!supportedBots.length ? <p className="lobby-meta">No bots support this ruleset.</p> : null}

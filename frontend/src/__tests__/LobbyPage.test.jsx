@@ -340,9 +340,16 @@ describe("LobbyPage", () => {
     expect(await screen.findByLabelText("Bot opponent")).toBeInTheDocument()
     expect(screen.getByText("Plays random legal-looking moves.")).toBeInTheDocument()
     expect(screen.getByLabelText("Bot opponent")).toHaveValue("bot-1")
-    expect(screen.getByRole("option", { name: "Random Bot (1201)" })).toBeInTheDocument()
-    expect(screen.getByRole("option", { name: "GPT Nano (1342)" })).toBeInTheDocument()
-    expect(screen.getByRole("option", { name: "Random Any Bot (1200)" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1201 - Random Bot" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1342 - GPT Nano" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1200 - Random Any Bot" })).toBeInTheDocument()
+    const botOptions = within(screen.getByLabelText("Bot opponent")).getAllByRole("option").map((option) => option.textContent)
+    expect(botOptions).toEqual([
+      "Select a bot",
+      "1342 - GPT Nano",
+      "1201 - Random Bot",
+      "1200 - Random Any Bot",
+    ])
     fireEvent.click(screen.getByRole("button", { name: "Create bot game" }))
     await waitFor(() => expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({ opponent_type: "bot", bot_id: "bot-1" })))
     expect(mockNavigate).toHaveBeenCalledWith("/game/BOT123")
@@ -363,9 +370,9 @@ describe("LobbyPage", () => {
     fireEvent.change(await screen.findByLabelText("Ruleset"), { target: { value: "berkeley" } })
     fireEvent.click(await screen.findByLabelText("Bot"))
     expect(await screen.findByLabelText("Bot opponent")).toBeInTheDocument()
-    expect(screen.queryByRole("option", { name: "Random Any Bot (1200)" })).not.toBeInTheDocument()
-    expect(screen.getByRole("option", { name: "Random Bot (1201)" })).toBeInTheDocument()
-    expect(screen.getByRole("option", { name: "GPT Nano (1342)" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "1200 - Random Any Bot" })).not.toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1201 - Random Bot" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1342 - GPT Nano" })).toBeInTheDocument()
   })
 
   it("falls_back_to_the_first_supported_bot_and_its_raw_description", async () => {
@@ -385,7 +392,7 @@ describe("LobbyPage", () => {
     fireEvent.click(await screen.findByLabelText("Bot"))
     expect(await screen.findByLabelText("Bot opponent")).toHaveValue("bot-custom")
     expect(screen.getByText("Prefers puzzles.")).toBeInTheDocument()
-    expect(screen.getByRole("option", { name: "Custom Bot (1200)" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1200 - Custom Bot" })).toBeInTheDocument()
   })
 
   it("shows_default_errors_when_loading_bots_open_games_and_lobby_stats_fail_without_details", async () => {
