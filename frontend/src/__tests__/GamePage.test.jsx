@@ -116,19 +116,23 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     const currentMessage = await screen.findByLabelText("Current message")
-    expect(within(currentMessage).getByText("White to move")).toBeInTheDocument()
+    expect(within(currentMessage).getByText("White")).toBeInTheDocument()
+    expect(within(currentMessage).getByText("your move")).toBeInTheDocument()
+    expect(within(currentMessage).queryByText("White to move")).not.toBeInTheDocument()
   })
 
   it("shows_waiting_message_in_the_current_message_box", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
+      turn: "black",
       possible_actions: [],
     })
 
     render(<GamePage />)
 
     const currentMessage = await screen.findByLabelText("Current message")
-    expect(within(currentMessage).getByText("Waiting for opponent's move.")).toBeInTheDocument()
+    expect(within(currentMessage).getByText("Black")).toBeInTheDocument()
+    expect(within(currentMessage).getByText("opponent's move")).toBeInTheDocument()
   })
 
   it("highlights_the_board_shell_when_it_is_your_turn", async () => {
@@ -162,7 +166,11 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     const currentMessage = await screen.findByLabelText("Current message")
-    expect(within(currentMessage).getByText("Capture at F5 → your turn.")).toBeInTheDocument()
+    expect(within(currentMessage).getByText("move complete")).toBeInTheDocument()
+    expect(within(currentMessage).getByText("capture f5")).toBeInTheDocument()
+    expect(within(currentMessage).getByText("your move")).toBeInTheDocument()
+    expect(within(currentMessage).getAllByText("White")).toHaveLength(2)
+    expect(within(currentMessage).getByText("Black")).toBeInTheDocument()
   })
 
   it("polls_every_500ms_while_active", async () => {
@@ -263,7 +271,34 @@ describe("GamePage", () => {
     expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--illegal")
     expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--illegal")
     const currentMessage = screen.getByLabelText("Current message")
-    expect(within(currentMessage).getByText("Illegal move. Try a different move.")).toBeInTheDocument()
+    expect(within(currentMessage).getByText("White")).toBeInTheDocument()
+    expect(within(currentMessage).getByText("illegal move")).toBeInTheDocument()
+    expect(within(currentMessage).queryByText("Illegal move. Try a different move.")).not.toBeInTheDocument()
+  })
+
+  it("keeps_only_the_current_side_announcements_when_that_side_has_already_started_the_turn", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      referee_turns: [
+        {
+          turn: 1,
+          white: [{ messages: ["Move complete"] }],
+          black: [{ messages: ["Has pawn captures", "Capture at D4"] }],
+        },
+        {
+          turn: 2,
+          white: [{ messages: ["No pawn captures"] }],
+          black: [],
+        },
+      ],
+    })
+
+    render(<GamePage />)
+
+    const currentMessage = await screen.findByLabelText("Current message")
+    expect(within(currentMessage).getByText("no pawn captures")).toBeInTheDocument()
+    expect(within(currentMessage).queryByText("your move")).not.toBeInTheDocument()
+    expect(within(currentMessage).queryByText("opponent's move")).not.toBeInTheDocument()
   })
 
   it("gates_promotion_with_modal_and_appends_suffix", async () => {

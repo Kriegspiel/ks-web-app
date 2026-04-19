@@ -562,6 +562,57 @@
   line-height: 1.35;
 }
 
+.game-referee-latest__value--timeline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.3rem;
+}
+
+.game-referee-latest__timeline-piece {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.game-referee-latest__segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.game-referee-latest__actor {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.16rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, var(--surface));
+}
+
+.game-referee-latest__actor--white {
+  background: color-mix(in srgb, var(--surface) 74%, white 26%);
+  color: color-mix(in srgb, var(--text) 88%, black 12%);
+}
+
+.game-referee-latest__actor--black {
+  background: color-mix(in srgb, var(--text) 88%, black 12%);
+  color: color-mix(in srgb, var(--surface) 88%, white 12%);
+}
+
+.game-referee-latest__segment-text {
+  font-weight: 600;
+}
+
+.game-referee-latest__separator {
+  color: var(--muted-soft);
+  font-weight: 700;
+}
+
 .game-referee-log {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
