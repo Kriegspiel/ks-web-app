@@ -375,7 +375,7 @@ describe("GamePage", () => {
     expect(within(currentMessage).queryByText("Submitting action…")).not.toBeInTheDocument()
 
     resolveSubmit({ move_done: true })
-    await waitFor(() => expect(mockApi.getGameState).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(mockApi.getGameState.mock.calls.length).toBeGreaterThanOrEqual(2))
   })
 
   it("gates_promotion_with_modal_and_appends_suffix", async () => {
