@@ -350,7 +350,12 @@ describe("GamePage", () => {
         {
           turn: 1,
           black: [{ messages: ["Move complete, Rank check, Move attempt — Move complete · Check on rank"] }],
+          white: [],
+        },
+        {
+          turn: 2,
           white: [{ messages: ["Move complete, Opponent move — Move complete"] }],
+          black: [],
         },
       ],
     })
