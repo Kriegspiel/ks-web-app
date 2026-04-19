@@ -404,6 +404,20 @@ function splitRefereeTextParts(value) {
     .filter(Boolean)
 }
 
+function splitCurrentMessageParts(value) {
+  if (typeof value !== "string") {
+    return []
+  }
+
+  return value
+    .split("·")
+    .flatMap((part) => part.split(","))
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => part.replace(/^(Move attempt|Opponent move|Ask any pawn captures|Opponent asked any pawn captures)\s*[—-]\s*/i, "").trim())
+    .filter(Boolean)
+}
+
 function normalizeCurrentMessagePart(message) {
   if (typeof message !== "string") {
     return null
@@ -458,10 +472,10 @@ function normalizeCurrentMessagePart(message) {
   }
 
   const checkMap = [
-    [/^(check on rank|rank check)$/i, "rank check", "check-rank"],
-    [/^(check on file|file check)$/i, "file check", "check-file"],
-    [/^(check on long diagonal|check long diagonal|long-diagonal check)$/i, "long-diagonal check", "check-long-diagonal"],
-    [/^(check on short diagonal|check short diagonal|short-diagonal check)$/i, "short-diagonal check", "check-short-diagonal"],
+    [/^(check on rank|rank check)$/i, "check on rank", "check-rank"],
+    [/^(check on file|file check)$/i, "check on file", "check-file"],
+    [/^(check on long diagonal|check long diagonal|long-diagonal check)$/i, "check on long diagonal", "check-long-diagonal"],
+    [/^(check on short diagonal|check short diagonal|short-diagonal check)$/i, "check on short diagonal", "check-short-diagonal"],
     [/^(check by knight|knight check)$/i, "knight check", "check-knight"],
     [/^double check$/i, "double check", "check-double"],
   ]
@@ -508,6 +522,7 @@ function summarizeCurrentMessageSideEntries(entries = []) {
   })
 
   const parts = (Array.isArray(messages) ? messages : [])
+    .flatMap((message) => splitCurrentMessageParts(message))
     .map(normalizeCurrentMessagePart)
     .filter(Boolean)
 
