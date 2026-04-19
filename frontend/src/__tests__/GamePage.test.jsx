@@ -301,6 +301,83 @@ describe("GamePage", () => {
     expect(within(currentMessage).queryByText("opponent's move")).not.toBeInTheDocument()
   })
 
+  it("keeps_only_the_last_meaningful_statement_per_side_in_the_timeline", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      turn: "black",
+      your_color: "white",
+      possible_actions: [],
+      referee_turns: [
+        {
+          turn: 1,
+          white: [{ messages: ["Move complete", "Capture at D4"] }],
+          black: [{ messages: ["Move complete", "Check on long diagonal"] }],
+        },
+        {
+          turn: 2,
+          white: [
+            { messages: ["Opponent asked any pawn captures"] },
+            { messages: ["No pawn captures"] },
+            { messages: ["Illegal move"] },
+            { messages: ["Move attempt"] },
+            { messages: ["Move complete"] },
+          ],
+          black: [],
+        },
+      ],
+    })
+
+    render(<GamePage />)
+
+    const currentMessage = await screen.findByLabelText("Current message")
+    const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
+    expect(timeline).toHaveAttribute(
+      "aria-label",
+      "Black: move complete, long-diagonal check → White: no pawn captures, move complete → Black: opponent's move"
+    )
+    expect(within(currentMessage).queryByText("illegal move")).not.toBeInTheDocument()
+    expect(within(currentMessage).queryByText("move attempt")).not.toBeInTheDocument()
+    expect(within(currentMessage).queryByText("opponent asked any pawn captures")).not.toBeInTheDocument()
+  })
+
+  it("shows_submitting_move_inside_the_last_current_message_statement", async () => {
+    let resolveSubmit
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      referee_turns: [
+        {
+          turn: 1,
+          white: [{ messages: ["No pawn captures"] }],
+          black: [],
+        },
+      ],
+    })
+    mockApi.submitMove.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveSubmit = resolve
+        })
+    )
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e2" })
+    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+
+    await waitFor(() => {
+      expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
+    })
+
+    const currentMessage = screen.getByLabelText("Current message")
+    const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
+    expect(timeline).toHaveAttribute("aria-label", "White: no pawn captures, submitting move")
+    expect(within(currentMessage).queryByText("Submitting action…")).not.toBeInTheDocument()
+
+    resolveSubmit({ move_done: true })
+    await waitFor(() => expect(mockApi.getGameState).toHaveBeenCalledTimes(2))
+  })
+
   it("gates_promotion_with_modal_and_appends_suffix", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,

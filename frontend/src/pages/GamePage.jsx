@@ -115,6 +115,7 @@ const CURRENT_MESSAGE_PART_PRIORITY = {
   check: 50,
   other: 60,
 }
+const CURRENT_MESSAGE_LIVE_STATUS_KEYS = new Set(["illegal move", "submitting move", "your move", "opponent's move"])
 
 function normalizeLogColor(value) {
   if (typeof value !== "string") {
@@ -418,6 +419,15 @@ function normalizeCurrentMessagePart(message) {
     return null
   }
 
+  if (
+    normalized === "move attempt" ||
+    normalized === "opponent move" ||
+    normalized === "ask any pawn captures" ||
+    normalized === "opponent asked any pawn captures"
+  ) {
+    return null
+  }
+
   if (normalized.startsWith("illegal move")) {
     return { key: "illegal_move", text: "illegal move", priority: CURRENT_MESSAGE_PART_PRIORITY.illegal_move }
   }
@@ -497,7 +507,71 @@ function summarizeCurrentMessageSideEntries(entries = []) {
     return []
   })
 
-  return summarizeCurrentMessageParts(messages)
+  const parts = (Array.isArray(messages) ? messages : [])
+    .map(normalizeCurrentMessagePart)
+    .filter(Boolean)
+
+  let pawnCaptureState = ""
+  let moveCompleted = false
+  let captureText = ""
+  const checkTexts = []
+  const seenChecks = new Set()
+  const otherTexts = []
+  const seenOther = new Set()
+  let lastPartKey = ""
+
+  parts.forEach((part) => {
+    lastPartKey = part.key
+
+    if (part.key === "has_any" || part.key === "no_any") {
+      pawnCaptureState = part.text
+      return
+    }
+
+    if (part.key === "illegal_move") {
+      return
+    }
+
+    if (part.key === "move_complete") {
+      moveCompleted = true
+      return
+    }
+
+    if (part.key.startsWith("capture")) {
+      captureText = part.text
+      return
+    }
+
+    if (part.key.startsWith("check-")) {
+      if (!seenChecks.has(part.key)) {
+        seenChecks.add(part.key)
+        checkTexts.push(part.text)
+      }
+      return
+    }
+
+    if (!seenOther.has(part.key)) {
+      seenOther.add(part.key)
+      otherTexts.push(part.text)
+    }
+  })
+
+  const summary = []
+  if (pawnCaptureState) {
+    summary.push(pawnCaptureState)
+  }
+  if (moveCompleted) {
+    summary.push("move complete")
+  } else if (lastPartKey === "illegal_move") {
+    summary.push("illegal move")
+  }
+  if (captureText) {
+    summary.push(captureText)
+  }
+  summary.push(...checkTexts)
+  summary.push(...otherTexts)
+
+  return summary
 }
 
 function buildCurrentMessageHistorySegments(turns) {
@@ -548,13 +622,15 @@ function currentTurnStatusText({ turnColor, yourColor, canMove, waitingForOppone
   return ""
 }
 
-function buildCurrentMessageSegments({ turns, turnColor, yourColor, canMove, waitingForOpponent, actionError }) {
+function buildCurrentMessageSegments({ turns, turnColor, yourColor, canMove, waitingForOpponent, actionError, submittingAction }) {
   const historySegments = buildCurrentMessageHistorySegments(turns)
   const currentColor = normalizeLogColor(turnColor)
   const illegalMoveActive = typeof actionError === "string" && actionError.toLowerCase().startsWith("illegal move")
   const liveText = illegalMoveActive
     ? "illegal move"
-    : currentTurnStatusText({ turnColor: currentColor, yourColor, canMove, waitingForOpponent })
+    : submittingAction
+      ? "submitting move"
+      : currentTurnStatusText({ turnColor: currentColor, yourColor, canMove, waitingForOpponent })
 
   if (!liveText || !currentColor) {
     return historySegments.slice(-3)
@@ -564,11 +640,12 @@ function buildCurrentMessageSegments({ turns, turnColor, yourColor, canMove, wai
   const lastSegment = nextSegments.at(-1) ?? null
 
   if (lastSegment && lastSegment.color === currentColor) {
-    if (!illegalMoveActive) {
+    if (liveText === "your move" || liveText === "opponent's move") {
       return nextSegments.slice(-3)
     }
 
-    const parts = summarizeCurrentMessageParts([...lastSegment.parts, liveText])
+    const withoutLiveStatus = lastSegment.parts.filter((part) => !CURRENT_MESSAGE_LIVE_STATUS_KEYS.has(part))
+    const parts = summarizeCurrentMessageParts([...withoutLiveStatus, liveText])
     nextSegments[nextSegments.length - 1] = {
       ...lastSegment,
       parts,
@@ -1728,8 +1805,9 @@ export default function GamePage() {
       canMove,
       waitingForOpponent,
       actionError,
+      submittingAction,
     }),
-    [actionError, canMove, gameState?.turn, gameState?.your_color, groupedRefereeLog, waitingForOpponent]
+    [actionError, canMove, gameState?.turn, gameState?.your_color, groupedRefereeLog, submittingAction, waitingForOpponent]
   )
   const currentMessageAccessibleText = useMemo(
     () => formatCurrentMessageAccessibleText(currentMessageSegments),
@@ -2314,9 +2392,7 @@ export default function GamePage() {
   const nonNarrativeActionError = actionError && !actionError.toLowerCase().startsWith("illegal move") ? actionError : ""
   const transientGameMessage = loading
     ? "Loading game state…"
-    : submittingAction
-      ? "Submitting action…"
-      : nonNarrativeActionError
+    : nonNarrativeActionError
         ? nonNarrativeActionError
         : isCompleted
           ? completedSummary
