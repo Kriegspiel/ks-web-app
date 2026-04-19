@@ -106,6 +106,15 @@ const REFEREE_CODE_KEYS = [
   "special_case",
 ]
 const REFEREE_CAPTURE_SQUARE_KEYS = ["capture_square", "capture_at_square", "captured_square", "target_square", "square"]
+const CURRENT_MESSAGE_PART_PRIORITY = {
+  has_any: 10,
+  no_any: 10,
+  illegal_move: 20,
+  move_complete: 30,
+  capture: 40,
+  check: 50,
+  other: 60,
+}
 
 function normalizeLogColor(value) {
   if (typeof value !== "string") {
@@ -392,6 +401,199 @@ function splitRefereeTextParts(value) {
     .map((part) => part.replace(/^Capture done at\s+/i, "Capture at "))
     .map((part) => part.replace(/^Capture done$/i, "Capture"))
     .filter(Boolean)
+}
+
+function normalizeCurrentMessagePart(message) {
+  if (typeof message !== "string") {
+    return null
+  }
+
+  const trimmed = message.trim()
+  if (!trimmed) {
+    return null
+  }
+
+  const normalized = trimmed.toLowerCase()
+  if (/^(white|black)('s)? move$/.test(normalized) || normalized === "white to move" || normalized === "black to move") {
+    return null
+  }
+
+  if (normalized.startsWith("illegal move")) {
+    return { key: "illegal_move", text: "illegal move", priority: CURRENT_MESSAGE_PART_PRIORITY.illegal_move }
+  }
+
+  if (normalized === "move complete") {
+    return { key: "move_complete", text: "move complete", priority: CURRENT_MESSAGE_PART_PRIORITY.move_complete }
+  }
+
+  if (normalized === "has pawn captures") {
+    return { key: "has_any", text: "has pawn captures", priority: CURRENT_MESSAGE_PART_PRIORITY.has_any }
+  }
+
+  if (normalized === "no pawn captures") {
+    return { key: "no_any", text: "no pawn captures", priority: CURRENT_MESSAGE_PART_PRIORITY.no_any }
+  }
+
+  const captureMatch = normalized.match(/^capture(?: done)?(?: at)? ([a-h][1-8])$/i)
+  if (captureMatch) {
+    return {
+      key: `capture-${captureMatch[1].toLowerCase()}`,
+      text: `capture ${captureMatch[1].toLowerCase()}`,
+      priority: CURRENT_MESSAGE_PART_PRIORITY.capture,
+    }
+  }
+
+  if (normalized === "capture" || normalized === "capture done") {
+    return { key: "capture", text: "capture", priority: CURRENT_MESSAGE_PART_PRIORITY.capture }
+  }
+
+  const checkMap = [
+    [/^(check on rank|rank check)$/i, "rank check", "check-rank"],
+    [/^(check on file|file check)$/i, "file check", "check-file"],
+    [/^(check on long diagonal|check long diagonal|long-diagonal check)$/i, "long-diagonal check", "check-long-diagonal"],
+    [/^(check on short diagonal|check short diagonal|short-diagonal check)$/i, "short-diagonal check", "check-short-diagonal"],
+    [/^(check by knight|knight check)$/i, "knight check", "check-knight"],
+    [/^double check$/i, "double check", "check-double"],
+  ]
+  for (const [pattern, text, key] of checkMap) {
+    if (pattern.test(trimmed)) {
+      return { key, text, priority: CURRENT_MESSAGE_PART_PRIORITY.check }
+    }
+  }
+
+  return {
+    key: normalized,
+    text: normalized,
+    priority: CURRENT_MESSAGE_PART_PRIORITY.other,
+  }
+}
+
+function summarizeCurrentMessageParts(messages = []) {
+  const uniqueParts = new Map()
+  ;(Array.isArray(messages) ? messages : []).forEach((message) => {
+    const part = normalizeCurrentMessagePart(message)
+    if (!part || uniqueParts.has(part.key)) {
+      return
+    }
+    uniqueParts.set(part.key, part)
+  })
+
+  return [...uniqueParts.values()]
+    .sort((left, right) => left.priority - right.priority || left.text.localeCompare(right.text))
+    .map((part) => part.text)
+}
+
+function summarizeCurrentMessageSideEntries(entries = []) {
+  const messages = (Array.isArray(entries) ? entries : []).flatMap((entry) => {
+    if (Array.isArray(entry?.messages)) {
+      return entry.messages
+    }
+    if (typeof entry?.text === "string" && entry.text.trim()) {
+      return [entry.text]
+    }
+    if (typeof entry === "string" && entry.trim()) {
+      return [entry]
+    }
+    return []
+  })
+
+  return summarizeCurrentMessageParts(messages)
+}
+
+function buildCurrentMessageHistorySegments(turns) {
+  if (!Array.isArray(turns)) {
+    return []
+  }
+
+  const segments = []
+  turns.forEach((turn) => {
+    const turnNumber = Number.isFinite(turn?.turn) ? turn.turn : segments.length + 1
+    ;["white", "black"].forEach((color) => {
+      const parts = summarizeCurrentMessageSideEntries(turn?.[color])
+      if (!parts.length) {
+        return
+      }
+
+      segments.push({
+        key: `${turnNumber}-${color}-${parts.join("|")}`,
+        color,
+        parts,
+        text: parts.join(", "),
+      })
+    })
+  })
+
+  return segments
+}
+
+function formatCurrentMessageActor(color) {
+  return color === "black" ? "Black" : "White"
+}
+
+function currentTurnStatusText({ turnColor, yourColor, canMove, waitingForOpponent }) {
+  const normalizedTurn = normalizeLogColor(turnColor)
+  const normalizedPlayer = normalizeLogColor(yourColor)
+  if (!normalizedTurn) {
+    return ""
+  }
+
+  if (canMove && normalizedPlayer && normalizedTurn === normalizedPlayer) {
+    return "your move"
+  }
+
+  if (waitingForOpponent && normalizedPlayer && normalizedTurn !== normalizedPlayer) {
+    return "opponent's move"
+  }
+
+  return ""
+}
+
+function buildCurrentMessageSegments({ turns, turnColor, yourColor, canMove, waitingForOpponent, actionError }) {
+  const historySegments = buildCurrentMessageHistorySegments(turns)
+  const currentColor = normalizeLogColor(turnColor)
+  const illegalMoveActive = typeof actionError === "string" && actionError.toLowerCase().startsWith("illegal move")
+  const liveText = illegalMoveActive
+    ? "illegal move"
+    : currentTurnStatusText({ turnColor: currentColor, yourColor, canMove, waitingForOpponent })
+
+  if (!liveText || !currentColor) {
+    return historySegments.slice(-3)
+  }
+
+  const nextSegments = [...historySegments]
+  const lastSegment = nextSegments.at(-1) ?? null
+
+  if (lastSegment && lastSegment.color === currentColor) {
+    if (!illegalMoveActive) {
+      return nextSegments.slice(-3)
+    }
+
+    const parts = summarizeCurrentMessageParts([...lastSegment.parts, liveText])
+    nextSegments[nextSegments.length - 1] = {
+      ...lastSegment,
+      parts,
+      text: parts.join(", "),
+    }
+    return nextSegments.slice(-3)
+  }
+
+  nextSegments.push({
+    key: `live-${currentColor}-${liveText}`,
+    color: currentColor,
+    parts: [liveText],
+    text: liveText,
+  })
+  return nextSegments.slice(-3)
+}
+
+function formatCurrentMessageAccessibleText(segments) {
+  if (!Array.isArray(segments) || !segments.length) {
+    return ""
+  }
+
+  return segments
+    .map((segment) => `${formatCurrentMessageActor(segment.color)}: ${segment.text}`)
+    .join(" \u2192 ")
 }
 
 function getCaptureSquareFromTexts(messages = []) {
@@ -1518,24 +1720,21 @@ export default function GamePage() {
   const completedDuration = formatDuration(gameMeta?.created_at, gameMeta?.updated_at)
   const completedHeading = formatViewerOutcome(completedResult, gameState?.your_color)
   const completedSummary = formatCompletedResult(completedResult)
-  const latestRefereeEntry = flattenedRefereeEntries.at(-1) ?? null
-  const latestAnnouncementText = useMemo(() => {
-    if (!latestRefereeEntry) {
-      return "No referee responses yet."
-    }
-
-    const messages = Array.isArray(latestRefereeEntry.messages)
-      ? latestRefereeEntry.messages.filter((message) => typeof message === "string" && message.trim())
-      : []
-    const lastMessage = messages.at(-1) ?? "No referee responses yet."
-    const latestColor = normalizeLogColor(latestRefereeEntry.color)
-    const yourColor = normalizeLogColor(gameState?.your_color)
-    if (gameState?.state === "active" && canMove && latestColor && yourColor && latestColor !== yourColor) {
-      return `${lastMessage} \u2192 your turn.`
-    }
-
-    return lastMessage
-  }, [canMove, gameState?.state, gameState?.your_color, latestRefereeEntry])
+  const currentMessageSegments = useMemo(
+    () => buildCurrentMessageSegments({
+      turns: groupedRefereeLog,
+      turnColor: gameState?.turn,
+      yourColor: gameState?.your_color,
+      canMove,
+      waitingForOpponent,
+      actionError,
+    }),
+    [actionError, canMove, gameState?.turn, gameState?.your_color, groupedRefereeLog, waitingForOpponent]
+  )
+  const currentMessageAccessibleText = useMemo(
+    () => formatCurrentMessageAccessibleText(currentMessageSegments),
+    [currentMessageSegments]
+  )
   const refereePanelStyle = desktopRefereeHeight ? { height: `${desktopRefereeHeight}px`, maxHeight: `${desktopRefereeHeight}px` } : undefined
 
   useEffect(() => {
@@ -2112,18 +2311,17 @@ export default function GamePage() {
 
   const phantomMenuSquare = phantomMenu?.square ?? ""
   const phantomOnMenuSquare = phantomMenuSquare ? placements[phantomMenuSquare] : ""
+  const nonNarrativeActionError = actionError && !actionError.toLowerCase().startsWith("illegal move") ? actionError : ""
   const transientGameMessage = loading
     ? "Loading game state…"
     : submittingAction
       ? "Submitting action…"
-      : actionError
-        ? actionError
+      : nonNarrativeActionError
+        ? nonNarrativeActionError
         : isCompleted
           ? completedSummary
-        : waitingForOpponent
-          ? "Waiting for opponent's move."
           : ""
-  const currentMessageText = transientGameMessage || latestAnnouncementText
+  const currentMessageText = transientGameMessage || currentMessageAccessibleText || "No referee responses yet."
 
   return (
     <main className="page-shell game-page" onClick={() => phantomMenu && closePhantomMenu()}>
@@ -2317,7 +2515,34 @@ export default function GamePage() {
               ) : null}
               <section className="game-referee-latest" aria-label="Current message" aria-live={actionError ? "assertive" : "polite"}>
                 <div className="game-referee-latest__label">Current message</div>
-                <p className="game-referee-latest__value" role={actionError ? "alert" : undefined}>{currentMessageText}</p>
+                {transientGameMessage ? (
+                  <p className="game-referee-latest__value" role={actionError ? "alert" : undefined}>{currentMessageText}</p>
+                ) : currentMessageSegments.length ? (
+                  <p
+                    className="game-referee-latest__value game-referee-latest__value--timeline"
+                    role={actionError ? "alert" : undefined}
+                    aria-label={currentMessageText}
+                  >
+                    {currentMessageSegments.map((segment, index) => (
+                      <span key={segment.key} className="game-referee-latest__timeline-piece">
+                        {index > 0 ? (
+                          <span className="game-referee-latest__separator" aria-hidden="true">
+                            {" "}
+                            →{" "}
+                            </span>
+                        ) : null}
+                        <span className="game-referee-latest__segment">
+                          <span className={`game-referee-latest__actor game-referee-latest__actor--${segment.color}`.trim()}>
+                            {formatCurrentMessageActor(segment.color)}
+                          </span>
+                          <span className="game-referee-latest__segment-text">{segment.text}</span>
+                        </span>
+                      </span>
+                    ))}
+                  </p>
+                ) : (
+                  <p className="game-referee-latest__value" role={actionError ? "alert" : undefined}>{currentMessageText}</p>
+                )}
               </section>
 
               <div className="game-referee-log">
