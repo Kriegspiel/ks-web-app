@@ -333,11 +333,44 @@ describe("GamePage", () => {
     const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
     expect(timeline).toHaveAttribute(
       "aria-label",
-      "Black: move complete, long-diagonal check → White: no pawn captures, move complete → Black: opponent's move"
+      "Black: move complete, check on long diagonal → White: no pawn captures, move complete → Black: opponent's move"
     )
     expect(within(currentMessage).queryByText("illegal move")).not.toBeInTheDocument()
     expect(within(currentMessage).queryByText("move attempt")).not.toBeInTheDocument()
     expect(within(currentMessage).queryByText("opponent asked any pawn captures")).not.toBeInTheDocument()
+  })
+
+  it("strips_compound_referee_strings_down_to_the_clean_last_announcements", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      turn: "black",
+      your_color: "white",
+      possible_actions: [],
+      referee_turns: [
+        {
+          turn: 1,
+          black: [{ messages: ["Move complete, Rank check, Move attempt — Move complete · Check on rank"] }],
+          white: [],
+        },
+        {
+          turn: 2,
+          white: [{ messages: ["Move complete, Opponent move — Move complete"] }],
+          black: [],
+        },
+      ],
+    })
+
+    render(<GamePage />)
+
+    const currentMessage = await screen.findByLabelText("Current message")
+    const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
+    expect(timeline).toHaveAttribute(
+      "aria-label",
+      "Black: move complete, check on rank → White: move complete → Black: opponent's move"
+    )
+    expect(within(currentMessage).queryByText("move attempt")).not.toBeInTheDocument()
+    expect(within(currentMessage).queryByText("opponent move")).not.toBeInTheDocument()
+    expect(within(currentMessage).queryByText("rank check")).not.toBeInTheDocument()
   })
 
   it("shows_submitting_move_inside_the_last_current_message_statement", async () => {
