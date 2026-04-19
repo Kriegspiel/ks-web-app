@@ -2,6 +2,7 @@ import footerMarkdown from "../../../content/site/footer/README.md?raw"
 
 const absoluteFooterLinks = new Map([
   ["/rules/berkeley", "https://kriegspiel.org/rules/berkeley"],
+  ["/rules/cincinnati", "https://kriegspiel.org/rules/cincinnati"],
   ["/rules/wild16", "https://kriegspiel.org/rules/wild16"],
   ["/rules/comparison/", "https://kriegspiel.org/rules/comparison/"],
   ["/blog", "https://kriegspiel.org/blog"],

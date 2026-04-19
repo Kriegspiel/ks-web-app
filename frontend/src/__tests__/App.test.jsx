@@ -196,6 +196,7 @@ describe("App routes", () => {
     expect(screen.getByRole("heading", { name: "Policy" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Development" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Social" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Cincinnati" })).toHaveAttribute("href", "https://kriegspiel.org/rules/cincinnati")
     expect(screen.getByRole("link", { name: "any@kriegspiel.org" })).toHaveAttribute("href", "mailto:any@kriegspiel.org")
   })
 
