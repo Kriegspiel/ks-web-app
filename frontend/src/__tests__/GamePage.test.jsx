@@ -373,6 +373,77 @@ describe("GamePage", () => {
     expect(within(currentMessage).queryByText("rank check")).not.toBeInTheDocument()
   })
 
+  it("deduplicates_repeated_announcements_inside_compound_current_message_strings", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      turn: "black",
+      your_color: "white",
+      possible_actions: [],
+      referee_turns: [
+        {
+          turn: 1,
+          black: [{ messages: ["Has pawn captures, Has pawn captures, Move complete, Move complete, Check on file, File check"] }],
+          white: [],
+        },
+      ],
+    })
+
+    render(<GamePage />)
+
+    const currentMessage = await screen.findByLabelText("Current message")
+    const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
+    expect(timeline).toHaveAttribute(
+      "aria-label",
+      "Black: has pawn captures, move complete, check on file → White: your move"
+    )
+    expect(within(currentMessage).queryByText(/^file check$/i)).not.toBeInTheDocument()
+  })
+
+  it("keeps_illegal_move_only_when_it_is_the_terminal_statement_for_that_side", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      referee_turns: [
+        {
+          turn: 1,
+          white: [{ messages: ["No pawn captures, Move attempt — Illegal move"] }],
+          black: [],
+        },
+      ],
+    })
+
+    render(<GamePage />)
+
+    const currentMessage = await screen.findByLabelText("Current message")
+    const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
+    expect(timeline).toHaveAttribute("aria-label", "White: no pawn captures, illegal move")
+    expect(within(currentMessage).queryByText("your move")).not.toBeInTheDocument()
+  })
+
+  it("normalizes_capture_done_and_check_variants_inside_current_message_strings", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      turn: "white",
+      referee_turns: [
+        {
+          turn: 1,
+          white: [{ messages: ["Capture done at D4, Move complete, Long-diagonal check"] }],
+          black: [],
+        },
+      ],
+    })
+
+    render(<GamePage />)
+
+    const currentMessage = await screen.findByLabelText("Current message")
+    const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
+    expect(timeline).toHaveAttribute(
+      "aria-label",
+      "White: move complete, capture d4, check on long diagonal"
+    )
+    expect(within(currentMessage).queryByText(/capture done at/i)).not.toBeInTheDocument()
+    expect(within(currentMessage).queryByText(/long-diagonal check/i)).not.toBeInTheDocument()
+  })
+
   it("shows_submitting_move_inside_the_last_current_message_statement", async () => {
     let resolveSubmit
     mockApi.getGameState.mockResolvedValueOnce({
