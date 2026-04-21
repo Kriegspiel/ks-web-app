@@ -55,6 +55,17 @@ describe("RegisterPage", () => {
     expect(await screen.findByText("Invalid email format.")).toBeInTheDocument()
     expect(mockAuth.register).not.toHaveBeenCalled()
   })
+
+  it("shows_required_email_validation_before_submit", async () => {
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>)
+
+    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "newuser" } })
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret123" } })
+    fireEvent.click(screen.getByRole("button", { name: "Register" }))
+
+    expect(await screen.findByText("Email is required.")).toBeInTheDocument()
+    expect(mockAuth.register).not.toHaveBeenCalled()
+  })
   it("shows_password_max_length_validation_before_submit", async () => {
     render(<MemoryRouter><RegisterPage /></MemoryRouter>)
 
@@ -106,6 +117,18 @@ describe("RegisterPage", () => {
     })
   })
 
+  it("falls_back_to_the_default_username_taken_message_when_the_backend_omits_one", async () => {
+    mockAuth.register.mockRejectedValue({ status: 409, code: "USERNAME_TAKEN" })
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>)
+
+    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "taken_user" } })
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "new@example.com" } })
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret123" } })
+    fireEvent.click(screen.getByRole("button", { name: "Register" }))
+
+    expect(await screen.findByText("Username already exists")).toBeInTheDocument()
+  })
+
   it("shows_email_taken_next_to_email_field", async () => {
     mockAuth.register.mockRejectedValue({ status: 409, code: "EMAIL_TAKEN", message: "Email already registered" })
     render(<MemoryRouter><RegisterPage /></MemoryRouter>)
@@ -122,6 +145,18 @@ describe("RegisterPage", () => {
     })
   })
 
+  it("falls_back_to_the_default_email_taken_message_when_the_backend_omits_one", async () => {
+    mockAuth.register.mockRejectedValue({ status: 409, code: "EMAIL_TAKEN" })
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>)
+
+    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "new_user" } })
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "used@example.com" } })
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret123" } })
+    fireEvent.click(screen.getByRole("button", { name: "Register" }))
+
+    expect(await screen.findByText("Email already registered")).toBeInTheDocument()
+  })
+
   it("shows_generic_submission_errors_in_the_form_and_hides_context_action_errors", async () => {
     mockAuth.actionError = "Context boom"
     mockAuth.register.mockRejectedValue({ message: "Server exploded" })
@@ -135,6 +170,22 @@ describe("RegisterPage", () => {
 
     expect(await screen.findByText("Server exploded")).toBeInTheDocument()
     expect(screen.queryByText("Context boom")).not.toBeInTheDocument()
+  })
+
+  it("keeps_the_form_error_slot_empty_when_a_generic_failure_has_no_message", async () => {
+    mockAuth.register.mockRejectedValue({})
+
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>)
+
+    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "new_user" } })
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "new@example.com" } })
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret123" } })
+    fireEvent.click(screen.getByRole("button", { name: "Register" }))
+
+    await waitFor(() => {
+      expect(mockAuth.register).toHaveBeenCalled()
+    })
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })
 
   it("shows_context_action_errors_when_there_is_no_submission_error", () => {

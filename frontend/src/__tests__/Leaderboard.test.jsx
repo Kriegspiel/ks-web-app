@@ -95,6 +95,20 @@ describe("LeaderboardPage", () => {
     expect(screen.getByRole("button", { name: "Next" })).toBeDisabled()
   })
 
+  it("falls_back_to_current_page_labels_when_pagination_counts_are_nullish", async () => {
+    mockApi.userApi.getLeaderboard.mockResolvedValueOnce({
+      players: [{ rank: 1, username: "amy", games_played: 1, win_rate: 0 }],
+      pagination: { page: null, pages: null, total: 1 },
+    })
+
+    render(<MemoryRouter><LeaderboardPage /></MemoryRouter>)
+
+    await screen.findByText("amy")
+    expect(screen.getByText(/Page 1 of 0/)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Prev" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Next" })).not.toBeDisabled()
+  })
+
   it("shows_the_default_error_message_when_leaderboard_loading_fails_without_details", async () => {
     mockApi.userApi.getLeaderboard.mockRejectedValueOnce({})
 

@@ -118,6 +118,28 @@ describe("gameClock", () => {
     )).toBe(null)
   })
 
+  it("returns_the_next_clock_when_the_active_color_is_unknown", () => {
+    expect(reconcileClockSnapshot(
+      {
+        state: "active",
+        move_number: 3,
+        turn: "white",
+        clock: { white_remaining: 30, black_remaining: 30, active_color: "white" },
+      },
+      {
+        state: "active",
+        move_number: 3,
+        turn: "white",
+        clock: { white_remaining: 29, black_remaining: 30, active_color: "green" },
+      },
+      { previousSyncedAtMs: 10_000, nextSyncedAtMs: 11_000 },
+    )).toEqual({
+      white_remaining: 29,
+      black_remaining: 30,
+      active_color: "green",
+    })
+  })
+
   it("keeps_black_clock_monotonic_within_the_same_turn", () => {
     const reconciled = reconcileClockSnapshot(
       {

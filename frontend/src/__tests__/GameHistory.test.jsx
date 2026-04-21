@@ -165,6 +165,33 @@ describe("GameHistoryPage", () => {
     expect(screen.getByRole("button", { name: "Next" })).not.toBeDisabled()
   })
 
+  it("uses_visible_fallbacks_when_opponent_and_pagination_fields_are_nullish", async () => {
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
+      games: [
+        {
+          game_id: "g-nullish",
+          rule_variant: "berkeley",
+          opponent: null,
+          opponent_role: null,
+          play_as: "white",
+          result: "draw",
+          reason: "stalemate",
+          turn_count: 3,
+          played_at: "2026-01-04T00:00:00Z",
+        },
+      ],
+      pagination: { page: null, pages: null, total: 1 },
+    })
+
+    renderHistory()
+
+    expect(await screen.findByText("Berkeley")).toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: /bot\)/i })).not.toBeInTheDocument()
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0)
+    expect(screen.getByText(/Page 1 of 0/)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Next" })).not.toBeDisabled()
+  })
+
   it("shows_the_default_error_message_when_history_loading_fails_without_details", async () => {
     mockApi.userApi.getGameHistory.mockRejectedValueOnce({})
 

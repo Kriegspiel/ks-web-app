@@ -14,6 +14,15 @@ describe("chessboard move helpers", () => {
     expect(getAllowedMoveTargets(["e2e4"], "z9")).toEqual([])
   })
 
+  it("pads_missing_fen_ranks_and_handles_invalid_row_indexes", () => {
+    const board = parseFenBoard("4k3/8/8/8")
+
+    expect(board).toHaveLength(8)
+    expect(board[0][4]).toBe("k")
+    expect(board[7]).toHaveLength(8)
+    expect(board[7].every((square) => square === null)).toBe(true)
+  })
+
   it("returns_empty_targets_for_invalid_inputs_or_the_wrong_piece_color", () => {
     expect(getVisibleMoveTargets({
       fen: "8/8/8/8/8/8/4p3/4K3 w - - 0 1",
@@ -40,6 +49,20 @@ describe("chessboard move helpers", () => {
       fromSquare: "d7",
       color: "black",
     }).sort()).toEqual(["c6", "d5", "d6"].sort())
+  })
+
+  it("ignores_off_board_pawn_captures_and_knight_steps", () => {
+    expect(getVisibleMoveTargets({
+      fen: "8/8/8/8/8/1p6/P7/8 w - - 0 1",
+      fromSquare: "a2",
+      color: "white",
+    }).sort()).toEqual(["a3", "a4", "b3"].sort())
+
+    expect(getVisibleMoveTargets({
+      fen: "8/8/8/8/8/8/8/N7 w - - 0 1",
+      fromSquare: "a1",
+      color: "white",
+    }).sort()).toEqual(["b3", "c2"].sort())
   })
 
   it("derives_knight_bishop_and_rook_targets_with_mixed_blockers", () => {
