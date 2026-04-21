@@ -394,7 +394,7 @@ describe("GamePage", () => {
     const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
     expect(timeline).toHaveAttribute(
       "aria-label",
-      "Black: has pawn captures, move complete, check on file → White: your move"
+      "Black: has pawn captures, move complete, check on file"
     )
     expect(within(currentMessage).queryByText(/^file check$/i)).not.toBeInTheDocument()
   })
