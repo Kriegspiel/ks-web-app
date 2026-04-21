@@ -116,6 +116,62 @@ describe("ChessBoard", () => {
     expect(screen.getAllByRole("button", { name: "Square e5" }).at(-1)).not.toHaveClass("square--capture")
   })
 
+  it("renders_only_valid_overlay_arrows_and_badges", () => {
+    const { container } = render(
+      <ChessBoard
+        boardFen="8/8/8/8/8/8/8/4K3 w - - 0 1"
+        overlayArrows={[
+          { from: "a1", to: "b2", tone: "success" },
+          { from: "h8", to: "h7", tone: "oops" },
+          { from: "z9", to: "b2", tone: "success" },
+        ]}
+        overlayBadges={[
+          { square: "c3", label: "1", tone: "success" },
+          { square: "d4", label: "2", tone: "oops" },
+          { square: "q9", label: "x", tone: "success" },
+        ]}
+      />,
+    )
+
+    expect(container.querySelectorAll(".board-overlay")).toHaveLength(1)
+    expect(container.querySelectorAll(".board-overlay__arrow--success")).toHaveLength(1)
+    expect(container.querySelectorAll(".board-overlay__arrow--illegal")).toHaveLength(1)
+    expect(container.querySelectorAll(".board-overlay__badge--success")).toHaveLength(1)
+    expect(container.querySelectorAll(".board-overlay__badge--illegal")).toHaveLength(1)
+  })
+
+  it("omits_the_overlay_svg_when_all_overlay_entries_are_invalid", () => {
+    const { container } = render(
+      <ChessBoard
+        boardFen="8/8/8/8/8/8/8/4K3 w - - 0 1"
+        overlayArrows={[{ from: "z9", to: "b2", tone: "success" }]}
+        overlayBadges={[{ square: "q9", label: "x", tone: "success" }]}
+      />,
+    )
+
+    expect(container.querySelector(".board-overlay")).toBeNull()
+  })
+
+  it("ignores_non_string_phantom_pieces_and_preserves_disabled_mouse_defaults", () => {
+    render(
+      <ChessBoard
+        boardFen="8/8/8/8/8/8/8/4K3 w - - 0 1"
+        disabled
+        phantomSquares={["d5"]}
+        phantomPlacements={{ d5: 7 }}
+      />,
+    )
+
+    expect(screen.getByLabelText("Phantom undefined")).toBeInTheDocument()
+
+    const square = screen.getAllByRole("button", { name: "Square d5" }).at(-1)
+    const event = new MouseEvent("mousedown", { bubbles: true, cancelable: true })
+    const dispatchResult = square.dispatchEvent(event)
+
+    expect(dispatchResult).toBe(true)
+    expect(event.defaultPrevented).toBe(false)
+  })
+
   it("wires_primary_and_pointer_handlers_and_respects_disabled", () => {
     const onSquareClick = vi.fn()
     const onSquareRightClick = vi.fn()

@@ -117,6 +117,26 @@ describe("usePhantoms", () => {
 
     expect(result.current.placements).toEqual({})
   })
+
+  it("reads_legacy_persisted_shapes_without_wrapped_placements", () => {
+    window.localStorage.setItem("phantoms_g-536", JSON.stringify({ a1: "Q", h8: "n", bad: 4 }))
+
+    const { result } = renderHook(() => usePhantoms({ gameId: "g-536", occupiedSquares: [] }))
+
+    expect(result.current.placements).toEqual({ a1: "q", h8: "n" })
+  })
+
+  it("skips_persistence_and_rejects_non_string_piece_values_without_a_game_id", () => {
+    const { result } = renderHook(() => usePhantoms({ gameId: "", occupiedSquares: [] }))
+
+    act(() => {
+      expect(result.current.setPieceAt("d4", 7)).toBe(false)
+      result.current.replaceAll(null)
+    })
+
+    expect(result.current.placements).toEqual({})
+    expect(window.localStorage.length).toBe(0)
+  })
 })
 
 describe("occupiedSquaresFromFen", () => {
