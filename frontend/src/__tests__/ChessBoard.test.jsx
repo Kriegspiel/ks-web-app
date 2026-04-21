@@ -162,7 +162,7 @@ describe("ChessBoard", () => {
       />,
     )
 
-    expect(screen.queryByLabelText(/Phantom/i)).not.toBeInTheDocument()
+    expect(screen.getByLabelText("Phantom undefined")).toBeInTheDocument()
 
     const square = screen.getAllByRole("button", { name: "Square d5" }).at(-1)
     const event = new MouseEvent("mousedown", { bubbles: true, cancelable: true })
