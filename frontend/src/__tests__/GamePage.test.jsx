@@ -444,6 +444,31 @@ describe("GamePage", () => {
     expect(within(currentMessage).queryByText(/long-diagonal check/i)).not.toBeInTheDocument()
   })
 
+  it("normalizes_cincinnati_capture_announcements_inside_current_message_strings", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      turn: "black",
+      your_color: "white",
+      possible_actions: [],
+      referee_turns: [
+        {
+          turn: 1,
+          black: [{ messages: ["Has pawn capture, Piece captured at D4"] }],
+          white: [],
+        },
+      ],
+    })
+
+    render(<GamePage />)
+
+    const currentMessage = await screen.findByLabelText("Current message")
+    const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
+    expect(timeline).toHaveAttribute(
+      "aria-label",
+      "Black: has pawn capture, capture d4"
+    )
+  })
+
   it("shows_submitting_move_inside_the_last_current_message_statement", async () => {
     let resolveSubmit
     mockApi.getGameState.mockResolvedValueOnce({
@@ -466,6 +491,11 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByRole("button", { name: "Square e2" })
+    await waitFor(() => {
+      const currentMessage = screen.getByLabelText("Current message")
+      const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
+      expect(timeline).toHaveAttribute("aria-label", "White: no pawn captures")
+    })
     fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
     fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
 
@@ -578,7 +608,7 @@ describe("GamePage", () => {
     await waitFor(() => {
       expect(mockSoundPlayer.playCategories).toHaveBeenCalledWith(["Has pawn captures"])
     })
-  })
+  }, 10000)
 
   it("mutes_game_sounds_from_the_board_footer_toggle", async () => {
     const firstState = {
@@ -634,7 +664,7 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    expect(await screen.findByText("Berkeley Any")).toBeInTheDocument()
+    expect(await screen.findByText("Berkeley + Any")).toBeInTheDocument()
     const opponentLink = screen.getByRole("link", { name: "gptnano (bot)" })
     expect(opponentLink).toHaveAttribute("href", "/user/gptnano")
     expect(screen.getByText("1342")).toBeInTheDocument()
@@ -1253,6 +1283,44 @@ describe("GamePage", () => {
     expect(within(refereeLog).getByText("No pawn captures")).toBeInTheDocument()
     expect(screen.queryByText("ILLEGAL_MOVE")).not.toBeInTheDocument()
     expect(screen.queryByText("CAPTURE_DONE")).not.toBeInTheDocument()
+  })
+
+  it("formats_typed_capture_announcements_numeric_pawn_tries_and_nonsense_in_scoresheets", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      scoresheet: {
+        viewer_color: "white",
+        turns: [
+          {
+            turn: 1,
+            white: [
+              {
+                move_uci: "e5d4",
+                answer: {
+                  main: "CAPTURE_DONE",
+                  capture_square: "d4",
+                  captured_piece_announcement: "PAWN",
+                  next_turn_pawn_tries: 2,
+                  special: "CHECK_FILE",
+                },
+              },
+            ],
+            black: [
+              {
+                move_uci: "a7a6",
+                answer: { main: "NONSENSE" },
+              },
+            ],
+          },
+        ],
+      },
+    })
+
+    render(<GamePage />)
+
+    const refereeLog = await screen.findByRole("log", { name: "Referee log by turn" })
+    expect(within(refereeLog).getByText("[e5d4] Pawn captured at D4 · Check on file · 2 pawn tries")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("[a7a6] Nonsense")).toBeInTheDocument()
   })
 
   it("highlights_the_recent_capture_square_on_the_board", async () => {

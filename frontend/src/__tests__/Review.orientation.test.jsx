@@ -30,7 +30,7 @@ vi.mock("../hooks/useAuth", () => ({
     user: { username: "notifil" },
   }),
 }))
-vi.mock("../components/ChessBoard", () => ({
+vi.mock("../components/ChessBoard.jsx", () => ({
   default: ({ orientation }) => <div className="chess-board" data-orientation={orientation} />,
 }))
 vi.mock("../components/VersionStamp", () => ({

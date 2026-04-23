@@ -355,6 +355,49 @@ describe("LobbyPage", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/game/BOT123")
   })
 
+  it("shows_all_ruleset_options_and_supports_new_variant_specific_bots", async () => {
+    mockApi.getBots.mockResolvedValue({
+      bots: [
+        {
+          bot_id: "bot-cincinnati",
+          username: "cincybot",
+          display_name: "Cincinnati Bot",
+          description: "Knows Cincinnati.",
+          elo: 1420,
+          supported_rule_variants: ["cincinnati"],
+        },
+        {
+          bot_id: "bot-wild16",
+          username: "wildbot",
+          display_name: "Wild 16 Bot",
+          description: "Knows Wild 16.",
+          elo: 1510,
+          supported_rule_variants: ["wild16"],
+        },
+      ],
+    })
+
+    renderPage()
+
+    const rulesetSelect = await screen.findByLabelText("Ruleset")
+    expect(within(rulesetSelect).getByRole("option", { name: "Berkeley" })).toBeInTheDocument()
+    expect(within(rulesetSelect).getByRole("option", { name: "Berkeley + Any" })).toBeInTheDocument()
+    expect(within(rulesetSelect).getByRole("option", { name: "Cincinnati" })).toBeInTheDocument()
+    expect(within(rulesetSelect).getByRole("option", { name: "Wild 16" })).toBeInTheDocument()
+
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    expect(await screen.findByLabelText("Bot opponent")).toHaveValue("")
+    expect(screen.getByText("No bots support this ruleset.")).toBeInTheDocument()
+
+    fireEvent.change(rulesetSelect, { target: { value: "cincinnati" } })
+    expect(screen.getByRole("option", { name: "1420 - Cincinnati Bot" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "1510 - Wild 16 Bot" })).not.toBeInTheDocument()
+
+    fireEvent.change(rulesetSelect, { target: { value: "wild16" } })
+    expect(screen.getByRole("option", { name: "1510 - Wild 16 Bot" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "1420 - Cincinnati Bot" })).not.toBeInTheDocument()
+  })
+
   it("updates_the_bot_description_when_selecting_gpt_nano", async () => {
     renderPage()
 

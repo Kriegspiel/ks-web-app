@@ -59,6 +59,44 @@ describe("GameHistoryPage", () => {
     expect(screen.getByText("v. test-frontend / v. test-backend")).toBeInTheDocument()
   })
 
+  it("renders_cincinnati_and_wild16_rule_labels", async () => {
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
+      games: [
+        {
+          game_id: "g-cincinnati",
+          game_code: "CINCY1",
+          rule_variant: "cincinnati",
+          opponent: "amy",
+          opponent_role: "user",
+          play_as: "white",
+          result: "win",
+          reason: "checkmate",
+          turn_count: 14,
+          played_at: "2026-01-05T00:00:00Z",
+        },
+        {
+          game_id: "g-wild16",
+          game_code: "WILD16",
+          rule_variant: "wild16",
+          opponent: "wildbot",
+          opponent_role: "bot",
+          play_as: "black",
+          result: "loss",
+          reason: "timeout",
+          turn_count: 9,
+          played_at: "2026-01-06T00:00:00Z",
+        },
+      ],
+      pagination: { page: 1, pages: 1, total: 2 },
+    })
+
+    renderHistory()
+
+    expect(await screen.findByText("Cincinnati")).toBeInTheDocument()
+    expect(screen.getByText("Wild 16")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "wildbot (bot)" })).toHaveAttribute("href", "/user/wildbot")
+  })
+
   it("handles_prev_next_pagination", async () => {
     mockApi.userApi.getGameHistory
       .mockResolvedValueOnce({ games: [{ game_id: "g-1", opponent: "amy" }], pagination: { page: 1, pages: 3, total: 241 } })

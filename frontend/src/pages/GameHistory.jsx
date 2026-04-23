@@ -3,16 +3,13 @@ import { Link, useParams } from "react-router-dom"
 import VersionStamp from "../components/VersionStamp"
 import { userApi } from "../services/api"
 import { formatUtcDateTime } from "../utils/dateTime"
+import { formatRuleVariant } from "../utils/rules"
 import "./GameHistory.css"
 
 const HISTORY_PAGE_SIZE = 100
 
 function formatDate(value) {
   return formatUtcDateTime(value) || "—"
-}
-
-function formatRuleVariant(value) {
-  return value === "berkeley_any" ? "Berkeley + Any" : value === "berkeley" ? "Berkeley" : "—"
 }
 
 function opponentLabel(game) {
