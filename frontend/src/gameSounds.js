@@ -52,11 +52,17 @@ export function announcementSoundCategories(messages = []) {
     if (!normalized) {
       continue
     }
-    if (normalized.startsWith("capture done") || normalized.startsWith("capture at") || normalized === "capture") {
+    if (
+      normalized.startsWith("capture done") ||
+      normalized.startsWith("capture at") ||
+      normalized.startsWith("pawn captured") ||
+      normalized.startsWith("piece captured") ||
+      normalized === "capture"
+    ) {
       categories.push("capture")
       continue
     }
-    if (normalized.startsWith("illegal move")) {
+    if (normalized.startsWith("illegal move") || normalized.startsWith("nonsense")) {
       categories.push("illegal")
       continue
     }
@@ -64,7 +70,11 @@ export function announcementSoundCategories(messages = []) {
       categories.push("move")
       continue
     }
-    if (normalized.includes("has pawn captures")) {
+    if (
+      normalized.includes("has pawn captures") ||
+      normalized.includes("has pawn capture") ||
+      /^\d+ pawn tr(?:y|ies)$/.test(normalized)
+    ) {
       categories.push("any_yes")
       continue
     }

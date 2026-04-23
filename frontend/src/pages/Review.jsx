@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Link, useParams } from "react-router-dom"
-import ChessBoard from "../components/ChessBoard"
+import ChessBoard from "../components/ChessBoard.jsx"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import { getGame, getGameTranscript } from "../services/api"
@@ -14,6 +14,7 @@ const STARTING_FENS = {
 
 const ANNOUNCEMENT_TEXT = {
   ILLEGAL_MOVE: "Illegal move",
+  NONSENSE: "Nonsense",
   REGULAR_MOVE: "Move complete",
   CAPTURE_DONE: "Capture",
   HAS_ANY: "Has pawn captures",
@@ -39,14 +40,37 @@ function formatAnnouncement(code) {
   return ANNOUNCEMENT_TEXT[code] ?? code
 }
 
-function formatCaptureAnnouncement(move) {
-  const main = formatAnnouncement(move?.answer?.main)
-  const captureSquare = typeof move?.answer?.capture_square === "string" ? move.answer.capture_square.trim().toUpperCase() : ""
-  if (main === "Capture" && captureSquare) {
-    return `${main} at ${captureSquare}`
+function formatNextTurnPawnAnnouncement(answer) {
+  const pawnTries = Number(answer?.next_turn_pawn_tries)
+  if (Number.isInteger(pawnTries)) {
+    if (pawnTries <= 0) {
+      return "No pawn captures"
+    }
+    return pawnTries === 1 ? "1 pawn try" : `${pawnTries} pawn tries`
   }
 
-  return main
+  if (answer?.next_turn_has_pawn_capture === true) {
+    return "Has pawn capture"
+  }
+
+  return ""
+}
+
+function formatCaptureAnnouncement(answer) {
+  const main = formatAnnouncement(answer?.main)
+  const captureSquare = typeof answer?.capture_square === "string" ? answer.capture_square.trim().toUpperCase() : ""
+  if (main !== "Capture") {
+    return main
+  }
+
+  const capturedPiece = typeof answer?.captured_piece_announcement === "string" ? answer.captured_piece_announcement.trim().toUpperCase() : ""
+  const captureLabel = capturedPiece === "PAWN" ? "Pawn captured" : capturedPiece === "PIECE" ? "Piece captured" : "Capture"
+
+  if (captureSquare) {
+    return `${captureLabel} at ${captureSquare}`
+  }
+
+  return captureLabel
 }
 
 function moveAnnouncements(move) {
@@ -56,23 +80,17 @@ function moveAnnouncements(move) {
 
   const questionType = String(move.question_type ?? "COMMON").toUpperCase()
   const normalizedUci = typeof move.uci === "string" ? move.uci.trim().toLowerCase() : ""
-  const main = formatCaptureAnnouncement(move)
+  const main = formatCaptureAnnouncement(move?.answer)
+  const nextTurn = formatNextTurnPawnAnnouncement(move?.answer)
   const special = formatAnnouncement(move?.answer?.special)
+  const items = [...new Set([main, nextTurn, special].filter(Boolean))]
 
   if (questionType !== "ASK_ANY" && normalizedUci) {
-    const combined = [`[${normalizedUci}]`, main, special].filter(Boolean).join(" ")
-    return combined ? [combined] : [`[${normalizedUci}]`]
+    const combined = items.length ? [`[${normalizedUci}]`, items.join(" · ")].join(" ") : `[${normalizedUci}]`
+    return [combined]
   }
 
-  const items = []
-  if (main) {
-    items.push(main)
-  }
-  if (special) {
-    items.push(special)
-  }
-
-  return [...new Set(items.filter(Boolean))]
+  return items
 }
 
 function formatPlySummary(group) {

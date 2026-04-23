@@ -201,6 +201,47 @@ describe("ReviewPage", () => {
     expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--capture")
   })
 
+  it("formats_typed_captures_numeric_pawn_tries_and_nonsense_in_the_move_log", async () => {
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      game_id: "g-620",
+      rule_variant: "wild16",
+      moves: [
+        {
+          ply: 1,
+          color: "white",
+          question_type: "COMMON",
+          uci: "e5d4",
+          answer: {
+            main: "CAPTURE_DONE",
+            capture_square: "d4",
+            captured_piece_announcement: "PAWN",
+            next_turn_pawn_tries: 2,
+            special: "CHECK_FILE",
+          },
+          move_done: true,
+          replay_fen: transcript.moves[0].replay_fen,
+        },
+        {
+          ply: 2,
+          color: "black",
+          question_type: "COMMON",
+          uci: "a7a6",
+          answer: { main: "NONSENSE" },
+          move_done: false,
+          replay_fen: transcript.moves[1].replay_fen,
+        },
+      ],
+    })
+
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    expect(
+      screen.getByRole("button", { name: /White \[e5d4\] Pawn captured at D4 · 2 pawn tries · Check on file/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Black \[a7a6\] Nonsense/i })).toBeInTheDocument()
+  })
+
   it("shows_controlled_error_for_invalid_transcript", async () => {
     mockApi.getGameTranscript.mockResolvedValueOnce({ game_id: "g-620", moves: null })
 

@@ -4,16 +4,13 @@ import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import { createGame, deleteWaitingGame, getBots, getGame, getLobbyStats, getMyGames, getOpenGames, joinGame } from "../services/api"
 import { formatUtcDateTime } from "../utils/dateTime"
+import { DEFAULT_BOT_RULE_VARIANTS, RULESET_OPTIONS } from "../utils/rules"
 import "./Lobby.css"
 
 const WAITING_GAME_POLL_MS = 3000
 const OPEN_GAMES_POLL_MS = 5000
 const MY_GAMES_POLL_MS = 10000
 const LOBBY_STATS_POLL_MS = 10000
-const RULESET_OPTIONS = [
-  { value: "berkeley", label: "Berkeley" },
-  { value: "berkeley_any", label: "Berkeley + Any" },
-]
 const ACTIVE_STATES = new Set(["active"])
 const RULES_URL = "https://kriegspiel.org/rules"
 
@@ -65,7 +62,7 @@ function formatBotPickerLabel(bot) {
 }
 
 function botSupportsRuleVariant(bot, ruleVariant) {
-  const supported = Array.isArray(bot?.supported_rule_variants) ? bot.supported_rule_variants : ["berkeley", "berkeley_any"]
+  const supported = Array.isArray(bot?.supported_rule_variants) ? bot.supported_rule_variants : DEFAULT_BOT_RULE_VARIANTS
   return supported.includes(ruleVariant)
 }
 
@@ -527,8 +524,8 @@ export default function LobbyPage() {
         {openGamesError ? <p role="alert">{openGamesError}</p> : null}
         {openGamesLoading ? <p>Loading…</p> : null}
         <ul className="lobby-list">
-          {sortedOpenGames.map((game) => (
-            <li key={game.game_code}>
+          {sortedOpenGames.map((game, index) => (
+            <li key={game.game_code ?? game.game_id ?? `open-game-${index}`}>
               <div>
                 <strong>{game.game_code}</strong>
                 <div className="lobby-meta">

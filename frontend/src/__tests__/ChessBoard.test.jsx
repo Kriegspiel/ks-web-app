@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import ChessBoard from "../components/ChessBoard"
+import ChessBoard from "../components/ChessBoard.jsx"
 import { getAllowedMoveTargets, getVisibleMoveTargets, parseFenBoard } from "../components/chessboard"
 
 describe("ChessBoard", () => {

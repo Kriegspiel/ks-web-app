@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import ChessBoard from "../components/ChessBoard"
+import ChessBoard from "../components/ChessBoard.jsx"
 import PromotionModal from "../components/PromotionModal"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
@@ -8,6 +8,7 @@ import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
 import { announcementSoundCategories, createGameSoundPlayer } from "../gameSounds"
 import { askAny, deleteWaitingGame, getGame, getGameState, resignGame, submitMove } from "../services/api"
 import { getAllowedMoveTargets, PIECE_ASSETS } from "../components/chessboard"
+import { formatRuleVariant } from "../utils/rules"
 import { formatClock, projectClock, reconcileClockSnapshot } from "./gameClock"
 import "./GamePage.css"
 
@@ -77,6 +78,7 @@ const REFEREE_MAIN_ANNOUNCEMENT_TEXT = {
   10: "Check by knight",
   11: "Double check",
   ILLEGAL_MOVE: "Illegal move",
+  NONSENSE: "Nonsense",
   REGULAR_MOVE: "Move complete",
   CAPTURE_DONE: "Capture",
   HAS_ANY: "Has pawn captures",
@@ -179,14 +181,36 @@ function getRefereeCode(value) {
   return null
 }
 
-function formatRefereeCode(code, captureSquare) {
+function formatNextTurnPawnAnnouncementData({ nextTurnPawnTries, nextTurnHasPawnCapture }) {
+  if (Number.isInteger(nextTurnPawnTries)) {
+    if (nextTurnPawnTries <= 0) {
+      return "No pawn captures"
+    }
+    return nextTurnPawnTries === 1 ? "1 pawn try" : `${nextTurnPawnTries} pawn tries`
+  }
+
+  if (nextTurnHasPawnCapture === true) {
+    return "Has pawn capture"
+  }
+
+  return ""
+}
+
+function formatRefereeCode(code, captureSquare, capturedPieceAnnouncement = "") {
   const text = REFEREE_MAIN_ANNOUNCEMENT_TEXT[code]
   if (!text) {
     return ""
   }
 
   if (code === 3 || code === "CAPTURE_DONE") {
-    return captureSquare ? text + " at " + captureSquare : text
+    const normalizedCapturedPiece = typeof capturedPieceAnnouncement === "string" ? capturedPieceAnnouncement.trim().toUpperCase() : ""
+    const captureText =
+      normalizedCapturedPiece === "PAWN"
+        ? "Pawn captured"
+        : normalizedCapturedPiece === "PIECE"
+          ? "Piece captured"
+          : text
+    return captureSquare ? captureText + " at " + captureSquare : captureText
   }
 
   return text
@@ -219,13 +243,25 @@ function collectLogText(value, output) {
   if (typeof value === "object") {
     const codes = REFEREE_CODE_KEYS.map((key) => getRefereeCode(value[key])).filter(Boolean)
     const captureSquare = REFEREE_CAPTURE_SQUARE_KEYS.map((key) => formatCaptureSquare(value[key])).find(Boolean)
-
-    codes.forEach((code, index) => {
-      output.push(formatRefereeCode(code, index === 0 ? captureSquare : ""))
+    const capturedPieceAnnouncement =
+      typeof value.captured_piece_announcement === "string" ? value.captured_piece_announcement : ""
+    const nextTurnMessage = formatNextTurnPawnAnnouncementData({
+      nextTurnPawnTries: Number.isInteger(value.next_turn_pawn_tries) ? value.next_turn_pawn_tries : null,
+      nextTurnHasPawnCapture: value.next_turn_has_pawn_capture === true,
     })
 
+    codes.forEach((code, index) => {
+      output.push(formatRefereeCode(code, index === 0 ? captureSquare : "", index === 0 ? capturedPieceAnnouncement : ""))
+    })
+    if (nextTurnMessage) {
+      output.push(nextTurnMessage)
+    }
+
     Object.entries(value).forEach(([key, item]) => {
-      if (REFEREE_CAPTURE_SQUARE_KEYS.includes(key)) {
+      if (REFEREE_CAPTURE_SQUARE_KEYS.includes(key) || key === "captured_piece_announcement") {
+        return
+      }
+      if (key === "next_turn_pawn_tries" || key === "next_turn_has_pawn_capture") {
         return
       }
       if (REFEREE_CODE_KEYS.includes(key) && getRefereeCode(item)) {
@@ -399,6 +435,8 @@ function splitRefereeTextParts(value) {
     .map((part) => part.trim())
     .filter(Boolean)
     .map((part) => part.replace(/^(Move attempt|Opponent move|Ask any pawn captures|Opponent asked any pawn captures)\s*[—-]\s*/i, "").trim())
+    .map((part) => part.replace(/^Pawn captured at\s+/i, "Pawn captured at "))
+    .map((part) => part.replace(/^Piece captured at\s+/i, "Piece captured at "))
     .map((part) => part.replace(/^Capture done at\s+/i, "Capture at "))
     .map((part) => part.replace(/^Capture done$/i, "Capture"))
     .filter(Boolean)
@@ -446,6 +484,10 @@ function normalizeCurrentMessagePart(message) {
     return { key: "illegal_move", text: "illegal move", priority: CURRENT_MESSAGE_PART_PRIORITY.illegal_move }
   }
 
+  if (normalized.startsWith("nonsense")) {
+    return { key: "nonsense", text: "nonsense", priority: CURRENT_MESSAGE_PART_PRIORITY.illegal_move }
+  }
+
   if (normalized === "move complete") {
     return { key: "move_complete", text: "move complete", priority: CURRENT_MESSAGE_PART_PRIORITY.move_complete }
   }
@@ -454,17 +496,37 @@ function normalizeCurrentMessagePart(message) {
     return { key: "has_any", text: "has pawn captures", priority: CURRENT_MESSAGE_PART_PRIORITY.has_any }
   }
 
+  if (normalized === "has pawn capture") {
+    return { key: "has_pawn_capture", text: "has pawn capture", priority: CURRENT_MESSAGE_PART_PRIORITY.has_any }
+  }
+
   if (normalized === "no pawn captures") {
     return { key: "no_any", text: "no pawn captures", priority: CURRENT_MESSAGE_PART_PRIORITY.no_any }
   }
 
-  const captureMatch = normalized.match(/^capture(?: done)?(?: at)? ([a-h][1-8])$/i)
+  const pawnTryMatch = normalized.match(/^(\d+) pawn tr(?:y|ies)$/i)
+  if (pawnTryMatch) {
+    const count = Number.parseInt(pawnTryMatch[1], 10)
+    if (Number.isFinite(count)) {
+      return {
+        key: `pawn-tries-${count}`,
+        text: count === 1 ? "1 pawn try" : `${count} pawn tries`,
+        priority: CURRENT_MESSAGE_PART_PRIORITY.has_any,
+      }
+    }
+  }
+
+  const captureMatch = normalized.match(/^(pawn captured|piece captured|capture(?: done)?)(?: at)? ([a-h][1-8])$/i)
   if (captureMatch) {
     return {
-      key: `capture-${captureMatch[1].toLowerCase()}`,
-      text: `capture ${captureMatch[1].toLowerCase()}`,
+      key: `capture-${captureMatch[2].toLowerCase()}`,
+      text: `capture ${captureMatch[2].toLowerCase()}`,
       priority: CURRENT_MESSAGE_PART_PRIORITY.capture,
     }
+  }
+
+  if (normalized === "pawn captured" || normalized === "piece captured") {
+    return { key: "capture", text: "capture", priority: CURRENT_MESSAGE_PART_PRIORITY.capture }
   }
 
   if (normalized === "capture" || normalized === "capture done") {
@@ -538,12 +600,17 @@ function summarizeCurrentMessageSideEntries(entries = []) {
   parts.forEach((part) => {
     lastPartKey = part.key
 
-    if (part.key === "has_any" || part.key === "no_any") {
+    if (
+      part.key === "has_any" ||
+      part.key === "has_pawn_capture" ||
+      part.key === "no_any" ||
+      part.key.startsWith("pawn-tries-")
+    ) {
       pawnCaptureState = part.text
       return
     }
 
-    if (part.key === "illegal_move") {
+    if (part.key === "illegal_move" || part.key === "nonsense") {
       return
     }
 
@@ -577,8 +644,8 @@ function summarizeCurrentMessageSideEntries(entries = []) {
   }
   if (moveCompleted) {
     summary.push("move complete")
-  } else if (lastPartKey === "illegal_move") {
-    summary.push("illegal move")
+  } else if (lastPartKey === "illegal_move" || lastPartKey === "nonsense") {
+    summary.push(lastPartKey === "nonsense" ? "nonsense" : "illegal move")
   }
   if (captureText) {
     summary.push(captureText)
@@ -697,7 +764,7 @@ function getCaptureSquareFromTexts(messages = []) {
     if (typeof message !== "string") {
       return ""
     }
-    const match = message.match(/capture(?: done)? at ([a-h][1-8])/i)
+    const match = message.match(/(?:pawn captured|piece captured|capture(?: done)?) at ([a-h][1-8])/i)
     return match ? formatCaptureSquare(match[1]) : ""
   }).find(Boolean) ?? ""
 }
@@ -883,16 +950,17 @@ function rawEntryMessages(entry) {
 
 function isCaptureAnnouncementEntry(entry) {
   return rawEntryMessages(entry).some(
-    (message) => typeof message === "string" && /^(Capture|Capture done)( at\b|$)/.test(message),
+    (message) => typeof message === "string" && /^(Capture|Capture done|Pawn captured|Piece captured)( at\b|$)/.test(message),
   )
 }
 
 function isMoveResolutionEntry(entry) {
   return rawEntryMessages(entry).some(
     (message) => typeof message === "string" && (
-      /^(Capture|Capture done)( at\b|$)/.test(message) ||
+      /^(Capture|Capture done|Pawn captured|Piece captured)( at\b|$)/.test(message) ||
       message.startsWith("Move complete") ||
-      message.startsWith("Illegal move")
+      message.startsWith("Illegal move") ||
+      message.startsWith("Nonsense")
     ),
   )
 }
@@ -973,15 +1041,6 @@ function getRecentCaptureSquares(gameState) {
   }
 
   return []
-}
-
-function formatRuleVariant(value) {
-  if (typeof value !== "string" || !value.trim()) {
-    return "—"
-  }
-
-  const normalized = value.trim().replace(/[_-]+/g, " ")
-  return normalized.replace(/\b\w/g, (char) => char.toUpperCase())
 }
 
 function normalizeRatings(source) {
