@@ -491,6 +491,11 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByRole("button", { name: "Square e2" })
+    await waitFor(() => {
+      const currentMessage = screen.getByLabelText("Current message")
+      const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
+      expect(timeline).toHaveAttribute("aria-label", "White: no pawn captures")
+    })
     fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
     fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
 
