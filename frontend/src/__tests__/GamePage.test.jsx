@@ -173,6 +173,52 @@ describe("GamePage", () => {
     expect(within(currentMessage).getByText("Black")).toBeInTheDocument()
   })
 
+  it("keeps_wild16_pawn_capture_status_with_the_player_to_move", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      turn: "black",
+      your_color: "black",
+      possible_actions: ["move"],
+      scoresheet: {
+        viewer_color: "black",
+        last_move_number: 2,
+        turns: [
+          {
+            turn: 2,
+            white: [
+              {
+                kind: "capture",
+                actor: "opponent",
+                message: "Opponent move — Piece captured at F2",
+                messages: ["Piece captured at F2"],
+              },
+            ],
+            black: [
+              {
+                kind: "status",
+                actor: "self",
+                message: "No pawn captures",
+                messages: ["No pawn captures"],
+              },
+            ],
+          },
+        ],
+      },
+    })
+
+    render(<GamePage />)
+
+    const currentMessage = await screen.findByLabelText("Current message")
+    expect(within(currentMessage).getByText("White")).toBeInTheDocument()
+    expect(within(currentMessage).getByText("capture f2")).toBeInTheDocument()
+    expect(within(currentMessage).getByText("Black")).toBeInTheDocument()
+    expect(within(currentMessage).getByText("no pawn captures, your move")).toBeInTheDocument()
+    expect(currentMessage.querySelector(".game-referee-latest__value--timeline")).toHaveAttribute(
+      "aria-label",
+      "White: capture f2 \u2192 Black: no pawn captures, your move",
+    )
+  })
+
   it("polls_every_500ms_while_active", async () => {
     render(<GamePage />)
 
@@ -276,7 +322,7 @@ describe("GamePage", () => {
     expect(within(currentMessage).queryByText("Illegal move. Try a different move.")).not.toBeInTheDocument()
   })
 
-  it("keeps_only_the_current_side_announcements_when_that_side_has_already_started_the_turn", async () => {
+  it("adds_your_turn_to_the_current_side_turn_start_announcement", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
       referee_turns: [
@@ -296,8 +342,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     const currentMessage = await screen.findByLabelText("Current message")
-    expect(within(currentMessage).getByText("no pawn captures")).toBeInTheDocument()
-    expect(within(currentMessage).queryByText("your move")).not.toBeInTheDocument()
+    expect(within(currentMessage).getByText("no pawn captures, your move")).toBeInTheDocument()
     expect(within(currentMessage).queryByText("opponent's move")).not.toBeInTheDocument()
   })
 
@@ -495,7 +540,7 @@ describe("GamePage", () => {
     await waitFor(() => {
       const currentMessage = screen.getByLabelText("Current message")
       const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
-      expect(timeline).toHaveAttribute("aria-label", "White: no pawn captures")
+      expect(timeline).toHaveAttribute("aria-label", "White: no pawn captures, your move")
     })
     fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
     fireEvent.click(screen.getByRole("button", { name: "Square e4" }))

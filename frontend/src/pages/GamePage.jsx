@@ -118,6 +118,7 @@ const CURRENT_MESSAGE_PART_PRIORITY = {
   other: 60,
 }
 const CURRENT_MESSAGE_LIVE_STATUS_KEYS = new Set(["illegal move", "submitting move", "your move", "opponent's move"])
+const CURRENT_MESSAGE_TURN_START_STATUS = new Set(["has pawn captures", "has pawn capture", "no pawn captures"])
 
 function normalizeLogColor(value) {
   if (typeof value !== "string") {
@@ -694,6 +695,12 @@ function buildCurrentMessageHistorySegments(turns) {
   return segments
 }
 
+function isTurnStartStatusSegment(segment) {
+  return Array.isArray(segment?.parts) && segment.parts.length > 0 && segment.parts.every((part) => (
+    CURRENT_MESSAGE_TURN_START_STATUS.has(part) || /^\d+ pawn tr(?:y|ies)$/i.test(part)
+  ))
+}
+
 function formatCurrentMessageActor(color) {
   return color === "black" ? "Black" : "White"
 }
@@ -735,6 +742,14 @@ function buildCurrentMessageSegments({ turns, turnColor, yourColor, canMove, wai
 
   if (lastSegment && lastSegment.color === currentColor) {
     if (liveText === "your move" || liveText === "opponent's move") {
+      if (isTurnStartStatusSegment(lastSegment)) {
+        const parts = summarizeCurrentMessageParts([...lastSegment.parts, liveText])
+        nextSegments[nextSegments.length - 1] = {
+          ...lastSegment,
+          parts,
+          text: parts.join(", "),
+        }
+      }
       return nextSegments.slice(-3)
     }
 
