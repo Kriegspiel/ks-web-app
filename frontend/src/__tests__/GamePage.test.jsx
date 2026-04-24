@@ -779,7 +779,9 @@ describe("GamePage", () => {
 
     render(<GamePage />)
 
-    fireEvent.click(await screen.findByRole("button", { name: "Close" }))
+    const closeButton = await screen.findByRole("button", { name: "Close" })
+    await waitFor(() => expect(closeButton).not.toBeDisabled())
+    fireEvent.click(closeButton)
 
     await waitFor(() => {
       expect(mockApi.deleteWaitingGame).toHaveBeenCalledWith("g-123")
@@ -1615,7 +1617,9 @@ describe("GamePage", () => {
     await screen.findByRole("button", { name: "Square e4" })
     fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
 
-    expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
+    })
     expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--suggested")
     expect(screen.getByRole("button", { name: "Square f5" })).not.toHaveClass("square--suggested")
   })
@@ -1781,8 +1785,10 @@ describe("GamePage", () => {
     await screen.findByRole("button", { name: "Square e4" })
     fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
 
-    expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
-    expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
+      expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
+    })
     expect(screen.getByRole("button", { name: "Square e5" })).not.toHaveClass("square--suggested")
   })
 
@@ -1808,9 +1814,11 @@ describe("GamePage", () => {
     await screen.findByRole("button", { name: "Square e4" })
     fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
 
-    expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
-    expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
-    expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
+      expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
+      expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
+    })
   })
 
   it("applies_no_any_constraint_on_black_turns_using_turn_number_not_halfmove_number", async () => {
