@@ -1796,7 +1796,8 @@ export default function GamePage() {
   const signedInAs = user?.username ?? user?.email ?? "player"
   const isCompleted = gameState?.state === "completed" || gameMeta?.state === "completed"
   const canMove = gameState?.state === "active" && possibleActions.includes("move") && !submittingAction
-  const showAskAny = gameState?.state === "active" && possibleActions.includes("ask_any")
+  const showAskAny =
+    gameState?.state === "active" && gameMeta?.rule_variant === "berkeley_any" && possibleActions.includes("ask_any")
   const canAskAny = showAskAny && !submittingAction
   const canResign = gameState?.state === "active" && !submittingAction
   const canCloseWaitingGame = gameState?.state === "waiting" && !submittingAction

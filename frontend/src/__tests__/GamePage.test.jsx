@@ -1692,6 +1692,30 @@ describe("GamePage", () => {
     expect(screen.getByRole("button", { name: "Square f5" })).not.toHaveClass("square--suggested")
   })
 
+  it.each(["cincinnati", "wild16"])("hides_any_for_%s_even_if_backend_sends_stale_action", async (ruleVariant) => {
+    mockApi.getGame.mockResolvedValueOnce({
+      game_id: "g-123",
+      game_code: "ABC123",
+      rule_variant: ruleVariant,
+      state: "active",
+      opponent_type: "user",
+      white: { username: "fil", role: "user", connected: true },
+      black: { username: "opponent", role: "user", connected: true },
+      turn: "white",
+      move_number: 1,
+      created_at: "2026-04-02T12:00:00Z",
+    })
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      possible_actions: ["move", "ask_any"],
+    })
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e2" })
+    expect(screen.queryByRole("button", { name: "Any pawn captures?" })).not.toBeInTheDocument()
+  })
+
   it.each([
     ["cincinnati", "Has pawn capture"],
     ["wild16", "1 pawn try"],
