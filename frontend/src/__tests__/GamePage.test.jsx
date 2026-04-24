@@ -471,7 +471,7 @@ describe("GamePage", () => {
 
   it("shows_submitting_move_inside_the_last_current_message_statement", async () => {
     let resolveSubmit
-    mockApi.getGameState.mockResolvedValueOnce({
+    const stateWithNoPawnCaptures = {
       ...activeState,
       referee_turns: [
         {
@@ -480,7 +480,8 @@ describe("GamePage", () => {
           black: [],
         },
       ],
-    })
+    }
+    mockApi.getGameState.mockResolvedValue(stateWithNoPawnCaptures)
     mockApi.submitMove.mockImplementationOnce(
       () =>
         new Promise((resolve) => {
