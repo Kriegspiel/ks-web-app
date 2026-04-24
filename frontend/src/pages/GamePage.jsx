@@ -192,6 +192,9 @@ function formatNextTurnPawnAnnouncementData({ nextTurnPawnTries, nextTurnHasPawn
   if (nextTurnHasPawnCapture === true) {
     return "Has pawn capture"
   }
+  if (nextTurnHasPawnCapture === false) {
+    return "No pawn captures"
+  }
 
   return ""
 }
@@ -247,7 +250,8 @@ function collectLogText(value, output) {
       typeof value.captured_piece_announcement === "string" ? value.captured_piece_announcement : ""
     const nextTurnMessage = formatNextTurnPawnAnnouncementData({
       nextTurnPawnTries: Number.isInteger(value.next_turn_pawn_tries) ? value.next_turn_pawn_tries : null,
-      nextTurnHasPawnCapture: value.next_turn_has_pawn_capture === true,
+      nextTurnHasPawnCapture:
+        typeof value.next_turn_has_pawn_capture === "boolean" ? value.next_turn_has_pawn_capture : null,
     })
 
     codes.forEach((code, index) => {
@@ -297,6 +301,14 @@ function getLogEntryTexts(entry) {
   ]
 
   candidates.forEach((candidate) => collectLogText(candidate, output))
+  const nextTurnMessage = formatNextTurnPawnAnnouncementData({
+    nextTurnPawnTries: Number.isInteger(entry.next_turn_pawn_tries) ? entry.next_turn_pawn_tries : null,
+    nextTurnHasPawnCapture:
+      typeof entry.next_turn_has_pawn_capture === "boolean" ? entry.next_turn_has_pawn_capture : null,
+  })
+  if (nextTurnMessage) {
+    output.push(nextTurnMessage)
+  }
 
   return [...new Set(output)]
 }
@@ -1784,7 +1796,8 @@ export default function GamePage() {
   const signedInAs = user?.username ?? user?.email ?? "player"
   const isCompleted = gameState?.state === "completed" || gameMeta?.state === "completed"
   const canMove = gameState?.state === "active" && possibleActions.includes("move") && !submittingAction
-  const canAskAny = gameState?.state === "active" && possibleActions.includes("ask_any") && !submittingAction
+  const showAskAny = gameState?.state === "active" && possibleActions.includes("ask_any")
+  const canAskAny = showAskAny && !submittingAction
   const canResign = gameState?.state === "active" && !submittingAction
   const canCloseWaitingGame = gameState?.state === "waiting" && !submittingAction
 
@@ -2656,7 +2669,7 @@ export default function GamePage() {
             </section>
 
             <section className="game-card game-card--referee" aria-label="Referee panel" style={refereePanelStyle}>
-              {gameState.state === "active" ? (
+              {showAskAny ? (
                 <div className="game-actions" aria-label="Game actions">
                   <button type="button" onClick={handleAskAny} disabled={!canAskAny}>
                     Any pawn captures?

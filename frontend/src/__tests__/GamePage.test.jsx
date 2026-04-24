@@ -1450,6 +1450,25 @@ describe("GamePage", () => {
     expect(within(refereeLog).getByText("Checkmate — Black wins")).toBeInTheDocument()
   })
 
+  it("formats_cincinnati_false_pawn_capture_metadata_as_no_pawn_captures", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      referee_log: [
+        {
+          turn: 1,
+          color: "black",
+          announcement: "REGULAR_MOVE",
+          next_turn_has_pawn_capture: false,
+        },
+      ],
+    })
+
+    render(<GamePage />)
+
+    const refereeLog = await screen.findByRole("log", { name: "Referee log by turn" })
+    expect(within(refereeLog).getByText("No pawn captures")).toBeInTheDocument()
+  })
+
   it("does_not_mark_the_whole_game_page_as_a_live_region", async () => {
     const { container } = render(<GamePage />)
 
@@ -1628,6 +1647,94 @@ describe("GamePage", () => {
     expect(screen.getByRole("button", { name: "Square f3" })).not.toHaveClass("square--suggested")
   })
 
+  it.each([
+    ["cincinnati", "No pawn captures"],
+    ["wild16", "No pawn captures"],
+  ])("hides_any_and_filters_capture_targets_after_%s_no_pawn_capture_announcement", async (ruleVariant, message) => {
+    mockApi.getGame.mockResolvedValueOnce({
+      game_id: "g-123",
+      game_code: "ABC123",
+      rule_variant: ruleVariant,
+      state: "active",
+      opponent_type: "user",
+      white: { username: "fil", role: "user", connected: true },
+      black: { username: "opponent", role: "user", connected: true },
+      turn: "white",
+      move_number: 1,
+      created_at: "2026-04-02T12:00:00Z",
+    })
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      move_number: 1,
+      possible_actions: ["move"],
+      your_fen: "8/8/8/8/8/8/8/4K3",
+      allowed_moves: ["e4d5", "e4e5", "e4f5"],
+      scoresheet: {
+        turns: [
+          {
+            turn: 1,
+            white: [{ messages: [message] }],
+            black: [],
+          },
+        ],
+      },
+    })
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e4" })
+    expect(screen.queryByRole("button", { name: "Any pawn captures?" })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+    expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square f5" })).not.toHaveClass("square--suggested")
+  })
+
+  it.each([
+    ["cincinnati", "Has pawn capture"],
+    ["wild16", "1 pawn try"],
+  ])("does_not_apply_berkeley_has_any_constraint_to_%s_announcements", async (ruleVariant, message) => {
+    mockApi.getGame.mockResolvedValueOnce({
+      game_id: "g-123",
+      game_code: "ABC123",
+      rule_variant: ruleVariant,
+      state: "active",
+      opponent_type: "user",
+      white: { username: "fil", role: "user", connected: true },
+      black: { username: "opponent", role: "user", connected: true },
+      turn: "white",
+      move_number: 1,
+      created_at: "2026-04-02T12:00:00Z",
+    })
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      move_number: 1,
+      possible_actions: ["move"],
+      your_fen: "8/8/8/8/8/8/8/4K3",
+      allowed_moves: ["e4d5", "e4e5", "e4f5"],
+      scoresheet: {
+        turns: [
+          {
+            turn: 1,
+            white: [{ messages: [message] }],
+            black: [],
+          },
+        ],
+      },
+    })
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e4" })
+    expect(screen.queryByRole("button", { name: "Any pawn captures?" })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+    expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
+  })
+
   it("locally_filters_hidden_midfield_pawn_targets_after_has_any_even_if_allowed_moves_are_stale", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
@@ -1723,13 +1830,13 @@ describe("GamePage", () => {
     expect(screen.getByRole("button", { name: "Square e4" })).not.toHaveClass("square--suggested")
   })
 
-  it("disables_ask_any_when_not_allowed", async () => {
+  it("hides_ask_any_when_not_allowed", async () => {
     mockApi.getGameState.mockResolvedValueOnce({ ...activeState, possible_actions: ["move"] })
 
     render(<GamePage />)
 
-    const askButton = await screen.findByRole("button", { name: "Any pawn captures?" })
-    expect(askButton).toBeDisabled()
+    await screen.findByText(/Game code:/i)
+    expect(screen.queryByRole("button", { name: "Any pawn captures?" })).not.toBeInTheDocument()
   })
 
   it("stops_polling_when_game_completed", async () => {
