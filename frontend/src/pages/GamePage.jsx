@@ -391,6 +391,11 @@ function flattenGroupedRefereeEntries(turns) {
   return entries
 }
 
+function refereeEntryCompletesTurn(entry) {
+  const messages = Array.isArray(entry?.messages) ? entry.messages : []
+  return messages.some((message) => typeof message === "string" && /\bmove complete\b/i.test(message))
+}
+
 function getGameScoresheet(gameState, color) {
   if (!gameState || !color) {
     return null
@@ -1620,6 +1625,7 @@ export default function GamePage() {
   const suppressClickRef = useRef(false)
   const suppressContextMenuRef = useRef(false)
   const logScrollRef = useRef(null)
+  const lastScrollEntryKeysRef = useRef([])
   const viewportRestoreRef = useRef(null)
   const stateRequestIdRef = useRef(0)
   const metadataRequestIdRef = useRef(0)
@@ -2004,7 +2010,21 @@ export default function GamePage() {
 
   useEffect(() => {
     const logNode = logScrollRef.current
+    const previousKeys = lastScrollEntryKeysRef.current
+    const nextKeys = flattenedRefereeEntries.map((entry) => entry.key)
+    const hasPreviousEntries = previousKeys.length > 0
+    const isAppendOnly =
+      previousKeys.length <= nextKeys.length &&
+      previousKeys.every((key, index) => key === nextKeys[index])
+    const appendedEntries = isAppendOnly ? flattenedRefereeEntries.slice(previousKeys.length) : []
+
+    lastScrollEntryKeysRef.current = nextKeys
+
     if (!logNode) {
+      return
+    }
+
+    if (!hasPreviousEntries || !isAppendOnly || !appendedEntries.some(refereeEntryCompletesTurn)) {
       return
     }
 
@@ -2015,7 +2035,7 @@ export default function GamePage() {
     return () => {
       window.cancelAnimationFrame(frameId)
     }
-  }, [groupedRefereeLog])
+  }, [flattenedRefereeEntries])
 
   useEffect(() => {
     const previousKeys = lastSoundEntryKeysRef.current

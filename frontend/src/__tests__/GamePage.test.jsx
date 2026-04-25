@@ -317,8 +317,10 @@ describe("GamePage", () => {
       expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
     })
 
-    expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--illegal")
-    expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--illegal")
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--illegal")
+      expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--illegal")
+    })
     const currentMessage = screen.getByLabelText("Current message")
     expect(within(currentMessage).getByText("White")).toBeInTheDocument()
     expect(within(currentMessage).getByText("illegal move")).toBeInTheDocument()
@@ -713,7 +715,7 @@ describe("GamePage", () => {
     expect(screen.getByText("9:58")).toBeInTheDocument()
   })
 
-  it("always_follows_new_referee_entries_to_the_bottom", async () => {
+  it("only_scrolls_referee_log_after_completed_turn_entries", async () => {
     const firstState = {
       ...activeState,
       referee_log: [{ turn: 1, color: "white", announcement: "White to move" }],
@@ -722,30 +724,47 @@ describe("GamePage", () => {
       ...activeState,
       referee_log: [
         { turn: 1, color: "white", announcement: "White to move" },
-        { turn: 1, color: "black", announcement: "Black replied" },
+        { turn: 1, color: "white", announcement: "Illegal move" },
       ],
     }
+    const thirdState = {
+      ...activeState,
+      referee_log: [
+        { turn: 1, color: "white", announcement: "White to move" },
+        { turn: 1, color: "white", announcement: "Illegal move" },
+        { turn: 1, color: "white", announcement: "Move complete" },
+      ],
+    }
+
+    let resolveThirdState
+    const thirdStateResponse = new Promise((resolve) => {
+      resolveThirdState = () => resolve(thirdState)
+    })
 
     mockApi.getGameState
       .mockResolvedValueOnce(firstState)
       .mockResolvedValueOnce(secondState)
+      .mockReturnValueOnce(thirdStateResponse)
+      .mockResolvedValue(thirdState)
 
     render(<GamePage />)
 
     const log = await screen.findByRole("log", { name: "Referee log by turn" })
     Object.defineProperty(log, "scrollHeight", { value: 500, configurable: true })
     Object.defineProperty(log, "clientHeight", { value: 120, configurable: true })
-    Object.defineProperty(log, "scrollTop", { value: 0, writable: true, configurable: true })
-
-    await waitFor(() => {
-      expect(log.scrollTop).toBe(500)
-    })
-
-    log.scrollTop = 100
+    Object.defineProperty(log, "scrollTop", { value: 100, writable: true, configurable: true })
 
     await waitFor(() => {
       expect(mockApi.getGameState).toHaveBeenCalledTimes(2)
-    })
+    }, { timeout: 3000 })
+
+    expect(log.scrollTop).toBe(100)
+
+    await waitFor(() => {
+      expect(mockApi.getGameState).toHaveBeenCalledTimes(3)
+    }, { timeout: 3000 })
+
+    resolveThirdState()
 
     await waitFor(() => {
       expect(log.scrollTop).toBe(500)
