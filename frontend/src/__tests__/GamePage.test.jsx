@@ -322,6 +322,41 @@ describe("GamePage", () => {
     expect(within(currentMessage).queryByText("Illegal move. Try a different move.")).not.toBeInTheDocument()
   })
 
+  it("clears_a_local_illegal_move_message_when_the_authoritative_turn_advances", async () => {
+    mockApi.getGameState
+      .mockResolvedValueOnce(activeState)
+      .mockResolvedValue({
+        ...activeState,
+        turn: "black",
+        move_number: 2,
+        possible_actions: [],
+        referee_turns: [
+          {
+            turn: 1,
+            white: [{ messages: ["Move complete"] }],
+            black: [],
+          },
+        ],
+      })
+    mockApi.submitMove.mockResolvedValueOnce({ move_done: false })
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e2" })
+    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+
+    const currentMessage = await screen.findByLabelText("Current message")
+    await waitFor(() => expect(within(currentMessage).getByText("illegal move")).toBeInTheDocument())
+
+    await sleep(650)
+    await waitFor(() => {
+      expect(mockApi.getGameState.mock.calls.length).toBeGreaterThanOrEqual(2)
+      expect(within(currentMessage).queryByText("illegal move")).not.toBeInTheDocument()
+    })
+    expect(within(currentMessage).getByText("opponent's move")).toBeInTheDocument()
+  })
+
   it("adds_your_turn_to_the_current_side_turn_start_announcement", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,

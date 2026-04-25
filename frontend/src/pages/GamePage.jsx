@@ -120,6 +120,10 @@ const CURRENT_MESSAGE_PART_PRIORITY = {
 const CURRENT_MESSAGE_LIVE_STATUS_KEYS = new Set(["illegal move", "submitting move", "your move", "opponent's move"])
 const CURRENT_MESSAGE_TURN_START_STATUS = new Set(["has pawn captures", "has pawn capture", "no pawn captures"])
 
+function isIllegalMoveActionError(value) {
+  return typeof value === "string" && value.toLowerCase().startsWith("illegal move")
+}
+
 function normalizeLogColor(value) {
   if (typeof value !== "string") {
     return null
@@ -726,7 +730,7 @@ function currentTurnStatusText({ turnColor, yourColor, canMove, waitingForOppone
 function buildCurrentMessageSegments({ turns, turnColor, yourColor, canMove, waitingForOpponent, actionError, submittingAction }) {
   const historySegments = buildCurrentMessageHistorySegments(turns)
   const currentColor = normalizeLogColor(turnColor)
-  const illegalMoveActive = typeof actionError === "string" && actionError.toLowerCase().startsWith("illegal move")
+  const illegalMoveActive = isIllegalMoveActionError(actionError)
   const liveText = illegalMoveActive
     ? "illegal move"
     : submittingAction
@@ -1618,6 +1622,7 @@ export default function GamePage() {
   const lastSoundEntryKeysRef = useRef([])
   const finishDragPhantomRef = useRef(null)
   const finishMoveDragRef = useRef(null)
+  const illegalMoveContextRef = useRef(null)
 
   if (!soundPlayerRef.current) {
     soundPlayerRef.current = createGameSoundPlayer()
@@ -1775,6 +1780,28 @@ export default function GamePage() {
       window.clearInterval(intervalId)
     }
   }, [gameRef, gameState?.state, pollState])
+
+  useEffect(() => {
+    if (!isIllegalMoveActionError(actionError) || !illegalMoveContextRef.current || !gameState) {
+      return
+    }
+
+    const context = illegalMoveContextRef.current
+    const stillSameAttemptWindow =
+      context.gameRef === gameRef &&
+      context.state === gameState.state &&
+      context.turn === gameState.turn &&
+      context.moveNumber === gameState.move_number &&
+      context.yourColor === gameState.your_color
+
+    if (stillSameAttemptWindow) {
+      return
+    }
+
+    illegalMoveContextRef.current = null
+    setActionError("")
+    setIllegalMoveSquares([])
+  }, [actionError, gameRef, gameState])
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -2364,12 +2391,20 @@ export default function GamePage() {
   async function submitMoveWithUci(uci) {
     blurActiveInteractiveElement()
     setSubmittingAction(true)
+    illegalMoveContextRef.current = null
     setActionError("")
     captureViewport()
 
     try {
       const result = await submitMove(gameRef, uci)
       if (result?.move_done === false) {
+        illegalMoveContextRef.current = {
+          gameRef,
+          state: gameState?.state,
+          turn: gameState?.turn,
+          moveNumber: gameState?.move_number,
+          yourColor: gameState?.your_color,
+        }
         setActionError("Illegal move. Try a different move.")
         setIllegalMoveSquares([uci.slice(0, 2), uci.slice(2, 4)])
         setToSquare("")
