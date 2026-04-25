@@ -56,6 +56,7 @@ describe("ProfilePage", () => {
         {
           game_id: "g-legacy-bot",
           result: "win",
+          rule_variant: "berkeley_any",
           opponent: "legacybot",
           opponent_role: "bot",
           played_at: "2026-03-20T12:00:00Z",
@@ -70,6 +71,7 @@ describe("ProfilePage", () => {
         {
           game_id: "g-1",
           result: "win",
+          rule_variant: "cincinnati",
           opponent: "amy",
           opponent_role: "user",
           played_at: "2026-03-21T12:00:00Z",
@@ -84,6 +86,7 @@ describe("ProfilePage", () => {
         {
           game_id: "g-2",
           result: "loss",
+          rule_variant: "wild16",
           opponent: "bob",
           opponent_role: "bot",
           played_at: "2026-03-25T12:00:00Z",
@@ -140,7 +143,8 @@ describe("ProfilePage", () => {
     expect(screen.getByText("Start 1290")).toBeInTheDocument()
     expect(screen.getByText("Latest 1412")).toBeInTheDocument()
     expect(screen.getByText("5 (55.6%)")).toBeInTheDocument()
-    expect(screen.getByText(/win vs amy/i)).toBeInTheDocument()
+    expect(screen.getByText(/win vs amy · Cincinnati/i)).toBeInTheDocument()
+    expect(screen.getByText(/loss vs bob · Wild 16/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/fil/games")
   })
 

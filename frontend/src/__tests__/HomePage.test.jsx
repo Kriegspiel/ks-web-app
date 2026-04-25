@@ -119,6 +119,7 @@ describe("HomePage", () => {
         {
           game_id: "game-1",
           game_code: "ABCD12",
+          rule_variant: "wild16",
           state: "active",
           updated_at: "2026-03-26T15:00:00Z",
           white: { username: "randobot", role: "bot" },
@@ -127,6 +128,7 @@ describe("HomePage", () => {
         {
           game_id: "game-2",
           game_code: "EFGH34",
+          rule_variant: "cincinnati",
           state: "completed",
           updated_at: "2026-03-25T15:00:00Z",
           white: { username: "fil", role: "user" },
@@ -169,6 +171,8 @@ describe("HomePage", () => {
     expect(screen.getByRole("link", { name: "Resume active game" })).toHaveAttribute("href", "/game/ABCD12")
     expect(screen.getByText("ABCD12")).toBeInTheDocument()
     expect(screen.getByText("Active")).toBeInTheDocument()
+    expect(screen.getByText("Rules: Wild 16")).toBeInTheDocument()
+    expect(screen.getByText("Rules: Cincinnati")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "randobot (bot)" })).toHaveAttribute("href", "/user/randobot")
     expect(screen.getAllByRole("link", { name: "fil" })[0]).toHaveAttribute("href", "/user/fil")
     expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/fil/games")
