@@ -16,7 +16,10 @@ vi.mock("react-router-dom", async () => ({ ...(await vi.importActual("react-rout
 vi.mock("../hooks/useAuth", () => ({ useAuth: () => mockAuth }))
 vi.mock("../services/api", () => mockApi)
 
+const LAST_RULE_VARIANT_STORAGE_KEY = "kriegspiel.lastRuleVariant"
+
 beforeEach(() => {
+  window.localStorage.clear()
   mockNavigate.mockReset()
   mockAuth.user = { username: "fil" }
   mockAuth.actionError = ""
@@ -28,7 +31,7 @@ beforeEach(() => {
   mockApi.deleteWaitingGame.mockResolvedValue({})
   mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-2", username: "gptnano", display_name: "GPT Nano", description: "Model-driven Kriegspiel bot that chooses moves using GPT nano model.", elo: 1342, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-3", username: "randobotany", display_name: "Random Any Bot", description: "Asks any pawn captures first, then plays random legal-looking moves.", elo: 1200, supported_rule_variants: ["berkeley_any"] }] })
 })
-afterEach(() => { cleanup(); vi.useRealTimers() })
+afterEach(() => { cleanup(); window.localStorage.clear(); vi.useRealTimers() })
 
 function renderPage() {
   render(
@@ -72,6 +75,28 @@ describe("LobbyPage", () => {
     expect(await screen.findByRole("link", { name: "Resume active game" })).toHaveAttribute("href", "/game/LIVE01")
     expect(screen.getByRole("link", { name: "Leaderboard" })).toHaveAttribute("href", "/leaderboard")
     expect(screen.getByRole("link", { name: /Read rules/i })).toHaveAttribute("href", "https://kriegspiel.org/rules")
+  })
+
+  it("preselects_the_last_selected_ruleset_and_persists_new_choices", async () => {
+    window.localStorage.setItem(LAST_RULE_VARIANT_STORAGE_KEY, "wild16")
+
+    renderPage()
+
+    const rulesetSelect = await screen.findByLabelText("Ruleset")
+    expect(rulesetSelect).toHaveValue("wild16")
+
+    fireEvent.change(rulesetSelect, { target: { value: "cincinnati" } })
+
+    expect(rulesetSelect).toHaveValue("cincinnati")
+    expect(window.localStorage.getItem(LAST_RULE_VARIANT_STORAGE_KEY)).toBe("cincinnati")
+  })
+
+  it("falls_back_to_berkeley_any_when_the_stored_ruleset_is_unknown", async () => {
+    window.localStorage.setItem(LAST_RULE_VARIANT_STORAGE_KEY, "mystery")
+
+    renderPage()
+
+    expect(await screen.findByLabelText("Ruleset")).toHaveValue("berkeley_any")
   })
 
   it("hides_resume_active_game_when_user_has_no_active_game", async () => {

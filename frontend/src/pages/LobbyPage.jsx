@@ -13,6 +13,32 @@ const MY_GAMES_POLL_MS = 10000
 const LOBBY_STATS_POLL_MS = 10000
 const ACTIVE_STATES = new Set(["active"])
 const RULES_URL = "https://kriegspiel.org/rules"
+const DEFAULT_RULE_VARIANT = "berkeley_any"
+const LAST_RULE_VARIANT_STORAGE_KEY = "kriegspiel.lastRuleVariant"
+const RULESET_VALUES = new Set(RULESET_OPTIONS.map((option) => option.value))
+
+function normalizeRuleVariant(value) {
+  const normalized = typeof value === "string" ? value.trim() : ""
+  return RULESET_VALUES.has(normalized) ? normalized : DEFAULT_RULE_VARIANT
+}
+
+function readPreferredRuleVariant() {
+  try {
+    return normalizeRuleVariant(window.localStorage?.getItem(LAST_RULE_VARIANT_STORAGE_KEY))
+  } catch {
+    return DEFAULT_RULE_VARIANT
+  }
+}
+
+function storePreferredRuleVariant(value) {
+  const normalized = normalizeRuleVariant(value)
+  try {
+    window.localStorage?.setItem(LAST_RULE_VARIANT_STORAGE_KEY, normalized)
+  } catch {
+    // Storage can be unavailable in private windows; the in-memory selection still works.
+  }
+  return normalized
+}
 
 function normalizeBotDescription(bot) {
   if (!bot || typeof bot !== "object") {
@@ -113,7 +139,7 @@ export default function LobbyPage() {
   const formatCount = useMemo(() => new Intl.NumberFormat("en-US"), [])
   const [waitingGameId, setWaitingGameId] = useState(null)
   const [opponentType, setOpponentType] = useState("human")
-  const [ruleVariant, setRuleVariant] = useState("berkeley_any")
+  const [ruleVariant, setRuleVariant] = useState(readPreferredRuleVariant)
   const [bots, setBots] = useState([])
   const [botsError, setBotsError] = useState("")
   const [selectedBotId, setSelectedBotId] = useState("")
@@ -343,6 +369,10 @@ export default function LobbyPage() {
     }
   }
 
+  function handleRuleVariantChange(event) {
+    setRuleVariant(storePreferredRuleVariant(event.target.value))
+  }
+
   async function handleJoinByCode(event) {
     event.preventDefault()
     const normalizedCode = joinCode.trim().toUpperCase()
@@ -447,7 +477,7 @@ export default function LobbyPage() {
           <div className="lobby-create-grid">
             <div className="lobby-create-field">
               <label htmlFor="ruleset-picker">Ruleset</label>
-              <select id="ruleset-picker" value={ruleVariant} onChange={(event) => setRuleVariant(event.target.value)}>
+              <select id="ruleset-picker" value={ruleVariant} onChange={handleRuleVariantChange}>
                 {RULESET_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
