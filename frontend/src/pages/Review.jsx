@@ -42,8 +42,8 @@ function formatAnnouncement(code) {
 }
 
 function formatNextTurnPawnAnnouncement(answer) {
-  const pawnTries = Number(answer?.next_turn_pawn_tries)
-  if (Number.isInteger(pawnTries)) {
+  const pawnTries = answer?.next_turn_pawn_tries
+  if (typeof pawnTries === "number" && Number.isInteger(pawnTries)) {
     if (pawnTries <= 0) {
       return "No pawn captures"
     }
@@ -52,6 +52,9 @@ function formatNextTurnPawnAnnouncement(answer) {
 
   if (answer?.next_turn_has_pawn_capture === true) {
     return "Has pawn capture"
+  }
+  if (answer?.next_turn_has_pawn_capture === false) {
+    return "No pawn captures"
   }
 
   return ""

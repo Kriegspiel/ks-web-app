@@ -311,6 +311,59 @@ describe("ReviewPage", () => {
     expect(screen.getByRole("button", { name: /White 1 pawn try · \[d2d3\] Move complete/i })).toBeInTheDocument()
   })
 
+  it("uses_cincinnati_has_pawn_capture_flags_instead_of_treating_null_pawn_tries_as_zero", async () => {
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      game_id: "g-620",
+      rule_variant: "cincinnati",
+      moves: [
+        {
+          ply: 1,
+          color: "white",
+          question_type: "COMMON",
+          uci: "c4b5",
+          answer: {
+            main: "REGULAR_MOVE",
+            next_turn_pawn_tries: null,
+            next_turn_has_pawn_capture: true,
+            special: null,
+          },
+          move_done: true,
+          replay_fen: transcript.moves[0].replay_fen,
+        },
+        {
+          ply: 2,
+          color: "black",
+          question_type: "COMMON",
+          uci: "e3c5",
+          answer: {
+            main: "REGULAR_MOVE",
+            next_turn_pawn_tries: null,
+            next_turn_has_pawn_capture: false,
+            special: null,
+          },
+          move_done: true,
+          replay_fen: transcript.moves[1].replay_fen,
+        },
+        {
+          ply: 3,
+          color: "white",
+          question_type: "COMMON",
+          uci: "b1c3",
+          answer: { main: "REGULAR_MOVE", special: null },
+          move_done: true,
+          replay_fen: transcript.moves[0].replay_fen,
+        },
+      ],
+    })
+
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    expect(screen.getByRole("button", { name: /Black Has pawn capture · \[e3c5\] Move complete/i })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /Black No pawn captures · \[e3c5\] Move complete/i })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /White No pawn captures · \[b1c3\] Move complete/i })).toBeInTheDocument()
+  })
+
   it("shows_controlled_error_for_invalid_transcript", async () => {
     mockApi.getGameTranscript.mockResolvedValueOnce({ game_id: "g-620", moves: null })
 
