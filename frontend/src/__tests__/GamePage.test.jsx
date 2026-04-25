@@ -323,21 +323,8 @@ describe("GamePage", () => {
   })
 
   it("clears_a_local_illegal_move_message_when_the_authoritative_turn_advances", async () => {
-    mockApi.getGameState
-      .mockResolvedValueOnce(activeState)
-      .mockResolvedValue({
-        ...activeState,
-        turn: "black",
-        move_number: 2,
-        possible_actions: [],
-        referee_turns: [
-          {
-            turn: 1,
-            white: [{ messages: ["Move complete"] }],
-            black: [],
-          },
-        ],
-      })
+    let authoritativeState = activeState
+    mockApi.getGameState.mockImplementation(() => Promise.resolve(authoritativeState))
     mockApi.submitMove.mockResolvedValueOnce({ move_done: false })
 
     render(<GamePage />)
@@ -348,6 +335,20 @@ describe("GamePage", () => {
 
     const currentMessage = await screen.findByLabelText("Current message")
     await waitFor(() => expect(within(currentMessage).getByText("illegal move")).toBeInTheDocument())
+
+    authoritativeState = {
+      ...activeState,
+      turn: "black",
+      move_number: 2,
+      possible_actions: [],
+      referee_turns: [
+        {
+          turn: 1,
+          white: [{ messages: ["Move complete"] }],
+          black: [],
+        },
+      ],
+    }
 
     await sleep(650)
     await waitFor(() => {
