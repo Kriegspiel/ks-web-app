@@ -4,6 +4,7 @@ import ChessBoard from "../components/ChessBoard.jsx"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import { getGame, getGameTranscript } from "../services/api"
+import { formatRuleVariant } from "../utils/rules"
 import "./Review.css"
 
 const STARTING_FENS = {
@@ -727,6 +728,7 @@ export default function ReviewPage() {
               <h3>Game details</h3>
               <ul className="review-page__rating-list">
                 <li><span>Game code</span><strong>{game?.game_code ?? gameRef}</strong></li>
+                <li><span>Rules</span><strong>{formatRuleVariant(game?.rule_variant)}</strong></li>
                 <li><span>Started</span><strong>{startedAt}</strong></li>
                 <li><span>Finished</span><strong>{endedAt}</strong></li>
                 <li><span>Duration</span><strong>{duration}</strong></li>
