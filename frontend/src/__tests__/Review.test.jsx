@@ -241,9 +241,74 @@ describe("ReviewPage", () => {
 
     await screen.findByText(/Move log/i)
     expect(
-      screen.getByRole("button", { name: /White \[e5d4\] Pawn captured at D4 · 2 pawn tries · Check on file/i }),
+      screen.getByRole("button", { name: /White \[e5d4\] Pawn captured at D4 · Check on file/i }),
     ).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Black \[a7a6\] Nonsense/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Black 2 pawn tries · \[a7a6\] Nonsense/i })).toBeInTheDocument()
+  })
+
+  it("places_next_turn_pawn_announcements_at_the_start_of_the_next_ply_group", async () => {
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      game_id: "g-620",
+      rule_variant: "wild16",
+      moves: [
+        {
+          ply: 1,
+          color: "white",
+          question_type: "COMMON",
+          uci: "g2g4",
+          answer: {
+            main: "REGULAR_MOVE",
+            next_turn_pawn_tries: 0,
+            special: null,
+          },
+          move_done: true,
+          replay_fen: transcript.moves[0].replay_fen,
+        },
+        {
+          ply: 2,
+          color: "black",
+          question_type: "COMMON",
+          uci: "d7d5",
+          answer: { main: "ILLEGAL_MOVE", special: null },
+          move_done: false,
+          replay_fen: transcript.moves[1].replay_fen,
+        },
+        {
+          ply: 3,
+          color: "black",
+          question_type: "COMMON",
+          uci: "d7d5",
+          answer: {
+            main: "REGULAR_MOVE",
+            next_turn_pawn_tries: 1,
+            special: null,
+          },
+          move_done: true,
+          replay_fen: transcript.moves[1].replay_fen,
+        },
+        {
+          ply: 4,
+          color: "white",
+          question_type: "COMMON",
+          uci: "d2d3",
+          answer: { main: "REGULAR_MOVE", special: null },
+          move_done: true,
+          replay_fen: transcript.moves[0].replay_fen,
+        },
+      ],
+    })
+
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    expect(screen.getByRole("button", { name: /White \[g2g4\] Move complete/i })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /White \[g2g4\] Move complete · No pawn captures/i })).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
+        name: /Black No pawn captures · \[d7d5\] Illegal move · \[d7d5\] Move complete/i,
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /White 1 pawn try · \[d2d3\] Move complete/i })).toBeInTheDocument()
   })
 
   it("shows_controlled_error_for_invalid_transcript", async () => {
