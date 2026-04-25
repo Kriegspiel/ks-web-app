@@ -82,9 +82,8 @@ function moveAnnouncements(move) {
   const questionType = String(move.question_type ?? "COMMON").toUpperCase()
   const normalizedUci = typeof move.uci === "string" ? move.uci.trim().toLowerCase() : ""
   const main = formatCaptureAnnouncement(move?.answer)
-  const nextTurn = formatNextTurnPawnAnnouncement(move?.answer)
   const special = formatAnnouncement(move?.answer?.special)
-  const items = [...new Set([main, nextTurn, special].filter(Boolean))]
+  const items = [...new Set([main, special].filter(Boolean))]
 
   if (questionType !== "ASK_ANY" && normalizedUci) {
     const combined = items.length ? [`[${normalizedUci}]`, items.join(" · ")].join(" ") : `[${normalizedUci}]`
@@ -94,19 +93,36 @@ function moveAnnouncements(move) {
   return items
 }
 
+function moveTurnStartAnnouncement(move) {
+  if (!move?.move_done) {
+    return ""
+  }
+
+  return formatNextTurnPawnAnnouncement(move?.answer)
+}
+
+function groupAnnouncements(group) {
+  if (!group) {
+    return []
+  }
+
+  return [
+    ...(group.turnStartAnnouncements ?? []),
+    ...group.moves.flatMap((move) => moveAnnouncements(move)),
+  ]
+}
+
 function formatPlySummary(group) {
   if (!group) {
     return ""
   }
 
-  return group.moves
-    .map((move) => moveAnnouncements(move).join(" · "))
-    .filter(Boolean)
-    .join(" · ")
+  return groupAnnouncements(group).join(" · ")
 }
 
 function buildPlyGroups(moves) {
   const groups = []
+  let pendingTurnStartAnnouncement = ""
 
   for (const move of moves) {
     const color = move?.color === "black" ? "black" : "white"
@@ -115,6 +131,10 @@ function buildPlyGroups(moves) {
     if (previous && previous.color === color) {
       previous.moves.push(move)
       previous.lastPly = move?.ply ?? previous.lastPly
+      const nextTurnAnnouncement = moveTurnStartAnnouncement(move)
+      if (nextTurnAnnouncement) {
+        pendingTurnStartAnnouncement = nextTurnAnnouncement
+      }
       continue
     }
 
@@ -122,9 +142,16 @@ function buildPlyGroups(moves) {
       id: `${color}-${move?.ply ?? groups.length + 1}`,
       color,
       moves: [move],
+      turnStartAnnouncements: pendingTurnStartAnnouncement ? [pendingTurnStartAnnouncement] : [],
       firstPly: move?.ply ?? 0,
       lastPly: move?.ply ?? 0,
     })
+    pendingTurnStartAnnouncement = ""
+
+    const nextTurnAnnouncement = moveTurnStartAnnouncement(move)
+    if (nextTurnAnnouncement) {
+      pendingTurnStartAnnouncement = nextTurnAnnouncement
+    }
   }
 
   return groups.map((group, index) => ({
@@ -363,7 +390,7 @@ function summarizePlyGroup(group) {
     return []
   }
 
-  return group.moves.flatMap((move) => moveAnnouncements(move))
+  return groupAnnouncements(group)
 }
 
 function overlaysForPlyGroup(group) {
