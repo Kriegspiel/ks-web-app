@@ -90,9 +90,9 @@ describe("BotsReportPage", () => {
 
     render(<MemoryRouter><BotsReportPage /></MemoryRouter>)
 
-    expect((await screen.findAllByText(/America\/New_York/)).length).toBeGreaterThan(0)
-    expect(screen.getByRole("link", { name: "gptnano" })).toHaveAttribute("href", "/user/gptnano")
+    expect(await screen.findByRole("link", { name: "gptnano" })).toHaveAttribute("href", "/user/gptnano")
     expect(screen.getByRole("link", { name: "haiku" })).toHaveAttribute("href", "/user/haiku")
+    expect(screen.getAllByText(/America\/New_York/).length).toBeGreaterThan(0)
     expect(screen.getByText("2026-04-09")).toBeInTheDocument()
     expect(screen.getAllByText("0")).not.toHaveLength(0)
     expect(screen.getAllByText("0.0%")).toHaveLength(3)
