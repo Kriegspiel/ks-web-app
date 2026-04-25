@@ -5,6 +5,7 @@ import { ELO_TRACKS } from "../components/eloChartConstants"
 import VersionStamp from "../components/VersionStamp"
 import { userApi } from "../services/api"
 import { formatUtcDate } from "../utils/dateTime"
+import { formatRuleVariant } from "../utils/rules"
 import "./Profile.css"
 
 const BOT_BLOG_URL = "https://kriegspiel.org/blog/bot-registration-flow"
@@ -211,7 +212,7 @@ export default function ProfilePage() {
           <ul className="profile-recent-list">
             {recentGames.slice(0, 5).map((game) => (
               <li key={game.game_id}>
-                <span>{game.result} vs {game.opponent ?? "unknown"}</span>
+                <span>{game.result} vs {game.opponent ?? "unknown"} · {formatRuleVariant(game.rule_variant)}</span>
                 <Link to={`/game/${game.game_code ?? game.game_id}/review`}>Review</Link>
               </li>
             ))}

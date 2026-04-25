@@ -4,7 +4,7 @@ import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import { createGame, deleteWaitingGame, getBots, getGame, getLobbyStats, getMyGames, getOpenGames, joinGame } from "../services/api"
 import { formatUtcDateTime } from "../utils/dateTime"
-import { DEFAULT_BOT_RULE_VARIANTS, RULESET_OPTIONS } from "../utils/rules"
+import { DEFAULT_BOT_RULE_VARIANTS, RULESET_OPTIONS, formatRuleVariant } from "../utils/rules"
 import "./Lobby.css"
 
 const WAITING_GAME_POLL_MS = 3000
@@ -529,15 +529,16 @@ export default function LobbyPage() {
               <div>
                 <strong>{game.game_code}</strong>
                 <div className="lobby-meta">
-                    {renderCreatorLink(game, botUsernames)}
+                  {renderCreatorLink(game, botUsernames)}
                   {" · "}
                   {game.available_color}
                   {" · "}
                   {formatUtcDateTime(game.created_at)}
                 </div>
+                <div className="lobby-meta">Rules: {formatRuleVariant(game.rule_variant)}</div>
               </div>
               <div className="lobby-list__actions">
-                    {isOwnOpenGame(game, user?.username) ? (
+                {isOwnOpenGame(game, user?.username) ? (
                   <>
                     <button type="button" onClick={() => navigate(gamePagePath(game))}>Open</button>
                     <button

@@ -177,6 +177,7 @@ describe("LobbyPage", () => {
       games: [
         {
           game_code: "ABCD23",
+          rule_variant: "wild16",
           created_by: "randobotany",
           available_color: "black",
           created_at: "2026-04-03T23:59:59Z",
@@ -187,6 +188,7 @@ describe("LobbyPage", () => {
     renderPage()
 
     expect(await screen.findByRole("link", { name: "randobotany (bot)" })).toHaveAttribute("href", "/user/randobotany")
+    expect(screen.getByText("Rules: Wild 16")).toBeInTheDocument()
     expect(await screen.findByText(/2026-04-03 23:59:59 UTC/)).toBeInTheDocument()
   })
 

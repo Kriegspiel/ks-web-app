@@ -6,6 +6,7 @@ import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import { getMyGames, userApi } from "../services/api"
 import { formatUtcDateTime } from "../utils/dateTime"
+import { formatRuleVariant } from "../utils/rules"
 
 const ACTIVE_STATES = new Set(["active"])
 const RULES_URL = "https://kriegspiel.org/rules"
@@ -250,6 +251,7 @@ export default function HomePage() {
                             {" vs "}
                             {renderPlayerLink(game.black, "Waiting…")}
                           </div>
+                          <div className="lobby-meta">Rules: {formatRuleVariant(game.rule_variant)}</div>
                           <div className="lobby-meta">Updated {formatUpdatedAt(game.updated_at ?? game.created_at)}</div>
                         </div>
                         <Link to={`/game/${game.game_code ?? game.game_id}`}>Open</Link>
