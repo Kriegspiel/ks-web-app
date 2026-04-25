@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.2.123
+
+- **Material Status**: remaining material now uses the backend's
+  engine-derived summary, including public pawn-capture counts for Cincinnati
+  and Wild 16 while keeping Berkeley pawn counts private.
+
 ## ks-web-app frontend v. 1.2.122
 
 - **Referee Log Scrolling**: the in-game referee log now auto-scrolls only after
