@@ -502,7 +502,7 @@ describe("GamePage", () => {
     const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
     expect(timeline).toHaveAttribute(
       "aria-label",
-      "Black: move complete, check on long diagonal → White: no pawn captures, move complete → Black: opponent's move"
+      "Black: move complete, check on long diagonal → White: move complete → Black: opponent's move"
     )
     expect(within(currentMessage).queryByText("illegal move")).not.toBeInTheDocument()
     expect(within(currentMessage).queryByText("move attempt")).not.toBeInTheDocument()
@@ -563,18 +563,18 @@ describe("GamePage", () => {
     const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
     expect(timeline).toHaveAttribute(
       "aria-label",
-      "Black: has pawn captures, move complete, check on file"
+      "Black: move complete, check on file"
     )
     expect(within(currentMessage).queryByText(/^file check$/i)).not.toBeInTheDocument()
   })
 
-  it("keeps_illegal_move_only_when_it_is_the_terminal_statement_for_that_side", async () => {
+  it("drops_turn_start_pawn_capture_status_after_illegal_attempts", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
       referee_turns: [
         {
           turn: 1,
-          white: [{ messages: ["No pawn captures, Move attempt — Illegal move"] }],
+          white: [{ messages: ["1 pawn try, Move attempt — Illegal move"] }],
           black: [],
         },
       ],
@@ -584,7 +584,8 @@ describe("GamePage", () => {
 
     const currentMessage = await screen.findByLabelText("Current message")
     const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
-    expect(timeline).toHaveAttribute("aria-label", "White: no pawn captures, illegal move")
+    expect(timeline).toHaveAttribute("aria-label", "White: illegal move")
+    expect(within(currentMessage).queryByText("1 pawn try")).not.toBeInTheDocument()
     expect(within(currentMessage).queryByText("your move")).not.toBeInTheDocument()
   })
 
@@ -634,7 +635,7 @@ describe("GamePage", () => {
     const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
     expect(timeline).toHaveAttribute(
       "aria-label",
-      "Black: has pawn capture, capture d4"
+      "Black: capture d4"
     )
   })
 

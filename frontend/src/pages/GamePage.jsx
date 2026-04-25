@@ -607,6 +607,7 @@ function summarizeCurrentMessageSideEntries(entries = []) {
 
   let pawnCaptureState = ""
   let moveCompleted = false
+  let hasAttemptOutcome = false
   let captureText = ""
   const checkTexts = []
   const seenChecks = new Set()
@@ -628,20 +629,24 @@ function summarizeCurrentMessageSideEntries(entries = []) {
     }
 
     if (part.key === "illegal_move" || part.key === "nonsense") {
+      hasAttemptOutcome = true
       return
     }
 
     if (part.key === "move_complete") {
+      hasAttemptOutcome = true
       moveCompleted = true
       return
     }
 
     if (part.key.startsWith("capture")) {
+      hasAttemptOutcome = true
       captureText = part.text
       return
     }
 
     if (part.key.startsWith("check-")) {
+      hasAttemptOutcome = true
       if (!seenChecks.has(part.key)) {
         seenChecks.add(part.key)
         checkTexts.push(part.text)
@@ -656,7 +661,7 @@ function summarizeCurrentMessageSideEntries(entries = []) {
   })
 
   const summary = []
-  if (pawnCaptureState) {
+  if (pawnCaptureState && !hasAttemptOutcome) {
     summary.push(pawnCaptureState)
   }
   if (moveCompleted) {
