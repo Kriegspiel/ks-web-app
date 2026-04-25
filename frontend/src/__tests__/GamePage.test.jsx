@@ -317,8 +317,10 @@ describe("GamePage", () => {
       expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
     })
 
-    expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--illegal")
-    expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--illegal")
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--illegal")
+      expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--illegal")
+    })
     const currentMessage = screen.getByLabelText("Current message")
     expect(within(currentMessage).getByText("White")).toBeInTheDocument()
     expect(within(currentMessage).getByText("illegal move")).toBeInTheDocument()
