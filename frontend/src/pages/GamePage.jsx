@@ -178,7 +178,7 @@ function getRefereeCode(value) {
     return normalized
   }
 
-  const numeric = Number.parseInt(normalized, 10)
+  const numeric = /^\d+$/.test(normalized) ? Number.parseInt(normalized, 10) : null
   if (Number.isFinite(numeric) && REFEREE_MAIN_ANNOUNCEMENT_TEXT[numeric]) {
     return numeric
   }
@@ -1576,7 +1576,7 @@ export default function GamePage() {
   const gameRef = gameCode ?? gameId ?? ""
   const { user } = useAuth()
 
-  const [gameState, setGameState] = useState(null)
+  const [rawGameState, setGameState] = useState(null)
   const [gameMeta, setGameMeta] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -1603,6 +1603,7 @@ export default function GamePage() {
     }
     return window.localStorage.getItem(GAME_SOUND_MUTE_STORAGE_KEY) === "1"
   })
+  const gameState = !rawGameState || rawGameState.__gameRef === gameRef ? rawGameState : null
 
   const lastTapRef = useRef({ square: "", time: 0 })
   const boardCardRef = useRef(null)
@@ -1623,6 +1624,7 @@ export default function GamePage() {
   const finishDragPhantomRef = useRef(null)
   const finishMoveDragRef = useRef(null)
   const illegalMoveContextRef = useRef(null)
+  const previousGameRefRef = useRef(gameRef)
 
   if (!soundPlayerRef.current) {
     soundPlayerRef.current = createGameSoundPlayer()
@@ -1663,25 +1665,30 @@ export default function GamePage() {
     }
 
     try {
-      const state = await getGameState(gameRef)
-      if (requestId !== stateRequestIdRef.current) {
+      const requestedGameRef = gameRef
+      const state = await getGameState(requestedGameRef)
+      if (requestId !== stateRequestIdRef.current || requestedGameRef !== previousGameRefRef.current) {
         return
       }
       const receivedAtMs = Date.now()
       const syncedAtMs = requestedAtMs + ((receivedAtMs - requestedAtMs) / 2)
-      setGameState((previousState) => ({
-        ...state,
-        clock: reconcileClockSnapshot(previousState, state, {
-          previousSyncedAtMs: clockSnapshotAtMsRef.current,
-          nextSyncedAtMs: syncedAtMs,
-        }),
-      }))
+      setGameState((previousState) => {
+        const previousStateForClock = previousState?.__gameRef === requestedGameRef ? previousState : null
+        return {
+          ...state,
+          __gameRef: requestedGameRef,
+          clock: reconcileClockSnapshot(previousStateForClock, state, {
+            previousSyncedAtMs: clockSnapshotAtMsRef.current,
+            nextSyncedAtMs: syncedAtMs,
+          }),
+        }
+      })
       clockSnapshotAtMsRef.current = syncedAtMs
       setClockSnapshotAtMs(syncedAtMs)
       setClockNowMs(receivedAtMs)
       setError("")
     } catch (requestError) {
-      if (requestId !== stateRequestIdRef.current) {
+      if (requestId !== stateRequestIdRef.current || gameRef !== previousGameRefRef.current) {
         return
       }
       setError(requestError?.message ?? "Unable to load this game right now.")
@@ -1701,14 +1708,59 @@ export default function GamePage() {
     metadataRequestIdRef.current = requestId
 
     try {
-      const metadata = await getGame(gameRef)
-      if (requestId !== metadataRequestIdRef.current) {
+      const requestedGameRef = gameRef
+      const metadata = await getGame(requestedGameRef)
+      if (requestId !== metadataRequestIdRef.current || requestedGameRef !== previousGameRefRef.current) {
         return
       }
       setGameMeta(metadata)
     } catch {
       // Keep the board usable even if metadata fails.
     }
+  }, [gameRef])
+
+  useLayoutEffect(() => {
+    if (previousGameRefRef.current === gameRef) {
+      return
+    }
+
+    previousGameRefRef.current = gameRef
+    stateRequestIdRef.current += 1
+    metadataRequestIdRef.current += 1
+    illegalMoveContextRef.current = null
+    viewportRestoreRef.current = null
+    lastSoundEntryKeysRef.current = []
+    lastTapRef.current = { square: "", time: 0 }
+    dragPointerIdRef.current = null
+    draggingPhantomFromRef.current = ""
+    moveDragPointerIdRef.current = null
+    draggingMoveFromRef.current = ""
+    suppressClickRef.current = false
+    suppressContextMenuRef.current = false
+
+    const nowMs = Date.now()
+    clockSnapshotAtMsRef.current = nowMs
+    setClockSnapshotAtMs(nowMs)
+    setClockNowMs(nowMs)
+    setGameState(null)
+    setGameMeta(null)
+    setLoading(Boolean(gameRef))
+    setError("")
+    setActionError("")
+    setSubmittingAction(false)
+    setFromSquare("")
+    setToSquare("")
+    setLastMoveSquares([])
+    setIllegalMoveSquares([])
+    setShowPromotionModal(false)
+    setPhantomMenu(null)
+    setMovingPhantomFrom("")
+    setDraggingPhantomFrom("")
+    setDragHoverSquare("")
+    setDraggingMoveFrom("")
+    setMoveDragHoverSquare("")
+    setDragPreview(null)
+    setDesktopRefereeHeight(null)
   }, [gameRef])
 
   useEffect(() => {

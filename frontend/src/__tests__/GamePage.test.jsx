@@ -4,6 +4,7 @@ import GamePage from "../pages/GamePage"
 import { TEST_VERSION_STAMP } from "../version"
 
 const mockNavigate = vi.hoisted(() => vi.fn())
+const mockParams = vi.hoisted(() => ({ gameId: "g-123" }))
 
 const mockApi = vi.hoisted(() => ({
   getGame: vi.fn(),
@@ -33,7 +34,7 @@ vi.mock("react-router-dom", async () => {
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-    useParams: () => ({ gameId: "g-123" }),
+    useParams: () => mockParams,
   }
 })
 
@@ -62,6 +63,8 @@ beforeEach(() => {
   window.localStorage.clear()
   window.scrollTo = vi.fn()
   mockNavigate.mockReset()
+  mockParams.gameId = "g-123"
+  delete mockParams.gameCode
   Object.values(mockApi).forEach((fn) => fn.mockReset())
   mockSoundPlayer.prime.mockReset()
   mockSoundPlayer.playCategories.mockReset()
@@ -356,6 +359,91 @@ describe("GamePage", () => {
       expect(within(currentMessage).queryByText("illegal move")).not.toBeInTheDocument()
     })
     expect(within(currentMessage).getByText("opponent's move")).toBeInTheDocument()
+  })
+
+  it("clears_previous_game_referee_state_while_loading_a_new_game_route", async () => {
+    mockParams.gameId = "OLD111"
+    mockApi.getGame.mockImplementation((gameRef) => Promise.resolve({
+      game_id: gameRef,
+      game_code: gameRef,
+      rule_variant: "wild16",
+      state: "active",
+      opponent_type: "bot",
+      white: { username: "fil", role: "user", connected: true },
+      black: { username: "randobot", role: "bot", connected: true },
+      turn: "white",
+      move_number: 3,
+      created_at: "2026-04-02T12:00:00Z",
+    }))
+    mockApi.getGameState.mockImplementation((gameRef) => {
+      if (gameRef === "OLD111") {
+        return Promise.resolve({
+          ...activeState,
+          game_id: "old-game",
+          rule_variant: "wild16",
+          referee_turns: [
+            {
+              turn: 3,
+              white: [{ messages: ["Illegal move"] }],
+              black: [],
+            },
+          ],
+        })
+      }
+      return Promise.resolve({
+        ...activeState,
+        game_id: "new-game",
+        rule_variant: "wild16",
+        move_number: 5,
+        referee_turns: [
+          {
+            turn: 3,
+            white: [{ messages: ["1 pawn try"] }],
+            black: [],
+          },
+        ],
+      })
+    })
+
+    const { rerender } = render(<GamePage />)
+
+    expect(await screen.findByText("Illegal move")).toBeInTheDocument()
+
+    mockParams.gameId = "2CX43N"
+    rerender(<GamePage />)
+
+    await waitFor(() => {
+      expect(screen.queryByText("Illegal move")).not.toBeInTheDocument()
+    })
+    await waitFor(() => {
+      expect(mockApi.getGameState).toHaveBeenCalledWith("2CX43N")
+    })
+
+    expect(await screen.findAllByText(/1 pawn try/)).not.toHaveLength(0)
+    expect(screen.queryByText(/illegal move/i)).not.toBeInTheDocument()
+    expect(mockApi.getGameState).toHaveBeenCalledWith("2CX43N")
+  })
+
+  it("keeps_wild16_pawn_try_counts_as_announcements_not_numeric_codes", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      rule_variant: "wild16",
+      possible_actions: ["move"],
+      referee_turns: [
+        {
+          turn: 3,
+          white: [{ messages: ["2 pawn tries"] }],
+          black: [],
+        },
+      ],
+    })
+
+    render(<GamePage />)
+
+    const currentMessage = await screen.findByLabelText("Current message")
+    expect(within(currentMessage).getByText("2 pawn tries, your move")).toBeInTheDocument()
+    expect(within(currentMessage).queryByText("move complete")).not.toBeInTheDocument()
+    expect(within(currentMessage).queryByText("illegal move")).not.toBeInTheDocument()
   })
 
   it("adds_your_turn_to_the_current_side_turn_start_announcement", async () => {
