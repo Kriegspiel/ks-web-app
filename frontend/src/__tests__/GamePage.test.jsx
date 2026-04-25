@@ -713,7 +713,7 @@ describe("GamePage", () => {
     expect(screen.getByText("9:58")).toBeInTheDocument()
   })
 
-  it("always_follows_new_referee_entries_to_the_bottom", async () => {
+  it("only_scrolls_referee_log_after_completed_turn_entries", async () => {
     const firstState = {
       ...activeState,
       referee_log: [{ turn: 1, color: "white", announcement: "White to move" }],
@@ -722,30 +722,43 @@ describe("GamePage", () => {
       ...activeState,
       referee_log: [
         { turn: 1, color: "white", announcement: "White to move" },
-        { turn: 1, color: "black", announcement: "Black replied" },
+        { turn: 1, color: "white", announcement: "Illegal move" },
       ],
     }
+    const thirdState = {
+      ...activeState,
+      referee_log: [
+        { turn: 1, color: "white", announcement: "White to move" },
+        { turn: 1, color: "white", announcement: "Illegal move" },
+        { turn: 1, color: "white", announcement: "Move complete" },
+      ],
+    }
+
+    let resolveThirdState
+    const thirdStateResponse = new Promise((resolve) => {
+      resolveThirdState = () => resolve(thirdState)
+    })
 
     mockApi.getGameState
       .mockResolvedValueOnce(firstState)
       .mockResolvedValueOnce(secondState)
+      .mockReturnValueOnce(thirdStateResponse)
+      .mockResolvedValue(thirdState)
 
     render(<GamePage />)
 
     const log = await screen.findByRole("log", { name: "Referee log by turn" })
     Object.defineProperty(log, "scrollHeight", { value: 500, configurable: true })
     Object.defineProperty(log, "clientHeight", { value: 120, configurable: true })
-    Object.defineProperty(log, "scrollTop", { value: 0, writable: true, configurable: true })
+    Object.defineProperty(log, "scrollTop", { value: 100, writable: true, configurable: true })
 
     await waitFor(() => {
-      expect(log.scrollTop).toBe(500)
+      expect(mockApi.getGameState).toHaveBeenCalledTimes(3)
     })
 
-    log.scrollTop = 100
+    expect(log.scrollTop).toBe(100)
 
-    await waitFor(() => {
-      expect(mockApi.getGameState).toHaveBeenCalledTimes(2)
-    })
+    resolveThirdState()
 
     await waitFor(() => {
       expect(log.scrollTop).toBe(500)
