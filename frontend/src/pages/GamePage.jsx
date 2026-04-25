@@ -2814,20 +2814,24 @@ export default function GamePage() {
               <div className="game-board-meta">
                 <section className="game-piece-status" aria-label="Remaining piece status">
                   <p className="game-piece-status__line">
-                    <span className="game-piece-status__label">White pieces remain:</span> {remainingPieceStatus.white.piecesRemaining}
+                    <span className="game-piece-status__label">White pieces remain:</span>{" "}
+                    <span className="game-piece-status__value">{remainingPieceStatus.white.piecesRemaining}</span>
                     {remainingPieceStatus.white.pawnsCaptured !== null ? (
                       <>
                         {" · "}
-                        <span className="game-piece-status__label">White pawns captured:</span> {remainingPieceStatus.white.pawnsCaptured}
+                        <span className="game-piece-status__label">White pawns captured:</span>{" "}
+                        <span className="game-piece-status__value">{remainingPieceStatus.white.pawnsCaptured}</span>
                       </>
                     ) : null}
                   </p>
                   <p className="game-piece-status__line">
-                    <span className="game-piece-status__label">Black pieces remain:</span> {remainingPieceStatus.black.piecesRemaining}
+                    <span className="game-piece-status__label">Black pieces remain:</span>{" "}
+                    <span className="game-piece-status__value">{remainingPieceStatus.black.piecesRemaining}</span>
                     {remainingPieceStatus.black.pawnsCaptured !== null ? (
                       <>
                         {" · "}
-                        <span className="game-piece-status__label">Black pawns captured:</span> {remainingPieceStatus.black.pawnsCaptured}
+                        <span className="game-piece-status__label">Black pawns captured:</span>{" "}
+                        <span className="game-piece-status__value">{remainingPieceStatus.black.pawnsCaptured}</span>
                       </>
                     ) : null}
                   </p>
