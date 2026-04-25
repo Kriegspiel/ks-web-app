@@ -63,6 +63,8 @@ beforeEach(() => {
   mockApi.getGameTranscript.mockReset()
   mockApi.getGameTranscript.mockResolvedValue(transcript)
   mockApi.getGame.mockResolvedValue({
+    game_code: "F5455A",
+    rule_variant: "berkeley_any",
     created_at: "2026-04-05T12:00:00Z",
     updated_at: "2026-04-05T12:03:12Z",
     result: { winner: "white", reason: "checkmate" },
@@ -125,6 +127,8 @@ describe("ReviewPage", () => {
     expect(screen.getByText("Turn Start / 1B")).toBeInTheDocument()
     expect(screen.getByText("11s")).toBeInTheDocument()
     expect(screen.getByText("8s")).toBeInTheDocument()
+    expect(screen.getByText("Rules")).toBeInTheDocument()
+    expect(screen.getByText("Berkeley + Any")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
     expect(screen.getByText("Turn 1W / 1B")).toBeInTheDocument()
