@@ -1555,6 +1555,42 @@ function countRemainingPieces(turns) {
   return counts
 }
 
+function normalizeMaterialSideSummary(side) {
+  if (!side || typeof side !== "object") {
+    return null
+  }
+
+  const piecesRemaining = Number.parseInt(side.pieces_remaining, 10)
+  if (!Number.isFinite(piecesRemaining)) {
+    return null
+  }
+
+  const pawnsCaptured = side.pawns_captured === null || side.pawns_captured === undefined
+    ? null
+    : Number.parseInt(side.pawns_captured, 10)
+
+  return {
+    piecesRemaining: Math.min(16, Math.max(0, piecesRemaining)),
+    pawnsCaptured: Number.isFinite(pawnsCaptured) ? Math.min(8, Math.max(0, pawnsCaptured)) : null,
+  }
+}
+
+function getRemainingPieceStatus(gameState, turns) {
+  const materialSummary = gameState?.material_summary
+  const white = normalizeMaterialSideSummary(materialSummary?.white)
+  const black = normalizeMaterialSideSummary(materialSummary?.black)
+
+  if (white && black) {
+    return { white, black }
+  }
+
+  const fallbackCounts = countRemainingPieces(turns)
+  return {
+    white: { piecesRemaining: fallbackCounts.white, pawnsCaptured: null },
+    black: { piecesRemaining: fallbackCounts.black, pawnsCaptured: null },
+  }
+}
+
 function opponentStartingPhantoms(playerColor) {
   const normalized = normalizeLogColor(playerColor)
   if (!normalized) {
@@ -1952,7 +1988,10 @@ export default function GamePage() {
   const waitingForOpponent = gameState?.state === "active" && !possibleActions.includes("move")
   const soundSettingEnabled = user?.settings?.sound_enabled !== false
   const soundsEnabled = soundSettingEnabled && !soundsMuted
-  const remainingPieceStatus = useMemo(() => countRemainingPieces(groupedRefereeLog), [groupedRefereeLog])
+  const remainingPieceStatus = useMemo(
+    () => getRemainingPieceStatus(gameState, groupedRefereeLog),
+    [gameState, groupedRefereeLog]
+  )
   const displayClock = useMemo(
     () => projectClock(gameState?.clock, { gameState: gameState?.state, syncedAtMs: clockSnapshotAtMs, nowMs: clockNowMs }),
     [clockNowMs, clockSnapshotAtMs, gameState?.clock, gameState?.state]
@@ -2775,10 +2814,26 @@ export default function GamePage() {
               <div className="game-board-meta">
                 <section className="game-piece-status" aria-label="Remaining piece status">
                   <p className="game-piece-status__line">
-                    <span className="game-piece-status__label">White pieces remain:</span> {remainingPieceStatus.white}
+                    <span className="game-piece-status__label">White pieces remain:</span>{" "}
+                    <span className="game-piece-status__value">{remainingPieceStatus.white.piecesRemaining}</span>
+                    {remainingPieceStatus.white.pawnsCaptured !== null ? (
+                      <>
+                        {" · "}
+                        <span className="game-piece-status__label">White pawns captured:</span>{" "}
+                        <span className="game-piece-status__value">{remainingPieceStatus.white.pawnsCaptured}</span>
+                      </>
+                    ) : null}
                   </p>
                   <p className="game-piece-status__line">
-                    <span className="game-piece-status__label">Black pieces remain:</span> {remainingPieceStatus.black}
+                    <span className="game-piece-status__label">Black pieces remain:</span>{" "}
+                    <span className="game-piece-status__value">{remainingPieceStatus.black.piecesRemaining}</span>
+                    {remainingPieceStatus.black.pawnsCaptured !== null ? (
+                      <>
+                        {" · "}
+                        <span className="game-piece-status__label">Black pawns captured:</span>{" "}
+                        <span className="game-piece-status__value">{remainingPieceStatus.black.pawnsCaptured}</span>
+                      </>
+                    ) : null}
                   </p>
                 </section>
                 {canSeedOpponentPhantoms ? (

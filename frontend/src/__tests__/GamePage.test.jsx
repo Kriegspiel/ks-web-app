@@ -1201,7 +1201,7 @@ describe("GamePage", () => {
     expect(screen.getByRole("button", { name: /Opening setup\. Seed the opponent's starting pieces as phantoms in one click\./i })).toBeInTheDocument()
   })
 
-  it("tracks_remaining_pieces_from_capture_announcements", async () => {
+  it("falls_back_to_capture_announcements_when_material_summary_is_missing", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
       referee_log: [
@@ -1218,6 +1218,49 @@ describe("GamePage", () => {
     const pieceStatus = await screen.findByLabelText("Remaining piece status")
     expect(within(pieceStatus).getByText("15")).toBeInTheDocument()
     expect(within(pieceStatus).getByText("14")).toBeInTheDocument()
+  })
+
+  it("uses_engine_material_summary_when_available", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      material_summary: {
+        white: { pieces_remaining: 14, pawns_captured: 2 },
+        black: { pieces_remaining: 13, pawns_captured: 1 },
+      },
+      referee_log: [
+        { turn: 1, color: "white", announcement: "Capture at D5" },
+      ],
+    })
+
+    render(<GamePage />)
+
+    const pieceStatus = await screen.findByLabelText("Remaining piece status")
+    expect(within(pieceStatus).getByText("White pieces remain:")).toBeInTheDocument()
+    expect(within(pieceStatus).getByText("14")).toBeInTheDocument()
+    expect(within(pieceStatus).getByText("White pawns captured:")).toBeInTheDocument()
+    expect(within(pieceStatus).getByText("2")).toBeInTheDocument()
+    expect(within(pieceStatus).getByText("Black pieces remain:")).toBeInTheDocument()
+    expect(within(pieceStatus).getByText("13")).toBeInTheDocument()
+    expect(within(pieceStatus).getByText("Black pawns captured:")).toBeInTheDocument()
+    expect(within(pieceStatus).getByText("1")).toBeInTheDocument()
+  })
+
+  it("hides_pawn_capture_counts_when_the_engine_marks_them_private", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      material_summary: {
+        white: { pieces_remaining: 15, pawns_captured: null },
+        black: { pieces_remaining: 14, pawns_captured: null },
+      },
+    })
+
+    render(<GamePage />)
+
+    const pieceStatus = await screen.findByLabelText("Remaining piece status")
+    expect(within(pieceStatus).getByText("15")).toBeInTheDocument()
+    expect(within(pieceStatus).getByText("14")).toBeInTheDocument()
+    expect(within(pieceStatus).queryByText("White pawns captured:")).not.toBeInTheDocument()
+    expect(within(pieceStatus).queryByText("Black pawns captured:")).not.toBeInTheDocument()
   })
 
   it("renders_referee_log_grouped_by_turn", async () => {
