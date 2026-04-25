@@ -753,10 +753,14 @@ describe("GamePage", () => {
     Object.defineProperty(log, "scrollTop", { value: 100, writable: true, configurable: true })
 
     await waitFor(() => {
-      expect(mockApi.getGameState).toHaveBeenCalledTimes(3)
-    })
+      expect(mockApi.getGameState).toHaveBeenCalledTimes(2)
+    }, { timeout: 3000 })
 
     expect(log.scrollTop).toBe(100)
+
+    await waitFor(() => {
+      expect(mockApi.getGameState).toHaveBeenCalledTimes(3)
+    }, { timeout: 3000 })
 
     resolveThirdState()
 
