@@ -4,6 +4,7 @@ const absoluteFooterLinks = new Map([
   ["/rules/berkeley", "https://kriegspiel.org/rules/berkeley"],
   ["/rules/cincinnati", "https://kriegspiel.org/rules/cincinnati"],
   ["/rules/wild16", "https://kriegspiel.org/rules/wild16"],
+  ["/rules/rand", "https://kriegspiel.org/rules/rand"],
   ["/rules/comparison/", "https://kriegspiel.org/rules/comparison/"],
   ["/blog", "https://kriegspiel.org/blog"],
   ["/changelog", "https://kriegspiel.org/changelog"],
