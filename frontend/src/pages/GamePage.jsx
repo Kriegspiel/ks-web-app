@@ -2814,7 +2814,7 @@ export default function GamePage() {
               <div className="game-board-meta">
                 <section className="game-piece-status" aria-label="Remaining piece status">
                   <div className="game-piece-status__side" aria-label="White material view">
-                    <span className="game-piece-status__owner">White</span>
+                    <span className="game-piece-status__owner">For White</span>
                     <p className="game-piece-status__line">
                       <span className="game-piece-status__label">Black pieces remain:</span>{" "}
                       <span className="game-piece-status__value">{remainingPieceStatus.black.piecesRemaining}</span>
@@ -2827,7 +2827,7 @@ export default function GamePage() {
                     ) : null}
                   </div>
                   <div className="game-piece-status__side" aria-label="Black material view">
-                    <span className="game-piece-status__owner">Black</span>
+                    <span className="game-piece-status__owner">For Black</span>
                     <p className="game-piece-status__line">
                       <span className="game-piece-status__label">White pieces remain:</span>{" "}
                       <span className="game-piece-status__value">{remainingPieceStatus.white.piecesRemaining}</span>

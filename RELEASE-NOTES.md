@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.2.125
+
+- **Material Status Copy**: softened the side labels below the board from
+  uppercase color names to `For White` and `For Black`.
+
 ## ks-web-app frontend v. 1.2.124
 
 - **Material Status Layout**: the material strip below the board is now split
