@@ -285,28 +285,49 @@
 }
 
 .game-piece-status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
   width: min(100%, 34rem);
-  padding: 0.8rem 0.9rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.game-piece-status__side {
+  display: grid;
+  align-content: center;
+  gap: 0.28rem;
+  min-height: 5.4rem;
+  padding: 0.72rem 0.78rem;
   border: 1px solid var(--border);
   border-radius: 0.9rem;
   background: var(--surface-strong);
-  text-align: center;
+}
+
+.game-piece-status__owner {
+  color: var(--muted-soft);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .game-piece-status__line {
   margin: 0;
   color: var(--text);
-  font-size: 0.94rem;
+  font-size: clamp(0.78rem, 1.35vw, 0.94rem);
   line-height: 1.2;
 }
 
 .game-piece-status__label {
   font-weight: 700;
+}
+
+.game-piece-status__value {
+  font-weight: 800;
 }
 
 .game-board-meta .game-page__meta {
@@ -498,7 +519,13 @@
   }
 
   .game-piece-status {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .game-piece-status__side {
+    min-height: 4.9rem;
+    padding: 0.62rem;
   }
 
   .phantom-menu__piece-grid {

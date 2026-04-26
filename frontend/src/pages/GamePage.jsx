@@ -2813,28 +2813,32 @@ export default function GamePage() {
 
               <div className="game-board-meta">
                 <section className="game-piece-status" aria-label="Remaining piece status">
-                  <p className="game-piece-status__line">
-                    <span className="game-piece-status__label">White pieces remain:</span>{" "}
-                    <span className="game-piece-status__value">{remainingPieceStatus.white.piecesRemaining}</span>
-                    {remainingPieceStatus.white.pawnsCaptured !== null ? (
-                      <>
-                        {" · "}
-                        <span className="game-piece-status__label">White pawns captured:</span>{" "}
-                        <span className="game-piece-status__value">{remainingPieceStatus.white.pawnsCaptured}</span>
-                      </>
-                    ) : null}
-                  </p>
-                  <p className="game-piece-status__line">
-                    <span className="game-piece-status__label">Black pieces remain:</span>{" "}
-                    <span className="game-piece-status__value">{remainingPieceStatus.black.piecesRemaining}</span>
+                  <div className="game-piece-status__side" aria-label="White material view">
+                    <span className="game-piece-status__owner">White</span>
+                    <p className="game-piece-status__line">
+                      <span className="game-piece-status__label">Black pieces remain:</span>{" "}
+                      <span className="game-piece-status__value">{remainingPieceStatus.black.piecesRemaining}</span>
+                    </p>
                     {remainingPieceStatus.black.pawnsCaptured !== null ? (
-                      <>
-                        {" · "}
+                      <p className="game-piece-status__line">
                         <span className="game-piece-status__label">Black pawns captured:</span>{" "}
                         <span className="game-piece-status__value">{remainingPieceStatus.black.pawnsCaptured}</span>
-                      </>
+                      </p>
                     ) : null}
-                  </p>
+                  </div>
+                  <div className="game-piece-status__side" aria-label="Black material view">
+                    <span className="game-piece-status__owner">Black</span>
+                    <p className="game-piece-status__line">
+                      <span className="game-piece-status__label">White pieces remain:</span>{" "}
+                      <span className="game-piece-status__value">{remainingPieceStatus.white.piecesRemaining}</span>
+                    </p>
+                    {remainingPieceStatus.white.pawnsCaptured !== null ? (
+                      <p className="game-piece-status__line">
+                        <span className="game-piece-status__label">White pawns captured:</span>{" "}
+                        <span className="game-piece-status__value">{remainingPieceStatus.white.pawnsCaptured}</span>
+                      </p>
+                    ) : null}
+                  </div>
                 </section>
                 {canSeedOpponentPhantoms ? (
                   <button
