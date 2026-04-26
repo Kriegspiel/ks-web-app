@@ -310,9 +310,8 @@
   color: var(--muted-soft);
   font-size: 0.82rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.01em;
   line-height: 1;
-  text-transform: uppercase;
 }
 
 .game-piece-status__line {
