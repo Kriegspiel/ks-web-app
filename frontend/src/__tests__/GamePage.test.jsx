@@ -1153,9 +1153,14 @@ describe("GamePage", () => {
   it("seeds_default_opponent_phantoms_only_at_the_opening", async () => {
     render(<GamePage />)
 
+    const boardSection = await screen.findByLabelText("Board")
     const pieceStatus = await screen.findByLabelText("Remaining piece status")
     const openingSetupButton = screen.getByRole("button", { name: /Opening setup\. Seed the opponent's starting pieces as phantoms in one click\./i })
+    const boardShell = boardSection.querySelector(".game-board-shell")
     expect(openingSetupButton).toBeInTheDocument()
+    expect(boardShell).toBeInTheDocument()
+    expect(openingSetupButton.closest(".game-board-meta")).toBeNull()
+    expect(openingSetupButton.compareDocumentPosition(boardShell) & window.Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(screen.getByText(/Seed the opponent's starting pieces as phantoms in one click\./i)).toBeInTheDocument()
     expect(within(pieceStatus).getByText("White pieces remain:")).toBeInTheDocument()
     expect(within(pieceStatus).getByText("Black pieces remain:")).toBeInTheDocument()

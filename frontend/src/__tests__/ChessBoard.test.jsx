@@ -1,4 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react"
+import { readFileSync } from "node:fs"
+import { dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
 import { describe, expect, it, vi } from "vitest"
 import ChessBoard from "../components/ChessBoard.jsx"
 import { getAllowedMoveTargets, getVisibleMoveTargets, parseFenBoard } from "../components/chessboard"
@@ -69,6 +72,16 @@ describe("ChessBoard", () => {
     )
 
     expect(screen.getByLabelText("Phantom White queen")).toBeInTheDocument()
+  })
+
+  it("keeps_phantom_piece_styling_visibly_distinct_from_real_pieces", () => {
+    const cssPath = resolve(dirname(fileURLToPath(import.meta.url)), "../components/ChessBoard.css")
+    const css = readFileSync(cssPath, "utf8")
+
+    expect(css).toContain(".phantom-piece-on-board")
+    expect(css).toContain("opacity: 0.62;")
+    expect(css).toContain("filter: saturate(0.68) contrast(0.92);")
+    expect(css).toContain("background: rgba(86, 156, 255, 0.08);")
   })
 
   it("renders_move_suggestion_dots_on_suggested_squares", () => {

@@ -2732,6 +2732,18 @@ export default function GamePage() {
                 </div>
               </div>
 
+              {canSeedOpponentPhantoms ? (
+                <button
+                  type="button"
+                  className="game-opening-callout"
+                  aria-label="Opening setup. Seed the opponent's starting pieces as phantoms in one click."
+                  onClick={handleSeedOpponentPhantoms}
+                >
+                  <span className="game-opening-callout__eyebrow">Opening setup</span>
+                  <span className="game-opening-callout__body">Seed the opponent&apos;s starting pieces as phantoms in one click.</span>
+                </button>
+              ) : null}
+
               <div
                 className={`game-board-shell ${canMove ? "game-board-shell--your-turn" : ""}`.trim()}
                 ref={boardShellRef}
@@ -2840,17 +2852,6 @@ export default function GamePage() {
                     ) : null}
                   </div>
                 </section>
-                {canSeedOpponentPhantoms ? (
-                  <button
-                    type="button"
-                    className="game-opening-callout"
-                    aria-label="Opening setup. Seed the opponent's starting pieces as phantoms in one click."
-                    onClick={handleSeedOpponentPhantoms}
-                  >
-                    <span className="game-opening-callout__eyebrow">Opening setup</span>
-                    <span className="game-opening-callout__body">Seed the opponent&apos;s starting pieces as phantoms in one click.</span>
-                  </button>
-                ) : null}
                 <p className="game-page__meta">Phantoms: left-drag to move, right-click to remove, double-click or right-click empty squares to add.</p>
               </div>
             </section>

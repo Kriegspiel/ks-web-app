@@ -334,6 +334,7 @@
 }
 
 .game-opening-callout {
+  justify-self: center;
   width: min(100%, 34rem);
   padding: 0.9rem 1rem;
   border: 1px solid color-mix(in srgb, var(--border) 65%, var(--accent));
