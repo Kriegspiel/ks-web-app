@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react"
 import { readFileSync } from "node:fs"
+import { fileURLToPath } from "node:url"
 import { describe, expect, it, vi } from "vitest"
 import ChessBoard from "../components/ChessBoard.jsx"
 import { getAllowedMoveTargets, getVisibleMoveTargets, parseFenBoard } from "../components/chessboard"
@@ -73,7 +74,8 @@ describe("ChessBoard", () => {
   })
 
   it("keeps_phantom_piece_styling_visibly_distinct_from_real_pieces", () => {
-    const css = readFileSync(new URL("../components/ChessBoard.css", import.meta.url), "utf8")
+    const cssPath = fileURLToPath(new URL("../components/ChessBoard.css", import.meta.url))
+    const css = readFileSync(cssPath, "utf8")
 
     expect(css).toContain(".phantom-piece-on-board")
     expect(css).toContain("opacity: 0.62;")
