@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react"
 import { readFileSync } from "node:fs"
+import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { describe, expect, it, vi } from "vitest"
 import ChessBoard from "../components/ChessBoard.jsx"
@@ -74,7 +75,7 @@ describe("ChessBoard", () => {
   })
 
   it("keeps_phantom_piece_styling_visibly_distinct_from_real_pieces", () => {
-    const cssPath = fileURLToPath(new URL("../components/ChessBoard.css", import.meta.url))
+    const cssPath = resolve(dirname(fileURLToPath(import.meta.url)), "../components/ChessBoard.css")
     const css = readFileSync(cssPath, "utf8")
 
     expect(css).toContain(".phantom-piece-on-board")
