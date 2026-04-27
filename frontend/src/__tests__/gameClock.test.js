@@ -5,7 +5,7 @@ describe("gameClock", () => {
   it("projects_active_clock_locally_between_polls", () => {
     const projected = projectClock(
       { white_remaining: 601, black_remaining: 598, active_color: "white" },
-      { gameState: "active", syncedAtMs: 10_000, nowMs: 11_200 },
+      { gameState: "active", moveNumber: 2, syncedAtMs: 10_000, nowMs: 11_200 },
     )
 
     expect(projected).toEqual({
@@ -15,6 +15,19 @@ describe("gameClock", () => {
     })
     expect(formatClock(projected.white_remaining)).toBe("9:59")
     expect(formatClock(projected.black_remaining)).toBe("9:58")
+  })
+
+  it("keeps_opening_clock_paused_until_white_completes_the_first_move", () => {
+    const projected = projectClock(
+      { white_remaining: 601, black_remaining: 598, active_color: "white" },
+      { gameState: "active", moveNumber: 1, syncedAtMs: 10_000, nowMs: 20_000 },
+    )
+
+    expect(projected).toEqual({
+      white_remaining: 601,
+      black_remaining: 598,
+      active_color: null,
+    })
   })
 
   it("does_not_tick_completed_game_clock", () => {
@@ -34,13 +47,13 @@ describe("gameClock", () => {
     const reconciled = reconcileClockSnapshot(
       {
         state: "active",
-        move_number: 1,
+        move_number: 2,
         turn: "white",
         clock: { white_remaining: 601, black_remaining: 598, active_color: "white" },
       },
       {
         state: "active",
-        move_number: 1,
+        move_number: 2,
         turn: "white",
         clock: { white_remaining: 600.8, black_remaining: 598, active_color: "white" },
       },
@@ -51,6 +64,25 @@ describe("gameClock", () => {
       white_remaining: 600.5,
       black_remaining: 598,
       active_color: "white",
+    })
+  })
+
+  it("reconciles_opening_clock_as_paused_even_if_the_snapshot_says_white_is_active", () => {
+    const reconciled = reconcileClockSnapshot(
+      null,
+      {
+        state: "active",
+        move_number: 1,
+        turn: "white",
+        clock: { white_remaining: 601, black_remaining: 598, active_color: "white" },
+      },
+      { previousSyncedAtMs: 10_000, nextSyncedAtMs: 11_000 },
+    )
+
+    expect(reconciled).toEqual({
+      white_remaining: 601,
+      black_remaining: 598,
+      active_color: null,
     })
   })
 
@@ -83,7 +115,7 @@ describe("gameClock", () => {
 
     expect(projectClock(
       { white_remaining: 601, black_remaining: 598, active_color: "black" },
-      { gameState: "active", syncedAtMs: 10_000, nowMs: 12_000 },
+      { gameState: "active", moveNumber: 2, syncedAtMs: 10_000, nowMs: 12_000 },
     )).toEqual({
       white_remaining: 601,
       black_remaining: 596,

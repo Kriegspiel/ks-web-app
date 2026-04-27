@@ -1907,7 +1907,9 @@ export default function GamePage() {
       return undefined
     }
 
-    if (gameState?.state !== "active" || !gameState?.clock?.active_color) {
+    const numericMoveNumber = Number(gameState?.move_number)
+    const clockIsBeforeFirstCompletedMove = Number.isFinite(numericMoveNumber) && numericMoveNumber <= 1
+    if (gameState?.state !== "active" || !gameState?.clock?.active_color || clockIsBeforeFirstCompletedMove) {
       return undefined
     }
 
@@ -1920,7 +1922,7 @@ export default function GamePage() {
     return () => {
       window.clearInterval(intervalId)
     }
-  }, [clockSnapshotAtMs, gameState?.clock?.active_color, gameState?.state])
+  }, [clockSnapshotAtMs, gameState?.clock?.active_color, gameState?.move_number, gameState?.state])
 
   useLayoutEffect(() => {
     const viewport = viewportRestoreRef.current
@@ -1993,10 +1995,15 @@ export default function GamePage() {
     [gameState, groupedRefereeLog]
   )
   const displayClock = useMemo(
-    () => projectClock(gameState?.clock, { gameState: gameState?.state, syncedAtMs: clockSnapshotAtMs, nowMs: clockNowMs }),
-    [clockNowMs, clockSnapshotAtMs, gameState?.clock, gameState?.state]
+    () => projectClock(gameState?.clock, {
+      gameState: gameState?.state,
+      moveNumber: gameState?.move_number,
+      syncedAtMs: clockSnapshotAtMs,
+      nowMs: clockNowMs,
+    }),
+    [clockNowMs, clockSnapshotAtMs, gameState?.clock, gameState?.move_number, gameState?.state]
   )
-  const activeClockColor = displayClock?.active_color ?? gameState?.turn
+  const activeClockColor = displayClock?.active_color ?? null
   const opponent = useMemo(() => {
     if (!gameMeta || !gameState?.your_color) {
       return null
