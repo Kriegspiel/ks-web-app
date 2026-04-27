@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.2.128
+
+- **Board Clocks**: moved the game clocks below the board and aligned them to
+  the board's right edge.
+
 ## ks-web-app frontend v. 1.2.127
 
 - **Opening Phantoms**: moved the one-click opening phantom setup above the

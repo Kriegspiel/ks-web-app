@@ -2721,17 +2721,6 @@ export default function GamePage() {
 
           <div className="game-layout">
             <section className="game-card game-card--board" aria-label="Board" ref={boardCardRef}>
-              <div className="game-clocks" aria-label="Game clocks">
-                <div className={`game-clock ${activeClockColor === "white" ? "game-clock--active" : ""}`.trim()}>
-                  <span className="game-clock__label">White</span>
-                  <strong className="game-clock__time">{formatClock(displayClock?.white_remaining)}</strong>
-                </div>
-                <div className={`game-clock ${activeClockColor === "black" ? "game-clock--active" : ""}`.trim()}>
-                  <span className="game-clock__label">Black</span>
-                  <strong className="game-clock__time">{formatClock(displayClock?.black_remaining)}</strong>
-                </div>
-              </div>
-
               {canSeedOpponentPhantoms ? (
                 <button
                   type="button"
@@ -2815,6 +2804,17 @@ export default function GamePage() {
                     ) : null}
                   </div>
                 ) : null}
+              </div>
+
+              <div className="game-clocks" aria-label="Game clocks">
+                <div className={`game-clock ${activeClockColor === "white" ? "game-clock--active" : ""}`.trim()}>
+                  <span className="game-clock__label">White</span>
+                  <strong className="game-clock__time">{formatClock(displayClock?.white_remaining)}</strong>
+                </div>
+                <div className={`game-clock ${activeClockColor === "black" ? "game-clock--active" : ""}`.trim()}>
+                  <span className="game-clock__label">Black</span>
+                  <strong className="game-clock__time">{formatClock(displayClock?.black_remaining)}</strong>
+                </div>
               </div>
 
               {dragPreview ? (

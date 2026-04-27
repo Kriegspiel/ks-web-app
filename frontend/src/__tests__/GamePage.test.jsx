@@ -707,10 +707,15 @@ describe("GamePage", () => {
     })
   })
 
-  it("shows_clocks_above_board", async () => {
+  it("shows_clocks_below_the_board", async () => {
     render(<GamePage />)
 
-    await screen.findByLabelText(/Game clocks/i)
+    const boardSection = await screen.findByLabelText("Board")
+    const clocks = await screen.findByLabelText(/Game clocks/i)
+    const boardShell = boardSection.querySelector(".game-board-shell")
+
+    expect(boardShell).toBeInTheDocument()
+    expect(boardShell.compareDocumentPosition(clocks) & window.Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(screen.getByText(/^10:0[01]$/)).toBeInTheDocument()
     expect(screen.getByText("9:58")).toBeInTheDocument()
   })
