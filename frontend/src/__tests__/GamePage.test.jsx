@@ -716,8 +716,9 @@ describe("GamePage", () => {
 
     expect(boardShell).toBeInTheDocument()
     expect(boardShell.compareDocumentPosition(clocks) & window.Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(screen.getByText(/^10:0[01]$/)).toBeInTheDocument()
+    expect(screen.getByText("10:01")).toBeInTheDocument()
     expect(screen.getByText("9:58")).toBeInTheDocument()
+    expect(clocks.querySelector(".game-clock--active")).toBeNull()
   })
 
   it("only_scrolls_referee_log_after_completed_turn_entries", async () => {

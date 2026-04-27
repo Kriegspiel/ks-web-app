@@ -1,11 +1,17 @@
-export function projectClock(clock, { gameState = "active", syncedAtMs, nowMs } = {}) {
+function isBeforeFirstCompletedMove(gameState, moveNumber) {
+  const numericMoveNumber = Number(moveNumber)
+  return gameState === "active" && Number.isFinite(numericMoveNumber) && numericMoveNumber <= 1
+}
+
+export function projectClock(clock, { gameState = "active", moveNumber, syncedAtMs, nowMs } = {}) {
   if (!clock || typeof clock !== "object") {
     return null
   }
 
   let whiteRemaining = Number(clock.white_remaining)
   let blackRemaining = Number(clock.black_remaining)
-  const activeColor = clock.active_color === "white" || clock.active_color === "black" ? clock.active_color : null
+  const rawActiveColor = clock.active_color === "white" || clock.active_color === "black" ? clock.active_color : null
+  const activeColor = isBeforeFirstCompletedMove(gameState, moveNumber) ? null : rawActiveColor
 
   if (gameState === "active" && activeColor && Number.isFinite(syncedAtMs) && Number.isFinite(nowMs)) {
     const elapsedSeconds = Math.max(0, (nowMs - syncedAtMs) / 1000)
@@ -31,7 +37,16 @@ export function reconcileClockSnapshot(previousState, nextState, { previousSynce
   }
 
   const previousClock = previousState?.clock
-  const nextActiveColor = nextClock.active_color === "white" || nextClock.active_color === "black" ? nextClock.active_color : null
+  const rawNextActiveColor = nextClock.active_color === "white" || nextClock.active_color === "black" ? nextClock.active_color : null
+  const nextActiveColor = isBeforeFirstCompletedMove(nextState?.state, nextState?.move_number) ? null : rawNextActiveColor
+
+  if (rawNextActiveColor && !nextActiveColor) {
+    return {
+      ...nextClock,
+      active_color: null,
+    }
+  }
+
   const sameActiveStretch =
     previousState?.state === "active" &&
     nextState?.state === "active" &&
@@ -46,6 +61,7 @@ export function reconcileClockSnapshot(previousState, nextState, { previousSynce
 
   const projectedPreviousClock = projectClock(previousClock, {
     gameState: previousState?.state,
+    moveNumber: previousState?.move_number,
     syncedAtMs: previousSyncedAtMs,
     nowMs: nextSyncedAtMs,
   })
