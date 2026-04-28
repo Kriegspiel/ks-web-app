@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import AppHeader from "../components/AppHeader"
 import { ThemeProvider } from "../context/ThemeContext"
@@ -76,6 +76,52 @@ describe("Nav", () => {
     expect(screen.queryByRole("link", { name: "Home" })).not.toBeInTheDocument()
     expect(screen.queryByText(/signed in as/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/active game/i)).not.toBeInTheDocument()
+  })
+
+  it("dismisses_the_profile_menu_after_outside_and_menu_clicks", async () => {
+    mockAuth.isAuthenticated = true
+    mockAuth.user = { username: "fil" }
+
+    render(
+      <ThemeProvider>
+        <MemoryRouter>
+          <AppHeader />
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    const trigger = screen.getByText("Profile")
+    const menu = trigger.closest("details")
+    fireEvent.click(trigger)
+    await waitFor(() => expect(menu).toHaveAttribute("open"))
+    expect(screen.getByRole("link", { name: "User" })).toBeInTheDocument()
+
+    fireEvent.pointerDown(document.body)
+    await waitFor(() => expect(menu).not.toHaveAttribute("open"))
+
+    fireEvent.click(trigger)
+    await waitFor(() => expect(menu).toHaveAttribute("open"))
+    const userLink = screen.getByRole("link", { name: "User" })
+    fireEvent.click(userLink)
+    await waitFor(() => expect(menu).not.toHaveAttribute("open"))
+
+    fireEvent.click(trigger)
+    await waitFor(() => expect(menu).toHaveAttribute("open"))
+    const reopenedUserLink = screen.getByRole("link", { name: "User" })
+    const panel = reopenedUserLink.parentElement
+    fireEvent.click(panel)
+    await waitFor(() => expect(menu).not.toHaveAttribute("open"))
+
+    fireEvent.click(trigger)
+    await waitFor(() => expect(menu).toHaveAttribute("open"))
+    fireEvent.keyDown(document, { key: "Escape" })
+    await waitFor(() => expect(menu).not.toHaveAttribute("open"))
+
+    fireEvent.click(trigger)
+    await waitFor(() => expect(menu).toHaveAttribute("open"))
+    fireEvent.click(screen.getByRole("button", { name: "Logout" }))
+    expect(mockAuth.logout).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(menu).not.toHaveAttribute("open"))
   })
 })
 

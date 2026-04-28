@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import ThemeToggle from "./ThemeToggle"
@@ -5,12 +6,41 @@ import ThemeToggle from "./ThemeToggle"
 function AuthLinks() {
   const { isAuthenticated, actionLoading, logout, user } = useAuth()
   const location = useLocation()
+  const profileMenuRef = useRef(null)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const lobbyCurrent = location.pathname === "/" || location.pathname === "/lobby"
   const username = typeof user?.username === "string" ? user.username : ""
   const userProfilePath = username ? `/user/${encodeURIComponent(username)}` : "/settings"
   const userCurrent = username ? location.pathname === userProfilePath : location.pathname === "/settings"
 
+  useEffect(() => {
+    if (!profileMenuOpen) {
+      return undefined
+    }
+
+    function closeWhenOutside(event) {
+      if (!profileMenuRef.current?.contains(event.target)) {
+        setProfileMenuOpen(false)
+      }
+    }
+
+    function closeOnEscape(event) {
+      if (event.key === "Escape") {
+        setProfileMenuOpen(false)
+      }
+    }
+
+    document.addEventListener("pointerdown", closeWhenOutside)
+    document.addEventListener("keydown", closeOnEscape)
+
+    return () => {
+      document.removeEventListener("pointerdown", closeWhenOutside)
+      document.removeEventListener("keydown", closeOnEscape)
+    }
+  }, [profileMenuOpen])
+
   async function onLogout() {
+    setProfileMenuOpen(false)
     try {
       await logout()
     } catch {
@@ -22,9 +52,14 @@ function AuthLinks() {
     return (
       <>
         <Link to="/lobby" aria-current={lobbyCurrent ? "page" : undefined}>Lobby</Link>
-        <details className="header-profile-menu">
+        <details
+          className="header-profile-menu"
+          ref={profileMenuRef}
+          open={profileMenuOpen}
+          onToggle={(event) => setProfileMenuOpen(event.currentTarget.open)}
+        >
           <summary className="header-profile-menu__trigger">Profile</summary>
-          <div className="header-profile-menu__panel">
+          <div className="header-profile-menu__panel" onClick={() => setProfileMenuOpen(false)}>
             <Link
               className="header-profile-menu__item"
               to={userProfilePath}
