@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.2
+
+- **Profile Copy**: added sentence-ending periods to the profile member-since
+  subtitle and rating/results subheadings.
+
 ## ks-web-app frontend v. 1.3.1
 
 - **App Navigation**: made the app root open the lobby and simplified the
