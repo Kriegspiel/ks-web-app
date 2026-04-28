@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.1
+
+- **App Navigation**: made the app root open the lobby and simplified the
+  authenticated header to `Lobby` plus a `Profile` dropdown with user and
+  logout actions.
+
 ## ks-web-app frontend v. 1.3.0
 
 - **Guest Play**: added a login-page “Play as guest” flow that creates a

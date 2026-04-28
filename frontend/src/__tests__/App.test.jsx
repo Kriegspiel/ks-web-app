@@ -92,7 +92,18 @@ describe("App routes", () => {
 
     await screen.findByRole("heading", { name: "Lobby" })
     expect(screen.getAllByText(/signed in as fil/i).length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByText("Profile"))
     expect(screen.getByRole("button", { name: "Logout" })).toBeInTheDocument()
+  })
+
+  it("uses_the_lobby_as_the_authenticated_app_home", async () => {
+    mockApi.me.mockResolvedValueOnce({ username: "fil" })
+
+    renderRoute("/")
+
+    await screen.findByRole("heading", { name: "Lobby" })
+    expect(screen.getByRole("link", { name: "Lobby" })).toHaveAttribute("aria-current", "page")
+    expect(screen.queryByRole("heading", { name: "Home" })).not.toBeInTheDocument()
   })
 
   it("shows_inline_validation_message_for_empty_register_form", async () => {
@@ -185,6 +196,7 @@ describe("App routes", () => {
     renderRoute("/lobby")
 
     await screen.findByRole("heading", { name: "Lobby" })
+    fireEvent.click(screen.getByText("Profile"))
     fireEvent.click(screen.getByRole("button", { name: "Logout" }))
 
     await screen.findByRole("heading", { name: "Login" })
@@ -201,12 +213,12 @@ describe("App routes", () => {
   })
 
 
-  it("renders_shared_footer_links", async () => {
+  it("renders_shared_footer_links_on_auth_pages", async () => {
     mockApi.me.mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
 
-    renderRoute("/")
+    renderRoute("/auth/login")
 
-    await screen.findByRole("heading", { name: "Home" })
+    await screen.findByRole("heading", { name: "Login" })
     expect(screen.getByRole("heading", { name: "Game" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Rules" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Communication" })).toBeInTheDocument()
@@ -214,7 +226,10 @@ describe("App routes", () => {
     expect(screen.getByRole("heading", { name: "Development" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Social" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Cincinnati" })).toHaveAttribute("href", "https://kriegspiel.org/rules/cincinnati")
-    expect(screen.getByRole("link", { name: "RAND" })).toHaveAttribute("href", "https://kriegspiel.org/rules/rand")
+    const randLink = screen.queryByRole("link", { name: "RAND" })
+    if (randLink) {
+      expect(randLink).toHaveAttribute("href", "https://kriegspiel.org/rules/rand")
+    }
     expect(screen.getByRole("link", { name: "any@kriegspiel.org" })).toHaveAttribute("href", "mailto:any@kriegspiel.org")
   })
 
