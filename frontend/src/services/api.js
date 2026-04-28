@@ -53,6 +53,14 @@ export async function login(payload) {
     throw normalizeError(error, 'Unable to log in right now.')
   }
 }
+export async function playAsGuest() {
+  try {
+    const response = await api.post('/api/auth/guest')
+    return response.data
+  } catch (error) {
+    throw normalizeError(error, 'Unable to start guest session right now.')
+  }
+}
 export async function logout() {
   try {
     await api.post('/api/auth/logout')

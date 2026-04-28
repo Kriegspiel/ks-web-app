@@ -6,12 +6,14 @@ import { useAuth } from "../hooks/useAuth"
 const mockLoginRequest = vi.hoisted(() => vi.fn())
 const mockLogoutRequest = vi.hoisted(() => vi.fn())
 const mockMeRequest = vi.hoisted(() => vi.fn())
+const mockPlayAsGuestRequest = vi.hoisted(() => vi.fn())
 const mockRegisterRequest = vi.hoisted(() => vi.fn())
 
 vi.mock("../services/api", () => ({
   login: mockLoginRequest,
   logout: mockLogoutRequest,
   me: mockMeRequest,
+  playAsGuest: mockPlayAsGuestRequest,
   register: mockRegisterRequest,
 }))
 
@@ -23,6 +25,7 @@ beforeEach(() => {
   mockLoginRequest.mockReset()
   mockLogoutRequest.mockReset()
   mockMeRequest.mockReset()
+  mockPlayAsGuestRequest.mockReset()
   mockRegisterRequest.mockReset()
 })
 
@@ -376,6 +379,78 @@ describe("AuthProvider", () => {
 
     expect(caughtError).toEqual({})
     expect(result.current.actionError).toBe("Registration failed.")
+    expect(result.current.actionLoading).toBe(false)
+  })
+
+  it("plays_as_guest_and_refreshes_the_session", async () => {
+    mockMeRequest
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ username: "guest_adolf_adams", is_guest: true })
+    mockPlayAsGuestRequest.mockResolvedValueOnce({ username: "guest_adolf_adams" })
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.bootstrapping).toBe(false)
+    })
+
+    let returnedUser = null
+    await act(async () => {
+      returnedUser = await result.current.playAsGuest()
+    })
+
+    expect(mockPlayAsGuestRequest).toHaveBeenCalledTimes(1)
+    expect(returnedUser).toEqual({ username: "guest_adolf_adams", is_guest: true })
+    expect(result.current.user).toEqual({ username: "guest_adolf_adams", is_guest: true })
+    expect(result.current.actionError).toBe("")
+    expect(result.current.actionLoading).toBe(false)
+  })
+
+  it("surfaces_guest_play_failures", async () => {
+    mockMeRequest.mockResolvedValueOnce(null)
+    mockPlayAsGuestRequest.mockRejectedValueOnce({ message: "Guest pool exhausted" })
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.bootstrapping).toBe(false)
+    })
+
+    let caughtError = null
+    await act(async () => {
+      try {
+        await result.current.playAsGuest()
+      } catch (error) {
+        caughtError = error
+      }
+    })
+
+    expect(caughtError).toEqual({ message: "Guest pool exhausted" })
+    expect(result.current.actionError).toBe("Guest pool exhausted")
+    expect(result.current.actionLoading).toBe(false)
+  })
+
+  it("uses_the_default_guest_play_message_when_guest_play_fails_without_details", async () => {
+    mockMeRequest.mockResolvedValueOnce(null)
+    mockPlayAsGuestRequest.mockRejectedValueOnce({})
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.bootstrapping).toBe(false)
+    })
+
+    let caughtError = null
+    await act(async () => {
+      try {
+        await result.current.playAsGuest()
+      } catch (error) {
+        caughtError = error
+      }
+    })
+
+    expect(caughtError).toEqual({})
+    expect(result.current.actionError).toBe("Guest play failed.")
     expect(result.current.actionLoading).toBe(false)
   })
 

@@ -525,9 +525,25 @@ button.theme-toggle:active {
 }
 
 .auth-form button,
+.guest-login-button,
 .page-shell > button,
 .header-logout-button {
   width: fit-content;
+}
+
+.guest-login-panel {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, var(--accent));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface-strong) 88%, var(--surface) 12%);
+}
+
+.guest-login-panel p {
+  margin: 0 !important;
+  color: var(--muted-soft);
 }
 
 .auth-error {
