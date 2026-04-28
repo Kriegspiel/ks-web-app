@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { login as loginRequest, logout as logoutRequest, me as meRequest, register as registerRequest } from "../services/api"
+import {
+  login as loginRequest,
+  logout as logoutRequest,
+  me as meRequest,
+  playAsGuest as playAsGuestRequest,
+  register as registerRequest,
+} from "../services/api"
 import { AuthContext } from "./authContextObject"
 
 export function AuthProvider({ children }) {
@@ -83,6 +89,21 @@ export function AuthProvider({ children }) {
     }
   }, [refreshSession])
 
+  const playAsGuest = useCallback(async () => {
+    setActionLoading(true)
+    setActionError("")
+    try {
+      await playAsGuestRequest()
+      const currentUser = await refreshSession()
+      return currentUser
+    } catch (error) {
+      setActionError(error?.message ?? "Guest play failed.")
+      throw error
+    } finally {
+      setActionLoading(false)
+    }
+  }, [refreshSession])
+
   const logout = useCallback(async () => {
     setActionLoading(true)
     setActionError("")
@@ -109,9 +130,10 @@ export function AuthProvider({ children }) {
     actionError,
     login,
     register,
+    playAsGuest,
     logout,
     clearActionError,
-  }), [user, bootstrapping, actionLoading, actionError, login, register, logout, clearActionError])
+  }), [user, bootstrapping, actionLoading, actionError, login, register, playAsGuest, logout, clearActionError])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

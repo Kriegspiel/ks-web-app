@@ -20,7 +20,7 @@ function getValidationError(formState) {
 export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { login, actionLoading, actionError, clearActionError } = useAuth()
+  const { login, playAsGuest, actionLoading, actionError, clearActionError } = useAuth()
   const [formState, setFormState] = useState({ username: "", password: "" })
   const [submitted, setSubmitted] = useState(false)
 
@@ -49,6 +49,18 @@ export default function LoginPage() {
     }
   }
 
+  async function onGuestPlay() {
+    setSubmitted(false)
+    clearActionError()
+
+    try {
+      await playAsGuest()
+      navigate(destination, { replace: true })
+    } catch {
+      // actionError rendered from context
+    }
+  }
+
   const inlineValidationError = submitted ? getValidationError(formState) : ""
 
   return (
@@ -68,6 +80,12 @@ export default function LoginPage() {
           {actionLoading ? "Logging in…" : "Login"}
         </button>
       </form>
+      <section className="guest-login-panel" aria-label="Guest play">
+        <p>Want to try a game first?</p>
+        <button type="button" className="guest-login-button" onClick={onGuestPlay} disabled={actionLoading}>
+          {actionLoading ? "Starting…" : "Play as guest"}
+        </button>
+      </section>
       <p>
         Need an account? <Link to="/auth/register">Register</Link>
       </p>

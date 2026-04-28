@@ -7,6 +7,7 @@ import { TEST_VERSION_STAMP } from "../version"
 const mockApi = vi.hoisted(() => ({
   me: vi.fn(),
   login: vi.fn(),
+  playAsGuest: vi.fn(),
   logout: vi.fn(),
   register: vi.fn(),
   createGame: vi.fn(),
@@ -159,6 +160,22 @@ describe("App routes", () => {
 
     await screen.findByRole("heading", { name: "Game", level: 1 })
     expect(screen.getByText(/Signed in as fil\./i)).toBeInTheDocument()
+  })
+
+  it("starts_guest_play_from_login_and_enters_the_lobby", async () => {
+    mockApi.me
+      .mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
+      .mockResolvedValueOnce({ username: "guest_adolf_adams", is_guest: true })
+    mockApi.playAsGuest.mockResolvedValueOnce({ username: "guest_adolf_adams" })
+
+    renderRoute("/auth/login")
+
+    await screen.findByRole("heading", { name: "Login" })
+    fireEvent.click(screen.getByRole("button", { name: "Play as guest" }))
+
+    await screen.findByRole("heading", { name: "Lobby" })
+    expect(mockApi.playAsGuest).toHaveBeenCalledTimes(1)
+    expect(screen.getAllByText(/signed in as guest_adolf_adams/i).length).toBeGreaterThan(0)
   })
 
   it("logs_out_from_header_and_returns_to_login", async () => {

@@ -6,6 +6,7 @@ import LoginPage from "../pages/LoginPage"
 const mockNavigate = vi.hoisted(() => vi.fn())
 const mockAuth = vi.hoisted(() => ({
   login: vi.fn(),
+  playAsGuest: vi.fn(),
   actionLoading: false,
   actionError: "",
   clearActionError: vi.fn(),
@@ -27,6 +28,7 @@ afterEach(() => {
   cleanup()
   mockNavigate.mockReset()
   mockAuth.login.mockReset()
+  mockAuth.playAsGuest.mockReset()
   mockAuth.clearActionError.mockReset()
   mockAuth.actionError = ""
   mockAuth.actionLoading = false
@@ -94,6 +96,29 @@ describe("LoginPage", () => {
     await waitFor(() => {
       expect(mockAuth.login).toHaveBeenCalledWith({ username: "fil", password: "secret123" })
       expect(mockNavigate).toHaveBeenCalledWith("/lobby", { replace: true })
+    })
+  })
+
+  it("starts_guest_play_and_redirects_to_the_return_path", async () => {
+    mockAuth.playAsGuest.mockResolvedValue({ username: "guest_adolf_adams" })
+
+    renderPage({
+      pathname: "/auth/login",
+      state: {
+        from: {
+          pathname: "/game/abc-123",
+          search: "?from=invite",
+          hash: "#board",
+        },
+      },
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "Play as guest" }))
+
+    await waitFor(() => {
+      expect(mockAuth.clearActionError).toHaveBeenCalled()
+      expect(mockAuth.playAsGuest).toHaveBeenCalledTimes(1)
+      expect(mockNavigate).toHaveBeenCalledWith("/game/abc-123?from=invite#board", { replace: true })
     })
   })
 })
