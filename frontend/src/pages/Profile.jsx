@@ -153,7 +153,7 @@ export default function ProfilePage() {
   return (
     <main className="page-shell profile-page">
       <h1>{profile?.username}</h1>
-      <p>Member since {formatDate(profile?.member_since)}</p>
+      <p>Member since {formatDate(profile?.member_since)}.</p>
       {profile?.role === "bot" || profile?.is_bot ? (
         <section className="profile-card profile-card--bot-note" aria-label="Bot information">
           <h2>This user is bot</h2>
@@ -187,14 +187,14 @@ export default function ProfilePage() {
         </div>
         <div className="stats-group-grid">
           <section className="stats-group-card" aria-labelledby="profile-ratings-heading">
-            <h3 id="profile-ratings-heading">{selectedTrack.label} rating</h3>
+            <h3 id="profile-ratings-heading">{selectedTrack.label} rating.</h3>
             <dl className="profile-stats-grid">
               <div><dt>{selectedTrack.label} Elo</dt><dd>{selectedRating.elo}</dd></div>
               <div><dt>Peak {selectedTrack.label.toLowerCase()}</dt><dd>{selectedRating.peak}</dd></div>
             </dl>
           </section>
           <section className="stats-group-card" aria-labelledby="profile-results-heading">
-            <h3 id="profile-results-heading">{selectedTrack.label} results</h3>
+            <h3 id="profile-results-heading">{selectedTrack.label} results.</h3>
             <dl className="profile-stats-grid">
               <div><dt>Games played</dt><dd>{selectedHistoryStats.gamesPlayed}</dd></div>
               <div><dt>Wins</dt><dd>{selectedHistoryStats.winsLabel}</dd></div>
