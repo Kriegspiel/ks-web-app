@@ -4,7 +4,6 @@ import AppFooter from "./components/AppFooter"
 import { AuthProvider } from "./context/AuthContext"
 import { ThemeProvider } from "./context/ThemeContext"
 import { useAuth } from "./hooks/useAuth"
-import HomePage from "./pages/HomePage"
 import LobbyPage from "./pages/LobbyPage"
 import JoinPage from "./pages/JoinPage"
 import LoginPage from "./pages/LoginPage"
@@ -92,7 +91,14 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route path="/" element={<HomePage />} />
+        <Route
+          path="/"
+          element={(
+            <RequireAuth>
+              <LobbyPage />
+            </RequireAuth>
+          )}
+        />
         <Route
           path="/auth/login"
           element={(

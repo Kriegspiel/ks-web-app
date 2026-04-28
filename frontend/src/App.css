@@ -138,11 +138,12 @@ button.theme-toggle:active {
   align-items: center;
   justify-content: flex-end;
   gap: 0.35rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .app-header__nav a,
-.header-logout-button {
+.header-profile-menu__trigger,
+.header-profile-menu__item {
   padding: 0.55rem 0.8rem;
   border-radius: 999px;
   text-decoration: none;
@@ -155,18 +156,82 @@ button.theme-toggle:active {
 
 .app-header__nav a:hover,
 .app-header__nav a:focus-visible,
-.header-logout-button:hover:not(:disabled),
-.header-logout-button:focus-visible {
+.header-profile-menu__trigger:hover,
+.header-profile-menu__trigger:focus-visible,
+.header-profile-menu__item:hover:not(:disabled),
+.header-profile-menu__item:focus-visible {
   color: var(--text);
   background: var(--accent-soft);
   box-shadow: none;
   transform: none;
 }
 
-.app-header__nav a[aria-current="page"] {
+.app-header__nav a[aria-current="page"],
+.header-profile-menu__item[aria-current="page"] {
   background: var(--surface-strong);
   border-color: var(--border);
   color: var(--text);
+}
+
+.header-profile-menu {
+  position: relative;
+}
+
+.header-profile-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  list-style: none;
+  cursor: pointer;
+}
+
+.header-profile-menu__trigger::-webkit-details-marker {
+  display: none;
+}
+
+.header-profile-menu__trigger::after {
+  content: "";
+  width: 0.42rem;
+  height: 0.42rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-0.08rem) rotate(45deg);
+  opacity: 0.75;
+}
+
+.header-profile-menu[open] .header-profile-menu__trigger {
+  background: var(--surface-strong);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.header-profile-menu[open] .header-profile-menu__trigger::after {
+  transform: translateY(0.08rem) rotate(225deg);
+}
+
+.header-profile-menu__panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.45rem);
+  min-width: 9rem;
+  padding: 0.35rem;
+  display: grid;
+  gap: 0.15rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  z-index: 20;
+}
+
+.header-profile-menu__panel .header-profile-menu__item {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.header-profile-menu__item--button {
+  font: inherit;
 }
 
 .page-shell {

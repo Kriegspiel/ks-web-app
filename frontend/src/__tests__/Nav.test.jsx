@@ -50,13 +50,13 @@ describe("Nav", () => {
 
     expect(screen.getByRole("link", { name: "Kriegspiel" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /toggle color theme/i })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Home" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Lobby" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Login" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Register" })).toBeInTheDocument()
-    expect(screen.queryByRole("link", { name: "Lobby" })).not.toBeInTheDocument()
+    expect(screen.queryByText("Profile")).not.toBeInTheDocument()
   })
 
-  it("shows_authenticated_links_without_user_or_active_game_clutter", () => {
+  it("shows_authenticated_lobby_and_profile_menu_without_header_clutter", () => {
     mockAuth.isAuthenticated = true
     mockAuth.user = { username: "fil" }
 
@@ -69,7 +69,11 @@ describe("Nav", () => {
     )
 
     expect(screen.getByRole("link", { name: "Lobby" })).toBeInTheDocument()
+    fireEvent.click(screen.getByText("Profile"))
+
+    expect(screen.getByRole("link", { name: "User" })).toHaveAttribute("href", "/user/fil")
     expect(screen.getByRole("button", { name: "Logout" })).toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: "Home" })).not.toBeInTheDocument()
     expect(screen.queryByText(/signed in as/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/active game/i)).not.toBeInTheDocument()
   })

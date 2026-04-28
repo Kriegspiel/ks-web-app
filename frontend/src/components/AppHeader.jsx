@@ -3,8 +3,12 @@ import { useAuth } from "../hooks/useAuth"
 import ThemeToggle from "./ThemeToggle"
 
 function AuthLinks() {
-  const { isAuthenticated, actionLoading, logout } = useAuth()
+  const { isAuthenticated, actionLoading, logout, user } = useAuth()
   const location = useLocation()
+  const lobbyCurrent = location.pathname === "/" || location.pathname === "/lobby"
+  const username = typeof user?.username === "string" ? user.username : ""
+  const userProfilePath = username ? `/user/${encodeURIComponent(username)}` : "/settings"
+  const userCurrent = username ? location.pathname === userProfilePath : location.pathname === "/settings"
 
   async function onLogout() {
     try {
@@ -17,18 +21,34 @@ function AuthLinks() {
   if (isAuthenticated) {
     return (
       <>
-        <Link to="/" aria-current={location.pathname === "/" ? "page" : undefined}>Home</Link>
-        <Link to="/lobby" aria-current={location.pathname === "/lobby" ? "page" : undefined}>Lobby</Link>
-        <button type="button" className="header-logout-button" onClick={onLogout} disabled={actionLoading}>
-          {actionLoading ? "Logging out…" : "Logout"}
-        </button>
+        <Link to="/lobby" aria-current={lobbyCurrent ? "page" : undefined}>Lobby</Link>
+        <details className="header-profile-menu">
+          <summary className="header-profile-menu__trigger">Profile</summary>
+          <div className="header-profile-menu__panel">
+            <Link
+              className="header-profile-menu__item"
+              to={userProfilePath}
+              aria-current={userCurrent ? "page" : undefined}
+            >
+              User
+            </Link>
+            <button
+              type="button"
+              className="header-profile-menu__item header-profile-menu__item--button"
+              onClick={onLogout}
+              disabled={actionLoading}
+            >
+              {actionLoading ? "Logging out…" : "Logout"}
+            </button>
+          </div>
+        </details>
       </>
     )
   }
 
   return (
     <>
-      <Link to="/" aria-current={location.pathname === "/" ? "page" : undefined}>Home</Link>
+      <Link to="/lobby" aria-current={lobbyCurrent ? "page" : undefined}>Lobby</Link>
       <Link to="/auth/login" aria-current={location.pathname === "/auth/login" ? "page" : undefined}>Login</Link>
       <Link to="/auth/register" aria-current={location.pathname === "/auth/register" ? "page" : undefined}>Register</Link>
     </>
