@@ -231,6 +231,7 @@ describe("App routes", () => {
       expect(randLink).toHaveAttribute("href", "https://kriegspiel.org/rules/rand")
     }
     expect(screen.getByRole("link", { name: "English" })).toHaveAttribute("href", "https://kriegspiel.org/rules/english")
+    expect(screen.getByRole("link", { name: "CrazyKrieg" })).toHaveAttribute("href", "https://kriegspiel.org/rules/crazykrieg")
     expect(screen.getByRole("link", { name: "any@kriegspiel.org" })).toHaveAttribute("href", "mailto:any@kriegspiel.org")
   })
 
