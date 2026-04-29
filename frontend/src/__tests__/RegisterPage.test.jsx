@@ -43,6 +43,9 @@ describe("RegisterPage", () => {
 
     expect(await screen.findByText("Username can contain only letters, digits, and underscores.")).toBeInTheDocument()
     expect(mockAuth.register).not.toHaveBeenCalled()
+    expect(screen.getByText(/By using Kriegspiel/i)).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Terms of Use" })).toHaveAttribute("href", "https://kriegspiel.org/terms")
+    expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "https://kriegspiel.org/privacy")
   })
   it("shows_email_validation_before_submit", async () => {
     render(<MemoryRouter><RegisterPage /></MemoryRouter>)

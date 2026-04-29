@@ -52,6 +52,9 @@ describe("LoginPage", () => {
 
     expect(await screen.findByText("Username is required.")).toBeInTheDocument()
     expect(mockAuth.login).not.toHaveBeenCalled()
+    expect(screen.getByText(/By using Kriegspiel/i)).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Terms of Use" })).toHaveAttribute("href", "https://kriegspiel.org/terms")
+    expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "https://kriegspiel.org/privacy")
   })
 
   it("shows_password_validation_when_a_username_is_present", async () => {

@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import AuthLegalNotice from "../components/AuthLegalNotice"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 
@@ -91,6 +92,7 @@ export default function RegisterPage() {
       <p>
         Already have an account? <Link to="/auth/login">Login</Link>
       </p>
+      <AuthLegalNotice />
       <VersionStamp />
     </main>
   )
