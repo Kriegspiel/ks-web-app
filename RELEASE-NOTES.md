@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.6
+
+- **Footer Rules Link**: app footer CrazyKrieg links now point to the public
+  `kriegspiel.org` rules page instead of staying relative to the app host.
+
 ## ks-web-app frontend v. 1.3.5
 
 - **Auth Legal Notice**: added Terms of Use and Privacy Policy acceptance copy

@@ -6,6 +6,7 @@ const absoluteFooterLinks = new Map([
   ["/rules/wild16", "https://kriegspiel.org/rules/wild16"],
   ["/rules/rand", "https://kriegspiel.org/rules/rand"],
   ["/rules/english", "https://kriegspiel.org/rules/english"],
+  ["/rules/crazykrieg", "https://kriegspiel.org/rules/crazykrieg"],
   ["/rules/comparison/", "https://kriegspiel.org/rules/comparison/"],
   ["/blog", "https://kriegspiel.org/blog"],
   ["/changelog", "https://kriegspiel.org/changelog"],
