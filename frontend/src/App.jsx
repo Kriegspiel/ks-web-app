@@ -14,6 +14,7 @@ import ProfilePage from "./pages/Profile"
 import GameHistoryPage from "./pages/GameHistory"
 import LeaderboardPage from "./pages/Leaderboard"
 import BotsReportPage from "./pages/BotsReport"
+import GuestsReportPage from "./pages/GuestsReport"
 import SettingsPage from "./pages/Settings"
 import "./App.css"
 
@@ -144,6 +145,7 @@ export function AppRoutes() {
         <Route path="/user/:username/games" element={<GameHistoryPage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/tech/bots-report" element={<BotsReportPage />} />
+        <Route path="/tech/guests-report" element={<GuestsReportPage />} />
         <Route
           path="/settings"
           element={(

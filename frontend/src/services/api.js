@@ -98,5 +98,6 @@ export const userApi = {
 }
 export const techApi = {
   async getBotsReport(days = 10) { const response = await api.get("/api/tech/bots-report", { params: { days } }); return response.data },
+  async getGuestsReport() { const response = await api.get("/api/tech/guests-report"); return response.data },
 }
 export default api
