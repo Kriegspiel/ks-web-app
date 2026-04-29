@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
+import AuthLegalNotice from "../components/AuthLegalNotice"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 
@@ -89,6 +90,7 @@ export default function LoginPage() {
       <p>
         Need an account? <Link to="/auth/register">Register</Link>
       </p>
+      <AuthLegalNotice />
       <VersionStamp />
     </main>
   )

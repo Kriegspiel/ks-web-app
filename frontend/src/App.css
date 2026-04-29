@@ -611,6 +611,18 @@ button.theme-toggle:active {
   color: var(--muted-soft);
 }
 
+.auth-legal-notice {
+  max-width: 42rem;
+  margin-top: 1rem !important;
+  color: var(--muted-soft);
+  font-size: 0.95rem;
+}
+
+.auth-legal-notice a {
+  font-weight: 600;
+  text-underline-offset: 0.14em;
+}
+
 .auth-error {
   color: var(--danger) !important;
   margin: 0.25rem 0 !important;
