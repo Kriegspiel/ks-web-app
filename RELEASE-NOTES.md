@@ -5,6 +5,15 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.8
+
+- **Rulesets**: exposed RAND, English, and CrazyKrieg in ruleset labels,
+  selectors, lobby/game lists, and bot compatibility fallbacks.
+- **Footer Rules Links**: kept the app footer aligned with the full public
+  rules index, including RAND, English, and CrazyKrieg links.
+- **CrazyKrieg Reserves**: added public reserve boxes below the board and
+  playable reserve-drop interaction for CrazyKrieg games.
+
 ## ks-web-app frontend v. 1.3.7
 
 - **Guests Report**: added `/tech/guests-report`, a tech table listing guest

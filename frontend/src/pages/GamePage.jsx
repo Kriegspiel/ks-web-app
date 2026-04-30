@@ -15,6 +15,14 @@ import "./GamePage.css"
 const POLL_INTERVAL_MS = 500
 const DOUBLE_TAP_WINDOW_MS = 320
 const PHANTOM_PIECES = ["q", "r", "b", "n", "p", "k"]
+const DROP_PIECES = ["P", "N", "B", "R", "Q"]
+const DROP_PIECE_LABELS = {
+  P: "Pawn",
+  N: "Knight",
+  B: "Bishop",
+  R: "Rook",
+  Q: "Queen",
+}
 const PHANTOM_LABELS = {
   q: "Queen",
   r: "Rook",
@@ -186,7 +194,17 @@ function getRefereeCode(value) {
   return null
 }
 
-function formatNextTurnPawnAnnouncementData({ nextTurnPawnTries, nextTurnHasPawnCapture }) {
+function formatNextTurnPawnAnnouncementData({ nextTurnPawnTries, nextTurnHasPawnCapture, nextTurnPawnTrySquares }) {
+  if (Array.isArray(nextTurnPawnTrySquares)) {
+    const squares = nextTurnPawnTrySquares
+      .filter((square) => typeof square === "string" && /^[a-h][1-8]$/i.test(square.trim()))
+      .map((square) => square.trim().toUpperCase())
+    if (!squares.length) {
+      return "No pawn captures"
+    }
+    return squares.length === 1 ? `Pawn try from ${squares[0]}` : `Pawn tries from ${squares.join(", ")}`
+  }
+
   if (Number.isInteger(nextTurnPawnTries)) {
     if (nextTurnPawnTries <= 0) {
       return "No pawn captures"
@@ -212,16 +230,28 @@ function formatRefereeCode(code, captureSquare, capturedPieceAnnouncement = "") 
 
   if (code === 3 || code === "CAPTURE_DONE") {
     const normalizedCapturedPiece = typeof capturedPieceAnnouncement === "string" ? capturedPieceAnnouncement.trim().toUpperCase() : ""
-    const captureText =
-      normalizedCapturedPiece === "PAWN"
-        ? "Pawn captured"
-        : normalizedCapturedPiece === "PIECE"
-          ? "Piece captured"
-          : text
+    const captureLabels = {
+      PAWN: "Pawn",
+      PIECE: "Piece",
+      KNIGHT: "Knight",
+      BISHOP: "Bishop",
+      ROOK: "Rook",
+      QUEEN: "Queen",
+    }
+    const captureText = captureLabels[normalizedCapturedPiece] ? `${captureLabels[normalizedCapturedPiece]} captured` : text
     return captureSquare ? captureText + " at " + captureSquare : captureText
   }
 
   return text
+}
+
+function formatDroppedPieceAnnouncement(value) {
+  if (typeof value !== "string") {
+    return ""
+  }
+
+  const label = DROP_PIECE_LABELS[value.trim().toUpperCase()]
+  return label ? `${label} dropped` : ""
 }
 
 function collectLogText(value, output) {
@@ -257,7 +287,10 @@ function collectLogText(value, output) {
       nextTurnPawnTries: Number.isInteger(value.next_turn_pawn_tries) ? value.next_turn_pawn_tries : null,
       nextTurnHasPawnCapture:
         typeof value.next_turn_has_pawn_capture === "boolean" ? value.next_turn_has_pawn_capture : null,
+      nextTurnPawnTrySquares: Array.isArray(value.next_turn_pawn_try_squares) ? value.next_turn_pawn_try_squares : null,
     })
+    const droppedPieceMessage = formatDroppedPieceAnnouncement(value.dropped_piece_announcement)
+    const promotionMessage = value.promotion_announced === true ? "Promotion" : ""
 
     codes.forEach((code, index) => {
       output.push(formatRefereeCode(code, index === 0 ? captureSquare : "", index === 0 ? capturedPieceAnnouncement : ""))
@@ -265,12 +298,18 @@ function collectLogText(value, output) {
     if (nextTurnMessage) {
       output.push(nextTurnMessage)
     }
+    if (droppedPieceMessage) {
+      output.push(droppedPieceMessage)
+    }
+    if (promotionMessage) {
+      output.push(promotionMessage)
+    }
 
     Object.entries(value).forEach(([key, item]) => {
-      if (REFEREE_CAPTURE_SQUARE_KEYS.includes(key) || key === "captured_piece_announcement") {
+      if (REFEREE_CAPTURE_SQUARE_KEYS.includes(key) || key === "captured_piece_announcement" || key === "dropped_piece_announcement") {
         return
       }
-      if (key === "next_turn_pawn_tries" || key === "next_turn_has_pawn_capture") {
+      if (key === "next_turn_pawn_tries" || key === "next_turn_has_pawn_capture" || key === "next_turn_pawn_try_squares" || key === "promotion_announced") {
         return
       }
       if (REFEREE_CODE_KEYS.includes(key) && getRefereeCode(item)) {
@@ -310,6 +349,7 @@ function getLogEntryTexts(entry) {
     nextTurnPawnTries: Number.isInteger(entry.next_turn_pawn_tries) ? entry.next_turn_pawn_tries : null,
     nextTurnHasPawnCapture:
       typeof entry.next_turn_has_pawn_capture === "boolean" ? entry.next_turn_has_pawn_capture : null,
+    nextTurnPawnTrySquares: Array.isArray(entry.next_turn_pawn_try_squares) ? entry.next_turn_pawn_try_squares : null,
   })
   if (nextTurnMessage) {
     output.push(nextTurnMessage)
@@ -459,6 +499,10 @@ function splitRefereeTextParts(value) {
     .map((part) => part.replace(/^(Move attempt|Opponent move|Ask any pawn captures|Opponent asked any pawn captures)\s*[—-]\s*/i, "").trim())
     .map((part) => part.replace(/^Pawn captured at\s+/i, "Pawn captured at "))
     .map((part) => part.replace(/^Piece captured at\s+/i, "Piece captured at "))
+    .map((part) => part.replace(/^Knight captured at\s+/i, "Knight captured at "))
+    .map((part) => part.replace(/^Bishop captured at\s+/i, "Bishop captured at "))
+    .map((part) => part.replace(/^Rook captured at\s+/i, "Rook captured at "))
+    .map((part) => part.replace(/^Queen captured at\s+/i, "Queen captured at "))
     .map((part) => part.replace(/^Capture done at\s+/i, "Capture at "))
     .map((part) => part.replace(/^Capture done$/i, "Capture"))
     .filter(Boolean)
@@ -538,7 +582,16 @@ function normalizeCurrentMessagePart(message) {
     }
   }
 
-  const captureMatch = normalized.match(/^(pawn captured|piece captured|capture(?: done)?)(?: at)? ([a-h][1-8])$/i)
+  const pawnTrySquaresMatch = normalized.match(/^pawn tr(?:y|ies) from (.+)$/i)
+  if (pawnTrySquaresMatch) {
+    return {
+      key: `pawn-try-squares-${pawnTrySquaresMatch[1]}`,
+      text: trimmed.toLowerCase(),
+      priority: CURRENT_MESSAGE_PART_PRIORITY.has_any,
+    }
+  }
+
+  const captureMatch = normalized.match(/^(pawn captured|piece captured|knight captured|bishop captured|rook captured|queen captured|capture(?: done)?)(?: at)? ([a-h][1-8])$/i)
   if (captureMatch) {
     return {
       key: `capture-${captureMatch[2].toLowerCase()}`,
@@ -547,12 +600,25 @@ function normalizeCurrentMessagePart(message) {
     }
   }
 
-  if (normalized === "pawn captured" || normalized === "piece captured") {
+  if (/^(pawn|piece|knight|bishop|rook|queen) captured$/i.test(normalized)) {
     return { key: "capture", text: "capture", priority: CURRENT_MESSAGE_PART_PRIORITY.capture }
   }
 
   if (normalized === "capture" || normalized === "capture done") {
     return { key: "capture", text: "capture", priority: CURRENT_MESSAGE_PART_PRIORITY.capture }
+  }
+
+  const dropMatch = normalized.match(/^(pawn|knight|bishop|rook|queen) dropped$/i)
+  if (dropMatch) {
+    return {
+      key: `drop-${dropMatch[1]}`,
+      text: `${dropMatch[1]} dropped`,
+      priority: CURRENT_MESSAGE_PART_PRIORITY.other,
+    }
+  }
+
+  if (normalized === "promotion") {
+    return { key: "promotion", text: "promotion", priority: CURRENT_MESSAGE_PART_PRIORITY.other }
   }
 
   const checkMap = [
@@ -627,7 +693,8 @@ function summarizeCurrentMessageSideEntries(entries = []) {
       part.key === "has_any" ||
       part.key === "has_pawn_capture" ||
       part.key === "no_any" ||
-      part.key.startsWith("pawn-tries-")
+      part.key.startsWith("pawn-tries-") ||
+      part.key.startsWith("pawn-try-squares-")
     ) {
       pawnCaptureState = part.text
       return
@@ -711,7 +778,7 @@ function buildCurrentMessageHistorySegments(turns) {
 
 function isTurnStartStatusSegment(segment) {
   return Array.isArray(segment?.parts) && segment.parts.length > 0 && segment.parts.every((part) => (
-    CURRENT_MESSAGE_TURN_START_STATUS.has(part) || /^\d+ pawn tr(?:y|ies)$/i.test(part)
+    CURRENT_MESSAGE_TURN_START_STATUS.has(part) || /^\d+ pawn tr(?:y|ies)$/i.test(part) || /^pawn tr(?:y|ies) from\b/i.test(part)
   ))
 }
 
@@ -805,7 +872,7 @@ function getCaptureSquareFromTexts(messages = []) {
     if (typeof message !== "string") {
       return ""
     }
-    const match = message.match(/(?:pawn captured|piece captured|capture(?: done)?) at ([a-h][1-8])/i)
+    const match = message.match(/(?:pawn captured|piece captured|knight captured|bishop captured|rook captured|queen captured|capture(?: done)?) at ([a-h][1-8])/i)
     return match ? formatCaptureSquare(match[1]) : ""
   }).find(Boolean) ?? ""
 }
@@ -991,7 +1058,7 @@ function rawEntryMessages(entry) {
 
 function isCaptureAnnouncementEntry(entry) {
   return rawEntryMessages(entry).some(
-    (message) => typeof message === "string" && /^(Capture|Capture done|Pawn captured|Piece captured)( at\b|$)/.test(message),
+    (message) => typeof message === "string" && /^(Capture|Capture done|Pawn captured|Piece captured|Knight captured|Bishop captured|Rook captured|Queen captured)( at\b|$)/.test(message),
   )
 }
 
@@ -999,6 +1066,7 @@ function isMoveResolutionEntry(entry) {
   return rawEntryMessages(entry).some(
     (message) => typeof message === "string" && (
       /^(Capture|Capture done|Pawn captured|Piece captured)( at\b|$)/.test(message) ||
+      /^(Knight captured|Bishop captured|Rook captured|Queen captured)( at\b|$)/.test(message) ||
       message.startsWith("Move complete") ||
       message.startsWith("Illegal move") ||
       message.startsWith("Nonsense")
@@ -1318,6 +1386,56 @@ function getAllowedMoveSources(allowedMoves) {
   return [...new Set(sources)]
 }
 
+function normalizeDropMove(uci) {
+  if (typeof uci !== "string") {
+    return null
+  }
+
+  const normalized = uci.trim()
+  const match = normalized.match(/^([pnbrq])@([a-h][1-8])$/i)
+  if (!match) {
+    return null
+  }
+
+  return {
+    piece: match[1].toUpperCase(),
+    square: match[2].toLowerCase(),
+  }
+}
+
+function getMoveHighlightSquares(uci) {
+  const dropMove = normalizeDropMove(uci)
+  if (dropMove) {
+    return [dropMove.square]
+  }
+
+  if (typeof uci !== "string") {
+    return []
+  }
+
+  const normalized = uci.trim().toLowerCase()
+  const from = normalized.slice(0, 2)
+  const to = normalized.slice(2, 4)
+  return [from, to].filter((square) => /^[a-h][1-8]$/.test(square))
+}
+
+function getDropTargetsByPiece(allowedMoves) {
+  const grouped = Object.fromEntries(DROP_PIECES.map((piece) => [piece, []]))
+  if (!Array.isArray(allowedMoves)) {
+    return grouped
+  }
+
+  allowedMoves.forEach((uci) => {
+    const dropMove = normalizeDropMove(uci)
+    if (!dropMove || !grouped[dropMove.piece]) {
+      return
+    }
+    grouped[dropMove.piece].push(dropMove.square)
+  })
+
+  return Object.fromEntries(Object.entries(grouped).map(([piece, squares]) => [piece, [...new Set(squares)].sort()]))
+}
+
 function squareRankNumber(square) {
   const rank = Number.parseInt(String(square || "")[1], 10)
   return Number.isFinite(rank) ? rank : null
@@ -1330,6 +1448,10 @@ function squareFileNumber(square) {
 }
 
 function getPawnMoveKind(uci, color, fen) {
+  if (normalizeDropMove(uci)) {
+    return ""
+  }
+
   if (typeof uci !== "string" || !/^[a-h][1-8][a-h][1-8][qrbn]?$/i.test(uci.trim())) {
     return ""
   }
@@ -1371,6 +1493,41 @@ function getPawnMoveKind(uci, color, fen) {
   }
 
   return ""
+}
+
+function normalizeReserveSideSummary(side) {
+  const out = { pawns: 0, knights: 0, bishops: 0, rooks: 0, queens: 0 }
+  if (!side || typeof side !== "object") {
+    return out
+  }
+
+  Object.keys(out).forEach((key) => {
+    const value = Number.parseInt(side[key], 10)
+    out[key] = Number.isFinite(value) ? Math.max(0, value) : 0
+  })
+  return out
+}
+
+function getReserveStatus(gameState) {
+  return {
+    white: normalizeReserveSideSummary(gameState?.reserve_summary?.white),
+    black: normalizeReserveSideSummary(gameState?.reserve_summary?.black),
+  }
+}
+
+function reserveCountForPiece(reserve, piece) {
+  const keyByPiece = {
+    P: "pawns",
+    N: "knights",
+    B: "bishops",
+    R: "rooks",
+    Q: "queens",
+  }
+  return reserve?.[keyByPiece[piece]] ?? 0
+}
+
+function reserveAssetKey(piece, color) {
+  return color === "black" ? piece.toLowerCase() : piece
 }
 
 function getLatestAskAnyConstraint(turns, playerColor) {
@@ -1616,6 +1773,42 @@ function hasPlayerTakenFirstTurn(turns, playerColor) {
   )
 }
 
+function ReservePieces({ color, reserve, canDrop, dropTargetsByPiece, selectedDropPiece, onSelectDropPiece }) {
+  const hasReserve = DROP_PIECES.some((piece) => reserveCountForPiece(reserve, piece) > 0)
+
+  return (
+    <div className="game-piece-status__reserve">
+      <span className="game-piece-status__label">{color === "black" ? "Black" : "White"} reserve:</span>
+      <div className="game-reserve-pieces" aria-label={`${color === "black" ? "Black" : "White"} reserve`}>
+        {DROP_PIECES.map((piece) => {
+          const count = reserveCountForPiece(reserve, piece)
+          const targets = Array.isArray(dropTargetsByPiece?.[piece]) ? dropTargetsByPiece[piece] : []
+          const disabled = !canDrop || count <= 0 || !targets.length
+          const selected = canDrop && selectedDropPiece === piece
+          const label = `${DROP_PIECE_LABELS[piece]} reserve piece (${count})`
+
+          return (
+            <button
+              type="button"
+              key={piece}
+              className={`game-reserve-piece ${selected ? "game-reserve-piece--selected" : ""}`.trim()}
+              disabled={disabled}
+              onClick={() => onSelectDropPiece(piece)}
+              aria-pressed={selected}
+              aria-label={targets.length ? `${label}. ${targets.length} legal drop ${targets.length === 1 ? "square" : "squares"}.` : label}
+              title={targets.length ? `${DROP_PIECE_LABELS[piece]} · ${count} · ${targets.length} drops` : `${DROP_PIECE_LABELS[piece]} · ${count}`}
+            >
+              <img src={PIECE_ASSETS[reserveAssetKey(piece, color)]} alt="" draggable="false" />
+              <span>{count}</span>
+            </button>
+          )
+        })}
+      </div>
+      {!hasReserve ? <span className="game-piece-status__empty">empty</span> : null}
+    </div>
+  )
+}
+
 export default function GamePage() {
   const navigate = useNavigate()
   const { gameCode, gameId } = useParams()
@@ -1630,6 +1823,7 @@ export default function GamePage() {
   const [submittingAction, setSubmittingAction] = useState(false)
   const [fromSquare, setFromSquare] = useState("")
   const [toSquare, setToSquare] = useState("")
+  const [selectedDropPiece, setSelectedDropPiece] = useState("")
   const [lastMoveSquares, setLastMoveSquares] = useState([])
   const [illegalMoveSquares, setIllegalMoveSquares] = useState([])
   const [showPromotionModal, setShowPromotionModal] = useState(false)
@@ -1797,6 +1991,7 @@ export default function GamePage() {
     setSubmittingAction(false)
     setFromSquare("")
     setToSquare("")
+    setSelectedDropPiece("")
     setLastMoveSquares([])
     setIllegalMoveSquares([])
     setShowPromotionModal(false)
@@ -1940,7 +2135,9 @@ export default function GamePage() {
   const isCompleted = gameState?.state === "completed" || gameMeta?.state === "completed"
   const canMove = gameState?.state === "active" && possibleActions.includes("move") && !submittingAction
   const showAskAny =
-    gameState?.state === "active" && gameMeta?.rule_variant === "berkeley_any" && possibleActions.includes("ask_any")
+    gameState?.state === "active" &&
+    ["berkeley_any", "english", "crazykrieg"].includes(gameMeta?.rule_variant) &&
+    possibleActions.includes("ask_any")
   const canAskAny = showAskAny && !submittingAction
   const canResign = gameState?.state === "active" && !submittingAction
   const canCloseWaitingGame = gameState?.state === "waiting" && !submittingAction
@@ -1978,15 +2175,26 @@ export default function GamePage() {
     () => filterAllowedMovesByAskAny(gameState?.allowed_moves, { askAnyConstraint, color: gameState?.your_color, fen: gameState?.your_fen }),
     [askAnyConstraint, gameState?.allowed_moves, gameState?.your_color, gameState?.your_fen]
   )
+  const dropTargetsByPiece = useMemo(() => getDropTargetsByPiece(effectiveAllowedMoves), [effectiveAllowedMoves])
+  const selectedDropTargets = useMemo(
+    () => (selectedDropPiece ? dropTargetsByPiece[selectedDropPiece] ?? [] : []),
+    [dropTargetsByPiece, selectedDropPiece]
+  )
   const moveSuggestionSquares = useMemo(() => {
+    if (selectedDropPiece) {
+      return selectedDropTargets
+    }
+
     const activeSourceSquare = draggingMoveFrom || fromSquare
     if (!activeSourceSquare) {
       return []
     }
 
     return getAllowedMoveTargets(effectiveAllowedMoves, activeSourceSquare)
-  }, [draggingMoveFrom, effectiveAllowedMoves, fromSquare])
+  }, [draggingMoveFrom, effectiveAllowedMoves, fromSquare, selectedDropPiece, selectedDropTargets])
   const allowedMoveSourceSquares = useMemo(() => getAllowedMoveSources(effectiveAllowedMoves), [effectiveAllowedMoves])
+  const reserveStatus = useMemo(() => getReserveStatus(gameState), [gameState])
+  const isCrazyKrieg = gameMeta?.rule_variant === "crazykrieg"
   const waitingForOpponent = gameState?.state === "active" && !possibleActions.includes("move")
   const soundSettingEnabled = user?.settings?.sound_enabled !== false
   const soundsEnabled = soundSettingEnabled && !soundsMuted
@@ -2149,6 +2357,18 @@ export default function GamePage() {
     resetPendingMove()
   }, [allowedMoveSourceSquares, fromSquare])
 
+  useEffect(() => {
+    if (!selectedDropPiece) {
+      return
+    }
+
+    if (canMove && selectedDropTargets.length) {
+      return
+    }
+
+    setSelectedDropPiece("")
+  }, [canMove, selectedDropPiece, selectedDropTargets.length])
+
   function closePhantomMenu() {
     setPhantomMenu(null)
   }
@@ -2160,14 +2380,30 @@ export default function GamePage() {
   function resetPendingMove() {
     setFromSquare("")
     setToSquare("")
+    setSelectedDropPiece("")
     setShowPromotionModal(false)
     setIllegalMoveSquares([])
   }
 
   function openPhantomMenu(square) {
+    setSelectedDropPiece("")
     setActionError("")
     const squareHasPhantom = Boolean(placements[square])
     setPhantomMenu(buildMenuState(square, boardShellRef.current, squareHasPhantom, availablePiecesForSquare(square)))
+  }
+
+  function handleSelectDropPiece(piece) {
+    if (!canMove || !DROP_PIECES.includes(piece)) {
+      return
+    }
+
+    setActionError("")
+    setIllegalMoveSquares([])
+    setFromSquare("")
+    setToSquare("")
+    setShowPromotionModal(false)
+    closePhantomMenu()
+    setSelectedDropPiece((current) => (current === piece ? "" : piece))
   }
 
   function beginMovePhantom(square) {
@@ -2252,6 +2488,7 @@ export default function GamePage() {
 
     setFromSquare(from)
     setToSquare(to)
+    setSelectedDropPiece("")
     setShowPromotionModal(false)
 
     if (isPromotionCandidate({ fen: gameState?.your_fen, fromSquare: from, toSquare: to, color: gameState?.your_color })) {
@@ -2299,6 +2536,26 @@ export default function GamePage() {
 
     const legalMoveSource = allowedMoveSourceSquares.includes(square)
     const ownPiece = squareHasOwnPiece(gameState?.your_fen, square, gameState?.your_color) || legalMoveSource
+
+    if (selectedDropPiece && canMove) {
+      resetTapState()
+      setActionError("")
+      setShowPromotionModal(false)
+      setIllegalMoveSquares([])
+      closePhantomMenu()
+
+      if (selectedDropTargets.includes(square)) {
+        await submitMoveWithUci(`${selectedDropPiece}@${square}`)
+        return
+      }
+
+      setSelectedDropPiece("")
+      if (!legalMoveSource) {
+        setActionError("Choose a highlighted empty square to drop that reserve piece.")
+        return
+      }
+    }
+
     const eligibleForDoubleTapPhantom = !fromSquare && (!ownPiece || Boolean(placements[square]))
     const now = Date.now()
     const previousTap = lastTapRef.current
@@ -2357,6 +2614,7 @@ export default function GamePage() {
 
   function handleSquareRightClick(square) {
     resetTapState()
+    setSelectedDropPiece("")
 
     if (suppressContextMenuRef.current) {
       suppressContextMenuRef.current = false
@@ -2400,6 +2658,7 @@ export default function GamePage() {
       const piece = pieceAtSquare(gameState?.your_fen, square)
       setActionError("")
       setShowPromotionModal(false)
+      setSelectedDropPiece("")
       setDraggingMoveFrom(square)
       draggingMoveFromRef.current = square
       moveDragPointerIdRef.current = event.pointerId
@@ -2517,6 +2776,7 @@ export default function GamePage() {
     illegalMoveContextRef.current = null
     setActionError("")
     captureViewport()
+    const highlightSquares = getMoveHighlightSquares(uci)
 
     try {
       const result = await submitMove(gameRef, uci)
@@ -2529,12 +2789,12 @@ export default function GamePage() {
           yourColor: gameState?.your_color,
         }
         setActionError("Illegal move. Try a different move.")
-        setIllegalMoveSquares([uci.slice(0, 2), uci.slice(2, 4)])
+        setIllegalMoveSquares(highlightSquares)
         setToSquare("")
         return
       }
 
-      setLastMoveSquares([uci.slice(0, 2), uci.slice(2, 4)])
+      setLastMoveSquares(highlightSquares)
       setIllegalMoveSquares([])
       resetPendingMove()
       await pollState({ silent: true, preserveViewport: true })
@@ -2844,6 +3104,16 @@ export default function GamePage() {
                         <span className="game-piece-status__value">{remainingPieceStatus.black.pawnsCaptured}</span>
                       </p>
                     ) : null}
+                    {isCrazyKrieg ? (
+                      <ReservePieces
+                        color="white"
+                        reserve={reserveStatus.white}
+                        canDrop={canMove && gameState?.your_color === "white"}
+                        dropTargetsByPiece={dropTargetsByPiece}
+                        selectedDropPiece={selectedDropPiece}
+                        onSelectDropPiece={handleSelectDropPiece}
+                      />
+                    ) : null}
                   </div>
                   <div className="game-piece-status__side" aria-label="Black material view">
                     <span className="game-piece-status__owner">For Black</span>
@@ -2856,6 +3126,16 @@ export default function GamePage() {
                         <span className="game-piece-status__label">White pawns captured:</span>{" "}
                         <span className="game-piece-status__value">{remainingPieceStatus.white.pawnsCaptured}</span>
                       </p>
+                    ) : null}
+                    {isCrazyKrieg ? (
+                      <ReservePieces
+                        color="black"
+                        reserve={reserveStatus.black}
+                        canDrop={canMove && gameState?.your_color === "black"}
+                        dropTargetsByPiece={dropTargetsByPiece}
+                        selectedDropPiece={selectedDropPiece}
+                        onSelectDropPiece={handleSelectDropPiece}
+                      />
                     ) : null}
                   </div>
                 </section>

@@ -50,6 +50,10 @@ const activeState = {
   your_color: "white",
   your_fen: "8/8/8/8/8/8/4P3/4K3",
   allowed_moves: ["e2e4"],
+  reserve_summary: {
+    white: { pawns: 0, knights: 0, bishops: 0, rooks: 0, queens: 0 },
+    black: { pawns: 0, knights: 0, bishops: 0, rooks: 0, queens: 0 },
+  },
   referee_log: [{ turn: 1, color: "white", announcement: "White to move" }],
   possible_actions: ["move", "ask_any"],
   clock: { white_remaining: 601, black_remaining: 598, active_color: "white" },
@@ -1278,6 +1282,62 @@ describe("GamePage", () => {
     expect(within(pieceStatus).getByText("14")).toBeInTheDocument()
     expect(within(pieceStatus).queryByText("White pawns captured:")).not.toBeInTheDocument()
     expect(within(pieceStatus).queryByText("Black pawns captured:")).not.toBeInTheDocument()
+  })
+
+  it("renders_crazykrieg_reserves_and_submits_drop_moves", async () => {
+    mockApi.getGame.mockResolvedValueOnce({
+      game_id: "g-123",
+      game_code: "ABC123",
+      rule_variant: "crazykrieg",
+      state: "active",
+      opponent_type: "user",
+      white: { username: "fil", role: "user", connected: true },
+      black: { username: "opponent", role: "user", connected: true },
+      turn: "white",
+      move_number: 5,
+      created_at: "2026-04-02T12:00:00Z",
+    })
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      move_number: 5,
+      allowed_moves: ["P@e4", "N@f5"],
+      reserve_summary: {
+        white: { pawns: 1, knights: 1, bishops: 0, rooks: 0, queens: 0 },
+        black: { pawns: 0, knights: 0, bishops: 1, rooks: 0, queens: 0 },
+      },
+    })
+
+    render(<GamePage />)
+
+    const pieceStatus = await screen.findByLabelText("Remaining piece status")
+    const whiteReserve = within(pieceStatus).getByLabelText("White reserve")
+    expect(within(whiteReserve).getByRole("button", { name: /Pawn reserve piece \(1\).*1 legal drop square/i })).toBeInTheDocument()
+    expect(within(whiteReserve).getByRole("button", { name: /Knight reserve piece \(1\).*1 legal drop square/i })).toBeInTheDocument()
+
+    fireEvent.click(within(whiteReserve).getByRole("button", { name: /Pawn reserve piece \(1\)/i }))
+    expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--suggested")
+
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+    await waitFor(() => expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "P@e4"))
+  })
+
+  it.each(["english", "crazykrieg"])("shows_any_button_for_%s_when_the_ruleset_supports_it", async (ruleVariant) => {
+    mockApi.getGame.mockResolvedValueOnce({
+      game_id: "g-123",
+      game_code: "ABC123",
+      rule_variant: ruleVariant,
+      state: "active",
+      opponent_type: "user",
+      white: { username: "fil", role: "user", connected: true },
+      black: { username: "opponent", role: "user", connected: true },
+      turn: "white",
+      move_number: 1,
+      created_at: "2026-04-02T12:00:00Z",
+    })
+
+    render(<GamePage />)
+
+    expect(await screen.findByRole("button", { name: "Any pawn captures?" })).toBeInTheDocument()
   })
 
   it("renders_referee_log_grouped_by_turn", async () => {

@@ -331,6 +331,63 @@
   font-weight: 800;
 }
 
+.game-piece-status__reserve {
+  display: grid;
+  gap: 0.34rem;
+  margin-top: 0.2rem;
+}
+
+.game-piece-status__empty {
+  color: var(--muted-soft);
+  font-size: 0.78rem;
+}
+
+.game-reserve-pieces {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.28rem;
+}
+
+.game-reserve-piece {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.18rem;
+  min-height: 2rem;
+  padding: 0.24rem 0.34rem;
+  border-radius: 0.58rem;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  color: var(--text);
+  box-shadow: none;
+}
+
+.game-reserve-piece img {
+  width: 1.2rem;
+  height: 1.2rem;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.game-reserve-piece span {
+  color: var(--muted-soft);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.game-reserve-piece:not(:disabled):hover,
+.game-reserve-piece:not(:disabled):focus-visible,
+.game-reserve-piece--selected {
+  border-color: color-mix(in srgb, var(--accent) 62%, var(--border));
+  background: color-mix(in srgb, var(--surface-strong) 72%, var(--accent) 28%);
+}
+
+.game-reserve-piece:disabled {
+  opacity: 0.54;
+  cursor: default;
+}
+
 .game-board-meta .game-page__meta {
   max-width: 34rem;
 }
