@@ -401,6 +401,14 @@ describe("LobbyPage", () => {
           elo: 1510,
           supported_rule_variants: ["wild16"],
         },
+        {
+          bot_id: "bot-crazy",
+          username: "crazybot",
+          display_name: "Crazy Bot",
+          description: "Knows CrazyKrieg.",
+          elo: 1601,
+          supported_rule_variants: ["crazykrieg"],
+        },
       ],
     })
 
@@ -411,6 +419,9 @@ describe("LobbyPage", () => {
     expect(within(rulesetSelect).getByRole("option", { name: "Berkeley + Any" })).toBeInTheDocument()
     expect(within(rulesetSelect).getByRole("option", { name: "Cincinnati" })).toBeInTheDocument()
     expect(within(rulesetSelect).getByRole("option", { name: "Wild 16" })).toBeInTheDocument()
+    expect(within(rulesetSelect).getByRole("option", { name: "RAND" })).toBeInTheDocument()
+    expect(within(rulesetSelect).getByRole("option", { name: "English" })).toBeInTheDocument()
+    expect(within(rulesetSelect).getByRole("option", { name: "CrazyKrieg" })).toBeInTheDocument()
 
     fireEvent.click(await screen.findByLabelText("Bot"))
     expect(await screen.findByLabelText("Bot opponent")).toHaveValue("")
@@ -423,6 +434,10 @@ describe("LobbyPage", () => {
     fireEvent.change(rulesetSelect, { target: { value: "wild16" } })
     expect(screen.getByRole("option", { name: "1510 - Wild 16 Bot" })).toBeInTheDocument()
     expect(screen.queryByRole("option", { name: "1420 - Cincinnati Bot" })).not.toBeInTheDocument()
+
+    fireEvent.change(rulesetSelect, { target: { value: "crazykrieg" } })
+    expect(screen.getByRole("option", { name: "1601 - Crazy Bot" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "1510 - Wild 16 Bot" })).not.toBeInTheDocument()
   })
 
   it("updates_the_bot_description_when_selecting_gpt_nano", async () => {

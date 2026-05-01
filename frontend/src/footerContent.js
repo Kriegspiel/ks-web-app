@@ -15,6 +15,16 @@ const absoluteFooterLinks = new Map([
   ["/terms", "https://kriegspiel.org/terms"],
 ])
 
+const requiredRulesLinks = [
+  { label: "Berkeley", href: "https://kriegspiel.org/rules/berkeley" },
+  { label: "Cincinnati", href: "https://kriegspiel.org/rules/cincinnati" },
+  { label: "Wild 16", href: "https://kriegspiel.org/rules/wild16" },
+  { label: "RAND", href: "https://kriegspiel.org/rules/rand" },
+  { label: "English", href: "https://kriegspiel.org/rules/english" },
+  { label: "CrazyKrieg", href: "https://kriegspiel.org/rules/crazykrieg" },
+  { label: "Comparison", href: "https://kriegspiel.org/rules/comparison/" },
+]
+
 function normalizeFooterLabel(label) {
   return label === "hi@kriegspiel.org" ? "any@kriegspiel.org" : label
 }
@@ -48,6 +58,16 @@ function parseFooterMarkdown(markdown) {
     const linkMatch = line.match(/^-\s+\[(.+?)\]\((.+?)\)$/)
     if (linkMatch) {
       currentGroup.links.push({ label: normalizeFooterLabel(linkMatch[1]), href: normalizeFooterHref(linkMatch[2]) })
+    }
+  }
+
+  const rulesGroup = groups.find((group) => group.title === "Rules")
+  if (rulesGroup) {
+    const existingHrefs = new Set(rulesGroup.links.map((link) => link.href))
+    for (const requiredLink of requiredRulesLinks) {
+      if (!existingHrefs.has(requiredLink.href)) {
+        rulesGroup.links.push(requiredLink)
+      }
     }
   }
 
