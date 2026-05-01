@@ -1254,12 +1254,12 @@ describe("GamePage", () => {
     const pieceStatus = await screen.findByLabelText("Remaining piece status")
     const whiteMaterialView = within(pieceStatus).getByLabelText("White material view")
     const blackMaterialView = within(pieceStatus).getByLabelText("Black material view")
-    expect(within(whiteMaterialView).getByText("For White")).toBeInTheDocument()
+    expect(within(whiteMaterialView).queryByText("For White")).not.toBeInTheDocument()
     expect(within(whiteMaterialView).getByText("Black pieces remain:")).toBeInTheDocument()
     expect(within(whiteMaterialView).getByText("13")).toBeInTheDocument()
     expect(within(whiteMaterialView).getByText("Black pawns captured:")).toBeInTheDocument()
     expect(within(whiteMaterialView).getByText("1")).toBeInTheDocument()
-    expect(within(blackMaterialView).getByText("For Black")).toBeInTheDocument()
+    expect(within(blackMaterialView).queryByText("For Black")).not.toBeInTheDocument()
     expect(within(blackMaterialView).getByText("White pieces remain:")).toBeInTheDocument()
     expect(within(blackMaterialView).getByText("14")).toBeInTheDocument()
     expect(within(blackMaterialView).getByText("White pawns captured:")).toBeInTheDocument()
@@ -1301,6 +1301,10 @@ describe("GamePage", () => {
       ...activeState,
       move_number: 5,
       allowed_moves: ["P@e4", "N@f5"],
+      material_summary: {
+        white: { pieces_remaining: 17, pawns_captured: 3 },
+        black: { pieces_remaining: 15, pawns_captured: 9 },
+      },
       reserve_summary: {
         white: { pawns: 1, knights: 1, bishops: 0, rooks: 0, queens: 0 },
         black: { pawns: 0, knights: 0, bishops: 1, rooks: 0, queens: 0 },
@@ -1313,6 +1317,10 @@ describe("GamePage", () => {
     const whiteReserve = within(pieceStatus).getByLabelText("White reserve")
     expect(within(whiteReserve).getByRole("button", { name: /Pawn reserve piece \(1\).*1 legal drop square/i })).toBeInTheDocument()
     expect(within(whiteReserve).getByRole("button", { name: /Knight reserve piece \(1\).*1 legal drop square/i })).toBeInTheDocument()
+    expect(within(pieceStatus).getByText("17")).toBeInTheDocument()
+    expect(within(pieceStatus).getByText("15")).toBeInTheDocument()
+    expect(within(pieceStatus).queryByText("White pawns captured:")).not.toBeInTheDocument()
+    expect(within(pieceStatus).queryByText("Black pawns captured:")).not.toBeInTheDocument()
 
     fireEvent.click(within(whiteReserve).getByRole("button", { name: /Pawn reserve piece \(1\)/i }))
     expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--suggested")
@@ -1595,7 +1603,7 @@ describe("GamePage", () => {
     expect(screen.queryByText("CAPTURE_DONE")).not.toBeInTheDocument()
   })
 
-  it("formats_typed_capture_announcements_numeric_pawn_tries_and_nonsense_in_scoresheets", async () => {
+  it("formats_typed_capture_announcements_numeric_pawn_tries_and_hides_nonsense_in_scoresheets", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
       scoresheet: {
@@ -1630,7 +1638,7 @@ describe("GamePage", () => {
 
     const refereeLog = await screen.findByRole("log", { name: "Referee log by turn" })
     expect(within(refereeLog).getByText("[e5d4] Pawn captured at D4 · Check on file · 2 pawn tries")).toBeInTheDocument()
-    expect(within(refereeLog).getByText("[a7a6] Nonsense")).toBeInTheDocument()
+    expect(within(refereeLog).queryByText("[a7a6] Nonsense")).not.toBeInTheDocument()
   })
 
   it("highlights_the_recent_capture_square_on_the_board", async () => {

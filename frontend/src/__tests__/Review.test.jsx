@@ -205,7 +205,7 @@ describe("ReviewPage", () => {
     expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--capture")
   })
 
-  it("formats_typed_captures_numeric_pawn_tries_and_nonsense_in_the_move_log", async () => {
+  it("formats_typed_captures_numeric_pawn_tries_and_hides_nonsense_in_the_move_log", async () => {
     mockApi.getGameTranscript.mockResolvedValueOnce({
       game_id: "g-620",
       rule_variant: "wild16",
@@ -243,7 +243,39 @@ describe("ReviewPage", () => {
     expect(
       screen.getByRole("button", { name: /White \[e5d4\] Pawn captured at D4 · Check on file/i }),
     ).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Black 2 pawn tries · \[a7a6\] Nonsense/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Black 2 pawn tries/i })).toBeInTheDocument()
+    expect(screen.queryByText(/Nonsense/i)).not.toBeInTheDocument()
+  })
+
+  it("marks_crazykrieg_drops_with_a_green_board_circle", async () => {
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      game_id: "g-drop",
+      rule_variant: "crazykrieg",
+      moves: [
+        {
+          ply: 1,
+          color: "white",
+          question_type: "COMMON",
+          uci: "P@e4",
+          answer: { main: "REGULAR_MOVE", dropped_piece_announcement: "PAWN", special: null },
+          move_done: true,
+          timestamp: "2026-04-05T12:00:11Z",
+          replay_fen: {
+            full: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+            white: "4K3/PPPP1PPP/8/8/4P3/8/8/8 b - - 0 1",
+            black: "8/8/8/8/8/8/pppppppp/rnbqkbnr b - - 0 1",
+          },
+        },
+      ],
+    })
+
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    fireEvent.click(screen.getByRole("button", { name: /White \[p@e4\] Move complete/i }))
+
+    expect(document.querySelector(".board-overlay__badge--success")).toBeInTheDocument()
+    expect(document.querySelectorAll(".board-overlay__arrow")).toHaveLength(0)
   })
 
   it("places_next_turn_pawn_announcements_at_the_start_of_the_next_ply_group", async () => {

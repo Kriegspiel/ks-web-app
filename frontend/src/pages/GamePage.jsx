@@ -86,7 +86,6 @@ const REFEREE_MAIN_ANNOUNCEMENT_TEXT = {
   10: "Check by knight",
   11: "Double check",
   ILLEGAL_MOVE: "Illegal move",
-  NONSENSE: "Nonsense",
   REGULAR_MOVE: "Move complete",
   CAPTURE_DONE: "Capture",
   HAS_ANY: "Has pawn captures",
@@ -293,7 +292,10 @@ function collectLogText(value, output) {
     const promotionMessage = value.promotion_announced === true ? "Promotion" : ""
 
     codes.forEach((code, index) => {
-      output.push(formatRefereeCode(code, index === 0 ? captureSquare : "", index === 0 ? capturedPieceAnnouncement : ""))
+      const formatted = formatRefereeCode(code, index === 0 ? captureSquare : "", index === 0 ? capturedPieceAnnouncement : "")
+      if (formatted) {
+        output.push(formatted)
+      }
     })
     if (nextTurnMessage) {
       output.push(nextTurnMessage)
@@ -355,7 +357,7 @@ function getLogEntryTexts(entry) {
     output.push(nextTurnMessage)
   }
 
-  return [...new Set(output)]
+  return [...new Set(output.filter((item) => typeof item === "string" && item.trim()))]
 }
 
 function getLogEntryColor(entry, fallbackIndex = 0) {
@@ -551,7 +553,7 @@ function normalizeCurrentMessagePart(message) {
   }
 
   if (normalized.startsWith("nonsense")) {
-    return { key: "nonsense", text: "nonsense", priority: CURRENT_MESSAGE_PART_PRIORITY.illegal_move }
+    return null
   }
 
   if (normalized === "move complete") {
@@ -700,7 +702,7 @@ function summarizeCurrentMessageSideEntries(entries = []) {
       return
     }
 
-    if (part.key === "illegal_move" || part.key === "nonsense") {
+    if (part.key === "illegal_move") {
       hasAttemptOutcome = true
       return
     }
@@ -738,8 +740,8 @@ function summarizeCurrentMessageSideEntries(entries = []) {
   }
   if (moveCompleted) {
     summary.push("move complete")
-  } else if (lastPartKey === "illegal_move" || lastPartKey === "nonsense") {
-    summary.push(lastPartKey === "nonsense" ? "nonsense" : "illegal move")
+  } else if (lastPartKey === "illegal_move") {
+    summary.push("illegal move")
   }
   if (captureText) {
     summary.push(captureText)
@@ -1727,17 +1729,23 @@ function normalizeMaterialSideSummary(side) {
     : Number.parseInt(side.pawns_captured, 10)
 
   return {
-    piecesRemaining: Math.min(16, Math.max(0, piecesRemaining)),
-    pawnsCaptured: Number.isFinite(pawnsCaptured) ? Math.min(8, Math.max(0, pawnsCaptured)) : null,
+    piecesRemaining: Math.max(0, piecesRemaining),
+    pawnsCaptured: Number.isFinite(pawnsCaptured) ? Math.max(0, pawnsCaptured) : null,
   }
 }
 
-function getRemainingPieceStatus(gameState, turns) {
+function getRemainingPieceStatus(gameState, turns, ruleVariant) {
   const materialSummary = gameState?.material_summary
   const white = normalizeMaterialSideSummary(materialSummary?.white)
   const black = normalizeMaterialSideSummary(materialSummary?.black)
 
   if (white && black) {
+    if (ruleVariant === "crazykrieg") {
+      return {
+        white: { ...white, pawnsCaptured: null },
+        black: { ...black, pawnsCaptured: null },
+      }
+    }
     return { white, black }
   }
 
@@ -2199,8 +2207,8 @@ export default function GamePage() {
   const soundSettingEnabled = user?.settings?.sound_enabled !== false
   const soundsEnabled = soundSettingEnabled && !soundsMuted
   const remainingPieceStatus = useMemo(
-    () => getRemainingPieceStatus(gameState, groupedRefereeLog),
-    [gameState, groupedRefereeLog]
+    () => getRemainingPieceStatus(gameState, groupedRefereeLog, gameMeta?.rule_variant),
+    [gameState, groupedRefereeLog, gameMeta?.rule_variant]
   )
   const displayClock = useMemo(
     () => projectClock(gameState?.clock, {
@@ -3093,7 +3101,6 @@ export default function GamePage() {
               <div className="game-board-meta">
                 <section className="game-piece-status" aria-label="Remaining piece status">
                   <div className="game-piece-status__side" aria-label="White material view">
-                    <span className="game-piece-status__owner">For White</span>
                     <p className="game-piece-status__line">
                       <span className="game-piece-status__label">Black pieces remain:</span>{" "}
                       <span className="game-piece-status__value">{remainingPieceStatus.black.piecesRemaining}</span>
@@ -3116,7 +3123,6 @@ export default function GamePage() {
                     ) : null}
                   </div>
                   <div className="game-piece-status__side" aria-label="Black material view">
-                    <span className="game-piece-status__owner">For Black</span>
                     <p className="game-piece-status__line">
                       <span className="game-piece-status__label">White pieces remain:</span>{" "}
                       <span className="game-piece-status__value">{remainingPieceStatus.white.piecesRemaining}</span>

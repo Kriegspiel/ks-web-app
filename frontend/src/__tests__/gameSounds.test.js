@@ -108,7 +108,6 @@ describe("announcementSoundCategories", () => {
       "capture",
       "capture",
       "illegal",
-      "illegal",
       "move",
       "any_yes",
       "any_yes",
