@@ -1911,7 +1911,7 @@ describe("GamePage", () => {
     expect(screen.getByRole("button", { name: "Square e5" })).not.toHaveClass("square--suggested")
   })
 
-  it("locally_filters_hidden_midfield_pawn_targets_after_no_any_even_if_allowed_moves_are_stale", async () => {
+  it("renders_all_backend_allowed_moves_even_when_referee_log_says_no_any", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
       your_fen: "8/8/8/8/8/8/8/4K3",
@@ -1935,11 +1935,11 @@ describe("GamePage", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
     })
-    expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--suggested")
-    expect(screen.getByRole("button", { name: "Square f5" })).not.toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
   })
 
-  it("locally_filters_message_only_no_any_entries_without_prompt_metadata", async () => {
+  it("renders_backend_allowed_moves_even_for_message_only_no_any_entries", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
       move_number: 1,
@@ -1963,14 +1963,14 @@ describe("GamePage", () => {
 
     expect(screen.getByRole("button", { name: "Square e3" })).toHaveClass("square--suggested")
     expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--suggested")
-    expect(screen.getByRole("button", { name: "Square d3" })).not.toHaveClass("square--suggested")
-    expect(screen.getByRole("button", { name: "Square f3" })).not.toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square d3" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square f3" })).toHaveClass("square--suggested")
   })
 
   it.each([
     ["cincinnati", "No pawn captures"],
     ["wild16", "No pawn captures"],
-  ])("hides_any_and_filters_capture_targets_after_%s_no_pawn_capture_announcement", async (ruleVariant, message) => {
+  ])("hides_any_and_keeps_backend_allowed_moves_after_%s_no_pawn_capture_announcement", async (ruleVariant, message) => {
     mockApi.getGame.mockResolvedValueOnce({
       game_id: "g-123",
       game_code: "ABC123",
@@ -2007,8 +2007,8 @@ describe("GamePage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
     expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
-    expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--suggested")
-    expect(screen.getByRole("button", { name: "Square f5" })).not.toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
   })
 
   it.each(["cincinnati", "wild16"])("hides_any_for_%s_even_if_backend_sends_stale_action", async (ruleVariant) => {
@@ -2079,7 +2079,7 @@ describe("GamePage", () => {
     expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
   })
 
-  it("locally_filters_hidden_midfield_pawn_targets_after_has_any_even_if_allowed_moves_are_stale", async () => {
+  it("renders_all_backend_allowed_moves_even_when_referee_log_says_has_any", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
       your_fen: "8/8/8/8/8/8/8/4K3",
@@ -2104,10 +2104,10 @@ describe("GamePage", () => {
       expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
       expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
     })
-    expect(screen.getByRole("button", { name: "Square e5" })).not.toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
   })
 
-  it.each(["english", "crazykrieg"])("releases_the_has_any_filter_after_one_failed_pawn_try_for_%s", async (ruleVariant) => {
+  it.each(["english", "crazykrieg"])("keeps_backend_allowed_moves_after_one_failed_pawn_try_for_%s", async (ruleVariant) => {
     mockApi.getGame.mockResolvedValueOnce({
       game_id: "g-123",
       game_code: "ABC123",
@@ -2179,7 +2179,7 @@ describe("GamePage", () => {
     })
   })
 
-  it("applies_no_any_constraint_on_black_turns_using_turn_number_not_halfmove_number", async () => {
+  it("renders_black_backend_allowed_moves_even_when_referee_log_says_no_any", async () => {
     mockApi.getGame.mockResolvedValueOnce({
       game_id: "g-123",
       game_code: "ABC123",
@@ -2217,8 +2217,8 @@ describe("GamePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Square d5" }))
 
     expect(screen.getByRole("button", { name: "Square d4" })).toHaveClass("square--suggested")
-    expect(screen.getByRole("button", { name: "Square c4" })).not.toHaveClass("square--suggested")
-    expect(screen.getByRole("button", { name: "Square e4" })).not.toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square c4" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--suggested")
   })
 
   it("hides_ask_any_when_not_allowed", async () => {
