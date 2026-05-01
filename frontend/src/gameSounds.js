@@ -62,7 +62,7 @@ export function announcementSoundCategories(messages = []) {
       categories.push("capture")
       continue
     }
-    if (normalized.startsWith("illegal move") || normalized.startsWith("nonsense")) {
+    if (normalized.startsWith("illegal move")) {
       categories.push("illegal")
       continue
     }

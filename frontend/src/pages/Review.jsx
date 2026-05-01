@@ -15,7 +15,6 @@ const STARTING_FENS = {
 
 const ANNOUNCEMENT_TEXT = {
   ILLEGAL_MOVE: "Illegal move",
-  NONSENSE: "Nonsense",
   REGULAR_MOVE: "Move complete",
   CAPTURE_DONE: "Capture",
   HAS_ANY: "Has pawn captures",
@@ -84,6 +83,10 @@ function moveAnnouncements(move) {
 
   const questionType = String(move.question_type ?? "COMMON").toUpperCase()
   const normalizedUci = typeof move.uci === "string" ? move.uci.trim().toLowerCase() : ""
+  if (String(move?.answer?.main ?? "").toUpperCase() === "NONSENSE") {
+    return []
+  }
+
   const main = formatCaptureAnnouncement(move?.answer)
   const special = formatAnnouncement(move?.answer?.special)
   const items = [...new Set([main, special].filter(Boolean))]
@@ -362,8 +365,17 @@ function isCastlingUci(uci) {
   return ["e1g1", "e1c1", "e8g8", "e8c8"].includes(String(uci ?? "").toLowerCase())
 }
 
+function dropSquareForMove(move) {
+  const uci = String(move?.uci ?? "").trim().toLowerCase()
+  const match = uci.match(/^[pnbrq]@([a-h][1-8])$/i)
+  return match?.[1] ?? ""
+}
+
 function arrowsForMove(move) {
   const uci = String(move?.uci ?? "").trim().toLowerCase()
+  if (dropSquareForMove(move)) {
+    return []
+  }
   if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) {
     return []
   }
@@ -407,6 +419,15 @@ function overlaysForPlyGroup(group) {
 
   group.moves.forEach((move, index) => {
     arrows.push(...arrowsForMove(move))
+
+    const dropSquare = move?.move_done ? dropSquareForMove(move) : ""
+    if (dropSquare) {
+      badges.push({
+        square: dropSquare,
+        label: "",
+        tone: "success",
+      })
+    }
 
     const captureSquare = typeof move?.answer?.capture_square === "string" ? move.answer.capture_square.trim().toLowerCase() : ""
     if (captureSquare && /^[a-h][1-8]$/.test(captureSquare)) {
