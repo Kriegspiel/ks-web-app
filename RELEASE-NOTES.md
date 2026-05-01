@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.12
+
+- **English/CrazyKrieg Any**: released the local pawn-capture board filter after
+  the first failed pawn try, matching the engine rule that only one pawn try is
+  required after a positive `Any?`.
+
 ## ks-web-app frontend v. 1.3.11
 
 - **CrazyKrieg Review**: marked completed drops on the review board with a

@@ -1532,17 +1532,27 @@ function reserveAssetKey(piece, color) {
   return color === "black" ? piece.toLowerCase() : piece
 }
 
-function getLatestAskAnyConstraint(turns, playerColor) {
+const ONE_TRY_ASK_ANY_RULESETS = new Set(["english", "crazykrieg"])
+
+function hasIllegalMoveMessage(messages) {
+  return Array.isArray(messages) && messages.some((message) => typeof message === "string" && message.startsWith("Illegal move"))
+}
+
+function getLatestAskAnyConstraint(turns, playerColor, ruleVariant = "") {
   if (!Array.isArray(turns) || !playerColor) {
     return { type: "", turn: null }
   }
 
   const sideKey = playerColor === "black" ? "black" : "white"
+  const releaseAfterOneFailedTry = ONE_TRY_ASK_ANY_RULESETS.has(ruleVariant)
   for (let turnIndex = turns.length - 1; turnIndex >= 0; turnIndex -= 1) {
     const sideEntries = Array.isArray(turns[turnIndex]?.[sideKey]) ? turns[turnIndex][sideKey] : []
     for (let entryIndex = sideEntries.length - 1; entryIndex >= 0; entryIndex -= 1) {
       const entry = sideEntries[entryIndex]
       const messages = Array.isArray(entry.messages) ? entry.messages : []
+      if (releaseAfterOneFailedTry && hasIllegalMoveMessage(messages)) {
+        return { type: "", turn: Number.isFinite(turns[turnIndex]?.turn) ? turns[turnIndex].turn : null }
+      }
       if (messages.includes("Has pawn captures")) {
         return { type: "has_any", turn: Number.isFinite(turns[turnIndex]?.turn) ? turns[turnIndex].turn : null }
       }
@@ -2165,8 +2175,8 @@ export default function GamePage() {
   const flattenedRefereeEntries = useMemo(() => flattenGroupedRefereeEntries(groupedRefereeLog), [groupedRefereeLog])
   const captureSquares = useMemo(() => getRecentCaptureSquares(gameState), [gameState])
   const latestAskAnyConstraint = useMemo(
-    () => getLatestAskAnyConstraint(groupedRefereeLog, gameState?.your_color),
-    [groupedRefereeLog, gameState?.your_color]
+    () => getLatestAskAnyConstraint(groupedRefereeLog, gameState?.your_color, gameMeta?.rule_variant),
+    [gameMeta?.rule_variant, groupedRefereeLog, gameState?.your_color]
   )
   const askAnyConstraint = useMemo(() => {
     const currentTurn = getActivePlayerTurnNumber({

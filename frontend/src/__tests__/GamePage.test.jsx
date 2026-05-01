@@ -2107,6 +2107,49 @@ describe("GamePage", () => {
     expect(screen.getByRole("button", { name: "Square e5" })).not.toHaveClass("square--suggested")
   })
 
+  it.each(["english", "crazykrieg"])("releases_the_has_any_filter_after_one_failed_pawn_try_for_%s", async (ruleVariant) => {
+    mockApi.getGame.mockResolvedValueOnce({
+      game_id: "g-123",
+      game_code: "ABC123",
+      rule_variant: ruleVariant,
+      state: "active",
+      opponent_type: "user",
+      white: { username: "fil", role: "user", connected: true },
+      black: { username: "opponent", role: "user", connected: true },
+      turn: "white",
+      move_number: 1,
+      created_at: "2026-04-02T12:00:00Z",
+    })
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      move_number: 1,
+      possible_actions: ["move", "ask_any"],
+      your_fen: "8/8/8/8/8/8/8/4K3",
+      allowed_moves: ["e4d5", "e4e5", "e4f5"],
+      scoresheet: {
+        turns: [
+          {
+            turn: 1,
+            white: [
+              { prompt: "Ask any pawn captures", messages: ["Has pawn captures"] },
+              { prompt: "Move attempt", move_uci: "e4f5", messages: ["Illegal move"] },
+            ],
+            black: [],
+          },
+        ],
+      },
+    })
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e4" })
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+
+    expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square e5" })).toHaveClass("square--suggested")
+    expect(screen.getByRole("button", { name: "Square f5" })).toHaveClass("square--suggested")
+  })
+
   it("does_not_apply_an_old_no_any_constraint_to_a_later_turn", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
