@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.9
+
+- **Bot Rulesets**: stopped treating missing bot compatibility metadata as
+  support for every ruleset, so legacy bots no longer appear for CrazyKrieg,
+  English, RAND, Cincinnati, or Wild 16 unless the backend says they do.
+
 ## ks-web-app frontend v. 1.3.8
 
 - **Rulesets**: exposed RAND, English, and CrazyKrieg in ruleset labels,

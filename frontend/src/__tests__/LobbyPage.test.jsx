@@ -480,6 +480,31 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("option", { name: "1200 - Custom Bot" })).toBeInTheDocument()
   })
 
+  it("does_not_treat_missing_bot_rulesets_as_support_for_new_variants", async () => {
+    mockApi.getBots.mockResolvedValue({
+      bots: [
+        {
+          bot_id: "bot-legacy",
+          username: "gptnano",
+          display_name: "GPT Nano",
+          description: "Legacy metadata.",
+          elo: 1229,
+        },
+      ],
+    })
+
+    renderPage()
+
+    const rulesetSelect = await screen.findByLabelText("Ruleset")
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    expect(await screen.findByLabelText("Bot opponent")).toHaveValue("bot-legacy")
+    expect(screen.getByRole("option", { name: "1229 - GPT Nano" })).toBeInTheDocument()
+
+    fireEvent.change(rulesetSelect, { target: { value: "crazykrieg" } })
+    expect(screen.queryByRole("option", { name: "1229 - GPT Nano" })).not.toBeInTheDocument()
+    expect(screen.getByText("No bots support this ruleset.")).toBeInTheDocument()
+  })
+
   it("shows_default_errors_when_loading_bots_open_games_and_lobby_stats_fail_without_details", async () => {
     mockApi.getBots.mockRejectedValueOnce({})
     mockApi.getOpenGames.mockRejectedValueOnce({})

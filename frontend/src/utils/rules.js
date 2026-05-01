@@ -18,7 +18,7 @@ export const RULESET_OPTIONS = [
   { value: "crazykrieg", label: RULESET_LABELS.crazykrieg },
 ]
 
-export const DEFAULT_BOT_RULE_VARIANTS = ["berkeley", "berkeley_any", "cincinnati", "wild16", "rand", "english", "crazykrieg"]
+export const DEFAULT_BOT_RULE_VARIANTS = ["berkeley", "berkeley_any"]
 
 export function formatRuleVariant(value) {
   if (typeof value !== "string") {
