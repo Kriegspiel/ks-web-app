@@ -27,6 +27,7 @@ describe("GuestsReportPage", () => {
   it("renders_guest_report_table", async () => {
     techApi.getGuestsReport.mockResolvedValue({
       total: 2,
+      available_guest_accounts: 39998,
       guests: [
         {
           name: "guest_mikhail_tal",
@@ -52,7 +53,8 @@ describe("GuestsReportPage", () => {
     expect(screen.getByRole("link", { name: "guest_judit_polgar" })).toHaveAttribute("href", "/user/guest_judit_polgar")
     expect(screen.getByText("2026-04-01")).toBeInTheDocument()
     expect(screen.getByText("2026-04-04 13:00:00 UTC")).toBeInTheDocument()
-    expect(screen.getByText("2 guests listed.")).toBeInTheDocument()
+    expect(screen.getByText(/2 guests listed/)).toBeInTheDocument()
+    expect(screen.getByText(/39,998 guest accounts still available/)).toBeInTheDocument()
   })
 
   it("renders_empty_state_for_missing_guest_array", async () => {

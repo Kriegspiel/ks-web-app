@@ -21,7 +21,7 @@ function formatGameCount(value) {
 export default function GuestsReportPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [data, setData] = useState({ guests: [], total: 0 })
+  const [data, setData] = useState({ guests: [], total: 0, available_guest_accounts: 0 })
 
   useEffect(() => {
     let cancelled = false
@@ -33,12 +33,16 @@ export default function GuestsReportPage() {
         const payload = await techApi.getGuestsReport()
         if (!cancelled) {
           const guests = Array.isArray(payload?.guests) ? payload.guests : []
-          setData({ guests, total: Number(payload?.total ?? guests.length) })
+          setData({
+            guests,
+            total: Number(payload?.total ?? guests.length),
+            available_guest_accounts: Number(payload?.available_guest_accounts ?? 0),
+          })
         }
       } catch (apiError) {
         if (!cancelled) {
           setError(apiError?.message ?? "Unable to load guests report.")
-          setData({ guests: [], total: 0 })
+          setData({ guests: [], total: 0, available_guest_accounts: 0 })
         }
       } finally {
         if (!cancelled) {
@@ -61,7 +65,10 @@ export default function GuestsReportPage() {
         <>
           {data.guests.length === 0 ? <p>No guests found.</p> : (
             <section className="leaderboard-table-wrap">
-              <p className="page-meta-stamp">{data.total.toLocaleString("en-US")} guests listed.</p>
+              <p className="page-meta-stamp">
+                {data.total.toLocaleString("en-US")} guests listed.{" "}
+                {data.available_guest_accounts.toLocaleString("en-US")} guest accounts still available.
+              </p>
               <table className="leaderboard-table guests-report-table">
                 <thead>
                   <tr>

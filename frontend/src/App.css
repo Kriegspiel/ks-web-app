@@ -676,6 +676,59 @@ button.theme-toggle:active {
   border-left: 3px solid var(--border);
 }
 
+.users-report-section {
+  display: grid;
+  gap: 1rem;
+}
+
+.users-report-summary,
+.users-report-charts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.users-report-summary__card,
+.users-report-chart {
+  margin: 0;
+  padding: 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+
+.users-report-summary__card span,
+.users-report-chart figcaption,
+.users-report-chart p {
+  color: var(--muted);
+}
+
+.users-report-summary__card strong {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: clamp(1.5rem, 4vw, 2.35rem);
+  color: var(--text);
+}
+
+.users-report-chart svg {
+  display: block;
+  width: 100%;
+  height: 5rem;
+  margin-top: 0.35rem;
+  color: var(--accent);
+}
+
+.users-report-chart p {
+  margin: 0.35rem 0 0;
+}
+
+@media (max-width: 760px) {
+  .users-report-summary,
+  .users-report-charts {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 900px) {
   .page-shell,
   .app-header__inner,
