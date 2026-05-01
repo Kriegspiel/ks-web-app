@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.13
+
+- **Move Rendering**: made board suggestions and CrazyKrieg drop targets render
+  directly from backend-provided `allowed_moves`, removing legacy client-side
+  ruleset filtering from referee-log messages.
+
 ## ks-web-app frontend v. 1.3.12
 
 - **English/CrazyKrieg Any**: released the local pawn-capture board filter after

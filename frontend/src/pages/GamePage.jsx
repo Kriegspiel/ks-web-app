@@ -1438,65 +1438,6 @@ function getDropTargetsByPiece(allowedMoves) {
   return Object.fromEntries(Object.entries(grouped).map(([piece, squares]) => [piece, [...new Set(squares)].sort()]))
 }
 
-function squareRankNumber(square) {
-  const rank = Number.parseInt(String(square || "")[1], 10)
-  return Number.isFinite(rank) ? rank : null
-}
-
-function squareFileNumber(square) {
-  const file = String(square || "")[0]
-  const fileNumber = file.charCodeAt(0) - 97
-  return fileNumber >= 0 && fileNumber < 8 ? fileNumber : null
-}
-
-function getPawnMoveKind(uci, color, fen) {
-  if (normalizeDropMove(uci)) {
-    return ""
-  }
-
-  if (typeof uci !== "string" || !/^[a-h][1-8][a-h][1-8][qrbn]?$/i.test(uci.trim())) {
-    return ""
-  }
-
-  const normalized = uci.trim().toLowerCase()
-  const fromSquare = normalized.slice(0, 2)
-  const toSquare = normalized.slice(2, 4)
-  const fromPiece = pieceAtSquare(fen, fromSquare)
-  if (fromPiece) {
-    const isPawn = color === "white" ? fromPiece === "P" : fromPiece === "p"
-    if (!isPawn) {
-      return ""
-    }
-  }
-
-  const fromRank = squareRankNumber(fromSquare)
-  const toRank = squareRankNumber(toSquare)
-  const fromFile = squareFileNumber(fromSquare)
-  const toFile = squareFileNumber(toSquare)
-  if (fromRank == null || toRank == null || fromFile == null || toFile == null) {
-    return ""
-  }
-
-  const fileDelta = toFile - fromFile
-  const rankDelta = toRank - fromRank
-  const forward = color === "black" ? -1 : 1
-  const startRank = color === "black" ? 7 : 2
-
-  if (Math.abs(fileDelta) === 1 && rankDelta === forward) {
-    return "capture"
-  }
-
-  if (fileDelta === 0 && rankDelta === forward) {
-    return "advance"
-  }
-
-  if (fileDelta === 0 && fromRank === startRank && rankDelta === forward * 2) {
-    return "advance"
-  }
-
-  return ""
-}
-
 function normalizeReserveSideSummary(side) {
   const out = { pawns: 0, knights: 0, bishops: 0, rooks: 0, queens: 0 }
   if (!side || typeof side !== "object") {
@@ -1532,71 +1473,8 @@ function reserveAssetKey(piece, color) {
   return color === "black" ? piece.toLowerCase() : piece
 }
 
-const ONE_TRY_ASK_ANY_RULESETS = new Set(["english", "crazykrieg"])
-
-function hasIllegalMoveMessage(messages) {
-  return Array.isArray(messages) && messages.some((message) => typeof message === "string" && message.startsWith("Illegal move"))
-}
-
-function getLatestAskAnyConstraint(turns, playerColor, ruleVariant = "") {
-  if (!Array.isArray(turns) || !playerColor) {
-    return { type: "", turn: null }
-  }
-
-  const sideKey = playerColor === "black" ? "black" : "white"
-  const releaseAfterOneFailedTry = ONE_TRY_ASK_ANY_RULESETS.has(ruleVariant)
-  for (let turnIndex = turns.length - 1; turnIndex >= 0; turnIndex -= 1) {
-    const sideEntries = Array.isArray(turns[turnIndex]?.[sideKey]) ? turns[turnIndex][sideKey] : []
-    for (let entryIndex = sideEntries.length - 1; entryIndex >= 0; entryIndex -= 1) {
-      const entry = sideEntries[entryIndex]
-      const messages = Array.isArray(entry.messages) ? entry.messages : []
-      if (releaseAfterOneFailedTry && hasIllegalMoveMessage(messages)) {
-        return { type: "", turn: Number.isFinite(turns[turnIndex]?.turn) ? turns[turnIndex].turn : null }
-      }
-      if (messages.includes("Has pawn captures")) {
-        return { type: "has_any", turn: Number.isFinite(turns[turnIndex]?.turn) ? turns[turnIndex].turn : null }
-      }
-      if (messages.includes("No pawn captures")) {
-        return { type: "no_any", turn: Number.isFinite(turns[turnIndex]?.turn) ? turns[turnIndex].turn : null }
-      }
-    }
-  }
-
-  return { type: "", turn: null }
-}
-
-function getActivePlayerTurnNumber({ moveNumber, turn, yourColor }) {
-  const normalizedTurn = normalizeLogColor(turn)
-  const normalizedColor = normalizeLogColor(yourColor)
-  const numericMoveNumber = Number.parseInt(moveNumber, 10)
-  if (!Number.isFinite(numericMoveNumber) || numericMoveNumber < 1) {
-    return null
-  }
-  if (!normalizedTurn || !normalizedColor || normalizedTurn !== normalizedColor) {
-    return null
-  }
-
-  return Math.ceil(numericMoveNumber / 2)
-}
-
-function filterAllowedMovesByAskAny(allowedMoves, { askAnyConstraint, color, fen }) {
-  if (!Array.isArray(allowedMoves) || !askAnyConstraint || !color) {
-    return Array.isArray(allowedMoves) ? allowedMoves : []
-  }
-
-  return allowedMoves.filter((uci) => {
-    const pawnMoveKind = getPawnMoveKind(uci, color, fen)
-    if (!pawnMoveKind) {
-      return askAnyConstraint !== "has_any"
-    }
-    if (askAnyConstraint === "has_any") {
-      return pawnMoveKind === "capture"
-    }
-    if (askAnyConstraint === "no_any") {
-      return pawnMoveKind !== "capture"
-    }
-    return true
-  })
+function normalizeAllowedMoves(allowedMoves) {
+  return Array.isArray(allowedMoves) ? allowedMoves : []
 }
 
 function clamp(value, min, max) {
@@ -2174,24 +2052,9 @@ export default function GamePage() {
     !hasPlayerTakenFirstTurn(groupedRefereeLog, gameState?.your_color)
   const flattenedRefereeEntries = useMemo(() => flattenGroupedRefereeEntries(groupedRefereeLog), [groupedRefereeLog])
   const captureSquares = useMemo(() => getRecentCaptureSquares(gameState), [gameState])
-  const latestAskAnyConstraint = useMemo(
-    () => getLatestAskAnyConstraint(groupedRefereeLog, gameState?.your_color, gameMeta?.rule_variant),
-    [gameMeta?.rule_variant, groupedRefereeLog, gameState?.your_color]
-  )
-  const askAnyConstraint = useMemo(() => {
-    const currentTurn = getActivePlayerTurnNumber({
-      moveNumber: gameState?.move_number,
-      turn: gameState?.turn,
-      yourColor: gameState?.your_color,
-    })
-    if (!Number.isFinite(currentTurn) || latestAskAnyConstraint.turn !== currentTurn) {
-      return ""
-    }
-    return latestAskAnyConstraint.type
-  }, [gameState?.move_number, gameState?.turn, gameState?.your_color, latestAskAnyConstraint])
   const effectiveAllowedMoves = useMemo(
-    () => filterAllowedMovesByAskAny(gameState?.allowed_moves, { askAnyConstraint, color: gameState?.your_color, fen: gameState?.your_fen }),
-    [askAnyConstraint, gameState?.allowed_moves, gameState?.your_color, gameState?.your_fen]
+    () => normalizeAllowedMoves(gameState?.allowed_moves),
+    [gameState?.allowed_moves]
   )
   const dropTargetsByPiece = useMemo(() => getDropTargetsByPiece(effectiveAllowedMoves), [effectiveAllowedMoves])
   const selectedDropTargets = useMemo(
