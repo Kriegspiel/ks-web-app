@@ -711,6 +711,45 @@ describe("GamePage", () => {
     })
   })
 
+  it("gates_black_pawn_promotion_when_crazyhouse_fen_contains_promoted_markers", async () => {
+    mockApi.getGame.mockResolvedValueOnce({
+      game_id: "g-123",
+      game_code: "ABC123",
+      rule_variant: "crazykrieg",
+      state: "active",
+      opponent_type: "user",
+      white: { username: "fil", role: "user", connected: true },
+      black: { username: "opponent", role: "user", connected: true },
+      turn: "black",
+      move_number: 33,
+      created_at: "2026-04-02T12:00:00Z",
+    })
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      turn: "black",
+      move_number: 33,
+      your_color: "black",
+      your_fen: "r1b1kbnr/p6p/1p4p1/2p5/3q4/2q5/q~1p5/8 b - - 0 1",
+      allowed_moves: ["c2c1q", "c2c1r", "c2c1b", "c2c1n"],
+      possible_actions: ["move"],
+      clock: { white_remaining: 601, black_remaining: 598, active_color: "black" },
+    })
+
+    render(<GamePage />)
+    await screen.findByRole("button", { name: "Square c2" })
+
+    fireEvent.click(screen.getByRole("button", { name: "Square c2" }))
+    fireEvent.click(screen.getByRole("button", { name: "Square c1" }))
+
+    expect(screen.getByRole("dialog", { name: "Choose promotion piece" })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Queen" }))
+
+    await waitFor(() => {
+      expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "c2c1q")
+    })
+  })
+
   it("shows_clocks_below_the_board", async () => {
     render(<GamePage />)
 

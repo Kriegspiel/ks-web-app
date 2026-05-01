@@ -1333,11 +1333,17 @@ function pieceAtSquare(fen, square) {
       continue
     }
 
-    if (cursor === fileIndex) {
+    if (token === "~") {
+      continue
+    }
+
+    if (/^[prnbqkPRNBQK]$/.test(token) && cursor === fileIndex) {
       return token
     }
 
-    cursor += 1
+    if (/^[prnbqkPRNBQK]$/.test(token)) {
+      cursor += 1
+    }
   }
 
   return ""
