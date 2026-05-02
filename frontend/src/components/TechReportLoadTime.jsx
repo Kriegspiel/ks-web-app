@@ -1,4 +1,4 @@
-export function formatLoadDuration(ms) {
+function formatLoadDuration(ms) {
   const duration = Number(ms)
   if (!Number.isFinite(duration) || duration < 0) {
     return ""
