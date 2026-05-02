@@ -17,6 +17,17 @@ function numberText(value) {
   return Number.isFinite(number) ? number.toLocaleString("en-US") : "0"
 }
 
+function formatLoadDuration(ms) {
+  const duration = Number(ms)
+  if (!Number.isFinite(duration) || duration < 0) {
+    return ""
+  }
+  if (duration < 1000) {
+    return `${Math.round(duration)} ms`
+  }
+  return `${(duration / 1000).toFixed(duration < 10_000 ? 1 : 0)} s`
+}
+
 function latestRow(section) {
   const rows = Array.isArray(section?.rows) ? section.rows : []
   return rows[rows.length - 1] ?? {}
@@ -71,14 +82,17 @@ function resultText(result) {
 export default function UsersReportPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [loadDurationMs, setLoadDurationMs] = useState(null)
   const [data, setData] = useState({ sections: [], last_games: [], timezone: "America/New_York" })
 
   useEffect(() => {
     let cancelled = false
 
     async function loadReport() {
+      const startedAt = Date.now()
       setLoading(true)
       setError("")
+      setLoadDurationMs(null)
       try {
         const payload = await techApi.getUsersReport()
         if (!cancelled) {
@@ -95,6 +109,7 @@ export default function UsersReportPage() {
         }
       } finally {
         if (!cancelled) {
+          setLoadDurationMs(Date.now() - startedAt)
           setLoading(false)
         }
       }
@@ -108,6 +123,11 @@ export default function UsersReportPage() {
     <main className="page-shell leaderboard-page">
       <h1>Users report</h1>
       <p className="page-meta-stamp">Activity periods are grouped in {data.timezone}. Games include active and archived records.</p>
+      {loadDurationMs !== null ? (
+        <p className="page-meta-stamp users-report-load-time">
+          {error ? "Request failed after " : "Loaded in "}{formatLoadDuration(loadDurationMs)}.
+        </p>
+      ) : null}
       {loading ? <p>Loading users report…</p> : null}
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
       {!loading && !error ? (
