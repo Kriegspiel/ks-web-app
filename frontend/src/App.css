@@ -681,8 +681,43 @@ button.theme-toggle:active {
   gap: 1rem;
 }
 
-.users-report-load-time {
+.tech-report-load-time {
   margin-top: -0.5rem;
+  color: var(--muted);
+}
+
+.tech-index-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.tech-index-card {
+  display: grid;
+  gap: 0.45rem;
+  min-height: 10rem;
+  padding: 1.15rem;
+  border: 1px solid var(--border);
+  border-radius: 1.1rem;
+  color: var(--text);
+  background: var(--surface);
+  text-decoration: none;
+}
+
+.tech-index-card:hover,
+.tech-index-card:focus-visible {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.tech-index-card span {
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+
+.tech-index-card p {
+  margin: 0;
   color: var(--muted);
 }
 
@@ -728,6 +763,7 @@ button.theme-toggle:active {
 }
 
 @media (max-width: 760px) {
+  .tech-index-grid,
   .users-report-summary,
   .users-report-charts {
     grid-template-columns: 1fr;

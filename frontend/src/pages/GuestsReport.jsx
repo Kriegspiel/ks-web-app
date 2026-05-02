@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import TechReportLoadTime from "../components/TechReportLoadTime"
 import VersionStamp from "../components/VersionStamp"
 import { techApi } from "../services/api"
 import { formatUtcDate, formatUtcDateTime } from "../utils/dateTime"
@@ -21,14 +22,17 @@ function formatGameCount(value) {
 export default function GuestsReportPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [loadDurationMs, setLoadDurationMs] = useState(null)
   const [data, setData] = useState({ guests: [], total: 0, available_guest_accounts: 0 })
 
   useEffect(() => {
     let cancelled = false
 
     async function loadReport() {
+      const startedAt = Date.now()
       setLoading(true)
       setError("")
+      setLoadDurationMs(null)
       try {
         const payload = await techApi.getGuestsReport()
         if (!cancelled) {
@@ -46,6 +50,7 @@ export default function GuestsReportPage() {
         }
       } finally {
         if (!cancelled) {
+          setLoadDurationMs(Date.now() - startedAt)
           setLoading(false)
         }
       }
@@ -59,6 +64,7 @@ export default function GuestsReportPage() {
     <main className="page-shell leaderboard-page">
       <h1>Guests report</h1>
       <p className="page-meta-stamp">All guest accounts, with archived and currently active games counted.</p>
+      <TechReportLoadTime durationMs={loadDurationMs} failed={Boolean(error)} />
       {loading ? <p>Loading guests report…</p> : null}
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
       {!loading && !error ? (
