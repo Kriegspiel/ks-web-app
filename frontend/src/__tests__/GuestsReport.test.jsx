@@ -16,6 +16,7 @@ vi.mock("../components/VersionStamp", () => ({
 const { techApi } = await import("../services/api")
 
 afterEach(() => {
+  vi.restoreAllMocks()
   cleanup()
 })
 
@@ -25,6 +26,8 @@ describe("GuestsReportPage", () => {
   })
 
   it("renders_guest_report_table", async () => {
+    const nowSpy = vi.spyOn(Date, "now")
+    nowSpy.mockReturnValueOnce(1_000).mockReturnValueOnce(1_099)
     techApi.getGuestsReport.mockResolvedValue({
       total: 2,
       available_guest_accounts: 39998,
@@ -49,12 +52,15 @@ describe("GuestsReportPage", () => {
     render(<MemoryRouter><GuestsReportPage /></MemoryRouter>)
 
     expect(await screen.findByText("Guests report")).toBeInTheDocument()
+    expect(screen.getByText("Loaded in 99 ms.")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "guest_mikhail_tal" })).toHaveAttribute("href", "/user/guest_mikhail_tal")
     expect(screen.getByRole("link", { name: "guest_judit_polgar" })).toHaveAttribute("href", "/user/guest_judit_polgar")
     expect(screen.getByText("2026-04-01")).toBeInTheDocument()
     expect(screen.getByText("2026-04-04 13:00:00 UTC")).toBeInTheDocument()
     expect(screen.getByText(/2 guests listed/)).toBeInTheDocument()
     expect(screen.getByText(/39,998 guest accounts still available/)).toBeInTheDocument()
+
+    nowSpy.mockRestore()
   })
 
   it("renders_empty_state_for_missing_guest_array", async () => {
@@ -66,10 +72,15 @@ describe("GuestsReportPage", () => {
   })
 
   it("shows_the_default_error_message_when_the_report_request_has_no_details", async () => {
+    const nowSpy = vi.spyOn(Date, "now")
+    nowSpy.mockReturnValueOnce(2_000).mockReturnValueOnce(2_625)
     techApi.getGuestsReport.mockRejectedValue({})
 
     render(<MemoryRouter><GuestsReportPage /></MemoryRouter>)
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Unable to load guests report.")
+    expect(screen.getByText("Request failed after 625 ms.")).toBeInTheDocument()
+
+    nowSpy.mockRestore()
   })
 })

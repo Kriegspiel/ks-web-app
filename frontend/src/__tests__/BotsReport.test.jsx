@@ -16,6 +16,7 @@ vi.mock("../components/VersionStamp", () => ({
 const { techApi } = await import("../services/api")
 
 afterEach(() => {
+  vi.restoreAllMocks()
   cleanup()
 })
 
@@ -25,6 +26,8 @@ describe("BotsReportPage", () => {
   })
 
   it("renders_report_table", async () => {
+    const nowSpy = vi.spyOn(Date, "now")
+    nowSpy.mockReturnValueOnce(1_000).mockReturnValueOnce(1_418)
     techApi.getBotsReport.mockResolvedValue({
       timezone: "America/New_York",
       bots: [
@@ -60,12 +63,15 @@ describe("BotsReportPage", () => {
     render(<MemoryRouter><BotsReportPage /></MemoryRouter>)
 
     expect(await screen.findByText("Bots report")).toBeInTheDocument()
+    expect(screen.getByText("Loaded in 418 ms.")).toBeInTheDocument()
     expect((await screen.findAllByText("2026-04-08")).length).toBe(2)
     expect(screen.getByRole("link", { name: "gptnano" })).toHaveAttribute("href", "/user/gptnano")
     expect(screen.getByRole("link", { name: "haiku" })).toHaveAttribute("href", "/user/haiku")
     expect(screen.getAllByText("Overall").length).toBeGreaterThan(0)
     expect(screen.getAllByText("vs. humans").length).toBeGreaterThan(0)
     expect(screen.getAllByText("vs. bots").length).toBeGreaterThan(0)
+
+    nowSpy.mockRestore()
   })
 
   it("falls_back_to_the_default_timezone_and_zeroed_row_stats", async () => {
@@ -99,10 +105,15 @@ describe("BotsReportPage", () => {
   })
 
   it("shows_the_default_error_message_when_the_report_request_has_no_details", async () => {
+    const nowSpy = vi.spyOn(Date, "now")
+    nowSpy.mockReturnValueOnce(2_000).mockReturnValueOnce(3_250)
     techApi.getBotsReport.mockRejectedValue({})
 
     render(<MemoryRouter><BotsReportPage /></MemoryRouter>)
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Unable to load bots report.")
+    expect(screen.getByText("Request failed after 1.3 s.")).toBeInTheDocument()
+
+    nowSpy.mockRestore()
   })
 })

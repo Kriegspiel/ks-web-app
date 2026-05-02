@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import TechReportLoadTime from "../components/TechReportLoadTime"
 import VersionStamp from "../components/VersionStamp"
 import { techApi } from "../services/api"
 import { formatUtcDateTime } from "../utils/dateTime"
@@ -15,17 +16,6 @@ const METRICS = [
 function numberText(value) {
   const number = Number(value)
   return Number.isFinite(number) ? number.toLocaleString("en-US") : "0"
-}
-
-function formatLoadDuration(ms) {
-  const duration = Number(ms)
-  if (!Number.isFinite(duration) || duration < 0) {
-    return ""
-  }
-  if (duration < 1000) {
-    return `${Math.round(duration)} ms`
-  }
-  return `${(duration / 1000).toFixed(duration < 10_000 ? 1 : 0)} s`
 }
 
 function latestRow(section) {
@@ -123,11 +113,7 @@ export default function UsersReportPage() {
     <main className="page-shell leaderboard-page">
       <h1>Users report</h1>
       <p className="page-meta-stamp">Activity periods are grouped in {data.timezone}. Games include active and archived records.</p>
-      {loadDurationMs !== null ? (
-        <p className="page-meta-stamp users-report-load-time">
-          {error ? "Request failed after " : "Loaded in "}{formatLoadDuration(loadDurationMs)}.
-        </p>
-      ) : null}
+      <TechReportLoadTime durationMs={loadDurationMs} failed={Boolean(error)} />
       {loading ? <p>Loading users report…</p> : null}
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
       {!loading && !error ? (

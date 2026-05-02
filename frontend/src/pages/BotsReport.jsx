@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import TechReportLoadTime from "../components/TechReportLoadTime"
 import VersionStamp from "../components/VersionStamp"
 import { techApi } from "../services/api"
 import "./Leaderboard.css"
@@ -7,14 +8,17 @@ import "./Leaderboard.css"
 export default function BotsReportPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [loadDurationMs, setLoadDurationMs] = useState(null)
   const [data, setData] = useState({ bots: [], timezone: "America/New_York" })
 
   useEffect(() => {
     let cancelled = false
 
     async function loadReport() {
+      const startedAt = Date.now()
       setLoading(true)
       setError("")
+      setLoadDurationMs(null)
       try {
         const payload = await techApi.getBotsReport(10)
         if (!cancelled) {
@@ -30,6 +34,7 @@ export default function BotsReportPage() {
         }
       } finally {
         if (!cancelled) {
+          setLoadDurationMs(Date.now() - startedAt)
           setLoading(false)
         }
       }
@@ -43,6 +48,7 @@ export default function BotsReportPage() {
     <main className="page-shell leaderboard-page">
       <h1>Bots report</h1>
       <p className="page-meta-stamp">Listed bots only. Completed-game stats for the last 10 days in {data.timezone}.</p>
+      <TechReportLoadTime durationMs={loadDurationMs} failed={Boolean(error)} />
       {loading ? <p>Loading bots report…</p> : null}
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
       {!loading && !error ? (
