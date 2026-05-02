@@ -681,6 +681,11 @@ button.theme-toggle:active {
   gap: 1rem;
 }
 
+.users-report-load-time {
+  margin-top: -0.5rem;
+  color: var(--muted);
+}
+
 .users-report-summary,
 .users-report-charts {
   display: grid;
