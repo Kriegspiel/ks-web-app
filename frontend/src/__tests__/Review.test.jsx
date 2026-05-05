@@ -343,6 +343,72 @@ describe("ReviewPage", () => {
     expect(screen.getByRole("button", { name: /White 1 pawn try · \[d2d3\] Move complete/i })).toBeInTheDocument()
   })
 
+  it("shows_rand_pawn_try_source_square_announcements_at_the_start_of_the_next_ply_group", async () => {
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      game_id: "g-rand",
+      rule_variant: "rand",
+      moves: [
+        {
+          ply: 1,
+          color: "white",
+          question_type: "COMMON",
+          uci: "e2e4",
+          answer: {
+            main: "REGULAR_MOVE",
+            next_turn_pawn_try_squares: [],
+            special: null,
+          },
+          move_done: true,
+          replay_fen: transcript.moves[0].replay_fen,
+        },
+        {
+          ply: 2,
+          color: "black",
+          question_type: "COMMON",
+          uci: "d7d5",
+          answer: {
+            main: "REGULAR_MOVE",
+            next_turn_pawn_try_squares: ["e4"],
+            special: null,
+          },
+          move_done: true,
+          replay_fen: transcript.moves[1].replay_fen,
+        },
+        {
+          ply: 3,
+          color: "white",
+          question_type: "COMMON",
+          uci: "e4d5",
+          answer: {
+            main: "CAPTURE_DONE",
+            capture_square: "d5",
+            captured_piece_announcement: "PAWN",
+            next_turn_pawn_try_squares: ["c7", "e7"],
+            special: null,
+          },
+          move_done: true,
+          replay_fen: transcript.moves[0].replay_fen,
+        },
+        {
+          ply: 4,
+          color: "black",
+          question_type: "COMMON",
+          uci: "g8f6",
+          answer: { main: "REGULAR_MOVE", special: null },
+          move_done: true,
+          replay_fen: transcript.moves[1].replay_fen,
+        },
+      ],
+    })
+
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    expect(screen.getByRole("button", { name: /Black No pawn captures · \[d7d5\] Move complete/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /White Pawn try from E4 · \[e4d5\] Pawn captured at D5/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Black Pawn tries from C7, E7 · \[g8f6\] Move complete/i })).toBeInTheDocument()
+  })
+
   it("uses_cincinnati_has_pawn_capture_flags_instead_of_treating_null_pawn_tries_as_zero", async () => {
     mockApi.getGameTranscript.mockResolvedValueOnce({
       game_id: "g-620",

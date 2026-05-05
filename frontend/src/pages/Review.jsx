@@ -41,6 +41,18 @@ function formatAnnouncement(code) {
 }
 
 function formatNextTurnPawnAnnouncement(answer) {
+  const pawnTrySquares = Array.isArray(answer?.next_turn_pawn_try_squares)
+    ? answer.next_turn_pawn_try_squares
+      .filter((square) => typeof square === "string" && /^[a-h][1-8]$/i.test(square.trim()))
+      .map((square) => square.trim().toUpperCase())
+    : null
+  if (pawnTrySquares) {
+    if (!pawnTrySquares.length) {
+      return "No pawn captures"
+    }
+    return pawnTrySquares.length === 1 ? `Pawn try from ${pawnTrySquares[0]}` : `Pawn tries from ${pawnTrySquares.join(", ")}`
+  }
+
   const pawnTries = answer?.next_turn_pawn_tries
   if (typeof pawnTries === "number" && Number.isInteger(pawnTries)) {
     if (pawnTries <= 0) {
