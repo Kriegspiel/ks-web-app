@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react"
-import { Link, useParams } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import EloChart from "../components/EloChart"
 import { ELO_TRACKS } from "../components/eloChartConstants"
 import VersionStamp from "../components/VersionStamp"
+import { useAuth } from "../hooks/useAuth"
 import { userApi } from "../services/api"
 import { formatUtcDate } from "../utils/dateTime"
 import { formatRuleVariant } from "../utils/rules"
@@ -65,14 +66,24 @@ function formatResultSummary(resultTrack) {
   }
 }
 
+function regularNameFromGuest(username) {
+  return typeof username === "string" && username.startsWith("guest_")
+    ? username.slice("guest_".length)
+    : username
+}
+
 export default function ProfilePage() {
   const { username = "" } = useParams()
+  const navigate = useNavigate()
+  const { user, convertGuest, actionLoading } = useAuth()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [profile, setProfile] = useState(null)
   const [recentGames, setRecentGames] = useState([])
   const [ratingSeries, setRatingSeries] = useState({ game: [], date: [] })
   const [ratingTrack, setRatingTrack] = useState("overall")
+  const [conversionForm, setConversionForm] = useState({ email: "", password: "" })
+  const [conversionError, setConversionError] = useState("")
 
   useEffect(() => {
     let cancelled = false
@@ -142,6 +153,28 @@ export default function ProfilePage() {
   const selectedRating = ratingTrack === "vs_humans" ? stats.ratings.vsHumans : ratingTrack === "vs_bots" ? stats.ratings.vsBots : stats.ratings.overall
   const selectedResults = ratingTrack === "vs_humans" ? stats.results.vsHumans : ratingTrack === "vs_bots" ? stats.results.vsBots : stats.results.overall
   const selectedHistoryStats = useMemo(() => formatResultSummary(selectedResults), [selectedResults])
+  const isOwnGuestProfile = user?.is_guest === true && profile?.role === "guest" && user?.username === profile?.username
+  const convertedUsername = regularNameFromGuest(profile?.username)
+
+  async function onConvertGuest(event) {
+    event.preventDefault()
+    setConversionError("")
+    const email = conversionForm.email.trim()
+    const password = conversionForm.password
+    if (!email || !password) {
+      setConversionError("Please enter an email and password.")
+      return
+    }
+    try {
+      const converted = await convertGuest({ email, password })
+      const nextUsername = converted?.username ?? convertedUsername
+      setProfile((current) => current ? { ...current, username: nextUsername, role: "user" } : current)
+      navigate(`/user/${encodeURIComponent(nextUsername)}`, { replace: true })
+    } catch (apiError) {
+      setConversionError(apiError?.message ?? "Unable to convert guest account right now.")
+    }
+  }
+
   if (loading) {
     return <main className="page-shell profile-page"><h1>Profile</h1><p>Loading profile…</p></main>
   }
@@ -154,6 +187,43 @@ export default function ProfilePage() {
     <main className="page-shell profile-page">
       <h1>{profile?.username}</h1>
       <p>Member since {formatDate(profile?.member_since)}.</p>
+      {isOwnGuestProfile ? (
+        <section className="profile-card profile-card--guest-conversion" aria-label="Convert guest account">
+          <h2>Keep this account.</h2>
+          <p>
+            You are currently playing Kriegspiel as a guest. We want everyone to have easy access,
+            so you can keep playing as a guest while this browser session lasts. To make sure you can
+            always get back to your games, convert this guest account to a regular account.
+          </p>
+          <p>Your username will become <strong>{convertedUsername}</strong>.</p>
+          <form className="guest-conversion-form" onSubmit={onConvertGuest}>
+            <label>
+              Email
+              <input
+                type="email"
+                value={conversionForm.email}
+                autoComplete="email"
+                onChange={(event) => setConversionForm((current) => ({ ...current, email: event.target.value }))}
+                required
+              />
+            </label>
+            <label>
+              Password
+              <input
+                type="password"
+                value={conversionForm.password}
+                autoComplete="new-password"
+                onChange={(event) => setConversionForm((current) => ({ ...current, password: event.target.value }))}
+                required
+              />
+            </label>
+            {conversionError ? <p role="alert" className="auth-error">{conversionError}</p> : null}
+            <button type="submit" className="guest-conversion-button" disabled={actionLoading}>
+              {actionLoading ? "Converting…" : "Convert to regular account"}
+            </button>
+          </form>
+        </section>
+      ) : null}
       {profile?.role === "bot" || profile?.is_bot ? (
         <section className="profile-card profile-card--bot-note" aria-label="Bot information">
           <h2>This user is bot</h2>

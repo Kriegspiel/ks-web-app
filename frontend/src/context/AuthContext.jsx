@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import {
+  convertGuest as convertGuestRequest,
   login as loginRequest,
   logout as logoutRequest,
   me as meRequest,
@@ -104,6 +105,21 @@ export function AuthProvider({ children }) {
     }
   }, [refreshSession])
 
+  const convertGuest = useCallback(async ({ email, password }) => {
+    setActionLoading(true)
+    setActionError("")
+    try {
+      await convertGuestRequest({ email, password })
+      const currentUser = await refreshSession()
+      return currentUser
+    } catch (error) {
+      setActionError(error?.message ?? "Guest conversion failed.")
+      throw error
+    } finally {
+      setActionLoading(false)
+    }
+  }, [refreshSession])
+
   const logout = useCallback(async () => {
     setActionLoading(true)
     setActionError("")
@@ -131,9 +147,10 @@ export function AuthProvider({ children }) {
     login,
     register,
     playAsGuest,
+    convertGuest,
     logout,
     clearActionError,
-  }), [user, bootstrapping, actionLoading, actionError, login, register, playAsGuest, logout, clearActionError])
+  }), [user, bootstrapping, actionLoading, actionError, login, register, playAsGuest, convertGuest, logout, clearActionError])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

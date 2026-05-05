@@ -10,8 +10,18 @@ const mockApi = vi.hoisted(() => ({
     getRatingHistory: vi.fn(),
   },
 }))
+const mockAuthState = vi.hoisted(() => ({
+  value: {
+    user: null,
+    convertGuest: vi.fn(),
+    actionLoading: false,
+  },
+}))
 
 vi.mock("../services/api", () => mockApi)
+vi.mock("../hooks/useAuth", () => ({
+  useAuth: () => mockAuthState.value,
+}))
 
 afterEach(() => cleanup())
 
@@ -19,6 +29,11 @@ beforeEach(() => {
   mockApi.userApi.getProfile.mockReset()
   mockApi.userApi.getGameHistory.mockReset()
   mockApi.userApi.getRatingHistory.mockReset()
+  mockAuthState.value = {
+    user: null,
+    convertGuest: vi.fn(),
+    actionLoading: false,
+  }
 })
 
 function renderProfile(path = "/user/fil") {
@@ -188,6 +203,66 @@ describe("ProfilePage", () => {
     expect(screen.getByText(/Email address of this bot owner is bot-gpt-nano@kriegspiel\.org\./i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("href", "https://kriegspiel.org/blog/bot-registration-flow")
     expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("target", "_blank")
+  })
+
+  it("shows_guest_conversion_section_for_own_guest_profile", async () => {
+    const convertGuest = vi.fn().mockResolvedValue({ username: "adolf_adams" })
+    mockAuthState.value = {
+      user: { username: "guest_adolf_adams", is_guest: true },
+      convertGuest,
+      actionLoading: false,
+    }
+    mockApi.userApi.getProfile
+      .mockResolvedValueOnce({
+        username: "guest_adolf_adams",
+        role: "guest",
+        member_since: "2026-04-28T00:00:00Z",
+        stats: {},
+      })
+      .mockResolvedValue({
+        username: "adolf_adams",
+        role: "user",
+        member_since: "2026-04-28T00:00:00Z",
+        stats: {},
+      })
+    mockApi.userApi.getGameHistory.mockResolvedValue({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValue({ series: { game: [], date: [] } })
+
+    renderProfile("/user/guest_adolf_adams")
+
+    await screen.findByRole("heading", { name: "guest_adolf_adams" })
+    expect(screen.getByRole("heading", { name: "Keep this account." })).toBeInTheDocument()
+    expect(screen.getByText(/You are currently playing Kriegspiel as a guest/i)).toBeInTheDocument()
+    expect(screen.getByText("adolf_adams")).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "player@example.com" } })
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret123" } })
+    fireEvent.click(screen.getByRole("button", { name: "Convert to regular account" }))
+
+    await waitFor(() => {
+      expect(convertGuest).toHaveBeenCalledWith({ email: "player@example.com", password: "secret123" })
+    })
+  })
+
+  it("does_not_show_guest_conversion_section_on_other_guest_profiles", async () => {
+    mockAuthState.value = {
+      user: { username: "guest_judit_polgar", is_guest: true },
+      convertGuest: vi.fn(),
+      actionLoading: false,
+    }
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "guest_adolf_adams",
+      role: "guest",
+      member_since: "2026-04-28T00:00:00Z",
+      stats: {},
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile("/user/guest_adolf_adams")
+
+    await screen.findByRole("heading", { name: "guest_adolf_adams" })
+    expect(screen.queryByRole("heading", { name: "Keep this account." })).not.toBeInTheDocument()
   })
 
   it("shows_the_default_error_message_when_profile_loading_fails_without_details", async () => {

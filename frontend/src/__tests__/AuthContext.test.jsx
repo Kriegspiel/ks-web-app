@@ -8,8 +8,10 @@ const mockLogoutRequest = vi.hoisted(() => vi.fn())
 const mockMeRequest = vi.hoisted(() => vi.fn())
 const mockPlayAsGuestRequest = vi.hoisted(() => vi.fn())
 const mockRegisterRequest = vi.hoisted(() => vi.fn())
+const mockConvertGuestRequest = vi.hoisted(() => vi.fn())
 
 vi.mock("../services/api", () => ({
+  convertGuest: mockConvertGuestRequest,
   login: mockLoginRequest,
   logout: mockLogoutRequest,
   me: mockMeRequest,
@@ -27,6 +29,7 @@ beforeEach(() => {
   mockMeRequest.mockReset()
   mockPlayAsGuestRequest.mockReset()
   mockRegisterRequest.mockReset()
+  mockConvertGuestRequest.mockReset()
 })
 
 describe("AuthProvider", () => {
@@ -451,6 +454,54 @@ describe("AuthProvider", () => {
 
     expect(caughtError).toEqual({})
     expect(result.current.actionError).toBe("Guest play failed.")
+    expect(result.current.actionLoading).toBe(false)
+  })
+
+  it("converts_guest_account_and_refreshes_the_session", async () => {
+    mockMeRequest
+      .mockResolvedValueOnce({ username: "guest_adolf_adams", is_guest: true })
+      .mockResolvedValueOnce({ username: "adolf_adams", is_guest: false })
+    mockConvertGuestRequest.mockResolvedValueOnce({ username: "adolf_adams" })
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.bootstrapping).toBe(false)
+    })
+
+    let returnedUser = null
+    await act(async () => {
+      returnedUser = await result.current.convertGuest({ email: "player@example.com", password: "secret123" })
+    })
+
+    expect(mockConvertGuestRequest).toHaveBeenCalledWith({ email: "player@example.com", password: "secret123" })
+    expect(returnedUser).toEqual({ username: "adolf_adams", is_guest: false })
+    expect(result.current.user).toEqual({ username: "adolf_adams", is_guest: false })
+    expect(result.current.actionError).toBe("")
+    expect(result.current.actionLoading).toBe(false)
+  })
+
+  it("surfaces_guest_conversion_failures", async () => {
+    mockMeRequest.mockResolvedValueOnce({ username: "guest_adolf_adams", is_guest: true })
+    mockConvertGuestRequest.mockRejectedValueOnce({ message: "Email already registered" })
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.bootstrapping).toBe(false)
+    })
+
+    let caughtError = null
+    await act(async () => {
+      try {
+        await result.current.convertGuest({ email: "taken@example.com", password: "secret123" })
+      } catch (error) {
+        caughtError = error
+      }
+    })
+
+    expect(caughtError).toEqual({ message: "Email already registered" })
+    expect(result.current.actionError).toBe("Email already registered")
     expect(result.current.actionLoading).toBe(false)
   })
 
