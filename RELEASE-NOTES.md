@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.17
+
+- **RAND Review Log**: displayed RAND pawn-try source-square announcements at
+  the start of the next review ply group, matching live game referee messages.
+
 ## ks-web-app frontend v. 1.3.16
 
 - **Tech Reports**: added load-duration diagnostics to bots and guests reports,
