@@ -8,6 +8,7 @@ const mockApi = vi.hoisted(() => ({
   me: vi.fn(),
   login: vi.fn(),
   playAsGuest: vi.fn(),
+  convertGuest: vi.fn(),
   logout: vi.fn(),
   register: vi.fn(),
   createGame: vi.fn(),

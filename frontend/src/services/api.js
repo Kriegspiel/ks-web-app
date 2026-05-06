@@ -61,6 +61,14 @@ export async function playAsGuest() {
     throw normalizeError(error, 'Unable to start guest session right now.')
   }
 }
+export async function convertGuest(payload) {
+  try {
+    const response = await api.post('/api/auth/guest/convert', payload)
+    return response.data
+  } catch (error) {
+    throw normalizeError(error, 'Unable to convert guest account right now.')
+  }
+}
 export async function logout() {
   try {
     await api.post('/api/auth/logout')

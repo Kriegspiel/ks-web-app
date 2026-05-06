@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import api, { askAny, createGame, deleteWaitingGame, getBots, getGame, getGameState, getGameTranscript, getLobbyStats, getMyGames, getOpenGames, joinGame, login, logout, me, playAsGuest, register, resignGame, submitMove, techApi, userApi } from "../services/api"
+import api, { askAny, convertGuest, createGame, deleteWaitingGame, getBots, getGame, getGameState, getGameTranscript, getLobbyStats, getMyGames, getOpenGames, joinGame, login, logout, me, playAsGuest, register, resignGame, submitMove, techApi, userApi } from "../services/api"
 
 describe("api client", () => {
   it("api_client_uses_relative_base_url", () => { expect(api.defaults.baseURL ?? "").toBe("") })
@@ -12,6 +12,7 @@ describe("auth helpers", () => {
   it("register_posts_to_auth_register", async () => { const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { user_id: "u1" } }); const payload = { username: "new-user", email: "new@example.com", password: "secret123" }; const result = await register(payload); expect(postSpy).toHaveBeenCalledWith("/api/auth/register", payload); expect(result).toEqual({ user_id: "u1" }) })
   it("login_posts_to_auth_login", async () => { const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { ok: true } }); const payload = { username: "new-user", password: "secret123" }; const result = await login(payload); expect(postSpy).toHaveBeenCalledWith("/api/auth/login", payload); expect(result).toEqual({ ok: true }) })
   it("play_as_guest_posts_to_auth_guest", async () => { const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { username: "guest_adolf_adams" } }); const result = await playAsGuest(); expect(postSpy).toHaveBeenCalledWith("/api/auth/guest"); expect(result).toEqual({ username: "guest_adolf_adams" }) })
+  it("convert_guest_posts_to_auth_guest_convert", async () => { const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { username: "adolf_adams" } }); const payload = { email: "player@example.com", password: "secret123" }; const result = await convertGuest(payload); expect(postSpy).toHaveBeenCalledWith("/api/auth/guest/convert", payload); expect(result).toEqual({ username: "adolf_adams" }) })
   it("logout_posts_to_auth_logout", async () => { const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: {} }); await logout(); expect(postSpy).toHaveBeenCalledWith("/api/auth/logout") })
   it("me_gets_auth_me", async () => { const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: { username: "test" } }); const result = await me(); expect(getSpy).toHaveBeenCalledWith("/api/auth/me"); expect(result).toEqual({ username: "test" }) })
   it("logout_uses_the_default_fallback_when_the_transport_error_has_no_message", async () => {
