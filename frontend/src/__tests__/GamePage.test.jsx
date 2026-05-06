@@ -237,6 +237,30 @@ describe("GamePage", () => {
     await waitFor(() => expect(mockApi.getGameState).toHaveBeenCalledTimes(2))
   })
 
+  it("keeps_current_message_from_staying_in_loading_state_after_silent_poll_races_initial_load", async () => {
+    let resolveInitialState
+    mockApi.getGameState.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveInitialState = resolve
+        }),
+    )
+
+    render(<GamePage />)
+
+    expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
+    await sleep(650)
+    expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
+
+    resolveInitialState(activeState)
+
+    const currentMessage = await screen.findByLabelText("Current message")
+    await waitFor(() => {
+      expect(within(currentMessage).queryByText("Loading game state…")).not.toBeInTheDocument()
+      expect(within(currentMessage).getByText("your move")).toBeInTheDocument()
+    })
+  })
+
   it("submits_two_click_move_and_repolls", async () => {
     render(<GamePage />)
 
