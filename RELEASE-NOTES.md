@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.19
+
+- **Game State Loading**: fixed a polling race where the board could load but
+  the current-message panel stayed stuck on “Loading game state…”.
+
 ## ks-web-app frontend v. 1.3.18
 
 - **Guest Conversion**: added a profile-page conversion panel for guest users

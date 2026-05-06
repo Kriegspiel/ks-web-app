@@ -1830,6 +1830,7 @@ export default function GamePage() {
       setClockSnapshotAtMs(syncedAtMs)
       setClockNowMs(receivedAtMs)
       setError("")
+      setLoading(false)
     } catch (requestError) {
       if (requestId !== stateRequestIdRef.current || gameRef !== previousGameRefRef.current) {
         return
@@ -1964,7 +1965,7 @@ export default function GamePage() {
   }, [])
 
   useEffect(() => {
-    if (!gameRef || gameState?.state === "completed") {
+    if (!gameRef || !gameState || gameState.state === "completed") {
       return undefined
     }
 
