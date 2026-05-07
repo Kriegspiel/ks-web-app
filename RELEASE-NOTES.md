@@ -5,6 +5,13 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.20
+
+- **Security**: production server now redirects Cloudflare-forwarded HTTP
+  traffic to HTTPS before serving the app or proxying API requests.
+- **Security**: production responses include HSTS and baseline browser
+  hardening headers.
+
 ## ks-web-app frontend v. 1.3.19
 
 - **Game State Loading**: fixed a polling race where the board could load but
