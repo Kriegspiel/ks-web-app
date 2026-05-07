@@ -3,8 +3,11 @@
 ## Runtime
 - Repo path: `/home/fil/dev/kriegspiel/ks-web-app`
 - Service: `ks-web-app-frontend.service`
-- Preview port: `127.0.0.1:4173`
+- App server port: `127.0.0.1:4173`
 - Public hostname: `https://app.kriegspiel.org`
+- The production app server is `frontend/server.mjs`; it serves `dist/`,
+  proxies same-origin `/api/...` traffic to `ks-backend`, redirects
+  Cloudflare-forwarded HTTP requests to HTTPS, and sends HSTS.
 
 ## Deploy
 ```bash
@@ -19,5 +22,6 @@ sudo systemctl restart ks-web-app-frontend.service
 ## Verify
 ```bash
 curl -I https://app.kriegspiel.org/
+curl -I http://app.kriegspiel.org/
 curl -fsS https://app.kriegspiel.org/ >/dev/null
 ```
