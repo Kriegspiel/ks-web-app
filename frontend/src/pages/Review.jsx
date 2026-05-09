@@ -5,6 +5,7 @@ import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import { getGame, getGameTranscript } from "../services/api"
 import { formatRuleVariant } from "../utils/rules"
+import { formatClock } from "./gameClock"
 import "./Review.css"
 
 const STARTING_FENS = {
@@ -31,6 +32,7 @@ const ANNOUNCEMENT_TEXT = {
   CHECK_KNIGHT: "Check by knight",
   CHECK_DOUBLE: "Double check",
 }
+const PAWN_CAPTURE_STATS_RULES = new Set(["cincinnati", "wild16", "rand", "english"])
 
 function formatAnnouncement(code) {
   if (typeof code !== "string" || code.trim().length === 0) {
@@ -38,6 +40,11 @@ function formatAnnouncement(code) {
   }
 
   return ANNOUNCEMENT_TEXT[code] ?? code
+}
+
+function isCaptureAnnouncement(code) {
+  const normalized = String(code ?? "").trim().toUpperCase()
+  return normalized === "CAPTURE_DONE" || normalized === "3"
 }
 
 function formatNextTurnPawnAnnouncement(answer) {
@@ -313,6 +320,15 @@ function formatDuration(startValue, endValue) {
   return parts.join(" ")
 }
 
+function secondsBetween(startValue, endValue) {
+  const start = new Date(startValue ?? "")
+  const end = new Date(endValue ?? "")
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+    return 0
+  }
+  return Math.floor((end.getTime() - start.getTime()) / 1000)
+}
+
 function normalizeRatings(source) {
   const ratings = source?.ratings ?? {}
   const overall = ratings?.overall?.elo ?? source?.elo ?? null
@@ -349,6 +365,94 @@ function historicalRatingsForColor(game, color) {
 
 function ratingValue(value) {
   return Number.isFinite(value) ? String(value) : "—"
+}
+
+function movesUpToPly(moves, group) {
+  if (!Array.isArray(moves) || !group) {
+    return []
+  }
+
+  const lastPly = Number(group.lastPly)
+  if (!Number.isFinite(lastPly) || lastPly <= 0) {
+    return []
+  }
+
+  return moves.filter((move) => Number(move?.ply) <= lastPly)
+}
+
+function countPiecesInFen(fen) {
+  if (typeof fen !== "string" || !fen.trim()) {
+    return null
+  }
+
+  const boardPart = fen.trim().split(/\s+/)[0]
+  if (!boardPart) {
+    return null
+  }
+
+  const counts = { white: 0, black: 0 }
+  for (const char of boardPart) {
+    if (!/[pnbrqk]/i.test(char)) {
+      continue
+    }
+    if (char === char.toUpperCase()) {
+      counts.white += 1
+    } else {
+      counts.black += 1
+    }
+  }
+
+  return counts
+}
+
+function replayMaterialStatus({ moves, selectedPlyGroup, ruleVariant, fullFen }) {
+  const selectedMoves = movesUpToPly(moves, selectedPlyGroup)
+  const fallbackPieces = { white: 16, black: 16 }
+  const pawnsCaptured = { white: 0, black: 0 }
+
+  selectedMoves.forEach((move) => {
+    if (!move?.move_done || !isCaptureAnnouncement(move?.answer?.main)) {
+      return
+    }
+
+    const capturedColor = move.color === "black" ? "white" : "black"
+    fallbackPieces[capturedColor] = Math.max(0, fallbackPieces[capturedColor] - 1)
+
+    if (String(move?.answer?.captured_piece_announcement ?? "").trim().toUpperCase() === "PAWN") {
+      pawnsCaptured[capturedColor] += 1
+    }
+  })
+
+  const fenPieces = countPiecesInFen(fullFen) ?? fallbackPieces
+  const showPawnCaptures = PAWN_CAPTURE_STATS_RULES.has(String(ruleVariant ?? ""))
+
+  return {
+    white: {
+      piecesRemaining: fenPieces.white,
+      pawnsCaptured: showPawnCaptures ? pawnsCaptured.white : null,
+    },
+    black: {
+      piecesRemaining: fenPieces.black,
+      pawnsCaptured: showPawnCaptures ? pawnsCaptured.black : null,
+    },
+  }
+}
+
+function replayTimeUsage({ moves, selectedPlyGroup, gameCreatedAt }) {
+  const selectedMoves = movesUpToPly(moves, selectedPlyGroup)
+  const usage = { white: 0, black: 0 }
+  let previousTimestamp = gameCreatedAt
+
+  selectedMoves.forEach((move) => {
+    const color = move?.color === "black" ? "black" : "white"
+    const elapsed = secondsBetween(previousTimestamp, move?.timestamp)
+    usage[color] += elapsed
+    if (move?.timestamp) {
+      previousTimestamp = move.timestamp
+    }
+  })
+
+  return usage
 }
 
 function playerLabel(player) {
@@ -579,6 +683,10 @@ export default function ReviewPage() {
     () => fenForPly(moves, selectedPlyGroup?.lastPly ?? 0, perspective),
     [moves, selectedPlyGroup, perspective],
   )
+  const fullBoardFen = useMemo(
+    () => fenForPly(moves, selectedPlyGroup?.lastPly ?? 0, "referee"),
+    [moves, selectedPlyGroup],
+  )
   const overlayState = useMemo(() => {
     if (perspective !== "referee" && selectedPlyGroup && perspective !== selectedPlyGroup.color) {
       const opponentOverlay = overlaysForPlyGroup(selectedPlyGroup)
@@ -588,6 +696,19 @@ export default function ReviewPage() {
   }, [selectedPlyGroup, perspective])
   const counterLabel = selectedPlyGroup ? formatPerspectiveLabel(selectedPlyGroup) : "Start"
   const maxCounterLabel = finalGroup ? formatPerspectiveLabel(finalGroup) : "0W"
+  const replayMaterial = useMemo(
+    () => replayMaterialStatus({
+      moves,
+      selectedPlyGroup,
+      ruleVariant: game?.rule_variant,
+      fullFen: fullBoardFen,
+    }),
+    [fullBoardFen, game?.rule_variant, moves, selectedPlyGroup],
+  )
+  const replayTime = useMemo(
+    () => replayTimeUsage({ moves, selectedPlyGroup, gameCreatedAt: game?.created_at }),
+    [game?.created_at, moves, selectedPlyGroup],
+  )
   const startedAt = formatUtcDateTime(game?.created_at)
   const endedAt = formatUtcDateTime(game?.updated_at)
   const duration = formatDuration(game?.created_at, game?.updated_at)
@@ -610,25 +731,49 @@ export default function ReviewPage() {
       {!loading && !error ? (
         <div className="review-page__layout">
           <section className="review-page__board-column">
-            <div className="review-page__top-toggle">
-              <div className="elo-chart__track-toggle review-page__toggle-group" role="tablist" aria-label="Replay perspective">
-                {[
-                  ["referee", "Referee"],
-                  ["white", "White"],
-                  ["black", "Black"],
-                ].map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    role="tab"
-                    aria-selected={perspective === value}
-                    className={`elo-chart__track-pill${perspective === value ? " is-active" : ""}`}
-                    onClick={() => setPerspective(value)}
-                  >
-                    {label}
-                  </button>
-                ))}
+            <div className="review-page__board-toolbar">
+              <div className="review-page__toolbar-group">
+                <span className="review-page__toolbar-label">View</span>
+                <div className="elo-chart__track-toggle review-page__toggle-group" role="tablist" aria-label="Replay perspective">
+                  {[
+                    ["referee", "Referee"],
+                    ["white", "White"],
+                    ["black", "Black"],
+                  ].map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      role="tab"
+                      aria-selected={perspective === value}
+                      className={`elo-chart__track-pill${perspective === value ? " is-active" : ""}`}
+                      onClick={() => setPerspective(value)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
+              <div className="review-page__toolbar-group">
+                <span className="review-page__toolbar-label">Board</span>
+                <div className="elo-chart__track-toggle elo-chart__mode-toggle review-page__toggle-group" role="tablist" aria-label="Board orientation">
+                  {[
+                    ["white", "White bottom"],
+                    ["black", "Black bottom"],
+                  ].map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      role="tab"
+                      aria-selected={boardOrientation === value}
+                      className={`elo-chart__track-pill${boardOrientation === value ? " is-active" : ""}`}
+                      onClick={() => setBoardOrientation(value)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <span className="review-page__ply">Turn {counterLabel} / {maxCounterLabel}</span>
             </div>
 
             <ChessBoard
@@ -640,111 +785,130 @@ export default function ReviewPage() {
               disabled
             />
 
-            <div className="review-page__controls" role="group" aria-label="Replay controls">
-              <button type="button" aria-label="First" title="First" onClick={() => setCurrentPly(-1)} disabled={currentPly < 0}>
-                <span aria-hidden="true">«</span>
-              </button>
-              <button
-                type="button"
-                aria-label="Prev"
-                title="Prev"
-                onClick={() => setCurrentPly((prev) => Math.max(-1, prev - 1))}
-                disabled={currentPly < 0}
-              >
-                <span aria-hidden="true">‹</span>
-              </button>
-              <span className="review-page__ply">Turn {counterLabel} / {maxCounterLabel}</span>
-              <button
-                type="button"
-                aria-label="Next"
-                title="Next"
-                onClick={() => setCurrentPly((prev) => Math.min(maxGroupIndex, prev + 1))}
-                disabled={currentPly >= maxGroupIndex}
-              >
-                <span aria-hidden="true">›</span>
-              </button>
-              <button type="button" aria-label="Last" title="Last" onClick={() => setCurrentPly(maxGroupIndex)} disabled={currentPly >= maxGroupIndex}>
-                <span aria-hidden="true">»</span>
-              </button>
-            </div>
-
-            <div className="review-page__board-footer">
-              <div className="elo-chart__track-toggle elo-chart__mode-toggle review-page__toggle-group" role="tablist" aria-label="Board orientation">
-                {[
-                  ["white", "White bottom"],
-                  ["black", "Black bottom"],
-                ].map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    role="tab"
-                    aria-selected={boardOrientation === value}
-                    className={`elo-chart__track-pill${boardOrientation === value ? " is-active" : ""}`}
-                    onClick={() => setBoardOrientation(value)}
-                  >
-                    {label}
-                  </button>
-                ))}
+            <div className="review-page__board-meta">
+              <div className="review-page__clocks" aria-label="Replay time used">
+                <div className="review-page__clock">
+                  <span className="review-page__clock-label">White time</span>
+                  <strong className="review-page__clock-time">{formatClock(replayTime.white)}</strong>
+                </div>
+                <div className="review-page__clock">
+                  <span className="review-page__clock-label">Black time</span>
+                  <strong className="review-page__clock-time">{formatClock(replayTime.black)}</strong>
+                </div>
               </div>
+              <section className="review-page__piece-status" aria-label="Replay material status">
+                <div className="review-page__piece-side" aria-label="White material view">
+                  <p className="review-page__piece-line">
+                    <span className="review-page__piece-label">Black pieces remain:</span>{" "}
+                    <span className="review-page__piece-value">{replayMaterial.black.piecesRemaining}</span>
+                  </p>
+                  {replayMaterial.black.pawnsCaptured !== null ? (
+                    <p className="review-page__piece-line">
+                      <span className="review-page__piece-label">Black pawns captured:</span>{" "}
+                      <span className="review-page__piece-value">{replayMaterial.black.pawnsCaptured}</span>
+                    </p>
+                  ) : null}
+                </div>
+                <div className="review-page__piece-side" aria-label="Black material view">
+                  <p className="review-page__piece-line">
+                    <span className="review-page__piece-label">White pieces remain:</span>{" "}
+                    <span className="review-page__piece-value">{replayMaterial.white.piecesRemaining}</span>
+                  </p>
+                  {replayMaterial.white.pawnsCaptured !== null ? (
+                    <p className="review-page__piece-line">
+                      <span className="review-page__piece-label">White pawns captured:</span>{" "}
+                      <span className="review-page__piece-value">{replayMaterial.white.pawnsCaptured}</span>
+                    </p>
+                  ) : null}
+                </div>
+              </section>
             </div>
           </section>
 
           <aside className="review-page__log-column">
             <h2>Move log</h2>
-            <ol className="review-page__move-rows" ref={moveRowsRef}>
-              {moveRows.map((row) => (
-                <li key={row.moveNumber} className="review-page__move-row">
-                  {(() => {
-                    const whiteCompletedAt = finalTimestampForGroup(row.white)
-                    const blackCompletedAt = finalTimestampForGroup(row.black)
-                    const rowStartedAt =
-                      finalTimestampForGroup(moveRows[row.moveNumber - 2]?.black) ??
-                      finalTimestampForGroup(moveRows[row.moveNumber - 2]?.white) ??
-                      game?.created_at
-                    const whiteElapsed = whiteCompletedAt ? formatElapsedBetween(rowStartedAt, whiteCompletedAt) : "—"
-                    const blackElapsed = blackCompletedAt ? formatElapsedBetween(whiteCompletedAt ?? rowStartedAt, blackCompletedAt) : "—"
+            <div className="review-page__log-frame">
+              <ol className="review-page__move-rows" ref={moveRowsRef}>
+                {moveRows.map((row) => (
+                  <li key={row.moveNumber} className="review-page__move-row">
+                    {(() => {
+                      const whiteCompletedAt = finalTimestampForGroup(row.white)
+                      const blackCompletedAt = finalTimestampForGroup(row.black)
+                      const rowStartedAt =
+                        finalTimestampForGroup(moveRows[row.moveNumber - 2]?.black) ??
+                        finalTimestampForGroup(moveRows[row.moveNumber - 2]?.white) ??
+                        game?.created_at
+                      const whiteElapsed = whiteCompletedAt ? formatElapsedBetween(rowStartedAt, whiteCompletedAt) : "—"
+                      const blackElapsed = blackCompletedAt ? formatElapsedBetween(whiteCompletedAt ?? rowStartedAt, blackCompletedAt) : "—"
 
-                    return (
-                  <div className="review-page__row-header">
-                    <span className="review-page__row-time review-page__row-time--white">{whiteElapsed}</span>
-                    <span className="review-page__move-number">{formatTurnNumber(row.white ?? row.black)}</span>
-                    <span className="review-page__row-time review-page__row-time--black">{blackElapsed}</span>
-                  </div>
-                    )
-                  })()}
-                  <div className="review-page__ply-grid">
-                    {["white", "black"].map((color) => {
-                      const move = row[color]
-                      if (!move) {
-                        return <div key={color} className="review-page__ply-card review-page__ply-card--empty" />
-                      }
-
-                      const announcements = summarizePlyGroup(move)
                       return (
-                        <button
-                          key={color}
-                          type="button"
-                          className={`review-page__ply-card${selectedPlyGroup?.id === move.id ? " is-active" : ""}`}
-                          data-ply-index={move.index}
-                          aria-label={`${color === "white" ? "White" : "Black"} ${formatPlySummary(move)}`}
-                          onClick={() => setCurrentPly(move.index)}
-                        >
-                          <span className="review-page__ply-color">{color === "white" ? "White" : "Black"}</span>
-                          <ol className="review-page__announcement-list">
-                            {announcements.map((announcement, index) => (
-                              <li key={`${move.id}-${index}`} className="review-page__announcement-item">
-                                <span className="review-page__announcement-badge">{index + 1}</span>
-                                <span>{announcement}</span>
-                              </li>
-                            ))}
-                          </ol>
-                        </button>
+                        <div className="review-page__row-header">
+                          <span className="review-page__row-time review-page__row-time--white">{whiteElapsed}</span>
+                          <span className="review-page__move-number">{formatTurnNumber(row.white ?? row.black)}</span>
+                          <span className="review-page__row-time review-page__row-time--black">{blackElapsed}</span>
+                        </div>
                       )
-                    })}
-                  </div>
-                </li>
-              ))}
-            </ol>
+                    })()}
+                    <div className="review-page__ply-grid">
+                      {["white", "black"].map((color) => {
+                        const move = row[color]
+                        if (!move) {
+                          return <div key={color} className="review-page__ply-card review-page__ply-card--empty" />
+                        }
+
+                        const announcements = summarizePlyGroup(move)
+                        return (
+                          <button
+                            key={color}
+                            type="button"
+                            className={`review-page__ply-card${selectedPlyGroup?.id === move.id ? " is-active" : ""}`}
+                            data-ply-index={move.index}
+                            aria-label={`${color === "white" ? "White" : "Black"} ${formatPlySummary(move)}`}
+                            onClick={() => setCurrentPly(move.index)}
+                          >
+                            <span className="review-page__ply-color">{color === "white" ? "White" : "Black"}</span>
+                            <ol className="review-page__announcement-list">
+                              {announcements.map((announcement, index) => (
+                                <li key={`${move.id}-${index}`} className="review-page__announcement-item">
+                                  <span className="review-page__announcement-badge">{index + 1}</span>
+                                  <span>{announcement}</span>
+                                </li>
+                              ))}
+                            </ol>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              <div className="review-page__scroll-controls" role="group" aria-label="Replay controls">
+                <button type="button" aria-label="First" title="First" onClick={() => setCurrentPly(-1)} disabled={currentPly < 0}>
+                  <span aria-hidden="true">↑↑</span>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Prev"
+                  title="Prev"
+                  onClick={() => setCurrentPly((prev) => Math.max(-1, prev - 1))}
+                  disabled={currentPly < 0}
+                >
+                  <span aria-hidden="true">↑</span>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Next"
+                  title="Next"
+                  onClick={() => setCurrentPly((prev) => Math.min(maxGroupIndex, prev + 1))}
+                  disabled={currentPly >= maxGroupIndex}
+                >
+                  <span aria-hidden="true">↓</span>
+                </button>
+                <button type="button" aria-label="Last" title="Last" onClick={() => setCurrentPly(maxGroupIndex)} disabled={currentPly >= maxGroupIndex}>
+                  <span aria-hidden="true">↓↓</span>
+                </button>
+              </div>
+            </div>
 
             <p className="review-page__result">Result: {formatResult(result)}</p>
           </aside>
