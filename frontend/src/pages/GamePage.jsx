@@ -1806,6 +1806,7 @@ export default function GamePage() {
   const submitMoveAttemptIdRef = useRef(0)
   const selectedMoveWindowRef = useRef("")
   const clockExpiryPollRef = useRef("")
+  const statePollInFlightRef = useRef(null)
   const previousGameRefRef = useRef(gameRef)
 
   if (!soundPlayerRef.current) {
@@ -1829,14 +1830,19 @@ export default function GamePage() {
     availablePiecesForSquare,
   } = usePhantoms({ gameId: gameRef, occupiedSquares })
 
-  const pollState = useCallback(async ({ silent = false, preserveViewport = false } = {}) => {
+  const pollState = useCallback(async ({ silent = false, preserveViewport = false, force = false } = {}) => {
     if (!gameRef) {
+      return
+    }
+
+    if (statePollInFlightRef.current !== null && !force) {
       return
     }
 
     const requestedAtMs = Date.now()
     const requestId = stateRequestIdRef.current + 1
     stateRequestIdRef.current = requestId
+    statePollInFlightRef.current = requestId
 
     if (preserveViewport) {
       captureViewport()
@@ -1876,6 +1882,9 @@ export default function GamePage() {
       }
       setError(requestError?.message ?? "Unable to load this game right now.")
     } finally {
+      if (statePollInFlightRef.current === requestId) {
+        statePollInFlightRef.current = null
+      }
       if (!silent && requestId === stateRequestIdRef.current) {
         setLoading(false)
       }
@@ -1913,6 +1922,7 @@ export default function GamePage() {
     illegalMoveContextRef.current = null
     submitMoveContextRef.current = null
     clockExpiryPollRef.current = ""
+    statePollInFlightRef.current = null
     viewportRestoreRef.current = null
     lastSoundEntryKeysRef.current = []
     lastTapRef.current = { square: "", time: 0 }
@@ -2038,7 +2048,7 @@ export default function GamePage() {
     }
     const handleGameChanged = () => {
       stopFallbackPolling()
-      pollSilently()
+      pollState({ silent: true, preserveViewport: false, force: true })
     }
 
     source.addEventListener("connected", stopFallbackPolling)
@@ -2245,7 +2255,7 @@ export default function GamePage() {
     }
 
     clockExpiryPollRef.current = pollKey
-    pollState({ silent: true, preserveViewport: false })
+    pollState({ silent: true, preserveViewport: false, force: true })
   }, [
     activeClockColor,
     displayClock?.black_remaining,
@@ -2891,7 +2901,7 @@ export default function GamePage() {
       setLastMoveSquares(highlightSquares)
       setIllegalMoveSquares([])
       resetPendingMove()
-      await pollState({ silent: true, preserveViewport: true })
+      await pollState({ silent: true, preserveViewport: true, force: true })
     } catch (requestError) {
       if (!isCurrentSubmitAttempt()) {
         return
@@ -2941,7 +2951,7 @@ export default function GamePage() {
 
     try {
       await askAny(gameRef)
-      await pollState({ silent: true, preserveViewport: true })
+      await pollState({ silent: true, preserveViewport: true, force: true })
     } catch (requestError) {
       setActionError(requestError?.message ?? "Unable to ask the referee right now.")
     } finally {
@@ -2962,7 +2972,7 @@ export default function GamePage() {
 
     try {
       await resignGame(gameRef)
-      await pollState({ silent: true, preserveViewport: true })
+      await pollState({ silent: true, preserveViewport: true, force: true })
     } catch (requestError) {
       setActionError(requestError?.message ?? "Unable to resign right now.")
     } finally {

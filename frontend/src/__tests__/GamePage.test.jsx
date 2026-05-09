@@ -337,6 +337,65 @@ describe("GamePage", () => {
     })
   })
 
+  it("does_not_let_fast_fallback_polling_starve_completed_state_after_submit", async () => {
+    let resolveBackgroundPoll
+    let resolveCompletedPoll
+    const completedState = {
+      ...activeState,
+      state: "completed",
+      turn: "black",
+      move_number: 2,
+      allowed_moves: [],
+      possible_actions: [],
+      result: { winner: "white", reason: "checkmate" },
+      clock: { white_remaining: 601, black_remaining: 598, active_color: null },
+      referee_turns: [
+        {
+          turn: 1,
+          white: [{ messages: ["Move complete", "Checkmate — White wins"] }],
+          black: [],
+        },
+      ],
+    }
+    mockApi.getGameState
+      .mockResolvedValueOnce(activeState)
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveBackgroundPoll = resolve
+          }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveCompletedPoll = resolve
+          }),
+      )
+      .mockResolvedValue(completedState)
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e2" })
+    await sleep(650)
+    await waitFor(() => expect(mockApi.getGameState).toHaveBeenCalledTimes(2))
+
+    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+
+    await waitFor(() => expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4"))
+    await waitFor(() => expect(mockApi.getGameState).toHaveBeenCalledTimes(3))
+
+    await sleep(650)
+    expect(mockApi.getGameState).toHaveBeenCalledTimes(3)
+
+    resolveCompletedPoll(completedState)
+
+    const summary = await screen.findByLabelText("Completed game summary")
+    expect(within(summary).getByText("You won by checkmate")).toBeInTheDocument()
+
+    resolveBackgroundPoll(activeState)
+  })
+
   it("submits_two_click_move_and_repolls", async () => {
     render(<GamePage />)
 
