@@ -22,6 +22,17 @@
   gap: 1rem;
 }
 
+.review-page__board-column,
+.review-page__log-column {
+  align-self: stretch;
+  min-height: 0;
+}
+
+.review-page__board-column {
+  display: grid;
+  align-content: start;
+}
+
 .review-page__board-toolbar {
   display: grid;
   margin-bottom: 1rem;
@@ -32,12 +43,19 @@
 }
 
 .review-page__toolbar-line {
-  display: grid;
-  grid-template-columns: auto auto auto auto;
+  display: flex;
   align-items: center;
-  justify-content: start;
-  column-gap: 0.55rem;
+  gap: clamp(1rem, 2vw, 1.45rem);
   row-gap: 0.45rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.review-page__toolbar-group {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  column-gap: 0.55rem;
   min-width: 0;
 }
 
@@ -50,13 +68,10 @@
   text-transform: uppercase;
 }
 
-.review-page__toolbar-label--inline {
-  margin-left: 0.25rem;
-}
-
 .review-page__toggle-group {
   flex: 0 1 auto;
-  margin-bottom: 0;
+  align-self: center;
+  margin: 0;
   box-shadow: none;
 }
 
@@ -96,7 +111,7 @@
 .review-page__log-column {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  min-height: 0;
+  overflow: hidden;
 }
 
 .review-page__board-meta {
@@ -172,10 +187,11 @@
 .review-page__log-frame {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
+  align-items: stretch;
   gap: 0.7rem;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 .review-page__move-rows {
@@ -186,13 +202,14 @@
   gap: 0.9rem;
   align-content: start;
   max-height: none;
-  height: 100%;
+  min-height: 0;
   overflow-y: auto;
 }
 
 .review-page__scroll-controls {
   position: sticky;
   top: 0.75rem;
+  align-self: start;
   display: grid;
   gap: 0.45rem;
   padding-top: 0.1rem;
@@ -405,18 +422,17 @@
   }
 
   .review-page__toolbar-line {
-    display: flex;
-    align-items: center;
     gap: 0.45rem;
-    flex-wrap: wrap;
+  }
+
+  .review-page__toolbar-group {
+    grid-template-columns: 1fr;
+    row-gap: 0.35rem;
+    align-items: start;
   }
 
   .review-page__toolbar-label {
     flex-basis: auto;
-  }
-
-  .review-page__toolbar-label--inline {
-    margin-left: 0;
   }
 
   .review-page__toggle-group .elo-chart__track-pill {

@@ -180,6 +180,9 @@ describe("ReviewPage", () => {
     const perspectiveControls = screen.getByRole("tablist", { name: "Replay perspective" })
     const orientationControls = screen.getByRole("tablist", { name: "Board orientation" })
     const board = document.querySelector(".chess-board")
+    expect(perspectiveControls.closest(".review-page__toolbar-group")).not.toBe(
+      orientationControls.closest(".review-page__toolbar-group"),
+    )
     expect(perspectiveControls.closest(".review-page__toolbar-line")).toBe(
       orientationControls.closest(".review-page__toolbar-line"),
     )
