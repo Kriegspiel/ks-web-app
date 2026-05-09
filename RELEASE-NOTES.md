@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.28
+
+- **Replay Overlay**: draws two castling arrows only when the pre-move board
+  actually has the moving king on the castling source square, so ordinary rook
+  or queen moves like `e1g1` render as a single move arrow.
+
 ## ks-web-app frontend v. 1.3.27
 
 - **Replay Layout**: measures the replay board card by its intrinsic board

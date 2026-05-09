@@ -828,6 +828,47 @@ describe("ReviewPage", () => {
     expect(document.querySelectorAll(".board-overlay__badge").length).toBeGreaterThan(0)
   })
 
+  it("does_not_render_castling_arrows_for_non_king_moves_on_castling_squares", async () => {
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      game_id: "g-620",
+      rule_variant: "berkeley_any",
+      moves: [
+        {
+          ply: 1,
+          color: "black",
+          question_type: "COMMON",
+          uci: "h7h6",
+          answer: { main: "REGULAR_MOVE", capture_square: null, special: null },
+          move_done: true,
+          replay_fen: {
+            full: "4k3/8/7p/8/8/8/5K2/4R3 w - - 0 1",
+            white: "8/8/8/8/8/8/5K2/4R3 w - - 0 1",
+            black: "4k3/8/7p/8/8/8/8/8 w - - 0 1",
+          },
+        },
+        {
+          ply: 2,
+          color: "white",
+          question_type: "COMMON",
+          uci: "e1g1",
+          answer: { main: "REGULAR_MOVE", capture_square: null, special: null },
+          move_done: true,
+          replay_fen: {
+            full: "4k3/8/7p/8/8/8/5K2/6R1 b - - 1 1",
+            white: "8/8/8/8/8/8/5K2/6R1 b - - 0 1",
+            black: "4k3/8/7p/8/8/8/8/8 b - - 0 1",
+          },
+        },
+      ],
+    })
+
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    fireEvent.click(screen.getByRole("button", { name: /White \[e1g1\] Move complete/i }))
+    expect(document.querySelectorAll(".board-overlay__arrow")).toHaveLength(1)
+  })
+
   it("renders_black_queenside_castling_arrows", async () => {
     mockApi.getGameTranscript.mockResolvedValueOnce({
       game_id: "g-620",
