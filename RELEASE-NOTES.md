@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.26
+
+- **Replay Layout**: explicitly syncs the move-log card height to the board
+  card height on desktop so only the move list scrolls, and hardens the replay
+  toolbar alignment against inherited toggle spacing.
+
 ## ks-web-app frontend v. 1.3.25
 
 - **Replay Layout**: made the move-log card stretch to the board card height,
