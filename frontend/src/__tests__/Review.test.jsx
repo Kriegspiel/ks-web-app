@@ -510,6 +510,52 @@ describe("ReviewPage", () => {
     expect(within(screen.getByLabelText("White reserve")).getByLabelText("Knight reserve piece (0)")).toBeInTheDocument()
   })
 
+  it("counts_only_board_pieces_for_crazykrieg_material_when_fen_has_reserve_pocket", async () => {
+    mockApi.getGame.mockResolvedValueOnce({
+      game_code: "EZYR2R",
+      rule_variant: "crazykrieg",
+      created_at: "2026-04-05T12:00:00Z",
+      updated_at: "2026-04-05T12:03:12Z",
+      result: null,
+      white: { username: "notifil", role: "user" },
+      black: { username: "haiku", role: "bot" },
+    })
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      game_id: "g-crazy-pocket",
+      rule_variant: "crazykrieg",
+      moves: [
+        {
+          ply: 1,
+          color: "white",
+          question_type: "COMMON",
+          uci: "e2e4",
+          answer: { main: "REGULAR_MOVE", capture_square: null, special: null },
+          move_done: true,
+          timestamp: "2026-04-05T12:00:11Z",
+          replay_fen: {
+            full: "4k3/8/8/8/4P3/8/4K3/4Q3[PNBRQPNBRQpnbrq] b - - 0 1",
+            white: "8/8/8/8/4P3/8/4K3/4Q3 b - - 0 1",
+            black: "4k3/8/8/8/8/8/8/8 b - - 0 1",
+          },
+        },
+      ],
+    })
+
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    fireEvent.click(screen.getByRole("button", { name: /White \[e2e4\] Move complete/i }))
+
+    const material = screen.getByLabelText("Replay material status")
+    const whiteView = within(material).getByLabelText("White material view")
+    const blackView = within(material).getByLabelText("Black material view")
+    expect(within(whiteView).getByText("Black pieces remain:")).toBeInTheDocument()
+    expect(within(whiteView).getByText("1")).toBeInTheDocument()
+    expect(within(blackView).getByText("White pieces remain:")).toBeInTheDocument()
+    expect(within(blackView).getByText("3")).toBeInTheDocument()
+    expect(within(blackView).queryByText("13")).not.toBeInTheDocument()
+  })
+
   it("places_next_turn_pawn_announcements_at_the_start_of_the_next_ply_group", async () => {
     mockApi.getGameTranscript.mockResolvedValueOnce({
       game_id: "g-620",
