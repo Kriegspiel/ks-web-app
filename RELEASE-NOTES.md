@@ -5,6 +5,13 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.38
+
+- **Live Game Refresh**: coalesces overlapping game-state polls and forces a
+  fresh state refresh after move, ask-any, resign, clock-expiry, and SSE change
+  events, preventing active tabs from missing a completed game state when fast
+  fallback polling is busy.
+
 ## ks-web-app frontend v. 1.3.37
 
 - **Live Timeout Refresh**: refreshes authoritative game state as soon as the
