@@ -146,6 +146,26 @@ function normalizeLogColor(value) {
   return null
 }
 
+function hasAuthoritativeStateAdvancedSinceSubmit(context, state, gameRef) {
+  if (!context || !state || context.gameRef !== gameRef || state.__gameRef !== context.gameRef) {
+    return false
+  }
+
+  if (context.state && state.state && context.state !== state.state) {
+    return true
+  }
+
+  const submittedTurn = normalizeLogColor(context.turn)
+  const currentTurn = normalizeLogColor(state.turn)
+  if (submittedTurn && currentTurn && submittedTurn !== currentTurn) {
+    return true
+  }
+
+  const submittedMoveNumber = context.moveNumber == null ? "" : String(context.moveNumber)
+  const currentMoveNumber = state.move_number == null ? "" : String(state.move_number)
+  return Boolean(submittedMoveNumber && currentMoveNumber && submittedMoveNumber !== currentMoveNumber)
+}
+
 function formatCaptureSquare(value) {
   if (typeof value !== "string") {
     return ""
@@ -1767,6 +1787,8 @@ export default function GamePage() {
   const finishDragPhantomRef = useRef(null)
   const finishMoveDragRef = useRef(null)
   const illegalMoveContextRef = useRef(null)
+  const submitMoveContextRef = useRef(null)
+  const submitMoveAttemptIdRef = useRef(0)
   const previousGameRefRef = useRef(gameRef)
 
   if (!soundPlayerRef.current) {
@@ -1872,6 +1894,7 @@ export default function GamePage() {
     stateRequestIdRef.current += 1
     metadataRequestIdRef.current += 1
     illegalMoveContextRef.current = null
+    submitMoveContextRef.current = null
     viewportRestoreRef.current = null
     lastSoundEntryKeysRef.current = []
     lastTapRef.current = { square: "", time: 0 }
@@ -1999,6 +2022,27 @@ export default function GamePage() {
     setActionError("")
     setIllegalMoveSquares([])
   }, [actionError, gameRef, gameState])
+
+  useEffect(() => {
+    const context = submitMoveContextRef.current
+    if (!submittingAction || !context || !gameState) {
+      return
+    }
+
+    if (!hasAuthoritativeStateAdvancedSinceSubmit(context, gameState, gameRef)) {
+      return
+    }
+
+    submitMoveContextRef.current = null
+    setSubmittingAction(false)
+    setActionError("")
+    setLastMoveSquares(context.highlightSquares)
+    setFromSquare("")
+    setToSquare("")
+    setSelectedDropPiece("")
+    setShowPromotionModal(false)
+    setIllegalMoveSquares([])
+  }, [gameRef, gameState, submittingAction])
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -2665,9 +2709,25 @@ export default function GamePage() {
     setActionError("")
     captureViewport()
     const highlightSquares = getMoveHighlightSquares(uci)
+    const attemptId = submitMoveAttemptIdRef.current + 1
+    submitMoveAttemptIdRef.current = attemptId
+    submitMoveContextRef.current = {
+      id: attemptId,
+      gameRef,
+      state: gameState?.state,
+      turn: gameState?.turn,
+      moveNumber: gameState?.move_number,
+      yourColor: gameState?.your_color,
+      highlightSquares,
+    }
+    const isCurrentSubmitAttempt = () => submitMoveContextRef.current?.id === attemptId
 
     try {
       const result = await submitMove(gameRef, uci)
+      if (!isCurrentSubmitAttempt()) {
+        return
+      }
+
       if (result?.move_done === false) {
         illegalMoveContextRef.current = {
           gameRef,
@@ -2687,9 +2747,16 @@ export default function GamePage() {
       resetPendingMove()
       await pollState({ silent: true, preserveViewport: true })
     } catch (requestError) {
+      if (!isCurrentSubmitAttempt()) {
+        return
+      }
+
       setActionError(requestError?.message ?? "Unable to submit move right now.")
     } finally {
-      setSubmittingAction(false)
+      if (isCurrentSubmitAttempt()) {
+        submitMoveContextRef.current = null
+        setSubmittingAction(false)
+      }
     }
   }
 

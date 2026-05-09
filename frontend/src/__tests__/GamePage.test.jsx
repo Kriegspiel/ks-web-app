@@ -713,6 +713,62 @@ describe("GamePage", () => {
     await waitFor(() => expect(mockApi.getGameState.mock.calls.length).toBeGreaterThanOrEqual(2))
   })
 
+  it("clears_submitting_move_when_polling_confirms_the_move_completed", async () => {
+    let authoritativeState = {
+      ...activeState,
+      referee_turns: [
+        {
+          turn: 1,
+          white: [{ messages: ["No pawn captures"] }],
+          black: [],
+        },
+      ],
+    }
+    mockApi.getGameState.mockImplementation(() => Promise.resolve(authoritativeState))
+    mockApi.submitMove.mockImplementationOnce(() => new Promise(() => {}))
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e2" })
+    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+
+    await waitFor(() => {
+      expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
+    })
+
+    const currentMessage = screen.getByLabelText("Current message")
+    await waitFor(() => {
+      const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
+      expect(timeline).toHaveAttribute("aria-label", "White: no pawn captures, submitting move")
+    })
+
+    authoritativeState = {
+      ...activeState,
+      turn: "black",
+      move_number: 2,
+      possible_actions: [],
+      your_fen: "8/8/8/8/4P3/8/8/4K3",
+      referee_turns: [
+        {
+          turn: 1,
+          white: [{ messages: ["Move complete"] }],
+          black: [],
+        },
+      ],
+    }
+
+    await sleep(650)
+
+    await waitFor(() => {
+      const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
+      expect(timeline).not.toHaveAttribute("aria-label", expect.stringContaining("submitting move"))
+      expect(timeline).toHaveAttribute("aria-label", expect.stringContaining("opponent's move"))
+    })
+    expect(screen.getByRole("button", { name: "Square e2" })).toHaveClass("square--last-move")
+    expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--last-move")
+  })
+
   it("gates_promotion_with_modal_and_appends_suffix", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,

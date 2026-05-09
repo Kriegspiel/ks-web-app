@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.29
+
+- **Move Submission**: clears the local “submitting move” state when polling
+  confirms the submitted move already advanced the authoritative game state,
+  even if the original submit request is still waiting on a browser response.
+
 ## ks-web-app frontend v. 1.3.28
 
 - **Replay Overlay**: draws two castling arrows only when the pre-move board
