@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.35
+
+- **Material Cards**: top-aligns live and replay material/reserve card content
+  so uneven CrazyKrieg reserve panels start from the same vertical edge.
+
 ## ks-web-app frontend v. 1.3.34
 
 - **English Review**: hides pawn-capture counts in replay material stats because

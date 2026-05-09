@@ -300,6 +300,7 @@
 .game-piece-status__side {
   display: grid;
   align-content: start;
+  align-items: start;
   gap: 0.28rem;
   min-height: 5.4rem;
   padding: 0.72rem 0.78rem;
