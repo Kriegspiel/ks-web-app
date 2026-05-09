@@ -200,6 +200,56 @@ describe("ReviewPage", () => {
     expect(within(boardToolbar).queryByText("Turn Start / 1B")).not.toBeInTheDocument()
   })
 
+  it("syncs_the_move_log_card_height_to_the_board_card_on_desktop", async () => {
+    const originalMatchMedia = window.matchMedia
+    const originalRequestAnimationFrame = window.requestAnimationFrame
+    const originalCancelAnimationFrame = window.cancelAnimationFrame
+    window.matchMedia = vi.fn(() => ({
+      matches: true,
+      media: "(min-width: 769px)",
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(() => false),
+    }))
+    window.requestAnimationFrame = (callback) => {
+      callback()
+      return 1
+    }
+    window.cancelAnimationFrame = vi.fn()
+
+    try {
+      const { container } = renderReviewPage()
+      await screen.findByText(/Move log/i)
+
+      const boardCard = container.querySelector(".review-page__board-column")
+      boardCard.getBoundingClientRect = () => ({
+        top: 0,
+        bottom: 612,
+        left: 0,
+        right: 640,
+        width: 640,
+        height: 612,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      })
+
+      window.dispatchEvent(new Event("resize"))
+
+      await waitFor(() => {
+        expect(container.querySelector(".review-page__log-column")).toHaveStyle({ height: "612px" })
+      })
+      expect(container.querySelector(".review-page__move-rows")).toBeInTheDocument()
+    } finally {
+      window.matchMedia = originalMatchMedia
+      window.requestAnimationFrame = originalRequestAnimationFrame
+      window.cancelAnimationFrame = originalCancelAnimationFrame
+    }
+  })
+
   it("uses_vertical_move_log_controls_to_step_through_replay", async () => {
     renderReviewPage()
 

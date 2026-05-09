@@ -603,6 +603,8 @@ export default function ReviewPage() {
   const [currentPly, setCurrentPly] = useState(-1)
   const [perspective, setPerspective] = useState("referee")
   const [boardOrientation, setBoardOrientation] = useState("white")
+  const [reviewCardHeight, setReviewCardHeight] = useState(null)
+  const boardColumnRef = useRef(null)
   const moveRowsRef = useRef(null)
   const maxGroupIndexRef = useRef(-1)
 
@@ -668,6 +670,73 @@ export default function ReviewPage() {
       window.removeEventListener("keydown", onKeyDown)
     }
   }, [])
+
+  useEffect(() => {
+    if (loading || error) {
+      setReviewCardHeight(null)
+      return undefined
+    }
+
+    const boardCard = boardColumnRef.current
+    if (!(boardCard instanceof HTMLElement)) {
+      return undefined
+    }
+
+    const mediaQuery = window.matchMedia?.("(min-width: 769px)")
+    const requestFrame = typeof window.requestAnimationFrame === "function"
+      ? window.requestAnimationFrame
+      : (callback) => {
+          callback()
+          return 0
+        }
+    const cancelFrame = typeof window.cancelAnimationFrame === "function"
+      ? window.cancelAnimationFrame
+      : () => {}
+    let animationFrame = 0
+
+    function measureBoardCard() {
+      if (animationFrame) {
+        cancelFrame(animationFrame)
+      }
+
+      animationFrame = requestFrame(() => {
+        const shouldSync = mediaQuery?.matches ?? true
+        const nextHeight = shouldSync
+          ? Math.ceil(boardCard.getBoundingClientRect().height)
+          : 0
+        const syncedHeight = nextHeight > 0 ? nextHeight : null
+        setReviewCardHeight((currentHeight) => (
+          currentHeight === syncedHeight ? currentHeight : syncedHeight
+        ))
+      })
+    }
+
+    measureBoardCard()
+
+    const resizeObserver = typeof ResizeObserver === "function"
+      ? new ResizeObserver(measureBoardCard)
+      : null
+    resizeObserver?.observe(boardCard)
+    window.addEventListener("resize", measureBoardCard)
+    if (typeof mediaQuery?.addEventListener === "function") {
+      mediaQuery.addEventListener("change", measureBoardCard)
+    } else {
+      mediaQuery?.addListener?.(measureBoardCard)
+    }
+
+    return () => {
+      if (animationFrame) {
+        cancelFrame(animationFrame)
+      }
+      resizeObserver?.disconnect()
+      window.removeEventListener("resize", measureBoardCard)
+      if (typeof mediaQuery?.removeEventListener === "function") {
+        mediaQuery.removeEventListener("change", measureBoardCard)
+      } else {
+        mediaQuery?.removeListener?.(measureBoardCard)
+      }
+    }
+  }, [error, loading])
 
   useEffect(() => {
     if (currentPly < 0) {
@@ -756,7 +825,7 @@ export default function ReviewPage() {
 
       {!loading && !error ? (
         <div className="review-page__layout">
-          <section className="review-page__board-column">
+          <section className="review-page__board-column" ref={boardColumnRef}>
             <div className="review-page__board-toolbar" aria-label="Replay view controls">
               <div className="review-page__toolbar-line">
                 <div className="review-page__toolbar-group">
@@ -853,7 +922,10 @@ export default function ReviewPage() {
             </div>
           </section>
 
-          <aside className="review-page__log-column">
+          <aside
+            className="review-page__log-column"
+            style={reviewCardHeight ? { height: `${reviewCardHeight}px` } : undefined}
+          >
             <div className="review-page__log-header">
               <h2>Move log</h2>
               <span className="review-page__ply">Turn {counterLabel} / {maxCounterLabel}</span>
