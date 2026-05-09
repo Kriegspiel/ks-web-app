@@ -759,43 +759,47 @@ export default function ReviewPage() {
           <section className="review-page__board-column">
             <div className="review-page__board-toolbar" aria-label="Replay view controls">
               <div className="review-page__toolbar-line">
-                <span className="review-page__toolbar-label">View</span>
-                <div className="elo-chart__track-toggle review-page__toggle-group" role="tablist" aria-label="Replay perspective">
-                  {[
-                    ["referee", "Referee"],
-                    ["white", "White"],
-                    ["black", "Black"],
-                  ].map(([value, label]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      role="tab"
-                      aria-selected={perspective === value}
-                      className={`elo-chart__track-pill${perspective === value ? " is-active" : ""}`}
-                      onClick={() => setPerspective(value)}
-                    >
-                      {label}
-                    </button>
-                  ))}
+                <div className="review-page__toolbar-group">
+                  <span className="review-page__toolbar-label">View</span>
+                  <div className="elo-chart__track-toggle review-page__toggle-group" role="tablist" aria-label="Replay perspective">
+                    {[
+                      ["referee", "Referee"],
+                      ["white", "White"],
+                      ["black", "Black"],
+                    ].map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        role="tab"
+                        aria-selected={perspective === value}
+                        className={`elo-chart__track-pill${perspective === value ? " is-active" : ""}`}
+                        onClick={() => setPerspective(value)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <span className="review-page__toolbar-label review-page__toolbar-label--inline">Bottom</span>
-                <div className="elo-chart__track-toggle elo-chart__mode-toggle review-page__toggle-group" role="tablist" aria-label="Board orientation">
-                  {[
-                    ["white", "White", "White bottom"],
-                    ["black", "Black", "Black bottom"],
-                  ].map(([value, label, ariaLabel]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      role="tab"
-                      aria-label={ariaLabel}
-                      aria-selected={boardOrientation === value}
-                      className={`elo-chart__track-pill${boardOrientation === value ? " is-active" : ""}`}
-                      onClick={() => setBoardOrientation(value)}
-                    >
-                      {label}
-                    </button>
-                  ))}
+                <div className="review-page__toolbar-group">
+                  <span className="review-page__toolbar-label">Bottom</span>
+                  <div className="elo-chart__track-toggle elo-chart__mode-toggle review-page__toggle-group" role="tablist" aria-label="Board orientation">
+                    {[
+                      ["white", "White", "White bottom"],
+                      ["black", "Black", "Black bottom"],
+                    ].map(([value, label, ariaLabel]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        role="tab"
+                        aria-label={ariaLabel}
+                        aria-selected={boardOrientation === value}
+                        className={`elo-chart__track-pill${boardOrientation === value ? " is-active" : ""}`}
+                        onClick={() => setBoardOrientation(value)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
