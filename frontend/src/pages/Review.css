@@ -217,6 +217,50 @@
   font-weight: 800;
 }
 
+.review-page__reserve {
+  display: grid;
+  gap: 0.34rem;
+  margin-top: 0.2rem;
+}
+
+.review-page__reserve-empty {
+  color: var(--muted-soft);
+  font-size: 0.78rem;
+}
+
+.review-page__reserve-pieces {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.28rem;
+}
+
+.review-page__reserve-piece {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.18rem;
+  min-height: 2rem;
+  padding: 0.24rem 0.34rem;
+  border: 1px solid var(--border);
+  border-radius: 0.58rem;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  color: var(--text);
+}
+
+.review-page__reserve-piece img {
+  width: 1.2rem;
+  height: 1.2rem;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.review-page__reserve-piece span {
+  color: var(--muted-soft);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
 .review-page__log-frame {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

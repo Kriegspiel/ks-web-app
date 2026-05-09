@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import ChessBoard from "../components/ChessBoard.jsx"
-import { parseFenBoard } from "../components/chessboard"
+import { PIECE_ASSETS, parseFenBoard } from "../components/chessboard"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import { getGame, getGameTranscript } from "../services/api"
@@ -34,6 +34,14 @@ const ANNOUNCEMENT_TEXT = {
   CHECK_DOUBLE: "Double check",
 }
 const PAWN_CAPTURE_STATS_RULES = new Set(["cincinnati", "wild16", "rand", "english"])
+const DROP_PIECES = ["P", "N", "B", "R", "Q"]
+const DROP_PIECE_LABELS = {
+  P: "Pawn",
+  N: "Knight",
+  B: "Bishop",
+  R: "Rook",
+  Q: "Queen",
+}
 const DEFAULT_CLOCK_BASE_SECONDS = 25 * 60
 const DEFAULT_CLOCK_INCREMENT_SECONDS = 10
 
@@ -89,7 +97,15 @@ function formatCaptureAnnouncement(answer) {
   }
 
   const capturedPiece = typeof answer?.captured_piece_announcement === "string" ? answer.captured_piece_announcement.trim().toUpperCase() : ""
-  const captureLabel = capturedPiece === "PAWN" ? "Pawn captured" : capturedPiece === "PIECE" ? "Piece captured" : "Capture"
+  const captureLabels = {
+    PAWN: "Pawn",
+    PIECE: "Piece",
+    KNIGHT: "Knight",
+    BISHOP: "Bishop",
+    ROOK: "Rook",
+    QUEEN: "Queen",
+  }
+  const captureLabel = captureLabels[capturedPiece] ? `${captureLabels[capturedPiece]} captured` : "Capture"
 
   if (captureSquare) {
     return `${captureLabel} at ${captureSquare}`
@@ -383,6 +399,91 @@ function movesUpToPly(moves, group) {
   return moves.filter((move) => Number(move?.ply) <= lastPly)
 }
 
+function emptyReserveSummary() {
+  return { pawns: 0, knights: 0, bishops: 0, rooks: 0, queens: 0 }
+}
+
+function reserveKeyForPiece(piece) {
+  return {
+    P: "pawns",
+    N: "knights",
+    B: "bishops",
+    R: "rooks",
+    Q: "queens",
+  }[String(piece ?? "").trim().toUpperCase()] ?? ""
+}
+
+function reservePieceFromAnnouncement(value) {
+  const normalized = String(value ?? "").trim().toUpperCase()
+  return {
+    PAWN: "P",
+    KNIGHT: "N",
+    BISHOP: "B",
+    ROOK: "R",
+    QUEEN: "Q",
+  }[normalized] ?? ""
+}
+
+function normalizeDropMove(uci) {
+  const match = String(uci ?? "").trim().match(/^([pnbrq])@([a-h][1-8])$/i)
+  if (!match) {
+    return null
+  }
+
+  return {
+    piece: match[1].toUpperCase(),
+    square: match[2].toLowerCase(),
+  }
+}
+
+function reserveCountForPiece(reserve, piece) {
+  const key = reserveKeyForPiece(piece)
+  return key ? reserve?.[key] ?? 0 : 0
+}
+
+function reserveAssetKey(piece, color) {
+  return color === "black" ? piece.toLowerCase() : piece
+}
+
+function replayReserveStatus({ moves, selectedPlyGroup, ruleVariant }) {
+  const reserves = {
+    white: emptyReserveSummary(),
+    black: emptyReserveSummary(),
+  }
+
+  if (ruleVariant !== "crazykrieg") {
+    return reserves
+  }
+
+  movesUpToPly(moves, selectedPlyGroup).forEach((move) => {
+    if (!move?.move_done) {
+      return
+    }
+
+    const color = move.color === "black" ? "black" : "white"
+    const dropMove = normalizeDropMove(move.uci)
+    if (dropMove) {
+      const reserveKey = reserveKeyForPiece(dropMove.piece)
+      if (reserveKey) {
+        reserves[color][reserveKey] = Math.max(0, reserves[color][reserveKey] - 1)
+      }
+      return
+    }
+
+    if (!isCaptureAnnouncement(move?.answer?.main)) {
+      return
+    }
+
+    const reservePiece = reservePieceFromAnnouncement(move?.answer?.captured_piece_announcement)
+    const reserveKey = reserveKeyForPiece(reservePiece)
+    if (reserveKey) {
+      reserves[color][reserveKey] += 1
+    }
+  })
+
+  return reserves
+}
+
 function countPiecesInFen(fen) {
   if (typeof fen !== "string" || !fen.trim()) {
     return null
@@ -439,6 +540,34 @@ function replayMaterialStatus({ moves, selectedPlyGroup, ruleVariant, fullFen })
       pawnsCaptured: showPawnCaptures ? pawnsCaptured.black : null,
     },
   }
+}
+
+function ReviewReservePieces({ color, reserve }) {
+  const hasReserve = DROP_PIECES.some((piece) => reserveCountForPiece(reserve, piece) > 0)
+
+  return (
+    <div className="review-page__reserve">
+      <span className="review-page__piece-label">{color === "black" ? "Black" : "White"} reserve:</span>
+      <div className="review-page__reserve-pieces" aria-label={`${color === "black" ? "Black" : "White"} reserve`}>
+        {DROP_PIECES.map((piece) => {
+          const count = reserveCountForPiece(reserve, piece)
+
+          return (
+            <div
+              key={piece}
+              className="review-page__reserve-piece"
+              aria-label={`${DROP_PIECE_LABELS[piece]} reserve piece (${count})`}
+              title={`${DROP_PIECE_LABELS[piece]} · ${count}`}
+            >
+              <img src={PIECE_ASSETS[reserveAssetKey(piece, color)]} alt="" draggable="false" />
+              <span>{count}</span>
+            </div>
+          )
+        })}
+      </div>
+      {!hasReserve ? <span className="review-page__reserve-empty">empty</span> : null}
+    </div>
+  )
 }
 
 function replayClockSettings(timeControl) {
@@ -874,6 +1003,14 @@ export default function ReviewPage() {
     }),
     [fullBoardFen, game?.rule_variant, moves, selectedPlyGroup],
   )
+  const replayReserves = useMemo(
+    () => replayReserveStatus({
+      moves,
+      selectedPlyGroup,
+      ruleVariant: game?.rule_variant,
+    }),
+    [game?.rule_variant, moves, selectedPlyGroup],
+  )
   const replayClock = useMemo(
     () => replayClockRemaining({
       moves,
@@ -891,6 +1028,7 @@ export default function ReviewPage() {
   const whiteHistoricalRatings = historicalRatingsForColor(game, "white")
   const blackHistoricalRatings = historicalRatingsForColor(game, "black")
   const signedInAs = user?.username ?? user?.email ?? "player"
+  const isCrazyKrieg = game?.rule_variant === "crazykrieg"
 
   return (
     <main className="page-shell review-page" aria-live="polite">
@@ -984,6 +1122,9 @@ export default function ReviewPage() {
                       <span className="review-page__piece-value">{replayMaterial.black.pawnsCaptured}</span>
                     </p>
                   ) : null}
+                  {isCrazyKrieg ? (
+                    <ReviewReservePieces color="white" reserve={replayReserves.white} />
+                  ) : null}
                 </div>
                 <div className="review-page__piece-side" aria-label="Black material view">
                   <p className="review-page__piece-line">
@@ -995,6 +1136,9 @@ export default function ReviewPage() {
                       <span className="review-page__piece-label">White pawns captured:</span>{" "}
                       <span className="review-page__piece-value">{replayMaterial.white.pawnsCaptured}</span>
                     </p>
+                  ) : null}
+                  {isCrazyKrieg ? (
+                    <ReviewReservePieces color="black" reserve={replayReserves.black} />
                   ) : null}
                 </div>
               </section>

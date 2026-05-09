@@ -5,6 +5,14 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.30
+
+- **CrazyKrieg Review**: reconstructs public reserves during replay and shows
+  read-only White/Black reserve strips below the board, matching the live game
+  material view.
+- **CrazyKrieg Review**: uses exact capture identity labels such as “Knight
+  captured” when the transcript provides reserve identity.
+
 ## ks-web-app frontend v. 1.3.29
 
 - **Move Submission**: clears the local “submitting move” state when polling
