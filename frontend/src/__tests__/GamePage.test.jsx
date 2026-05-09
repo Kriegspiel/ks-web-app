@@ -275,6 +275,44 @@ describe("GamePage", () => {
     await waitFor(() => expect(mockApi.getGameState.mock.calls.length).toBeGreaterThan(pollCountAfterConnect + 1))
   })
 
+  it("refreshes_authoritative_state_when_the_displayed_clock_expires", async () => {
+    const expiredState = {
+      ...activeState,
+      turn: "black",
+      move_number: 7,
+      your_color: "black",
+      possible_actions: ["move"],
+      clock: { white_remaining: 180, black_remaining: 0, active_color: "black" },
+    }
+    mockApi.getGameState
+      .mockResolvedValueOnce(expiredState)
+      .mockResolvedValue({
+        ...expiredState,
+        state: "completed",
+        possible_actions: [],
+        result: { winner: "white", reason: "timeout" },
+        clock: { white_remaining: 180, black_remaining: 0, active_color: null },
+      })
+
+    render(<GamePage />)
+
+    const summary = await screen.findByLabelText("Completed game summary")
+    expect(within(summary).getByText("You lost by timeout")).toBeInTheDocument()
+    expect(within(summary).getByText("White wins by timeout")).toBeInTheDocument()
+    expect(mockApi.getGameState.mock.calls.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it("refreshes_active_game_state_when_the_tab_regains_focus", async () => {
+    render(<GamePage />)
+
+    await screen.findByText(/Game code:/i)
+    const callsBeforeFocus = mockApi.getGameState.mock.calls.length
+
+    window.dispatchEvent(new Event("focus"))
+
+    await waitFor(() => expect(mockApi.getGameState.mock.calls.length).toBeGreaterThan(callsBeforeFocus))
+  })
+
   it("keeps_current_message_from_staying_in_loading_state_after_silent_poll_races_initial_load", async () => {
     let resolveInitialState
     mockApi.getGameState.mockImplementationOnce(
