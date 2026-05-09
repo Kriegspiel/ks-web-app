@@ -5,6 +5,15 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.37
+
+- **Live Timeout Refresh**: refreshes authoritative game state as soon as the
+  displayed active clock reaches zero, so timeout losses/wins surface promptly
+  in an already-open game tab.
+- **Tab Resume Refresh**: refreshes active game state when the game tab regains
+  focus or visibility, helping sleeping/background tabs catch up after timeouts
+  or missed live events.
+
 ## ks-web-app frontend v. 1.3.36
 
 - **Live Game Updates**: subscribes to game server-sent events and refreshes
