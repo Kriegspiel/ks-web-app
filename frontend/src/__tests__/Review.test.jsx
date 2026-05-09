@@ -204,6 +204,7 @@ describe("ReviewPage", () => {
     const originalMatchMedia = window.matchMedia
     const originalRequestAnimationFrame = window.requestAnimationFrame
     const originalCancelAnimationFrame = window.cancelAnimationFrame
+    const getComputedStyleSpy = vi.spyOn(window, "getComputedStyle")
     window.matchMedia = vi.fn(() => ({
       matches: true,
       media: "(min-width: 769px)",
@@ -225,28 +226,80 @@ describe("ReviewPage", () => {
       await screen.findByText(/Move log/i)
 
       const boardCard = container.querySelector(".review-page__board-column")
+      const [toolbar, chessBoard, boardMeta] = boardCard.children
       boardCard.getBoundingClientRect = () => ({
-        top: 0,
-        bottom: 612,
+        top: 100,
+        bottom: 1700,
         left: 0,
         right: 640,
         width: 640,
-        height: 612,
+        height: 1600,
         x: 0,
-        y: 0,
+        y: 100,
         toJSON: () => ({}),
       })
+      toolbar.getBoundingClientRect = () => ({
+        top: 120,
+        bottom: 172,
+        left: 0,
+        right: 640,
+        width: 640,
+        height: 52,
+        x: 0,
+        y: 120,
+        toJSON: () => ({}),
+      })
+      chessBoard.getBoundingClientRect = () => ({
+        top: 188,
+        bottom: 568,
+        left: 0,
+        right: 640,
+        width: 640,
+        height: 380,
+        x: 0,
+        y: 188,
+        toJSON: () => ({}),
+      })
+      boardMeta.getBoundingClientRect = () => ({
+        top: 584,
+        bottom: 650,
+        left: 0,
+        right: 640,
+        width: 640,
+        height: 66,
+        x: 0,
+        y: 584,
+        toJSON: () => ({}),
+      })
+      getComputedStyleSpy.mockImplementation((element) => ({
+        getPropertyValue: (property) => {
+          if (element === boardCard && property === "padding-bottom") {
+            return "16px"
+          }
+          if (element === boardCard && property === "border-bottom-width") {
+            return "2px"
+          }
+          if (property === "margin-bottom") {
+            return "0px"
+          }
+          return "0px"
+        },
+        paddingBottom: element === boardCard ? "16px" : "0px",
+        borderBottomWidth: element === boardCard ? "2px" : "0px",
+        marginBottom: "0px",
+      }))
 
       window.dispatchEvent(new Event("resize"))
 
       await waitFor(() => {
-        expect(container.querySelector(".review-page__log-column")).toHaveStyle({ height: "612px" })
+        expect(container.querySelector(".review-page__log-column")?.style.height).toBe("568px")
       })
       expect(container.querySelector(".review-page__move-rows")).toBeInTheDocument()
     } finally {
       window.matchMedia = originalMatchMedia
       window.requestAnimationFrame = originalRequestAnimationFrame
       window.cancelAnimationFrame = originalCancelAnimationFrame
+      getComputedStyleSpy.mockRestore()
     }
   })
 
