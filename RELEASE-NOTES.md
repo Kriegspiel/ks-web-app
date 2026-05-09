@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.34
+
+- **English Review**: hides pawn-capture counts in replay material stats because
+  English rules announce capture squares, not captured material type.
+
 ## ks-web-app frontend v. 1.3.33
 
 - **Live Game Board**: aligns material and reserve box content to the top so

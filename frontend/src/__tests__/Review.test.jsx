@@ -750,6 +750,66 @@ describe("ReviewPage", () => {
     expect(within(blackView).getByText("16")).toBeInTheDocument()
   })
 
+  it("hides_pawn_capture_counts_for_english_review_because_captures_are_untyped", async () => {
+    mockApi.getGame.mockResolvedValueOnce({
+      game_code: "NJ9M6F",
+      rule_variant: "english",
+      created_at: "2026-05-09T17:00:00Z",
+      updated_at: "2026-05-09T17:09:51Z",
+      result: { winner: "white", reason: "checkmate" },
+      white: { username: "hikaru_sokolovsky", connected: true, role: "guest" },
+      black: { username: "bot", connected: true, role: "bot" },
+    })
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      game_id: "g-english",
+      rule_variant: "english",
+      viewer_color: "white",
+      moves: [
+        transcript.moves[0],
+        {
+          ply: 2,
+          color: "black",
+          question_type: "COMMON",
+          uci: "e7e5",
+          answer: { main: "REGULAR_MOVE", capture_square: null, special: null },
+          move_done: true,
+          timestamp: "2026-05-09T17:00:15Z",
+          replay_fen: transcript.moves[1].replay_fen,
+        },
+        {
+          ply: 3,
+          color: "white",
+          question_type: "COMMON",
+          uci: "f1b5",
+          answer: {
+            main: "CAPTURE_DONE",
+            capture_square: "b5",
+            captured_piece_announcement: null,
+            special: null,
+          },
+          move_done: true,
+          timestamp: "2026-05-09T17:00:22Z",
+          replay_fen: {
+            full: "rnbqkbnr/pppp1ppp/8/1B2p3/4P3/8/PPPP1PPP/RNBQK1NR b KQkq - 0 2",
+            white: "4K3/PPPP1PPP/8/1B6/4P3/8/8/8 b - - 0 1",
+            black: "8/8/8/4p3/8/8/pppp1ppp/rnbqkbnr b - - 0 1",
+          },
+        },
+      ],
+    })
+
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    fireEvent.click(screen.getByRole("button", { name: /White \[f1b5\] Capture at B5/i }))
+
+    const material = screen.getByLabelText("Replay material status")
+    expect(within(material).getByText("Black pieces remain:")).toBeInTheDocument()
+    expect(within(material).getByText("White pieces remain:")).toBeInTheDocument()
+    expect(within(material).queryByText("Black pawns captured:")).not.toBeInTheDocument()
+    expect(within(material).queryByText("White pawns captured:")).not.toBeInTheDocument()
+  })
+
   it("uses_cincinnati_has_pawn_capture_flags_instead_of_treating_null_pawn_tries_as_zero", async () => {
     mockApi.getGameTranscript.mockResolvedValueOnce({
       game_id: "g-620",

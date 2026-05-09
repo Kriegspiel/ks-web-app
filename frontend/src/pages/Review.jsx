@@ -33,7 +33,7 @@ const ANNOUNCEMENT_TEXT = {
   CHECK_KNIGHT: "Check by knight",
   CHECK_DOUBLE: "Double check",
 }
-const PAWN_CAPTURE_STATS_RULES = new Set(["cincinnati", "wild16", "rand", "english"])
+const PAWN_CAPTURE_STATS_RULES = new Set(["cincinnati", "wild16", "rand"])
 const DROP_PIECES = ["P", "N", "B", "R", "Q"]
 const DROP_PIECE_LABELS = {
   P: "Pawn",
