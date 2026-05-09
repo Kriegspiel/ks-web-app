@@ -431,6 +431,85 @@ describe("ReviewPage", () => {
     expect(document.querySelectorAll(".board-overlay__arrow")).toHaveLength(0)
   })
 
+  it("shows_crazykrieg_replay_reserves_below_the_board", async () => {
+    mockApi.getGame.mockResolvedValueOnce({
+      game_code: "EZYR2R",
+      rule_variant: "crazykrieg",
+      created_at: "2026-04-05T12:00:00Z",
+      updated_at: "2026-04-05T12:03:12Z",
+      result: null,
+      white: { username: "notifil", role: "user" },
+      black: { username: "haiku", role: "bot" },
+    })
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      game_id: "g-crazy",
+      rule_variant: "crazykrieg",
+      moves: [
+        {
+          ply: 1,
+          color: "white",
+          question_type: "COMMON",
+          uci: "e4f5",
+          answer: {
+            main: "CAPTURE_DONE",
+            capture_square: "f5",
+            captured_piece_announcement: "KNIGHT",
+            special: null,
+          },
+          move_done: true,
+          timestamp: "2026-04-05T12:00:11Z",
+          replay_fen: {
+            full: "rnbqkb1r/pppppppp/8/5P2/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+            white: "4K3/PPPP1PPP/8/5P2/8/8/8/8 b - - 0 1",
+            black: "8/8/8/8/8/8/pppppppp/rnbqkb1r b - - 0 1",
+          },
+        },
+        {
+          ply: 2,
+          color: "black",
+          question_type: "COMMON",
+          uci: "h7h6",
+          answer: { main: "REGULAR_MOVE", capture_square: null, special: null },
+          move_done: true,
+          timestamp: "2026-04-05T12:00:15Z",
+          replay_fen: {
+            full: "rnbqkb1r/ppppppp1/7p/5P2/8/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+            white: "4K3/PPPP1PPP/8/5P2/8/8/8/8 w - - 0 1",
+            black: "8/8/7p/8/8/8/ppppppp1/rnbqkb1r w - - 0 1",
+          },
+        },
+        {
+          ply: 3,
+          color: "white",
+          question_type: "COMMON",
+          uci: "N@c4",
+          answer: { main: "REGULAR_MOVE", dropped_piece_announcement: "KNIGHT", special: null },
+          move_done: true,
+          timestamp: "2026-04-05T12:00:20Z",
+          replay_fen: {
+            full: "rnbqkb1r/ppppppp1/7p/5P2/2N5/8/PPPP1PPP/RNBQKBNR b KQkq - 1 2",
+            white: "4K3/PPPP1PPP/8/5P2/2N5/8/8/8 b - - 0 1",
+            black: "8/8/7p/8/8/8/ppppppp1/rnbqkb1r b - - 0 1",
+          },
+        },
+      ],
+    })
+
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    expect(screen.getByLabelText("White reserve")).toBeInTheDocument()
+    expect(screen.getByLabelText("Black reserve")).toBeInTheDocument()
+    expect(within(screen.getByLabelText("White reserve")).getByLabelText("Knight reserve piece (0)")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: /White \[e4f5\] Knight captured at F5/i }))
+    expect(within(screen.getByLabelText("White reserve")).getByLabelText("Knight reserve piece (1)")).toBeInTheDocument()
+    expect(within(screen.getByLabelText("Black reserve")).getByLabelText("Knight reserve piece (0)")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: /White \[n@c4\] Move complete/i }))
+    expect(within(screen.getByLabelText("White reserve")).getByLabelText("Knight reserve piece (0)")).toBeInTheDocument()
+  })
+
   it("places_next_turn_pawn_announcements_at_the_start_of_the_next_ply_group", async () => {
     mockApi.getGameTranscript.mockResolvedValueOnce({
       game_id: "g-620",
