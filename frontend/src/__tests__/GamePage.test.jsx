@@ -396,6 +396,45 @@ describe("GamePage", () => {
     resolveBackgroundPoll(activeState)
   })
 
+  it("shows_completed_summary_from_game_over_submit_response_before_followup_poll_returns", async () => {
+    let resolveFollowupPoll
+    mockApi.getGameState
+      .mockResolvedValueOnce(activeState)
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFollowupPoll = resolve
+          }),
+      )
+    mockApi.submitMove.mockResolvedValueOnce({
+      move_done: true,
+      game_over: true,
+      special_announcement: "CHECKMATE_WHITE_WINS",
+      turn: "black",
+      clock: { white_remaining: 612, black_remaining: 588, active_color: null },
+    })
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e2" })
+    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+
+    const summary = await screen.findByLabelText("Completed game summary")
+    expect(within(summary).getByText("You won by checkmate")).toBeInTheDocument()
+    expect(within(summary).getByText("White wins by checkmate")).toBeInTheDocument()
+
+    resolveFollowupPoll({
+      ...activeState,
+      turn: "black",
+      possible_actions: [],
+      allowed_moves: [],
+    })
+
+    await sleep(50)
+    expect(screen.getByLabelText("Completed game summary")).toBeInTheDocument()
+  })
+
   it("submits_two_click_move_and_repolls", async () => {
     render(<GamePage />)
 
