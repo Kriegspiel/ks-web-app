@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import ReviewPage from "../pages/Review"
 const mockApi = vi.hoisted(() => ({
@@ -127,11 +127,14 @@ describe("ReviewPage", () => {
     expect(screen.getByText("Turn Start / 1B")).toBeInTheDocument()
     expect(screen.getByText("11s")).toBeInTheDocument()
     expect(screen.getByText("8s")).toBeInTheDocument()
+    expect(screen.getByLabelText("Replay time used")).toBeInTheDocument()
+    expect(screen.getByLabelText("Replay material status")).toBeInTheDocument()
     expect(screen.getByText("Rules")).toBeInTheDocument()
     expect(screen.getByText("Berkeley + Any")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
     expect(screen.getByText("Turn 1W / 1B")).toBeInTheDocument()
+    expect(within(screen.getByLabelText("Replay time used")).getByText("0:11")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i }))
     expect(screen.getByText("Turn 1B / 1B")).toBeInTheDocument()
@@ -164,6 +167,32 @@ describe("ReviewPage", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Black bottom" }))
     expect(board?.getAttribute("data-orientation")).toBe("black")
     expect(screen.getByText("Turn 1W / 1B")).toBeInTheDocument()
+  })
+
+  it("keeps_board_orientation_controls_above_the_replay_board", async () => {
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+
+    const orientationControls = screen.getByRole("tablist", { name: "Board orientation" })
+    const board = document.querySelector(".chess-board")
+    expect(orientationControls.compareDocumentPosition(board) & window.Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it("uses_vertical_move_log_controls_to_step_through_replay", async () => {
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+
+    const controls = screen.getByRole("group", { name: "Replay controls" })
+    fireEvent.click(within(controls).getByRole("button", { name: "Next" }))
+    expect(screen.getByRole("button", { name: /White \[e2e4\] Move complete/i })).toHaveClass("is-active")
+
+    fireEvent.click(within(controls).getByRole("button", { name: "Next" }))
+    expect(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i })).toHaveClass("is-active")
+
+    fireEvent.click(within(controls).getByRole("button", { name: "Prev" }))
+    expect(screen.getByRole("button", { name: /White \[e2e4\] Move complete/i })).toHaveClass("is-active")
   })
 
   it("hides_opponent_overlays_in_private_views", async () => {
@@ -407,6 +436,69 @@ describe("ReviewPage", () => {
     expect(screen.getByRole("button", { name: /Black No pawn captures · \[d7d5\] Move complete/i })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /White Pawn try from E4 · \[e4d5\] Pawn captured at D5/i })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Black Pawn tries from C7, E7 · \[g8f6\] Move complete/i })).toBeInTheDocument()
+  })
+
+  it("updates_replay_material_stats_from_the_selected_position_and_capture_announcements", async () => {
+    mockApi.getGame.mockResolvedValueOnce({
+      game_code: "F5455A",
+      rule_variant: "cincinnati",
+      created_at: "2026-04-05T12:00:00Z",
+      updated_at: "2026-04-05T12:03:12Z",
+      result: { winner: "white", reason: "checkmate" },
+      white: { username: "notifil", connected: true, role: "user" },
+      black: { username: "haiku", connected: true, role: "bot" },
+    })
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      game_id: "g-620",
+      rule_variant: "cincinnati",
+      viewer_color: "white",
+      moves: [
+        transcript.moves[0],
+        {
+          ...transcript.moves[1],
+          answer: {
+            main: "REGULAR_MOVE",
+            capture_square: null,
+            special: null,
+            next_turn_has_pawn_capture: true,
+          },
+        },
+        {
+          ply: 3,
+          color: "white",
+          question_type: "COMMON",
+          uci: "e4d5",
+          answer: {
+            main: "CAPTURE_DONE",
+            capture_square: "d5",
+            captured_piece_announcement: "PAWN",
+            special: null,
+          },
+          move_done: true,
+          timestamp: "2026-04-05T12:00:28Z",
+          replay_fen: {
+            full: "rnbqkbnr/ppp2ppp/8/3Pp3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2",
+            white: "4K3/PPPP1PPP/8/3P4/8/8/8/8 b - - 0 1",
+            black: "8/8/8/4p3/8/8/ppp2ppp/rnbqkbnr b - - 0 1",
+          },
+        },
+      ],
+    })
+
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    fireEvent.click(screen.getByRole("button", { name: /White .* \[e4d5\] Pawn captured at D5/i }))
+
+    const material = screen.getByLabelText("Replay material status")
+    const whiteView = within(material).getByLabelText("White material view")
+    const blackView = within(material).getByLabelText("Black material view")
+    expect(within(whiteView).getByText("Black pieces remain:")).toBeInTheDocument()
+    expect(within(whiteView).getByText("15")).toBeInTheDocument()
+    expect(within(whiteView).getByText("Black pawns captured:")).toBeInTheDocument()
+    expect(within(whiteView).getByText("1")).toBeInTheDocument()
+    expect(within(blackView).getByText("White pieces remain:")).toBeInTheDocument()
+    expect(within(blackView).getByText("16")).toBeInTheDocument()
   })
 
   it("uses_cincinnati_has_pawn_capture_flags_instead_of_treating_null_pawn_tries_as_zero", async () => {
