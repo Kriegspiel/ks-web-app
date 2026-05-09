@@ -33,6 +33,8 @@ const ANNOUNCEMENT_TEXT = {
   CHECK_DOUBLE: "Double check",
 }
 const PAWN_CAPTURE_STATS_RULES = new Set(["cincinnati", "wild16", "rand", "english"])
+const DEFAULT_CLOCK_BASE_SECONDS = 25 * 60
+const DEFAULT_CLOCK_INCREMENT_SECONDS = 10
 
 function formatAnnouncement(code) {
   if (typeof code !== "string" || code.trim().length === 0) {
@@ -438,21 +440,40 @@ function replayMaterialStatus({ moves, selectedPlyGroup, ruleVariant, fullFen })
   }
 }
 
-function replayTimeUsage({ moves, selectedPlyGroup, gameCreatedAt }) {
+function replayClockSettings(timeControl) {
+  const base = Number(timeControl?.base)
+  const increment = Number(timeControl?.increment)
+  return {
+    base: Number.isFinite(base) && base > 0 ? base : DEFAULT_CLOCK_BASE_SECONDS,
+    increment: Number.isFinite(increment) && increment >= 0 ? increment : DEFAULT_CLOCK_INCREMENT_SECONDS,
+  }
+}
+
+function replayClockRemaining({ moves, selectedPlyGroup, gameCreatedAt, timeControl }) {
   const selectedMoves = movesUpToPly(moves, selectedPlyGroup)
-  const usage = { white: 0, black: 0 }
+  const { base, increment } = replayClockSettings(timeControl)
+  const remaining = { white: base, black: base }
+  let activeColor = null
   let previousTimestamp = gameCreatedAt
 
   selectedMoves.forEach((move) => {
     const color = move?.color === "black" ? "black" : "white"
-    const elapsed = secondsBetween(previousTimestamp, move?.timestamp)
-    usage[color] += elapsed
+
+    if (activeColor) {
+      remaining[activeColor] = Math.max(0, remaining[activeColor] - secondsBetween(previousTimestamp, move?.timestamp))
+    }
+
+    if (move?.move_done) {
+      remaining[color] += increment
+      activeColor = color === "white" ? "black" : "white"
+    }
+
     if (move?.timestamp) {
       previousTimestamp = move.timestamp
     }
   })
 
-  return usage
+  return remaining
 }
 
 function playerLabel(player) {
@@ -705,9 +726,14 @@ export default function ReviewPage() {
     }),
     [fullBoardFen, game?.rule_variant, moves, selectedPlyGroup],
   )
-  const replayTime = useMemo(
-    () => replayTimeUsage({ moves, selectedPlyGroup, gameCreatedAt: game?.created_at }),
-    [game?.created_at, moves, selectedPlyGroup],
+  const replayClock = useMemo(
+    () => replayClockRemaining({
+      moves,
+      selectedPlyGroup,
+      gameCreatedAt: game?.created_at,
+      timeControl: game?.time_control,
+    }),
+    [game?.created_at, game?.time_control, moves, selectedPlyGroup],
   )
   const startedAt = formatUtcDateTime(game?.created_at)
   const endedAt = formatUtcDateTime(game?.updated_at)
@@ -731,8 +757,8 @@ export default function ReviewPage() {
       {!loading && !error ? (
         <div className="review-page__layout">
           <section className="review-page__board-column">
-            <div className="review-page__board-toolbar">
-              <div className="review-page__toolbar-group">
+            <div className="review-page__board-toolbar" aria-label="Replay view controls">
+              <div className="review-page__toolbar-line">
                 <span className="review-page__toolbar-label">View</span>
                 <div className="elo-chart__track-toggle review-page__toggle-group" role="tablist" aria-label="Replay perspective">
                   {[
@@ -752,18 +778,20 @@ export default function ReviewPage() {
                     </button>
                   ))}
                 </div>
+                <span className="review-page__ply">Turn {counterLabel} / {maxCounterLabel}</span>
               </div>
-              <div className="review-page__toolbar-group">
-                <span className="review-page__toolbar-label">Board</span>
+              <div className="review-page__toolbar-line">
+                <span className="review-page__toolbar-label">Bottom</span>
                 <div className="elo-chart__track-toggle elo-chart__mode-toggle review-page__toggle-group" role="tablist" aria-label="Board orientation">
                   {[
-                    ["white", "White bottom"],
-                    ["black", "Black bottom"],
-                  ].map(([value, label]) => (
+                    ["white", "White", "White bottom"],
+                    ["black", "Black", "Black bottom"],
+                  ].map(([value, label, ariaLabel]) => (
                     <button
                       key={value}
                       type="button"
                       role="tab"
+                      aria-label={ariaLabel}
                       aria-selected={boardOrientation === value}
                       className={`elo-chart__track-pill${boardOrientation === value ? " is-active" : ""}`}
                       onClick={() => setBoardOrientation(value)}
@@ -773,7 +801,6 @@ export default function ReviewPage() {
                   ))}
                 </div>
               </div>
-              <span className="review-page__ply">Turn {counterLabel} / {maxCounterLabel}</span>
             </div>
 
             <ChessBoard
@@ -786,14 +813,14 @@ export default function ReviewPage() {
             />
 
             <div className="review-page__board-meta">
-              <div className="review-page__clocks" aria-label="Replay time used">
+              <div className="review-page__clocks" aria-label="Replay time remaining">
                 <div className="review-page__clock">
-                  <span className="review-page__clock-label">White time</span>
-                  <strong className="review-page__clock-time">{formatClock(replayTime.white)}</strong>
+                  <span className="review-page__clock-label">White remaining</span>
+                  <strong className="review-page__clock-time">{formatClock(replayClock.white)}</strong>
                 </div>
                 <div className="review-page__clock">
-                  <span className="review-page__clock-label">Black time</span>
-                  <strong className="review-page__clock-time">{formatClock(replayTime.black)}</strong>
+                  <span className="review-page__clock-label">Black remaining</span>
+                  <strong className="review-page__clock-time">{formatClock(replayClock.black)}</strong>
                 </div>
               </div>
               <section className="review-page__piece-status" aria-label="Replay material status">
