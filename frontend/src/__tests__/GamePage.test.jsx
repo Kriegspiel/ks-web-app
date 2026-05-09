@@ -355,6 +355,47 @@ describe("GamePage", () => {
     expect(within(currentMessage).queryByText("Illegal move. Try a different move.")).not.toBeInTheDocument()
   })
 
+  it("does_not_submit_a_stale_selected_move_after_allowed_targets_change", async () => {
+    let authoritativeState = {
+      ...activeState,
+      turn: "black",
+      move_number: 3,
+      your_color: "black",
+      your_fen: "8/8/8/4p3/8/8/8/4k3 b - - 0 1",
+      allowed_moves: ["e5e4"],
+      possible_actions: ["move"],
+      referee_turns: [
+        {
+          turn: 2,
+          white: [{ messages: ["Move complete"] }],
+          black: [{ messages: ["Move complete"] }],
+        },
+      ],
+    }
+    mockApi.getGameState.mockImplementation(() => Promise.resolve(authoritativeState))
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e5" })
+    fireEvent.click(screen.getByRole("button", { name: "Square e5" }))
+    expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--suggested")
+
+    authoritativeState = {
+      ...authoritativeState,
+      allowed_moves: ["e5e6"],
+    }
+
+    await sleep(650)
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Square e6" })).toHaveClass("square--suggested")
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+
+    expect(mockApi.submitMove).not.toHaveBeenCalled()
+    expect(screen.getByRole("button", { name: "Square e5" })).not.toHaveClass("square--highlighted")
+  })
+
   it("clears_a_local_illegal_move_message_when_the_authoritative_turn_advances", async () => {
     let authoritativeState = activeState
     mockApi.getGameState.mockImplementation(() => Promise.resolve(authoritativeState))
@@ -804,7 +845,7 @@ describe("GamePage", () => {
       move_number: 33,
       created_at: "2026-04-02T12:00:00Z",
     })
-    mockApi.getGameState.mockResolvedValueOnce({
+    mockApi.getGameState.mockResolvedValue({
       ...activeState,
       turn: "black",
       move_number: 33,
