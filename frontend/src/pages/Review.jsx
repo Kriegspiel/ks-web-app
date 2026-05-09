@@ -936,8 +936,6 @@ export default function ReviewPage() {
                 </button>
               </div>
             </div>
-
-            <p className="review-page__result">Result: {formatResult(result)}</p>
           </aside>
         </div>
       ) : null}
@@ -983,6 +981,7 @@ export default function ReviewPage() {
               <ul className="review-page__rating-list">
                 <li><span>Game code</span><strong>{game?.game_code ?? gameRef}</strong></li>
                 <li><span>Rules</span><strong>{formatRuleVariant(game?.rule_variant)}</strong></li>
+                <li><span>Result</span><strong>{formatResult(result)}</strong></li>
                 <li><span>Started</span><strong>{startedAt}</strong></li>
                 <li><span>Finished</span><strong>{endedAt}</strong></li>
                 <li><span>Duration</span><strong>{duration}</strong></li>
