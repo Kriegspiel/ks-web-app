@@ -778,10 +778,7 @@ export default function ReviewPage() {
                     </button>
                   ))}
                 </div>
-                <span className="review-page__ply">Turn {counterLabel} / {maxCounterLabel}</span>
-              </div>
-              <div className="review-page__toolbar-line">
-                <span className="review-page__toolbar-label">Bottom</span>
+                <span className="review-page__toolbar-label review-page__toolbar-label--inline">Bottom</span>
                 <div className="elo-chart__track-toggle elo-chart__mode-toggle review-page__toggle-group" role="tablist" aria-label="Board orientation">
                   {[
                     ["white", "White", "White bottom"],
@@ -853,7 +850,10 @@ export default function ReviewPage() {
           </section>
 
           <aside className="review-page__log-column">
-            <h2>Move log</h2>
+            <div className="review-page__log-header">
+              <h2>Move log</h2>
+              <span className="review-page__ply">Turn {counterLabel} / {maxCounterLabel}</span>
+            </div>
             <div className="review-page__log-frame">
               <ol className="review-page__move-rows" ref={moveRowsRef}>
                 {moveRows.map((row) => (

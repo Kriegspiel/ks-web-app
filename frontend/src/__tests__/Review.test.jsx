@@ -174,9 +174,24 @@ describe("ReviewPage", () => {
 
     await screen.findByText(/Move log/i)
 
+    const perspectiveControls = screen.getByRole("tablist", { name: "Replay perspective" })
     const orientationControls = screen.getByRole("tablist", { name: "Board orientation" })
     const board = document.querySelector(".chess-board")
+    expect(perspectiveControls.closest(".review-page__toolbar-line")).toBe(
+      orientationControls.closest(".review-page__toolbar-line"),
+    )
     expect(orientationControls.compareDocumentPosition(board) & window.Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it("keeps_replay_move_count_in_the_move_log_header", async () => {
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+
+    const logHeader = document.querySelector(".review-page__log-header")
+    const boardToolbar = document.querySelector(".review-page__board-toolbar")
+    expect(within(logHeader).getByText("Turn Start / 1B")).toBeInTheDocument()
+    expect(within(boardToolbar).queryByText("Turn Start / 1B")).not.toBeInTheDocument()
   })
 
   it("uses_vertical_move_log_controls_to_step_through_replay", async () => {
