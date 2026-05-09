@@ -127,14 +127,14 @@ describe("ReviewPage", () => {
     expect(screen.getByText("Turn Start / 1B")).toBeInTheDocument()
     expect(screen.getByText("11s")).toBeInTheDocument()
     expect(screen.getByText("8s")).toBeInTheDocument()
-    expect(screen.getByLabelText("Replay time used")).toBeInTheDocument()
+    expect(screen.getByLabelText("Replay time remaining")).toBeInTheDocument()
     expect(screen.getByLabelText("Replay material status")).toBeInTheDocument()
     expect(screen.getByText("Rules")).toBeInTheDocument()
     expect(screen.getByText("Berkeley + Any")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
     expect(screen.getByText("Turn 1W / 1B")).toBeInTheDocument()
-    expect(within(screen.getByLabelText("Replay time used")).getByText("0:11")).toBeInTheDocument()
+    expect(within(screen.getByLabelText("Replay time remaining")).getByText("25:10")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i }))
     expect(screen.getByText("Turn 1B / 1B")).toBeInTheDocument()
