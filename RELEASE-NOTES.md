@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.32
+
+- **Live Game Board**: prevents stale selected moves from being submitted after
+  the authoritative allowed-move list changes, avoiding repeated illegal
+  attempts for a move that was already completed.
+
 ## ks-web-app frontend v. 1.3.31
 
 - **CrazyKrieg Review**: counts only pieces on the board when showing replay

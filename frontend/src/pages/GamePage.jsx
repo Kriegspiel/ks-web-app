@@ -166,6 +166,19 @@ function hasAuthoritativeStateAdvancedSinceSubmit(context, state, gameRef) {
   return Boolean(submittedMoveNumber && currentMoveNumber && submittedMoveNumber !== currentMoveNumber)
 }
 
+function allowedBoardMoveForBase(allowedMoves, moveBase) {
+  if (!moveBase) {
+    return ""
+  }
+
+  return (Array.isArray(allowedMoves) ? allowedMoves : []).find((move) => {
+    if (typeof move !== "string") {
+      return false
+    }
+    return move === moveBase || (move.startsWith(moveBase) && move.length === moveBase.length + 1)
+  }) ?? ""
+}
+
 function formatCaptureSquare(value) {
   if (typeof value !== "string") {
     return ""
@@ -1789,6 +1802,7 @@ export default function GamePage() {
   const illegalMoveContextRef = useRef(null)
   const submitMoveContextRef = useRef(null)
   const submitMoveAttemptIdRef = useRef(0)
+  const selectedMoveWindowRef = useRef("")
   const previousGameRefRef = useRef(gameRef)
 
   if (!soundPlayerRef.current) {
@@ -2290,6 +2304,32 @@ export default function GamePage() {
   }, [allowedMoveSourceSquares, fromSquare])
 
   useEffect(() => {
+    const nextWindowKey = [
+      gameRef ?? "",
+      gameState?.state ?? "",
+      gameState?.turn ?? "",
+      gameState?.move_number ?? "",
+      gameState?.your_color ?? "",
+    ].join("|")
+
+    if (!nextWindowKey.trim()) {
+      return
+    }
+
+    if (!selectedMoveWindowRef.current) {
+      selectedMoveWindowRef.current = nextWindowKey
+      return
+    }
+
+    if (selectedMoveWindowRef.current === nextWindowKey) {
+      return
+    }
+
+    selectedMoveWindowRef.current = nextWindowKey
+    resetPendingMove()
+  }, [gameRef, gameState?.move_number, gameState?.state, gameState?.turn, gameState?.your_color])
+
+  useEffect(() => {
     if (!selectedDropPiece) {
       return
     }
@@ -2418,6 +2458,14 @@ export default function GamePage() {
       return
     }
 
+    const moveBase = `${from}${to}`
+    const allowedMove = allowedBoardMoveForBase(effectiveAllowedMoves, moveBase)
+    if (!allowedMove) {
+      resetPendingMove()
+      setActionError("Choose a highlighted legal move.")
+      return
+    }
+
     setFromSquare(from)
     setToSquare(to)
     setSelectedDropPiece("")
@@ -2428,7 +2476,7 @@ export default function GamePage() {
       return
     }
 
-    await submitMoveWithUci(`${from}${to}`)
+    await submitMoveWithUci(moveBase)
   }
 
   async function finishMoveDrag(targetSquare) {
@@ -2765,8 +2813,15 @@ export default function GamePage() {
       return
     }
 
+    const promotedMove = `${selectedMoveBase}${suffix}`
+    if (!effectiveAllowedMoves.includes(promotedMove)) {
+      setActionError("Choose a highlighted legal move.")
+      resetPendingMove()
+      return
+    }
+
     setShowPromotionModal(false)
-    await submitMoveWithUci(`${selectedMoveBase}${suffix}`)
+    await submitMoveWithUci(promotedMove)
   }
 
   function handlePromotionCancel() {
