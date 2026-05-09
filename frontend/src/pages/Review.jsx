@@ -590,6 +590,39 @@ function overlaysForPlyGroup(group) {
   }
 }
 
+function cssPixelValue(styles, cssName, jsName) {
+  const raw = styles?.getPropertyValue?.(cssName) || styles?.[jsName] || "0"
+  const value = Number.parseFloat(raw)
+  return Number.isFinite(value) ? value : 0
+}
+
+function measureReviewBoardCardHeight(boardCard) {
+  const cardRect = boardCard.getBoundingClientRect()
+  const fallbackHeight = Math.ceil(cardRect.height)
+  const cardStyles = typeof window.getComputedStyle === "function"
+    ? window.getComputedStyle(boardCard)
+    : null
+  const paddingBottom = cssPixelValue(cardStyles, "padding-bottom", "paddingBottom")
+  const borderBottom = cssPixelValue(cardStyles, "border-bottom-width", "borderBottomWidth")
+  let contentBottom = 0
+
+  Array.from(boardCard.children).forEach((child) => {
+    if (!(child instanceof HTMLElement)) {
+      return
+    }
+
+    const childRect = child.getBoundingClientRect()
+    const childStyles = typeof window.getComputedStyle === "function"
+      ? window.getComputedStyle(child)
+      : null
+    const marginBottom = cssPixelValue(childStyles, "margin-bottom", "marginBottom")
+    contentBottom = Math.max(contentBottom, childRect.bottom - cardRect.top + marginBottom)
+  })
+
+  const intrinsicHeight = Math.ceil(contentBottom + paddingBottom + borderBottom)
+  return intrinsicHeight > 0 ? intrinsicHeight : fallbackHeight
+}
+
 export default function ReviewPage() {
   const { gameCode, gameId } = useParams()
   const gameRef = gameCode ?? gameId ?? ""
@@ -702,7 +735,7 @@ export default function ReviewPage() {
       animationFrame = requestFrame(() => {
         const shouldSync = mediaQuery?.matches ?? true
         const nextHeight = shouldSync
-          ? Math.ceil(boardCard.getBoundingClientRect().height)
+          ? measureReviewBoardCardHeight(boardCard)
           : 0
         const syncedHeight = nextHeight > 0 ? nextHeight : null
         setReviewCardHeight((currentHeight) => (
@@ -830,7 +863,7 @@ export default function ReviewPage() {
               <div className="review-page__toolbar-line">
                 <div className="review-page__toolbar-group">
                   <span className="review-page__toolbar-label">View</span>
-                  <div className="elo-chart__track-toggle review-page__toggle-group" role="tablist" aria-label="Replay perspective">
+                  <div className="review-page__segmented-control" role="tablist" aria-label="Replay perspective">
                     {[
                       ["referee", "Referee"],
                       ["white", "White"],
@@ -841,7 +874,7 @@ export default function ReviewPage() {
                         type="button"
                         role="tab"
                         aria-selected={perspective === value}
-                        className={`elo-chart__track-pill${perspective === value ? " is-active" : ""}`}
+                        className={`review-page__segmented-pill${perspective === value ? " is-active" : ""}`}
                         onClick={() => setPerspective(value)}
                       >
                         {label}
@@ -851,7 +884,7 @@ export default function ReviewPage() {
                 </div>
                 <div className="review-page__toolbar-group">
                   <span className="review-page__toolbar-label">Bottom</span>
-                  <div className="elo-chart__track-toggle elo-chart__mode-toggle review-page__toggle-group" role="tablist" aria-label="Board orientation">
+                  <div className="review-page__segmented-control" role="tablist" aria-label="Board orientation">
                     {[
                       ["white", "White", "White bottom"],
                       ["black", "Black", "Black bottom"],
@@ -862,7 +895,7 @@ export default function ReviewPage() {
                         role="tab"
                         aria-label={ariaLabel}
                         aria-selected={boardOrientation === value}
-                        className={`elo-chart__track-pill${boardOrientation === value ? " is-active" : ""}`}
+                        className={`review-page__segmented-pill${boardOrientation === value ? " is-active" : ""}`}
                         onClick={() => setBoardOrientation(value)}
                       >
                         {label}
