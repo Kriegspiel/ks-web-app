@@ -1280,6 +1280,27 @@ function formatCompletedResult(result) {
   return reason ? `${winner} by ${reason}` : winner
 }
 
+function resultFromMoveResponse(response) {
+  if (!response || typeof response !== "object" || response.game_over !== true) {
+    return null
+  }
+
+  switch (response.special_announcement) {
+    case "CHECKMATE_WHITE_WINS":
+      return { winner: "white", reason: "checkmate" }
+    case "CHECKMATE_BLACK_WINS":
+      return { winner: "black", reason: "checkmate" }
+    case "DRAW_STALEMATE":
+      return { winner: null, reason: "stalemate" }
+    case "DRAW_INSUFFICIENT":
+      return { winner: null, reason: "insufficient" }
+    case "DRAW_TOOMANYREVERSIBLEMOVES":
+      return { winner: null, reason: "too_many_reversible_moves" }
+    default:
+      return null
+  }
+}
+
 function formatViewerOutcome(result, yourColor) {
   if (!result || typeof result !== "object") {
     return "Game finished"
@@ -1862,6 +1883,9 @@ export default function GamePage() {
       const syncedAtMs = requestedAtMs + ((receivedAtMs - requestedAtMs) / 2)
       setGameState((previousState) => {
         const previousStateForClock = previousState?.__gameRef === requestedGameRef ? previousState : null
+        if (previousStateForClock?.state === "completed" && state?.state !== "completed") {
+          return previousStateForClock
+        }
         return {
           ...state,
           __gameRef: requestedGameRef,
@@ -2901,6 +2925,23 @@ export default function GamePage() {
       setLastMoveSquares(highlightSquares)
       setIllegalMoveSquares([])
       resetPendingMove()
+      if (result?.game_over === true) {
+        const completedResult = resultFromMoveResponse(result)
+        setGameState((previousState) => {
+          if (!previousState || previousState.__gameRef !== gameRef) {
+            return previousState
+          }
+          return {
+            ...previousState,
+            state: "completed",
+            turn: result.turn ?? previousState.turn,
+            allowed_moves: [],
+            possible_actions: [],
+            result: completedResult ?? previousState.result ?? null,
+            clock: result.clock ?? previousState.clock,
+          }
+        })
+      }
       await pollState({ silent: true, preserveViewport: true, force: true })
     } catch (requestError) {
       if (!isCurrentSubmitAttempt()) {
