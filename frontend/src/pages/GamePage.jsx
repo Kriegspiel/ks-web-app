@@ -1805,6 +1805,7 @@ export default function GamePage() {
   const submitMoveContextRef = useRef(null)
   const submitMoveAttemptIdRef = useRef(0)
   const selectedMoveWindowRef = useRef("")
+  const clockExpiryPollRef = useRef("")
   const previousGameRefRef = useRef(gameRef)
 
   if (!soundPlayerRef.current) {
@@ -1911,6 +1912,7 @@ export default function GamePage() {
     metadataRequestIdRef.current += 1
     illegalMoveContextRef.current = null
     submitMoveContextRef.current = null
+    clockExpiryPollRef.current = ""
     viewportRestoreRef.current = null
     lastSoundEntryKeysRef.current = []
     lastTapRef.current = { square: "", time: 0 }
@@ -2051,6 +2053,29 @@ export default function GamePage() {
       source.removeEventListener("connected", stopFallbackPolling)
       source.removeEventListener("game_changed", handleGameChanged)
       source.close()
+    }
+  }, [gameRef, gameStateStatus, pollState])
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      return undefined
+    }
+    if (!gameRef || !gameStateStatus || gameStateStatus === "completed") {
+      return undefined
+    }
+
+    const refreshVisibleTab = () => {
+      if (document.visibilityState === "hidden") {
+        return
+      }
+      pollState({ silent: true, preserveViewport: false })
+    }
+
+    window.addEventListener("focus", refreshVisibleTab)
+    document.addEventListener("visibilitychange", refreshVisibleTab)
+    return () => {
+      window.removeEventListener("focus", refreshVisibleTab)
+      document.removeEventListener("visibilitychange", refreshVisibleTab)
     }
   }, [gameRef, gameStateStatus, pollState])
 
@@ -2197,6 +2222,40 @@ export default function GamePage() {
     [clockNowMs, clockSnapshotAtMs, gameState?.clock, gameState?.move_number, gameState?.state]
   )
   const activeClockColor = displayClock?.active_color ?? null
+  useEffect(() => {
+    if (gameStateStatus !== "active" || !activeClockColor) {
+      clockExpiryPollRef.current = ""
+      return
+    }
+
+    const activeRemaining = activeClockColor === "white" ? displayClock?.white_remaining : displayClock?.black_remaining
+    if (!Number.isFinite(activeRemaining) || activeRemaining > 0) {
+      clockExpiryPollRef.current = ""
+      return
+    }
+
+    const pollKey = [
+      gameRef,
+      gameState?.move_number ?? "",
+      activeClockColor,
+      gameState?.clock?.last_updated_at ?? "",
+    ].join(":")
+    if (clockExpiryPollRef.current === pollKey) {
+      return
+    }
+
+    clockExpiryPollRef.current = pollKey
+    pollState({ silent: true, preserveViewport: false })
+  }, [
+    activeClockColor,
+    displayClock?.black_remaining,
+    displayClock?.white_remaining,
+    gameRef,
+    gameState?.clock?.last_updated_at,
+    gameState?.move_number,
+    gameStateStatus,
+    pollState,
+  ])
   const opponent = useMemo(() => {
     if (!gameMeta || !gameState?.your_color) {
       return null
