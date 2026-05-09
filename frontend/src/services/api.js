@@ -93,6 +93,13 @@ export async function getMyGames() { try { const response = await api.get('/api/
 export async function getGame(gameId) { try { const response = await api.get(`/api/game/${encodeURIComponent(gameId)}`); return response.data } catch (error) { throw normalizeError(error, 'Unable to load game details right now.') } }
 export async function getGameTranscript(gameId) { try { const response = await api.get(`/api/game/${encodeURIComponent(gameId)}/moves`); return response.data } catch (error) { throw normalizeError(error, 'Unable to load game transcript right now.') } }
 export async function getGameState(gameId) { try { const response = await api.get(`/api/game/${encodeURIComponent(gameId)}/state`); return response.data } catch (error) { throw normalizeError(error, 'Unable to load game state right now.') } }
+export function gameEventsUrl(gameId) { return `/api/game/${encodeURIComponent(gameId)}/events` }
+export function createGameEventsSource(gameId) {
+  if (typeof window === "undefined" || typeof window.EventSource !== "function") {
+    return null
+  }
+  return new window.EventSource(gameEventsUrl(gameId), { withCredentials: true })
+}
 export async function deleteWaitingGame(gameId) { try { await api.delete(`/api/game/${encodeURIComponent(gameId)}`) } catch (error) { throw normalizeError(error, 'Unable to close this waiting game right now.') } }
 export async function submitMove(gameId, uci) { try { const response = await api.post(`/api/game/${encodeURIComponent(gameId)}/move`, { uci }); return response.data } catch (error) { throw normalizeError(error, 'Unable to submit move right now.') } }
 export async function askAny(gameId) { try { const response = await api.post(`/api/game/${encodeURIComponent(gameId)}/ask-any`); return response.data } catch (error) { throw normalizeError(error, 'Unable to ask any-captures right now.') } }

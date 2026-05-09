@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import api, { askAny, convertGuest, createGame, deleteWaitingGame, getBots, getGame, getGameState, getGameTranscript, getLobbyStats, getMyGames, getOpenGames, joinGame, login, logout, me, playAsGuest, register, resignGame, submitMove, techApi, userApi } from "../services/api"
+import api, { askAny, convertGuest, createGame, createGameEventsSource, deleteWaitingGame, gameEventsUrl, getBots, getGame, getGameState, getGameTranscript, getLobbyStats, getMyGames, getOpenGames, joinGame, login, logout, me, playAsGuest, register, resignGame, submitMove, techApi, userApi } from "../services/api"
 
 describe("api client", () => {
   it("api_client_uses_relative_base_url", () => { expect(api.defaults.baseURL ?? "").toBe("") })
@@ -104,6 +104,40 @@ describe("game helpers", () => {
   beforeEach(() => { vi.restoreAllMocks() })
   it("create_game_posts_to_api_game_create", async () => { const payload = { rule_variant: "berkeley_any", play_as: "random", time_control: "rapid", opponent_type: "human" }; const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { game_id: "g1" } }); const result = await createGame(payload); expect(postSpy).toHaveBeenCalledWith("/api/game/create", payload); expect(result).toEqual({ game_id: "g1" }) })
   it("bot_and_game_reads_use_expected_endpoints", async () => { const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: { games: [] } }); await getBots(); await getOpenGames(); await getMyGames(); await getGame("g-123"); await getGameState("g-123"); expect(getSpy).toHaveBeenNthCalledWith(1, "/api/bots"); expect(getSpy).toHaveBeenNthCalledWith(2, "/api/game/open"); expect(getSpy).toHaveBeenNthCalledWith(3, "/api/game/mine"); expect(getSpy).toHaveBeenNthCalledWith(4, "/api/game/g-123"); expect(getSpy).toHaveBeenNthCalledWith(5, "/api/game/g-123/state") })
+  it("game_event_streams_use_expected_endpoint", () => {
+    expect(gameEventsUrl("g/123")).toBe("/api/game/g%2F123/events")
+  })
+  it("game_event_source_uses_credentials_when_available", () => {
+    const OriginalEventSource = window.EventSource
+    const eventSourceSpy = vi.fn(function EventSourceMock(url, options) {
+      this.url = url
+      this.options = options
+    })
+    window.EventSource = eventSourceSpy
+    try {
+      const source = createGameEventsSource("g-123")
+      expect(eventSourceSpy).toHaveBeenCalledWith("/api/game/g-123/events", { withCredentials: true })
+      expect(source.url).toBe("/api/game/g-123/events")
+      expect(source.options).toEqual({ withCredentials: true })
+    } finally {
+      if (OriginalEventSource === undefined) {
+        delete window.EventSource
+      } else {
+        window.EventSource = OriginalEventSource
+      }
+    }
+  })
+  it("game_event_source_returns_null_when_eventsource_is_unavailable", () => {
+    const OriginalEventSource = window.EventSource
+    delete window.EventSource
+    try {
+      expect(createGameEventsSource("g-123")).toBeNull()
+    } finally {
+      if (OriginalEventSource !== undefined) {
+        window.EventSource = OriginalEventSource
+      }
+    }
+  })
   it("join_transcript_and_stats_reads_use_expected_endpoints", async () => {
     const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: {} })
     const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: {} })

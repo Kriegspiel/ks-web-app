@@ -6,13 +6,14 @@ import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
 import { announcementSoundCategories, createGameSoundPlayer } from "../gameSounds"
-import { askAny, deleteWaitingGame, getGame, getGameState, resignGame, submitMove } from "../services/api"
+import { askAny, createGameEventsSource, deleteWaitingGame, getGame, getGameState, resignGame, submitMove } from "../services/api"
 import { getAllowedMoveTargets, PIECE_ASSETS } from "../components/chessboard"
 import { formatRuleVariant } from "../utils/rules"
 import { formatClock, projectClock, reconcileClockSnapshot } from "./gameClock"
 import "./GamePage.css"
 
 const POLL_INTERVAL_MS = 500
+const SSE_SAFETY_POLL_INTERVAL_MS = 15000
 const DOUBLE_TAP_WINDOW_MS = 320
 const PHANTOM_PIECES = ["q", "r", "b", "n", "p", "k"]
 const DROP_PIECES = ["P", "N", "B", "R", "Q"]
@@ -1779,6 +1780,7 @@ export default function GamePage() {
     return window.localStorage.getItem(GAME_SOUND_MUTE_STORAGE_KEY) === "1"
   })
   const gameState = !rawGameState || rawGameState.__gameRef === gameRef ? rawGameState : null
+  const gameStateStatus = gameState?.state ?? ""
 
   const lastTapRef = useRef({ square: "", time: 0 })
   const boardCardRef = useRef(null)
@@ -2002,18 +2004,55 @@ export default function GamePage() {
   }, [])
 
   useEffect(() => {
-    if (!gameRef || !gameState || gameState.state === "completed") {
+    if (!gameRef || !gameStateStatus || gameStateStatus === "completed") {
       return undefined
     }
 
-    const intervalId = window.setInterval(() => {
+    const pollSilently = () => {
       pollState({ silent: true, preserveViewport: false })
-    }, POLL_INTERVAL_MS)
+    }
+
+    const source = createGameEventsSource(gameRef)
+    if (!source) {
+      const intervalId = window.setInterval(pollSilently, POLL_INTERVAL_MS)
+      return () => {
+        window.clearInterval(intervalId)
+      }
+    }
+
+    let fallbackIntervalId = null
+    const startFallbackPolling = () => {
+      if (fallbackIntervalId !== null) {
+        return
+      }
+      fallbackIntervalId = window.setInterval(pollSilently, POLL_INTERVAL_MS)
+    }
+    const stopFallbackPolling = () => {
+      if (fallbackIntervalId === null) {
+        return
+      }
+      window.clearInterval(fallbackIntervalId)
+      fallbackIntervalId = null
+    }
+    const handleGameChanged = () => {
+      stopFallbackPolling()
+      pollSilently()
+    }
+
+    source.addEventListener("connected", stopFallbackPolling)
+    source.addEventListener("game_changed", handleGameChanged)
+    source.onopen = stopFallbackPolling
+    source.onerror = startFallbackPolling
+    const safetyIntervalId = window.setInterval(pollSilently, SSE_SAFETY_POLL_INTERVAL_MS)
 
     return () => {
-      window.clearInterval(intervalId)
+      stopFallbackPolling()
+      window.clearInterval(safetyIntervalId)
+      source.removeEventListener("connected", stopFallbackPolling)
+      source.removeEventListener("game_changed", handleGameChanged)
+      source.close()
     }
-  }, [gameRef, gameState?.state, pollState])
+  }, [gameRef, gameStateStatus, pollState])
 
   useEffect(() => {
     if (!isIllegalMoveActionError(actionError) || !illegalMoveContextRef.current || !gameState) {

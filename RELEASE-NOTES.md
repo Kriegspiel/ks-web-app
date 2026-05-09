@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.36
+
+- **Live Game Updates**: subscribes to game server-sent events and refreshes
+  state on changes, keeping 500 ms polling only as a fallback.
+
 ## ks-web-app frontend v. 1.3.35
 
 - **Material Cards**: top-aligns live and replay material/reserve card content

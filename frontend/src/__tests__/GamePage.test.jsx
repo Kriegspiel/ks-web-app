@@ -9,6 +9,7 @@ const mockParams = vi.hoisted(() => ({ gameId: "g-123" }))
 const mockApi = vi.hoisted(() => ({
   getGame: vi.fn(),
   getGameState: vi.fn(),
+  createGameEventsSource: vi.fn(),
   deleteWaitingGame: vi.fn(),
   submitMove: vi.fn(),
   askAny: vi.fn(),
@@ -102,6 +103,7 @@ beforeEach(() => {
     created_at: "2026-04-02T12:00:00Z",
   })
   mockApi.getGameState.mockResolvedValue(activeState)
+  mockApi.createGameEventsSource.mockReturnValue(null)
   mockApi.deleteWaitingGame.mockResolvedValue({})
   mockApi.submitMove.mockResolvedValue({ move_done: true })
   mockApi.askAny.mockResolvedValue({ has_any: false })
@@ -235,6 +237,42 @@ describe("GamePage", () => {
 
     await sleep(650)
     await waitFor(() => expect(mockApi.getGameState).toHaveBeenCalledTimes(2))
+  })
+
+  it("uses_game_event_stream_updates_before_falling_back_to_polling", async () => {
+    const source = {
+      listeners: {},
+      addEventListener: vi.fn((eventName, listener) => {
+        source.listeners[eventName] = [...(source.listeners[eventName] ?? []), listener]
+      }),
+      removeEventListener: vi.fn((eventName, listener) => {
+        source.listeners[eventName] = (source.listeners[eventName] ?? []).filter((item) => item !== listener)
+      }),
+      close: vi.fn(),
+      emit(eventName) {
+        for (const listener of source.listeners[eventName] ?? []) {
+          listener({ type: eventName })
+        }
+      },
+      onerror: null,
+      onopen: null,
+    }
+    mockApi.createGameEventsSource.mockReturnValue(source)
+
+    render(<GamePage />)
+
+    await screen.findByText(/Game code:/i)
+    await waitFor(() => expect(mockApi.createGameEventsSource).toHaveBeenCalledWith("g-123"))
+    const pollCountAfterConnect = mockApi.getGameState.mock.calls.length
+
+    await sleep(650)
+    expect(mockApi.getGameState).toHaveBeenCalledTimes(pollCountAfterConnect)
+
+    source.emit("game_changed")
+    await waitFor(() => expect(mockApi.getGameState).toHaveBeenCalledTimes(pollCountAfterConnect + 1))
+
+    source.onerror()
+    await waitFor(() => expect(mockApi.getGameState.mock.calls.length).toBeGreaterThan(pollCountAfterConnect + 1))
   })
 
   it("keeps_current_message_from_staying_in_loading_state_after_silent_poll_races_initial_load", async () => {
