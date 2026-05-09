@@ -489,7 +489,10 @@ function countPiecesInFen(fen) {
     return null
   }
 
-  const boardPart = fen.trim().split(/\s+/)[0]
+  const boardPart = fen
+    .trim()
+    .split(/\s+/)[0]
+    .replace(/\[[^\]]*\]/g, "")
   if (!boardPart) {
     return null
   }

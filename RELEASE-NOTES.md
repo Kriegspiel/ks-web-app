@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.31
+
+- **CrazyKrieg Review**: counts only pieces on the board when showing replay
+  material, ignoring Crazyhouse reserve pockets embedded in full FEN strings.
+
 ## ks-web-app frontend v. 1.3.30
 
 - **CrazyKrieg Review**: reconstructs public reserves during replay and shows
