@@ -3250,7 +3250,7 @@ export default function GamePage() {
               ) : null}
 
               <div className="game-board-meta">
-                <section className="game-piece-status" aria-label="Remaining piece status">
+                <section className={`game-piece-status${isCrazyKrieg ? " game-piece-status--crazykrieg" : ""}`} aria-label="Remaining piece status">
                   <div className="game-piece-status__side" aria-label="White material view">
                     <p className="game-piece-status__line">
                       <span className="game-piece-status__label">Black pieces remain:</span>{" "}
