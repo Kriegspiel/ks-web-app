@@ -124,7 +124,7 @@ describe("ReviewPage", () => {
     renderReviewPage()
 
     await screen.findByText(/Move log/i)
-    expect(screen.getByText("Ply 0 / 2")).toBeInTheDocument()
+    expect(screen.getByText("Start/1B")).toBeInTheDocument()
     expect(screen.getByText("11s")).toBeInTheDocument()
     expect(screen.getByText("8s")).toBeInTheDocument()
     expect(screen.getByLabelText("Replay time remaining")).toBeInTheDocument()
@@ -136,11 +136,11 @@ describe("ReviewPage", () => {
     expect(within(gameDetails).getByText("white wins by checkmate")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
-    expect(screen.getByText("Ply 1 / 2")).toBeInTheDocument()
+    expect(screen.getByText("1W/1B")).toBeInTheDocument()
     expect(within(screen.getByLabelText("Replay time remaining")).getByText("25:10")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i }))
-    expect(screen.getByText("Ply 2 / 2")).toBeInTheDocument()
+    expect(screen.getByText("1B/1B")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i })).toHaveClass("is-active")
     expect(document.querySelectorAll(".review-page__announcement-badge").length).toBeGreaterThan(0)
   })
@@ -169,7 +169,7 @@ describe("ReviewPage", () => {
     expect(board?.getAttribute("data-orientation")).toBe("white")
     fireEvent.click(screen.getByRole("tab", { name: "Black bottom" }))
     expect(board?.getAttribute("data-orientation")).toBe("black")
-    expect(screen.getByText("Ply 1 / 2")).toBeInTheDocument()
+    expect(screen.getByText("1W/1B")).toBeInTheDocument()
   })
 
   it("keeps_board_orientation_controls_above_the_replay_board", async () => {
@@ -198,9 +198,9 @@ describe("ReviewPage", () => {
     const logHeader = document.querySelector(".review-page__log-header")
     const boardToolbar = document.querySelector(".review-page__board-toolbar")
     const board = document.querySelector(".chess-board")
-    expect(within(controls).getByText("Ply 0 / 2")).toBeInTheDocument()
+    expect(within(controls).getByText("Start/1B")).toBeInTheDocument()
     expect(within(logHeader).queryByText("Turn Start / 1B")).not.toBeInTheDocument()
-    expect(within(boardToolbar).queryByText("Ply 0 / 2")).not.toBeInTheDocument()
+    expect(within(boardToolbar).queryByText("Start/1B")).not.toBeInTheDocument()
     expect(board.compareDocumentPosition(controls) & window.Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
@@ -344,17 +344,19 @@ describe("ReviewPage", () => {
       const controls = screen.getByRole("group", { name: "Replay controls" })
       fireEvent.click(within(controls).getByRole("button", { name: "Play replay" }))
       expect(screen.getByRole("button", { name: /White \[e2e4\] Move complete/i })).toHaveClass("is-active")
-      expect(within(controls).getByText("Ply 1 / 2")).toBeInTheDocument()
+      expect(within(controls).getByText("1W/1B")).toBeInTheDocument()
       expect(within(controls).getByRole("button", { name: "Pause replay" })).toBeInTheDocument()
+      expect(within(controls).getByText("❚❚")).toBeInTheDocument()
 
       act(() => {
         vi.advanceTimersByTime(1000)
       })
 
       expect(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i })).toHaveClass("is-active")
-      expect(within(controls).getByText("Ply 2 / 2")).toBeInTheDocument()
+      expect(within(controls).getByText("1B/1B")).toBeInTheDocument()
       await act(async () => {})
       expect(within(controls).getByRole("button", { name: "Play replay" })).toBeInTheDocument()
+      expect(within(controls).getByText("▶")).toBeInTheDocument()
     } finally {
       vi.useRealTimers()
     }
