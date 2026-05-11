@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.41
+
+- **Replay Controls**: restores the compact `12W/23B` replay position label
+  and uses cleaner symbolic controls for first, previous, play, pause, next,
+  and last.
+
 ## ks-web-app frontend v. 1.3.40
 
 - **CrazyKrieg Mobile Board**: makes live reserve counts easier to read on

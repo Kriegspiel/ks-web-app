@@ -282,6 +282,14 @@ function formatResult(result) {
   return `${winner}${reason}`
 }
 
+function formatPerspectiveLabel(group) {
+  if (!group) {
+    return "Start"
+  }
+
+  return `${group.turnNumber}${group.color === "black" ? "B" : "W"}`
+}
+
 function formatTurnNumber(group) {
   if (!group) {
     return "0"
@@ -852,6 +860,7 @@ export default function ReviewPage() {
   const plyGroups = useMemo(() => buildPlyGroups(moves), [moves])
   const moveRows = useMemo(() => buildMoveRows(moves), [moves])
   const maxGroupIndex = Math.max(plyGroups.length - 1, -1)
+  const finalGroup = maxGroupIndex >= 0 ? plyGroups[maxGroupIndex] : null
   maxGroupIndexRef.current = maxGroupIndex
 
   useEffect(() => {
@@ -1011,8 +1020,8 @@ export default function ReviewPage() {
     }
     return overlaysForPlyGroup(selectedPlyGroup, previousBoardFen)
   }, [selectedPlyGroup, previousBoardFen, perspective])
-  const totalPlyCount = plyGroups.length
-  const selectedPlyNumber = currentPly >= 0 ? Math.min(currentPly + 1, totalPlyCount) : 0
+  const counterLabel = selectedPlyGroup ? formatPerspectiveLabel(selectedPlyGroup) : "Start"
+  const maxCounterLabel = finalGroup ? formatPerspectiveLabel(finalGroup) : "0W"
   const replayMaterial = useMemo(
     () => replayMaterialStatus({
       moves,
@@ -1157,15 +1166,15 @@ export default function ReviewPage() {
             <div className="review-page__replay-controls" role="group" aria-label="Replay controls">
               <div className="review-page__replay-control-group review-page__replay-control-group--left">
                 <button type="button" aria-label="First" title="First" onClick={goToFirstPly} disabled={currentPly < 0}>
-                  <span aria-hidden="true">&lt;&lt;</span>
+                  <span aria-hidden="true">≪</span>
                 </button>
                 <button type="button" aria-label="Prev" title="Prev" onClick={goToPreviousPly} disabled={currentPly < 0}>
-                  <span aria-hidden="true">&lt;</span>
+                  <span aria-hidden="true">‹</span>
                 </button>
               </div>
               <div className="review-page__replay-control-center">
-                <span className="review-page__replay-counter" aria-label="Replay ply counter">
-                  Ply {selectedPlyNumber} / {totalPlyCount}
+                <span className="review-page__replay-counter" aria-label="Replay position counter">
+                  {counterLabel}/{maxCounterLabel}
                 </span>
                 <button
                   type="button"
@@ -1175,15 +1184,15 @@ export default function ReviewPage() {
                   onClick={togglePlayback}
                   disabled={maxGroupIndex < 0}
                 >
-                  {isPlaying ? "Pause" : "Play"}
+                  <span aria-hidden="true">{isPlaying ? "❚❚" : "▶"}</span>
                 </button>
               </div>
               <div className="review-page__replay-control-group review-page__replay-control-group--right">
                 <button type="button" aria-label="Next" title="Next" onClick={goToNextPly} disabled={currentPly >= maxGroupIndex}>
-                  <span aria-hidden="true">&gt;</span>
+                  <span aria-hidden="true">›</span>
                 </button>
                 <button type="button" aria-label="Last" title="Last" onClick={goToLastPly} disabled={currentPly >= maxGroupIndex}>
-                  <span aria-hidden="true">&gt;&gt;</span>
+                  <span aria-hidden="true">≫</span>
                 </button>
               </div>
             </div>
