@@ -1648,6 +1648,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     const pieceStatus = await screen.findByLabelText("Remaining piece status")
+    expect(pieceStatus).toHaveClass("game-piece-status--crazykrieg")
     const whiteReserve = within(pieceStatus).getByLabelText("White reserve")
     expect(within(whiteReserve).getByRole("button", { name: /Pawn reserve piece \(1\).*1 legal drop square/i })).toBeInTheDocument()
     expect(within(whiteReserve).getByRole("button", { name: /Knight reserve piece \(1\).*1 legal drop square/i })).toBeInTheDocument()

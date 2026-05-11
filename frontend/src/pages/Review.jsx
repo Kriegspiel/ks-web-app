@@ -282,14 +282,6 @@ function formatResult(result) {
   return `${winner}${reason}`
 }
 
-function formatPerspectiveLabel(group) {
-  if (!group) {
-    return "Start"
-  }
-
-  return `${group.turnNumber}${group.color === "black" ? "B" : "W"}`
-}
-
 function formatTurnNumber(group) {
   if (!group) {
     return "0"
@@ -811,6 +803,7 @@ export default function ReviewPage() {
   const [perspective, setPerspective] = useState("referee")
   const [boardOrientation, setBoardOrientation] = useState("white")
   const [reviewCardHeight, setReviewCardHeight] = useState(null)
+  const [isPlaying, setIsPlaying] = useState(false)
   const boardColumnRef = useRef(null)
   const moveRowsRef = useRef(null)
   const maxGroupIndexRef = useRef(-1)
@@ -859,7 +852,6 @@ export default function ReviewPage() {
   const plyGroups = useMemo(() => buildPlyGroups(moves), [moves])
   const moveRows = useMemo(() => buildMoveRows(moves), [moves])
   const maxGroupIndex = Math.max(plyGroups.length - 1, -1)
-  const finalGroup = maxGroupIndex >= 0 ? plyGroups[maxGroupIndex] : null
   maxGroupIndexRef.current = maxGroupIndex
 
   useEffect(() => {
@@ -975,6 +967,30 @@ export default function ReviewPage() {
     }
   }, [currentPly])
 
+  useEffect(() => {
+    if (!isPlaying) {
+      return undefined
+    }
+
+    if (maxGroupIndex < 0) {
+      setIsPlaying(false)
+      return undefined
+    }
+
+    if (currentPly >= maxGroupIndex) {
+      setIsPlaying(false)
+      return undefined
+    }
+
+    const timer = window.setTimeout(() => {
+      setCurrentPly((previousPly) => Math.min(maxGroupIndex, previousPly + 1))
+    }, 1000)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [currentPly, isPlaying, maxGroupIndex])
+
   const selectedPlyGroup = currentPly >= 0 ? plyGroups[currentPly] ?? null : null
   const boardFen = useMemo(
     () => fenForPly(moves, selectedPlyGroup?.lastPly ?? 0, perspective),
@@ -995,8 +1011,8 @@ export default function ReviewPage() {
     }
     return overlaysForPlyGroup(selectedPlyGroup, previousBoardFen)
   }, [selectedPlyGroup, previousBoardFen, perspective])
-  const counterLabel = selectedPlyGroup ? formatPerspectiveLabel(selectedPlyGroup) : "Start"
-  const maxCounterLabel = finalGroup ? formatPerspectiveLabel(finalGroup) : "0W"
+  const totalPlyCount = plyGroups.length
+  const selectedPlyNumber = currentPly >= 0 ? Math.min(currentPly + 1, totalPlyCount) : 0
   const replayMaterial = useMemo(
     () => replayMaterialStatus({
       moves,
@@ -1032,6 +1048,42 @@ export default function ReviewPage() {
   const blackHistoricalRatings = historicalRatingsForColor(game, "black")
   const signedInAs = user?.username ?? user?.email ?? "player"
   const isCrazyKrieg = game?.rule_variant === "crazykrieg"
+
+  function goToFirstPly() {
+    setIsPlaying(false)
+    setCurrentPly(-1)
+  }
+
+  function goToPreviousPly() {
+    setIsPlaying(false)
+    setCurrentPly((previousPly) => Math.max(-1, previousPly - 1))
+  }
+
+  function goToNextPly() {
+    setIsPlaying(false)
+    setCurrentPly((previousPly) => Math.min(maxGroupIndex, previousPly + 1))
+  }
+
+  function goToLastPly() {
+    setIsPlaying(false)
+    setCurrentPly(maxGroupIndex)
+  }
+
+  function togglePlayback() {
+    if (isPlaying) {
+      setIsPlaying(false)
+      return
+    }
+
+    if (maxGroupIndex < 0) {
+      return
+    }
+
+    setCurrentPly((previousPly) => (
+      previousPly >= maxGroupIndex ? 0 : Math.min(maxGroupIndex, previousPly + 1)
+    ))
+    setIsPlaying(true)
+  }
 
   return (
     <main className="page-shell review-page" aria-live="polite">
@@ -1102,6 +1154,40 @@ export default function ReviewPage() {
               disabled
             />
 
+            <div className="review-page__replay-controls" role="group" aria-label="Replay controls">
+              <div className="review-page__replay-control-group review-page__replay-control-group--left">
+                <button type="button" aria-label="First" title="First" onClick={goToFirstPly} disabled={currentPly < 0}>
+                  <span aria-hidden="true">&lt;&lt;</span>
+                </button>
+                <button type="button" aria-label="Prev" title="Prev" onClick={goToPreviousPly} disabled={currentPly < 0}>
+                  <span aria-hidden="true">&lt;</span>
+                </button>
+              </div>
+              <div className="review-page__replay-control-center">
+                <span className="review-page__replay-counter" aria-label="Replay ply counter">
+                  Ply {selectedPlyNumber} / {totalPlyCount}
+                </span>
+                <button
+                  type="button"
+                  className="review-page__play-button"
+                  aria-label={isPlaying ? "Pause replay" : "Play replay"}
+                  aria-pressed={isPlaying}
+                  onClick={togglePlayback}
+                  disabled={maxGroupIndex < 0}
+                >
+                  {isPlaying ? "Pause" : "Play"}
+                </button>
+              </div>
+              <div className="review-page__replay-control-group review-page__replay-control-group--right">
+                <button type="button" aria-label="Next" title="Next" onClick={goToNextPly} disabled={currentPly >= maxGroupIndex}>
+                  <span aria-hidden="true">&gt;</span>
+                </button>
+                <button type="button" aria-label="Last" title="Last" onClick={goToLastPly} disabled={currentPly >= maxGroupIndex}>
+                  <span aria-hidden="true">&gt;&gt;</span>
+                </button>
+              </div>
+            </div>
+
             <div className="review-page__board-meta">
               <div className="review-page__clocks" aria-label="Replay time remaining">
                 <div className="review-page__clock">
@@ -1154,7 +1240,6 @@ export default function ReviewPage() {
           >
             <div className="review-page__log-header">
               <h2>Move log</h2>
-              <span className="review-page__ply">Turn {counterLabel} / {maxCounterLabel}</span>
             </div>
             <div className="review-page__log-frame">
               <ol className="review-page__move-rows" ref={moveRowsRef}>
@@ -1193,7 +1278,10 @@ export default function ReviewPage() {
                             className={`review-page__ply-card${selectedPlyGroup?.id === move.id ? " is-active" : ""}`}
                             data-ply-index={move.index}
                             aria-label={`${color === "white" ? "White" : "Black"} ${formatPlySummary(move)}`}
-                            onClick={() => setCurrentPly(move.index)}
+                            onClick={() => {
+                              setIsPlaying(false)
+                              setCurrentPly(move.index)
+                            }}
                           >
                             <span className="review-page__ply-color">{color === "white" ? "White" : "Black"}</span>
                             <ol className="review-page__announcement-list">
@@ -1211,32 +1299,6 @@ export default function ReviewPage() {
                   </li>
                 ))}
               </ol>
-              <div className="review-page__scroll-controls" role="group" aria-label="Replay controls">
-                <button type="button" aria-label="First" title="First" onClick={() => setCurrentPly(-1)} disabled={currentPly < 0}>
-                  <span aria-hidden="true">↑↑</span>
-                </button>
-                <button
-                  type="button"
-                  aria-label="Prev"
-                  title="Prev"
-                  onClick={() => setCurrentPly((prev) => Math.max(-1, prev - 1))}
-                  disabled={currentPly < 0}
-                >
-                  <span aria-hidden="true">↑</span>
-                </button>
-                <button
-                  type="button"
-                  aria-label="Next"
-                  title="Next"
-                  onClick={() => setCurrentPly((prev) => Math.min(maxGroupIndex, prev + 1))}
-                  disabled={currentPly >= maxGroupIndex}
-                >
-                  <span aria-hidden="true">↓</span>
-                </button>
-                <button type="button" aria-label="Last" title="Last" onClick={() => setCurrentPly(maxGroupIndex)} disabled={currentPly >= maxGroupIndex}>
-                  <span aria-hidden="true">↓↓</span>
-                </button>
-              </div>
             </div>
           </aside>
         </div>

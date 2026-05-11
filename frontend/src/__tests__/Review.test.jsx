@@ -124,7 +124,7 @@ describe("ReviewPage", () => {
     renderReviewPage()
 
     await screen.findByText(/Move log/i)
-    expect(screen.getByText("Turn Start / 1B")).toBeInTheDocument()
+    expect(screen.getByText("Ply 0 / 2")).toBeInTheDocument()
     expect(screen.getByText("11s")).toBeInTheDocument()
     expect(screen.getByText("8s")).toBeInTheDocument()
     expect(screen.getByLabelText("Replay time remaining")).toBeInTheDocument()
@@ -136,11 +136,11 @@ describe("ReviewPage", () => {
     expect(within(gameDetails).getByText("white wins by checkmate")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
-    expect(screen.getByText("Turn 1W / 1B")).toBeInTheDocument()
+    expect(screen.getByText("Ply 1 / 2")).toBeInTheDocument()
     expect(within(screen.getByLabelText("Replay time remaining")).getByText("25:10")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i }))
-    expect(screen.getByText("Turn 1B / 1B")).toBeInTheDocument()
+    expect(screen.getByText("Ply 2 / 2")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i })).toHaveClass("is-active")
     expect(document.querySelectorAll(".review-page__announcement-badge").length).toBeGreaterThan(0)
   })
@@ -169,7 +169,7 @@ describe("ReviewPage", () => {
     expect(board?.getAttribute("data-orientation")).toBe("white")
     fireEvent.click(screen.getByRole("tab", { name: "Black bottom" }))
     expect(board?.getAttribute("data-orientation")).toBe("black")
-    expect(screen.getByText("Turn 1W / 1B")).toBeInTheDocument()
+    expect(screen.getByText("Ply 1 / 2")).toBeInTheDocument()
   })
 
   it("keeps_board_orientation_controls_above_the_replay_board", async () => {
@@ -189,15 +189,19 @@ describe("ReviewPage", () => {
     expect(orientationControls.compareDocumentPosition(board) & window.Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
-  it("keeps_replay_move_count_in_the_move_log_header", async () => {
+  it("keeps_replay_controls_immediately_under_the_board", async () => {
     renderReviewPage()
 
     await screen.findByText(/Move log/i)
 
+    const controls = screen.getByRole("group", { name: "Replay controls" })
     const logHeader = document.querySelector(".review-page__log-header")
     const boardToolbar = document.querySelector(".review-page__board-toolbar")
-    expect(within(logHeader).getByText("Turn Start / 1B")).toBeInTheDocument()
-    expect(within(boardToolbar).queryByText("Turn Start / 1B")).not.toBeInTheDocument()
+    const board = document.querySelector(".chess-board")
+    expect(within(controls).getByText("Ply 0 / 2")).toBeInTheDocument()
+    expect(within(logHeader).queryByText("Turn Start / 1B")).not.toBeInTheDocument()
+    expect(within(boardToolbar).queryByText("Ply 0 / 2")).not.toBeInTheDocument()
+    expect(board.compareDocumentPosition(controls) & window.Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it("syncs_the_move_log_card_height_to_the_board_card_on_desktop", async () => {
@@ -226,7 +230,7 @@ describe("ReviewPage", () => {
       await screen.findByText(/Move log/i)
 
       const boardCard = container.querySelector(".review-page__board-column")
-      const [toolbar, chessBoard, boardMeta] = boardCard.children
+      const [toolbar, chessBoard, replayControls, boardMeta] = boardCard.children
       boardCard.getBoundingClientRect = () => ({
         top: 100,
         bottom: 1700,
@@ -260,15 +264,26 @@ describe("ReviewPage", () => {
         y: 188,
         toJSON: () => ({}),
       })
-      boardMeta.getBoundingClientRect = () => ({
+      replayControls.getBoundingClientRect = () => ({
         top: 584,
-        bottom: 650,
+        bottom: 626,
         left: 0,
         right: 640,
         width: 640,
-        height: 66,
+        height: 42,
         x: 0,
         y: 584,
+        toJSON: () => ({}),
+      })
+      boardMeta.getBoundingClientRect = () => ({
+        top: 642,
+        bottom: 700,
+        left: 0,
+        right: 640,
+        width: 640,
+        height: 58,
+        x: 0,
+        y: 642,
         toJSON: () => ({}),
       })
       getComputedStyleSpy.mockImplementation((element) => ({
@@ -292,7 +307,7 @@ describe("ReviewPage", () => {
       window.dispatchEvent(new Event("resize"))
 
       await waitFor(() => {
-        expect(container.querySelector(".review-page__log-column")?.style.height).toBe("568px")
+        expect(container.querySelector(".review-page__log-column")?.style.height).toBe("618px")
       })
       expect(container.querySelector(".review-page__move-rows")).toBeInTheDocument()
     } finally {
@@ -303,7 +318,7 @@ describe("ReviewPage", () => {
     }
   })
 
-  it("uses_vertical_move_log_controls_to_step_through_replay", async () => {
+  it("uses_under_board_controls_to_step_through_replay", async () => {
     renderReviewPage()
 
     await screen.findByText(/Move log/i)
@@ -317,6 +332,32 @@ describe("ReviewPage", () => {
 
     fireEvent.click(within(controls).getByRole("button", { name: "Prev" }))
     expect(screen.getByRole("button", { name: /White \[e2e4\] Move complete/i })).toHaveClass("is-active")
+  })
+
+  it("plays_and_pauses_replay_one_ply_per_second", async () => {
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    vi.useFakeTimers()
+
+    try {
+      const controls = screen.getByRole("group", { name: "Replay controls" })
+      fireEvent.click(within(controls).getByRole("button", { name: "Play replay" }))
+      expect(screen.getByRole("button", { name: /White \[e2e4\] Move complete/i })).toHaveClass("is-active")
+      expect(within(controls).getByText("Ply 1 / 2")).toBeInTheDocument()
+      expect(within(controls).getByRole("button", { name: "Pause replay" })).toBeInTheDocument()
+
+      act(() => {
+        vi.advanceTimersByTime(1000)
+      })
+
+      expect(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i })).toHaveClass("is-active")
+      expect(within(controls).getByText("Ply 2 / 2")).toBeInTheDocument()
+      await act(async () => {})
+      expect(within(controls).getByRole("button", { name: "Play replay" })).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it("hides_opponent_overlays_in_private_views", async () => {
