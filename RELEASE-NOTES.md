@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.42
+
+- **Social Link Cards**: added OpenGraph/Twitter metadata and a hosted preview
+  image so shared `app.kriegspiel.org` links render with a proper card on X
+  and other preview crawlers.
+
 ## ks-web-app frontend v. 1.3.41
 
 - **Replay Controls**: restores the compact `12W/23B` replay position label
