@@ -10,7 +10,8 @@ const mockAuth = vi.hoisted(() => ({
 }))
 
 const mockApi = vi.hoisted(() => ({
-  getMyGames: vi.fn(),
+  getMyActiveGames: vi.fn(),
+  getMyArchivedGames: vi.fn(),
   userApi: {
     getProfile: vi.fn(),
     getGameHistory: vi.fn(),
@@ -28,8 +29,10 @@ beforeEach(() => {
   cleanup()
   mockAuth.isAuthenticated = false
   mockAuth.user = null
-  mockApi.getMyGames.mockReset()
-  mockApi.getMyGames.mockResolvedValue({ games: [] })
+  mockApi.getMyActiveGames.mockReset()
+  mockApi.getMyActiveGames.mockResolvedValue({ games: [] })
+  mockApi.getMyArchivedGames.mockReset()
+  mockApi.getMyArchivedGames.mockResolvedValue({ games: [] })
   mockApi.userApi.getProfile.mockReset()
   mockApi.userApi.getProfile.mockResolvedValue({ username: "fil", stats: { ratings: { overall: { elo: 1200, peak: 1200 }, vs_humans: { elo: 1200, peak: 1200 }, vs_bots: { elo: 1200, peak: 1200 } }, results: { overall: { games_played: 0, games_won: 0, games_lost: 0, games_drawn: 0 }, vs_humans: { games_played: 0, games_won: 0, games_lost: 0, games_drawn: 0 }, vs_bots: { games_played: 0, games_won: 0, games_lost: 0, games_drawn: 0 } } } })
   mockApi.userApi.getGameHistory.mockReset()
@@ -91,7 +94,8 @@ describe("HomePage", () => {
     renderPage()
 
     await waitFor(() => {
-      expect(mockApi.getMyGames).toHaveBeenCalledTimes(1)
+      expect(mockApi.getMyActiveGames).toHaveBeenCalledTimes(1)
+      expect(mockApi.getMyArchivedGames).toHaveBeenCalledTimes(1)
       expect(mockApi.userApi.getProfile).toHaveBeenCalledWith("fil")
       expect(mockApi.userApi.getRatingHistory).toHaveBeenCalledWith("fil", "overall", 100)
     })
@@ -114,7 +118,7 @@ describe("HomePage", () => {
       username: "fil",
       stats: {},
     }
-    mockApi.getMyGames.mockResolvedValue({
+    mockApi.getMyActiveGames.mockResolvedValue({
       games: [
         {
           game_id: "game-1",
@@ -125,6 +129,10 @@ describe("HomePage", () => {
           white: { username: "randobot", role: "bot" },
           black: { username: "fil", role: "user" },
         },
+      ],
+    })
+    mockApi.getMyArchivedGames.mockResolvedValue({
+      games: [
         {
           game_id: "game-2",
           game_code: "EFGH34",
@@ -199,10 +207,14 @@ describe("HomePage", () => {
       username: "fil",
       stats: {},
     }
-    mockApi.getMyGames.mockResolvedValue({
+    mockApi.getMyActiveGames.mockResolvedValue({
+      games: [
+        { game_id: "game-fallback", state: "waiting", created_at: "2026-03-27T12:00:00Z", white: {}, black: null },
+      ],
+    })
+    mockApi.getMyArchivedGames.mockResolvedValue({
       games: [
         { game_id: "game-old", game_code: "OLD001", state: "completed", updated_at: "2026-03-20T15:00:00Z", white: { username: "fil" }, black: { username: "amy" } },
-        { game_id: "game-fallback", state: "waiting", created_at: "2026-03-27T12:00:00Z", white: {}, black: null },
         { game_id: "game-new", game_code: "NEW001", state: "completed", updated_at: "2026-03-28T15:00:00Z", white: { username: "fil" }, black: { username: "botty", role: "bot" } },
         { game_id: "game-invalid", game_code: "BAD001", state: "completed", updated_at: "not-a-date", white: { username: "fil" }, black: { username: "sam" } },
         { game_id: "game-mid", game_code: "MID001", state: "completed", updated_at: "2026-03-25T15:00:00Z", white: { username: "fil" }, black: { username: "zoe" } },
@@ -234,7 +246,7 @@ describe("HomePage", () => {
         results: { overall: { games_played: 0, games_won: 0, games_lost: 0, games_drawn: 0 } },
       },
     }
-    mockApi.getMyGames.mockResolvedValue({
+    mockApi.getMyActiveGames.mockResolvedValue({
       games: [
         {
           game_id: "game-no-code",
@@ -248,7 +260,8 @@ describe("HomePage", () => {
     renderPage()
 
     await waitFor(() => {
-      expect(mockApi.getMyGames).toHaveBeenCalledTimes(1)
+      expect(mockApi.getMyActiveGames).toHaveBeenCalledTimes(1)
+      expect(mockApi.getMyArchivedGames).toHaveBeenCalledTimes(1)
     })
     await waitFor(() => {
       expect(screen.queryByText("Loading your recent games…")).not.toBeInTheDocument()
@@ -268,7 +281,7 @@ describe("HomePage", () => {
       username: "fil",
       stats: {},
     }
-    mockApi.getMyGames.mockRejectedValue({})
+    mockApi.getMyActiveGames.mockRejectedValue({})
 
     renderPage()
 
@@ -281,7 +294,8 @@ describe("HomePage", () => {
       username: "fil",
       stats: {},
     }
-    mockApi.getMyGames.mockResolvedValue({})
+    mockApi.getMyActiveGames.mockResolvedValue({})
+    mockApi.getMyArchivedGames.mockResolvedValue({})
     mockApi.userApi.getProfile.mockResolvedValue({ username: "fil", stats: {} })
     mockApi.userApi.getRatingHistory.mockResolvedValue(null)
 

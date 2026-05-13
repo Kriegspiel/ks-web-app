@@ -11,7 +11,7 @@ const mockAuth = vi.hoisted(() => ({
   user: { username: "fil" },
   actionError: "",
 }))
-const mockApi = vi.hoisted(() => ({ createGame: vi.fn(), deleteWaitingGame: vi.fn(), joinGame: vi.fn(), getOpenGames: vi.fn(), getMyGames: vi.fn(), getGame: vi.fn(), getBots: vi.fn(), getLobbyStats: vi.fn() }))
+const mockApi = vi.hoisted(() => ({ createGame: vi.fn(), deleteWaitingGame: vi.fn(), joinGame: vi.fn(), getOpenGames: vi.fn(), getMyActiveGames: vi.fn(), getGame: vi.fn(), getBots: vi.fn(), getLobbyStats: vi.fn() }))
 vi.mock("react-router-dom", async () => ({ ...(await vi.importActual("react-router-dom")), useNavigate: () => mockNavigate }))
 vi.mock("../hooks/useAuth", () => ({ useAuth: () => mockAuth }))
 vi.mock("../services/api", () => mockApi)
@@ -25,7 +25,7 @@ beforeEach(() => {
   mockAuth.actionError = ""
   Object.values(mockApi).forEach((fn) => fn.mockReset())
   mockApi.getOpenGames.mockResolvedValue({ games: [] })
-  mockApi.getMyGames.mockResolvedValue({ games: [] })
+  mockApi.getMyActiveGames.mockResolvedValue({ games: [] })
   mockApi.getLobbyStats.mockResolvedValue({ active_games_now: 123456789, completed_last_hour: 3, completed_last_24_hours: 42, completed_total: 314 })
   mockApi.getGame.mockResolvedValue({ state: "waiting" })
   mockApi.deleteWaitingGame.mockResolvedValue({})
@@ -57,7 +57,7 @@ describe("LobbyPage", () => {
   })
 
   it("shows_lobby_quick_actions", async () => {
-    mockApi.getMyGames.mockResolvedValue({
+    mockApi.getMyActiveGames.mockResolvedValue({
       games: [
         {
           game_id: "g-active",
@@ -115,7 +115,7 @@ describe("LobbyPage", () => {
   })
 
   it("uses_game_id_fallbacks_for_active_games_and_created_active_games", async () => {
-    mockApi.getMyGames.mockResolvedValue({
+    mockApi.getMyActiveGames.mockResolvedValue({
       games: [
         {
           game_id: "g-active-only",
@@ -739,7 +739,7 @@ describe("LobbyPage", () => {
   })
 
   it("falls_back_to_no_active_games_when_refreshing_my_games_fails", async () => {
-    mockApi.getMyGames.mockRejectedValueOnce(new Error("My games exploded"))
+    mockApi.getMyActiveGames.mockRejectedValueOnce(new Error("My games exploded"))
 
     renderPage()
 
@@ -748,7 +748,7 @@ describe("LobbyPage", () => {
   })
 
   it("keeps_resume_active_game_hidden_when_my_games_only_include_waiting_entries", async () => {
-    mockApi.getMyGames.mockResolvedValueOnce({
+    mockApi.getMyActiveGames.mockResolvedValueOnce({
       games: [
         {
           game_id: "g-waiting-only",
@@ -764,7 +764,7 @@ describe("LobbyPage", () => {
   })
 
   it("falls_back_to_no_active_games_when_my_games_payload_is_not_an_array", async () => {
-    mockApi.getMyGames.mockResolvedValueOnce({})
+    mockApi.getMyActiveGames.mockResolvedValueOnce({})
 
     renderPage()
 

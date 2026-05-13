@@ -14,7 +14,8 @@ const mockApi = vi.hoisted(() => ({
   createGame: vi.fn(),
   joinGame: vi.fn(),
   getOpenGames: vi.fn(),
-  getMyGames: vi.fn(),
+  getMyActiveGames: vi.fn(),
+  getMyArchivedGames: vi.fn(),
   getGame: vi.fn(),
   getGameState: vi.fn(),
   deleteWaitingGame: vi.fn(),
@@ -40,7 +41,8 @@ beforeEach(() => {
     }
   })
   mockApi.getOpenGames.mockResolvedValue({ games: [] })
-  mockApi.getMyGames.mockResolvedValue({ games: [] })
+  mockApi.getMyActiveGames.mockResolvedValue({ games: [] })
+  mockApi.getMyArchivedGames.mockResolvedValue({ games: [] })
   mockApi.getGame.mockResolvedValue({ state: "waiting" })
   mockApi.userApi.getGameHistory.mockReset()
   mockApi.userApi.getGameHistory.mockResolvedValue({ games: [] })
