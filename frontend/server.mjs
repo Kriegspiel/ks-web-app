@@ -75,6 +75,12 @@ export function shouldProxyToBackend(req) {
   return host === "api.kriegspiel.org" || requestUrl.pathname === "/api" || requestUrl.pathname.startsWith("/api/")
 }
 
+export function shouldRejectPublicApiPrefix(req) {
+  const host = firstForwardedValue(req.headers.host).split(":").at(0)
+  const requestUrl = new URL(req.url || "/", "http://localhost")
+  return host === "api.kriegspiel.org" && (requestUrl.pathname === "/api" || requestUrl.pathname.startsWith("/api/"))
+}
+
 function applySecurityHeaders(headers, req) {
   headers.set("X-Content-Type-Options", "nosniff")
   headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
@@ -98,6 +104,13 @@ function redirectToHttps(req, res) {
     Location: location,
   })
   res.end()
+}
+
+function notFound(req, res) {
+  writeWithSecurityHeaders(req, res, 404, {
+    "Content-Type": "application/json; charset=utf-8",
+  })
+  res.end(JSON.stringify({ detail: "Not Found" }))
 }
 
 function proxyHeaders(req) {
@@ -209,6 +222,11 @@ export function createServer({
   return http.createServer((req, res) => {
     if (shouldRedirectToHttps(req)) {
       redirectToHttps(req, res)
+      return
+    }
+
+    if (shouldRejectPublicApiPrefix(req)) {
+      notFound(req, res)
       return
     }
 

@@ -3,6 +3,7 @@ import {
   buildHttpsRedirectLocation,
   getForwardedScheme,
   resolveStaticFile,
+  shouldRejectPublicApiPrefix,
   shouldProxyToBackend,
   shouldRedirectToHttps,
 } from "../../server.mjs"
@@ -42,6 +43,13 @@ describe("production server routing", () => {
     expect(shouldProxyToBackend(req({ host: "api.kriegspiel.org", url: "/health" }))).toBe(true)
     expect(shouldProxyToBackend(req({ host: "app.kriegspiel.org", url: "/api/auth/me" }))).toBe(true)
     expect(shouldProxyToBackend(req({ host: "app.kriegspiel.org", url: "/lobby" }))).toBe(false)
+  })
+
+  it("rejects_api_prefixed_paths_on_the_public_api_host", () => {
+    expect(shouldRejectPublicApiPrefix(req({ host: "api.kriegspiel.org", url: "/api/health" }))).toBe(true)
+    expect(shouldRejectPublicApiPrefix(req({ host: "api.kriegspiel.org", url: "/api/auth/me" }))).toBe(true)
+    expect(shouldRejectPublicApiPrefix(req({ host: "api.kriegspiel.org", url: "/health" }))).toBe(false)
+    expect(shouldRejectPublicApiPrefix(req({ host: "app.kriegspiel.org", url: "/api/auth/me" }))).toBe(false)
   })
 
   it("keeps_static_resolution_inside_the_dist_root", () => {
