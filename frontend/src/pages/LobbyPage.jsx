@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
-import { createGame, deleteWaitingGame, getBots, getGame, getLobbyStats, getMyGames, getOpenGames, joinGame } from "../services/api"
+import { createGame, deleteWaitingGame, getBots, getGame, getLobbyStats, getMyActiveGames, getOpenGames, joinGame } from "../services/api"
 import { formatUtcDateTime } from "../utils/dateTime"
 import { DEFAULT_BOT_RULE_VARIANTS, RULESET_OPTIONS, formatRuleVariant } from "../utils/rules"
 import "./Lobby.css"
@@ -212,7 +212,7 @@ export default function LobbyPage() {
 
   async function refreshMyGames() {
     try {
-      const response = await getMyGames()
+      const response = await getMyActiveGames()
       setMyGames(Array.isArray(response?.games) ? response.games : [])
     } catch {
       setMyGames([])

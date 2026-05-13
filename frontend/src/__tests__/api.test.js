@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import api, { askAny, convertGuest, createGame, createGameEventsSource, deleteWaitingGame, gameEventsUrl, getBots, getGame, getGameState, getGameTranscript, getLobbyStats, getMyGames, getOpenGames, joinGame, login, logout, me, playAsGuest, register, resignGame, submitMove, techApi, userApi } from "../services/api"
+import api, { askAny, convertGuest, createGame, createGameEventsSource, deleteWaitingGame, gameEventsUrl, getBots, getGame, getGameState, getGameTranscript, getLobbyStats, getMyActiveGames, getMyArchivedGames, getOpenGames, joinGame, login, logout, me, playAsGuest, register, resignGame, submitMove, techApi, userApi } from "../services/api"
 
 describe("api client", () => {
   it("api_client_uses_relative_base_url", () => { expect(api.defaults.baseURL ?? "").toBe("") })
@@ -103,7 +103,7 @@ describe("auth helpers", () => {
 describe("game helpers", () => {
   beforeEach(() => { vi.restoreAllMocks() })
   it("create_game_posts_to_api_game_create", async () => { const payload = { rule_variant: "berkeley_any", play_as: "random", time_control: "rapid", opponent_type: "human" }; const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { game_id: "g1" } }); const result = await createGame(payload); expect(postSpy).toHaveBeenCalledWith("/api/game/create", payload); expect(result).toEqual({ game_id: "g1" }) })
-  it("bot_and_game_reads_use_expected_endpoints", async () => { const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: { games: [] } }); await getBots(); await getOpenGames(); await getMyGames(); await getGame("g-123"); await getGameState("g-123"); expect(getSpy).toHaveBeenNthCalledWith(1, "/api/bots"); expect(getSpy).toHaveBeenNthCalledWith(2, "/api/game/open"); expect(getSpy).toHaveBeenNthCalledWith(3, "/api/game/mine"); expect(getSpy).toHaveBeenNthCalledWith(4, "/api/game/g-123"); expect(getSpy).toHaveBeenNthCalledWith(5, "/api/game/g-123/state") })
+  it("bot_and_game_reads_use_expected_endpoints", async () => { const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: { games: [] } }); await getBots(); await getOpenGames(); await getMyActiveGames(); await getMyArchivedGames(); await getGame("g-123"); await getGameState("g-123"); expect(getSpy).toHaveBeenNthCalledWith(1, "/api/bots"); expect(getSpy).toHaveBeenNthCalledWith(2, "/api/game/open"); expect(getSpy).toHaveBeenNthCalledWith(3, "/api/game/mine/active"); expect(getSpy).toHaveBeenNthCalledWith(4, "/api/game/mine/archived"); expect(getSpy).toHaveBeenNthCalledWith(5, "/api/game/g-123"); expect(getSpy).toHaveBeenNthCalledWith(6, "/api/game/g-123/state") })
   it("game_event_streams_use_expected_endpoint", () => {
     expect(gameEventsUrl("g/123")).toBe("/api/game/g%2F123/events")
   })
@@ -159,7 +159,8 @@ describe("game helpers", () => {
     ["joinGame", "post", () => joinGame("ABC123"), "Unable to join that game right now."],
     ["getOpenGames", "get", () => getOpenGames(), "Unable to load open games right now."],
     ["getLobbyStats", "get", () => getLobbyStats(), "Unable to load lobby stats right now."],
-    ["getMyGames", "get", () => getMyGames(), "Unable to load your games right now."],
+    ["getMyActiveGames", "get", () => getMyActiveGames(), "Unable to load your games right now."],
+    ["getMyArchivedGames", "get", () => getMyArchivedGames(), "Unable to load your games right now."],
     ["getGame", "get", () => getGame("g-123"), "Unable to load game details right now."],
     ["getGameTranscript", "get", () => getGameTranscript("g-123"), "Unable to load game transcript right now."],
     ["getGameState", "get", () => getGameState("g-123"), "Unable to load game state right now."],

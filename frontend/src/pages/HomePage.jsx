@@ -4,7 +4,7 @@ import EloChart from "../components/EloChart"
 import { ELO_TRACKS } from "../components/eloChartConstants"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
-import { getMyGames, userApi } from "../services/api"
+import { getMyActiveGames, getMyArchivedGames, userApi } from "../services/api"
 import { formatUtcDateTime } from "../utils/dateTime"
 import { formatRuleVariant } from "../utils/rules"
 
@@ -130,15 +130,18 @@ export default function HomePage() {
     async function loadMyGames() {
       setMyGamesLoading(true)
       try {
-        const [gamesResponse, profileResponse, historyResponse] = await Promise.all([
-          getMyGames(),
+        const [activeGamesResponse, archivedGamesResponse, profileResponse, historyResponse] = await Promise.all([
+          getMyActiveGames(),
+          getMyArchivedGames(),
           user?.username ? userApi.getProfile(user.username) : Promise.resolve(null),
           user?.username ? userApi.getRatingHistory(user.username, ratingTrack, 100) : Promise.resolve({ series: { game: [], date: [] } }),
         ])
         if (cancelled) {
           return
         }
-        setMyGames(Array.isArray(gamesResponse?.games) ? gamesResponse.games : [])
+        const activeGames = Array.isArray(activeGamesResponse?.games) ? activeGamesResponse.games : []
+        const archivedGames = Array.isArray(archivedGamesResponse?.games) ? archivedGamesResponse.games : []
+        setMyGames([...activeGames, ...archivedGames])
         setProfile(profileResponse)
         setRatingSeries(historyResponse?.series ?? { game: [], date: [] })
         setMyGamesError("")
