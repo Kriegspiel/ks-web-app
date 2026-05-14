@@ -398,6 +398,18 @@ describe("GamePage", () => {
 
   it("shows_completed_summary_from_game_over_submit_response_before_followup_poll_returns", async () => {
     let resolveFollowupPoll
+    const completedFinalState = {
+      ...activeState,
+      state: "completed",
+      turn: "black",
+      move_number: 2,
+      your_fen: "4k3/8/8/8/4P3/8/8/4K3",
+      allowed_moves: [],
+      possible_actions: [],
+      result: { winner: "white", reason: "checkmate" },
+      clock: { white_remaining: 612, black_remaining: 588, active_color: null },
+    }
+    window.localStorage.setItem("phantoms_g-123", JSON.stringify({ placements: { d5: "q" } }))
     mockApi.getGameState
       .mockResolvedValueOnce(activeState)
       .mockImplementationOnce(
@@ -406,6 +418,7 @@ describe("GamePage", () => {
             resolveFollowupPoll = resolve
           }),
       )
+      .mockResolvedValue(completedFinalState)
     mockApi.submitMove.mockResolvedValueOnce({
       move_done: true,
       game_over: true,
@@ -417,12 +430,14 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByRole("button", { name: "Square e2" })
+    await waitFor(() => expect(screen.getByRole("button", { name: "Square d5" })).toHaveClass("square--phantom"))
     fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
     fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
 
     const summary = await screen.findByLabelText("Completed game summary")
     expect(within(summary).getByText("You won by checkmate")).toBeInTheDocument()
     expect(within(summary).getByText("White wins by checkmate")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--phantom")
 
     resolveFollowupPoll({
       ...activeState,
@@ -433,6 +448,37 @@ describe("GamePage", () => {
 
     await sleep(50)
     expect(screen.getByLabelText("Completed game summary")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--phantom")
+
+    await waitFor(() => expect(mockApi.getGameState.mock.calls.length).toBeGreaterThanOrEqual(3), { timeout: 1200 })
+    expect(within(screen.getByRole("button", { name: "Square e4" })).getByAltText("White pawn")).toBeInTheDocument()
+    expect(within(screen.getByRole("button", { name: "Square e8" })).getByAltText("Black king")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(JSON.parse(window.localStorage.getItem("phantoms_g-123")).placements).toEqual({})
+    })
+  })
+
+  it("hides_and_clears_phantoms_when_a_completed_game_loads", async () => {
+    window.localStorage.setItem("phantoms_g-123", JSON.stringify({ placements: { d5: "q" } }))
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      state: "completed",
+      your_fen: "4k3/8/8/8/4P3/8/8/4K3",
+      allowed_moves: [],
+      possible_actions: [],
+      result: { winner: "white", reason: "checkmate" },
+      clock: { white_remaining: 612, black_remaining: 588, active_color: null },
+    })
+
+    render(<GamePage />)
+
+    await screen.findByLabelText("Completed game summary")
+    expect(screen.getByRole("button", { name: "Square d5" })).not.toHaveClass("square--phantom")
+    expect(within(screen.getByRole("button", { name: "Square e4" })).getByAltText("White pawn")).toBeInTheDocument()
+    expect(within(screen.getByRole("button", { name: "Square e8" })).getByAltText("Black king")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(JSON.parse(window.localStorage.getItem("phantoms_g-123")).placements).toEqual({})
+    })
   })
 
   it("submits_two_click_move_and_repolls", async () => {

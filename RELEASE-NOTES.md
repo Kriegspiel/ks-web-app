@@ -5,6 +5,14 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.45
+
+- **Completed Game Board**: keeps refreshing after a game-over move response
+  until the authoritative completed state arrives, so the final board shows all
+  pieces after the last move.
+- **Phantom Cleanup**: hides and clears local phantom pieces as soon as a game
+  finishes.
+
 ## ks-web-app frontend v. 1.3.42
 
 - **Social Link Cards**: added OpenGraph/Twitter metadata and a hosted preview
