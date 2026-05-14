@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.46
+
+- **Review Material Stats**: renders replay material stat labels and numbers
+  with regular text weight instead of bold emphasis.
+
 ## ks-web-app frontend v. 1.3.45
 
 - **Completed Game Board**: keeps refreshing after a game-over move response
