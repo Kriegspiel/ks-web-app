@@ -14,6 +14,8 @@ import "./GamePage.css"
 
 const POLL_INTERVAL_MS = 500
 const SSE_SAFETY_POLL_INTERVAL_MS = 15000
+const FINAL_STATE_RETRY_INTERVAL_MS = 500
+const FINAL_STATE_RETRY_LIMIT = 20
 const DOUBLE_TAP_WINDOW_MS = 320
 const PHANTOM_PIECES = ["q", "r", "b", "n", "p", "k"]
 const DROP_PIECES = ["P", "N", "B", "R", "Q"]
@@ -1847,6 +1849,7 @@ export default function GamePage() {
     setPieceAt,
     move,
     removeAt,
+    clearAll,
     replaceAll,
     availablePiecesForSquare,
   } = usePhantoms({ gameId: gameRef, occupiedSquares })
@@ -2091,6 +2094,40 @@ export default function GamePage() {
   }, [gameRef, gameStateStatus, pollState])
 
   useEffect(() => {
+    if (!gameRef || gameState?.state !== "completed" || gameState?.__finalStatePending !== true) {
+      return undefined
+    }
+
+    let canceled = false
+    let timeoutId = null
+    let attempts = 0
+
+    const retryUntilFinalStateArrives = async () => {
+      if (canceled || attempts >= FINAL_STATE_RETRY_LIMIT) {
+        return
+      }
+
+      attempts += 1
+      await pollState({ silent: true, preserveViewport: true, force: true })
+
+      if (canceled || attempts >= FINAL_STATE_RETRY_LIMIT) {
+        return
+      }
+
+      timeoutId = window.setTimeout(retryUntilFinalStateArrives, FINAL_STATE_RETRY_INTERVAL_MS)
+    }
+
+    timeoutId = window.setTimeout(retryUntilFinalStateArrives, FINAL_STATE_RETRY_INTERVAL_MS)
+
+    return () => {
+      canceled = true
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId)
+      }
+    }
+  }, [gameRef, gameState?.__finalStatePending, gameState?.state, pollState])
+
+  useEffect(() => {
     if (typeof window === "undefined" || typeof document === "undefined") {
       return undefined
     }
@@ -2192,14 +2229,18 @@ export default function GamePage() {
   const possibleActions = gameState?.possible_actions ?? []
   const signedInAs = user?.username ?? user?.email ?? "player"
   const isCompleted = gameState?.state === "completed" || gameMeta?.state === "completed"
-  const canMove = gameState?.state === "active" && possibleActions.includes("move") && !submittingAction
+  const canMove = !isCompleted && gameState?.state === "active" && possibleActions.includes("move") && !submittingAction
+  const phantomsEnabled = !isCompleted && gameState?.state === "active"
+  const boardPhantomSquares = phantomsEnabled ? phantomSquares : []
+  const boardPhantomPlacements = phantomsEnabled ? placements : {}
   const showAskAny =
+    !isCompleted &&
     gameState?.state === "active" &&
     ["berkeley_any", "english", "crazykrieg"].includes(gameMeta?.rule_variant) &&
     possibleActions.includes("ask_any")
   const canAskAny = showAskAny && !submittingAction
-  const canResign = gameState?.state === "active" && !submittingAction
-  const canCloseWaitingGame = gameState?.state === "waiting" && !submittingAction
+  const canResign = !isCompleted && gameState?.state === "active" && !submittingAction
+  const canCloseWaitingGame = !isCompleted && gameState?.state === "waiting" && !submittingAction
 
   const selectedMoveBase = useMemo(() => {
     if (!fromSquare || !toSquare) {
@@ -2211,7 +2252,7 @@ export default function GamePage() {
   const highlightedSquares = [fromSquare, toSquare, movingPhantomFrom, dragHoverSquare, draggingMoveFrom, moveDragHoverSquare].filter(Boolean)
   const groupedRefereeLog = useMemo(() => buildVisibleRefereeLog(gameState), [gameState])
   const canSeedOpponentPhantoms =
-    gameState?.state === "active" &&
+    phantomsEnabled &&
     !hasPlayerTakenFirstTurn(groupedRefereeLog, gameState?.your_color)
   const flattenedRefereeEntries = useMemo(() => flattenGroupedRefereeEntries(groupedRefereeLog), [groupedRefereeLog])
   const captureSquares = useMemo(() => getRecentCaptureSquares(gameState), [gameState])
@@ -2239,7 +2280,7 @@ export default function GamePage() {
   const allowedMoveSourceSquares = useMemo(() => getAllowedMoveSources(effectiveAllowedMoves), [effectiveAllowedMoves])
   const reserveStatus = useMemo(() => getReserveStatus(gameState), [gameState])
   const isCrazyKrieg = gameMeta?.rule_variant === "crazykrieg"
-  const waitingForOpponent = gameState?.state === "active" && !possibleActions.includes("move")
+  const waitingForOpponent = !isCompleted && gameState?.state === "active" && !possibleActions.includes("move")
   const soundSettingEnabled = user?.settings?.sound_enabled !== false
   const soundsEnabled = soundSettingEnabled && !soundsMuted
   const remainingPieceStatus = useMemo(
@@ -2339,6 +2380,21 @@ export default function GamePage() {
     [currentMessageSegments]
   )
   const refereePanelStyle = desktopRefereeHeight ? { height: `${desktopRefereeHeight}px`, maxHeight: `${desktopRefereeHeight}px` } : undefined
+
+  useEffect(() => {
+    if (!isCompleted) {
+      return
+    }
+
+    clearAll()
+    setPhantomMenu(null)
+    setMovingPhantomFrom("")
+    setDraggingPhantomFrom("")
+    draggingPhantomFromRef.current = ""
+    dragPointerIdRef.current = null
+    setDragHoverSquare("")
+    setDragPreview(null)
+  }, [clearAll, isCompleted])
 
   useEffect(() => {
     const logNode = logScrollRef.current
@@ -2490,6 +2546,10 @@ export default function GamePage() {
   }
 
   function openPhantomMenu(square) {
+    if (!phantomsEnabled) {
+      return
+    }
+
     setSelectedDropPiece("")
     setActionError("")
     const squareHasPhantom = Boolean(placements[square])
@@ -2668,7 +2728,7 @@ export default function GamePage() {
       }
     }
 
-    const eligibleForDoubleTapPhantom = !fromSquare && (!ownPiece || Boolean(placements[square]))
+    const eligibleForDoubleTapPhantom = phantomsEnabled && !fromSquare && (!ownPiece || Boolean(placements[square]))
     const now = Date.now()
     const previousTap = lastTapRef.current
 
@@ -2728,6 +2788,10 @@ export default function GamePage() {
     resetTapState()
     setSelectedDropPiece("")
 
+    if (!phantomsEnabled) {
+      return
+    }
+
     if (suppressContextMenuRef.current) {
       suppressContextMenuRef.current = false
       return
@@ -2750,7 +2814,7 @@ export default function GamePage() {
   function handleSquarePointerDown(square, event) {
     blurActiveInteractiveElement()
 
-    if (movingPhantomFrom) {
+    if (movingPhantomFrom || !phantomsEnabled) {
       return
     }
 
@@ -2934,6 +2998,7 @@ export default function GamePage() {
           return {
             ...previousState,
             state: "completed",
+            __finalStatePending: true,
             turn: result.turn ?? previousState.turn,
             allowed_moves: [],
             possible_actions: [],
@@ -3042,7 +3107,7 @@ export default function GamePage() {
   }
 
   function handleMenuChoosePiece(piece) {
-    if (!phantomMenu?.square) {
+    if (!phantomsEnabled || !phantomMenu?.square) {
       return
     }
 
@@ -3051,7 +3116,7 @@ export default function GamePage() {
   }
 
   function handleMenuDeletePhantom() {
-    if (!phantomMenu?.square) {
+    if (!phantomsEnabled || !phantomMenu?.square) {
       return
     }
 
@@ -3068,7 +3133,7 @@ export default function GamePage() {
   }
 
   const phantomMenuSquare = phantomMenu?.square ?? ""
-  const phantomOnMenuSquare = phantomMenuSquare ? placements[phantomMenuSquare] : ""
+  const phantomOnMenuSquare = phantomsEnabled && phantomMenuSquare ? placements[phantomMenuSquare] : ""
   const nonNarrativeActionError = actionError && !actionError.toLowerCase().startsWith("illegal move") ? actionError : ""
   const transientGameMessage = loading
     ? "Loading game state…"
@@ -3171,8 +3236,8 @@ export default function GamePage() {
                   captureSquares={captureSquares}
                   illegalSquares={illegalMoveSquares}
                   suggestedSquares={moveSuggestionSquares}
-                  phantomSquares={phantomSquares}
-                  phantomPlacements={placements}
+                  phantomSquares={boardPhantomSquares}
+                  phantomPlacements={boardPhantomPlacements}
                   disabled={false}
                   onSquareClick={handleSquareClick}
                   onSquareRightClick={handleSquareRightClick}
@@ -3183,7 +3248,7 @@ export default function GamePage() {
                   onSquarePointerCancel={handleSquarePointerCancel}
                 />
 
-                {phantomMenu ? (
+                {phantomMenu && phantomsEnabled ? (
                   <div
                     className={`phantom-menu ${phantomMenu.x == null ? "phantom-menu--sheet" : ""}`.trim()}
                     style={phantomMenu.x == null ? undefined : { left: phantomMenu.x, top: phantomMenu.y }}
@@ -3296,7 +3361,9 @@ export default function GamePage() {
                     ) : null}
                   </div>
                 </section>
-                <p className="game-page__meta">Phantoms: left-drag to move, right-click to remove, double-click or right-click empty squares to add.</p>
+                {phantomsEnabled ? (
+                  <p className="game-page__meta">Phantoms: left-drag to move, right-click to remove, double-click or right-click empty squares to add.</p>
+                ) : null}
               </div>
             </section>
 

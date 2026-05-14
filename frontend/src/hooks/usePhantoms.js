@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { FILES, RANKS, parseFenBoard } from "../components/chessboard"
 
 const STARTING_TRAY = {
@@ -194,9 +194,9 @@ export default function usePhantoms({ gameId, occupiedSquares = [] }) {
     return true
   }
 
-  function clearAll() {
+  const clearAll = useCallback(() => {
     setPlacements({})
-  }
+  }, [])
 
   function replaceAll(nextPlacements) {
     setPlacements(removeOccupiedPlacements(nextPlacements, occupiedSet))
