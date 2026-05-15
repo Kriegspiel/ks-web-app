@@ -1202,6 +1202,15 @@ function normalizeRatings(source) {
   }
 }
 
+function ratingNumber(value) {
+  if (value == null) {
+    return null
+  }
+
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
+}
+
 function ratingValue(value) {
   return Number.isFinite(value) ? String(value) : "—"
 }
@@ -1328,25 +1337,21 @@ function playerLabel(player) {
   return player.role === "bot" ? `${player.username} (bot)` : player.username
 }
 
-function historicalRatingsForColor(game, color) {
+function snapshotRatingsForColor(game, color, phase) {
   const player = color === "black" ? game?.black : game?.white
   const current = normalizeRatings(player)
   const snapshot = game?.rating_snapshot
   if (!snapshot || typeof snapshot !== "object") {
-    return {
-      overall: null,
-      vsHumans: null,
-      vsBots: null,
-    }
+    return phase === "after" ? current : { overall: null, vsHumans: null, vsBots: null }
   }
 
-  const overall = snapshot?.overall?.[`${color}_before`]
-  const specific = snapshot?.specific?.[`${color}_before`]
+  const overall = ratingNumber(snapshot?.overall?.[`${color}_${phase}`])
+  const specific = ratingNumber(snapshot?.specific?.[`${color}_${phase}`])
   const track = snapshot?.[`${color}_track`]
   return {
-    overall: overall == null ? null : Number(overall),
-    vsHumans: track === "vs_humans" ? Number(specific) : current.vsHumans,
-    vsBots: track === "vs_bots" ? Number(specific) : current.vsBots,
+    overall: overall ?? current.overall,
+    vsHumans: track === "vs_humans" ? specific ?? current.vsHumans : current.vsHumans,
+    vsBots: track === "vs_bots" ? specific ?? current.vsBots : current.vsBots,
   }
 }
 
@@ -2355,10 +2360,10 @@ export default function GamePage() {
   const opponentRatings = useMemo(() => normalizeRatings(opponent), [opponent])
   const opponentRating = opponentRatings.overall
   const completedResult = gameMeta?.result ?? gameState?.result
-  const whiteCurrentRatings = useMemo(() => normalizeRatings(gameMeta?.white), [gameMeta?.white])
-  const blackCurrentRatings = useMemo(() => normalizeRatings(gameMeta?.black), [gameMeta?.black])
-  const whiteHistoricalRatings = useMemo(() => historicalRatingsForColor(gameMeta, "white"), [gameMeta])
-  const blackHistoricalRatings = useMemo(() => historicalRatingsForColor(gameMeta, "black"), [gameMeta])
+  const whiteBeforeRatings = useMemo(() => snapshotRatingsForColor(gameMeta, "white", "before"), [gameMeta])
+  const blackBeforeRatings = useMemo(() => snapshotRatingsForColor(gameMeta, "black", "before"), [gameMeta])
+  const whiteAfterRatings = useMemo(() => snapshotRatingsForColor(gameMeta, "white", "after"), [gameMeta])
+  const blackAfterRatings = useMemo(() => snapshotRatingsForColor(gameMeta, "black", "after"), [gameMeta])
   const completedFinishedAt = formatUtcDateTime(gameMeta?.updated_at)
   const completedDuration = formatDuration(gameMeta?.created_at, gameMeta?.updated_at)
   const completedHeading = formatViewerOutcome(completedResult, gameState?.your_color)
@@ -3185,9 +3190,9 @@ export default function GamePage() {
 
               <div className="game-complete-summary__ratings">
                 {[
-                  ["white", gameMeta?.white, whiteHistoricalRatings, whiteCurrentRatings],
-                  ["black", gameMeta?.black, blackHistoricalRatings, blackCurrentRatings],
-                ].map(([color, player, historicalRatings, currentRatings]) => (
+                  ["white", gameMeta?.white, whiteBeforeRatings, whiteAfterRatings],
+                  ["black", gameMeta?.black, blackBeforeRatings, blackAfterRatings],
+                ].map(([color, player, beforeRatings, afterRatings]) => (
                   <article key={color} className="game-complete-summary__player-card">
                     <h3>
                       {color === "white" ? "White" : "Black"}:{" "}
@@ -3200,9 +3205,9 @@ export default function GamePage() {
                       )}
                     </h3>
                     <ul className="game-complete-summary__rating-list">
-                      <li><span>Overall</span><strong>{formatRatingTransition(historicalRatings?.overall, currentRatings?.overall)}</strong></li>
-                      <li><span>vs Humans</span><strong>{formatRatingTransition(historicalRatings?.vsHumans, currentRatings?.vsHumans)}</strong></li>
-                      <li><span>vs Bots</span><strong>{formatRatingTransition(historicalRatings?.vsBots, currentRatings?.vsBots)}</strong></li>
+                      <li><span>Overall</span><strong>{formatRatingTransition(beforeRatings?.overall, afterRatings?.overall)}</strong></li>
+                      <li><span>vs Humans</span><strong>{formatRatingTransition(beforeRatings?.vsHumans, afterRatings?.vsHumans)}</strong></li>
+                      <li><span>vs Bots</span><strong>{formatRatingTransition(beforeRatings?.vsBots, afterRatings?.vsBots)}</strong></li>
                     </ul>
                   </article>
                 ))}
