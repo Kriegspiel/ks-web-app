@@ -19,6 +19,19 @@ function formatGameCount(value) {
   return Number.isFinite(count) ? count.toLocaleString("en-US") : "0"
 }
 
+function formatTotalTimePlayed(value) {
+  const totalSeconds = Math.max(0, Math.floor(Number(value) || 0))
+  if (totalSeconds === 0) return "0m"
+
+  const days = Math.floor(totalSeconds / 86_400)
+  const hours = Math.floor((totalSeconds % 86_400) / 3_600)
+  const minutes = Math.floor((totalSeconds % 3_600) / 60)
+  if (days > 0) return `${days}d ${hours}h`
+  if (hours > 0) return `${hours}h ${minutes}m`
+  if (minutes > 0) return `${minutes}m`
+  return `${totalSeconds}s`
+}
+
 export default function GuestsReportPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -82,6 +95,7 @@ export default function GuestsReportPage() {
                     <th>Day started</th>
                     <th>Last game</th>
                     <th>Number of games</th>
+                    <th>Total time played</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -95,6 +109,7 @@ export default function GuestsReportPage() {
                       <td>{formatStartedDay(guest.day_started)}</td>
                       <td>{formatLastGame(guest.last_game)}</td>
                       <td>{formatGameCount(guest.number_of_games)}</td>
+                      <td>{formatTotalTimePlayed(guest.total_time_played_seconds)}</td>
                     </tr>
                   ))}
                 </tbody>
