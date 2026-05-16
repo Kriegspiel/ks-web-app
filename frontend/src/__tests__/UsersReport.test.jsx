@@ -61,6 +61,16 @@ describe("UsersReportPage", () => {
           played_at: "2026-05-01T12:00:00+00:00",
           review_path: "/game/USER01/review",
         },
+        {
+          game_id: "gid-2",
+          game_code: "LIVE02",
+          rule_variant: "wild16",
+          white: { username: "fil", role: "user" },
+          black: { username: "gptnano", role: "bot" },
+          result: {},
+          played_at: "2026-05-01T12:05:00+00:00",
+          review_path: "/game/LIVE02/review",
+        },
       ],
     })
 
@@ -75,11 +85,15 @@ describe("UsersReportPage", () => {
     expect(screen.getAllByText("Total games").length).toBeGreaterThan(0)
 
     const gamesSection = screen.getByRole("heading", { name: "Last 100 games by users" }).closest("section")
+    const userRow = within(gamesSection).getByRole("row", { name: /USER01/i })
+    const liveRow = within(gamesSection).getByRole("row", { name: /LIVE02/i })
     expect(within(gamesSection).getByRole("link", { name: "USER01" })).toHaveAttribute("href", "/game/USER01/review")
+    expect(within(gamesSection).getByRole("link", { name: "LIVE02" })).toHaveAttribute("href", "/game/LIVE02/review")
     expect(within(gamesSection).getByText("CrazyKrieg")).toBeInTheDocument()
-    expect(within(gamesSection).getByRole("link", { name: "fil" })).toHaveAttribute("href", "/user/fil")
-    expect(within(gamesSection).getByRole("link", { name: "gptnano (bot)" })).toHaveAttribute("href", "/user/gptnano")
-    expect(within(gamesSection).getByText("white, checkmate")).toBeInTheDocument()
+    expect(within(userRow).getByRole("link", { name: "fil" })).toHaveAttribute("href", "/user/fil")
+    expect(within(userRow).getByRole("link", { name: "gptnano (bot)" })).toHaveAttribute("href", "/user/gptnano")
+    expect(within(userRow).getByText("white, checkmate")).toBeInTheDocument()
+    expect(liveRow).toHaveTextContent("—")
     expect(within(gamesSection).getByText("2026-05-01 12:00:00 UTC")).toBeInTheDocument()
 
     nowSpy.mockRestore()
