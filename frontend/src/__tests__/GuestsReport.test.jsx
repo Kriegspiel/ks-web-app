@@ -38,6 +38,7 @@ describe("GuestsReportPage", () => {
           day_started: "2026-04-01",
           last_game: "2026-04-04T13:00:00+00:00",
           number_of_games: 2,
+          total_time_played_seconds: 5_400,
         },
         {
           name: "guest_judit_polgar",
@@ -45,6 +46,7 @@ describe("GuestsReportPage", () => {
           day_started: "2026-04-02",
           last_game: null,
           number_of_games: 0,
+          total_time_played_seconds: 0,
         },
       ],
     })
@@ -57,6 +59,9 @@ describe("GuestsReportPage", () => {
     expect(screen.getByRole("link", { name: "guest_judit_polgar" })).toHaveAttribute("href", "/user/guest_judit_polgar")
     expect(screen.getByText("2026-04-01")).toBeInTheDocument()
     expect(screen.getByText("2026-04-04 13:00:00 UTC")).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: "Total time played" })).toBeInTheDocument()
+    expect(screen.getByText("1h 30m")).toBeInTheDocument()
+    expect(screen.getByText("0m")).toBeInTheDocument()
     expect(screen.getByText(/2 guests listed/)).toBeInTheDocument()
     expect(screen.getByText(/39,998 guest accounts still available/)).toBeInTheDocument()
 
