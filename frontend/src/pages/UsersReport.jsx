@@ -64,8 +64,13 @@ function resultText(result) {
   if (!result || typeof result !== "object") {
     return "—"
   }
+  const hasWinner = Object.prototype.hasOwnProperty.call(result, "winner")
+  const hasReason = typeof result.reason === "string" && result.reason.trim()
+  if (!hasWinner && !hasReason) {
+    return "—"
+  }
   const winner = result.winner ? String(result.winner) : "draw"
-  const reason = result.reason ? `, ${result.reason}` : ""
+  const reason = hasReason ? `, ${result.reason}` : ""
   return `${winner}${reason}`
 }
 

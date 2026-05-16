@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.49
+
+- **Users Tech Report**: render unknown or in-progress game results as `—`
+  instead of treating an empty result payload as a draw.
+
 ## ks-web-app frontend v. 1.3.48
 
 - **Guest Tech Report**: adds a total time played column for each guest account.
