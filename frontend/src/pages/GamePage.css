@@ -407,6 +407,11 @@
   box-shadow: none;
 }
 
+.game-opening-callout--active {
+  border-color: color-mix(in srgb, var(--accent) 70%, var(--border));
+  background: color-mix(in srgb, var(--surface-strong) 66%, var(--accent) 34%);
+}
+
 .game-opening-callout__eyebrow {
   display: block;
   font-size: 0.74rem;

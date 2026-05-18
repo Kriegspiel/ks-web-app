@@ -1540,18 +1540,19 @@ describe("GamePage", () => {
     nowSpy.mockRestore()
   })
 
-  it("seeds_default_opponent_phantoms_only_at_the_opening", async () => {
+  it("toggles_default_opponent_phantoms_only_at_the_opening", async () => {
     render(<GamePage />)
 
     const boardSection = await screen.findByLabelText("Board")
     const pieceStatus = await screen.findByLabelText("Remaining piece status")
-    const openingSetupButton = screen.getByRole("button", { name: /Opening setup\. Seed the opponent's starting pieces as phantoms in one click\./i })
+    const openingSetupButton = screen.getByRole("button", { name: /Opening setup\. Show opponent starting phantoms\./i })
     const boardShell = boardSection.querySelector(".game-board-shell")
     expect(openingSetupButton).toBeInTheDocument()
+    expect(openingSetupButton).toHaveAttribute("aria-pressed", "false")
     expect(boardShell).toBeInTheDocument()
     expect(openingSetupButton.closest(".game-board-meta")).toBeNull()
     expect(openingSetupButton.compareDocumentPosition(boardShell) & window.Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(screen.getByText(/Seed the opponent's starting pieces as phantoms in one click\./i)).toBeInTheDocument()
+    expect(screen.getByText(/Show opponent starting phantoms\./i)).toBeInTheDocument()
     expect(within(pieceStatus).getByText("White pieces remain:")).toBeInTheDocument()
     expect(within(pieceStatus).getByText("Black pieces remain:")).toBeInTheDocument()
     expect(within(pieceStatus).getAllByText("16")).toHaveLength(2)
@@ -1562,6 +1563,14 @@ describe("GamePage", () => {
     expect(screen.getByRole("button", { name: "Square e8" })).toHaveClass("square--phantom")
     expect(screen.getByRole("button", { name: "Square h7" })).toHaveClass("square--phantom")
     expect(within(screen.getByLabelText("Remaining piece status")).getAllByText("16")).toHaveLength(2)
+
+    expect(screen.getByRole("button", { name: /Opening setup\. Hide opponent starting phantoms\./i })).toHaveAttribute("aria-pressed", "true")
+    fireEvent.click(openingSetupButton)
+
+    expect(screen.getByRole("button", { name: "Square a8" })).not.toHaveClass("square--phantom")
+    expect(screen.getByRole("button", { name: "Square e8" })).not.toHaveClass("square--phantom")
+    expect(screen.getByRole("button", { name: "Square h7" })).not.toHaveClass("square--phantom")
+    expect(screen.getByRole("button", { name: /Opening setup\. Show opponent starting phantoms\./i })).toHaveAttribute("aria-pressed", "false")
   })
 
   it("hides_default_opponent_phantom_setup_after_the_opening", async () => {
@@ -1574,7 +1583,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByLabelText("Remaining piece status")
-    expect(screen.queryByRole("button", { name: /Opening setup\. Seed the opponent's starting pieces as phantoms in one click\./i })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /Opening setup\. Show opponent starting phantoms\./i })).not.toBeInTheDocument()
   })
 
   it("keeps_default_opponent_phantom_setup_visible_for_black_until_black_moves", async () => {
@@ -1595,7 +1604,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     await screen.findByLabelText("Remaining piece status")
-    expect(screen.getByRole("button", { name: /Opening setup\. Seed the opponent's starting pieces as phantoms in one click\./i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Opening setup\. Show opponent starting phantoms\./i })).toBeInTheDocument()
   })
 
   it("falls_back_to_capture_announcements_when_material_summary_is_missing", async () => {
