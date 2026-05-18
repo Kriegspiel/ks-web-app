@@ -1721,6 +1721,12 @@ function opponentStartingPhantoms(playerColor) {
   return OPPONENT_STARTING_PHANTOMS[normalized === "white" ? "black" : "white"] ?? {}
 }
 
+function placementsEqual(left, right) {
+  const leftEntries = Object.entries(left ?? {})
+  const rightEntries = Object.entries(right ?? {})
+  return leftEntries.length === rightEntries.length && leftEntries.every(([square, piece]) => right?.[square] === piece)
+}
+
 function isOpeningPromptText(text) {
   return /^(white|black) to move$/i.test(String(text || "").trim())
 }
@@ -2256,6 +2262,12 @@ export default function GamePage() {
 
   const highlightedSquares = [fromSquare, toSquare, movingPhantomFrom, dragHoverSquare, draggingMoveFrom, moveDragHoverSquare].filter(Boolean)
   const groupedRefereeLog = useMemo(() => buildVisibleRefereeLog(gameState), [gameState])
+  const opponentOpeningPhantoms = useMemo(() => opponentStartingPhantoms(gameState?.your_color), [gameState?.your_color])
+  const openingSetupActive = useMemo(
+    () => Object.keys(opponentOpeningPhantoms).length > 0 && placementsEqual(placements, opponentOpeningPhantoms),
+    [opponentOpeningPhantoms, placements],
+  )
+  const openingSetupButtonText = openingSetupActive ? "Hide opponent starting phantoms." : "Show opponent starting phantoms."
   const canSeedOpponentPhantoms =
     phantomsEnabled &&
     !hasPlayerTakenFirstTurn(groupedRefereeLog, gameState?.your_color)
@@ -3133,7 +3145,7 @@ export default function GamePage() {
   }
 
   function handleSeedOpponentPhantoms() {
-    replaceAll(opponentStartingPhantoms(gameState?.your_color))
+    replaceAll(openingSetupActive ? {} : opponentOpeningPhantoms)
     setActionError("")
   }
 
@@ -3220,12 +3232,13 @@ export default function GamePage() {
               {canSeedOpponentPhantoms ? (
                 <button
                   type="button"
-                  className="game-opening-callout"
-                  aria-label="Opening setup. Seed the opponent's starting pieces as phantoms in one click."
+                  className={`game-opening-callout ${openingSetupActive ? "game-opening-callout--active" : ""}`.trim()}
+                  aria-label={`Opening setup. ${openingSetupButtonText}`}
+                  aria-pressed={openingSetupActive}
                   onClick={handleSeedOpponentPhantoms}
                 >
                   <span className="game-opening-callout__eyebrow">Opening setup</span>
-                  <span className="game-opening-callout__body">Seed the opponent&apos;s starting pieces as phantoms in one click.</span>
+                  <span className="game-opening-callout__body">{openingSetupButtonText}</span>
                 </button>
               ) : null}
 

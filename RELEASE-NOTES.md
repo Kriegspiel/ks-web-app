@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.50
+
+- **Opening Setup Phantoms**: changes the opening setup control into a
+  Show/Hide toggle for opponent starting phantoms.
+
 ## ks-web-app frontend v. 1.3.49
 
 - **Users Tech Report**: render unknown or in-progress game results as `—`
