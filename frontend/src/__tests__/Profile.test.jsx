@@ -190,6 +190,24 @@ describe("ProfilePage", () => {
           vs_bots: { elo: 1200, peak: 1200 },
         },
       },
+      bot_metrics: {
+        completed_games: 4,
+        average_duration_seconds: 420,
+        average_turn_count: 18.5,
+        overall: { total_games: 4, wins: 2, losses: 1, draws: 1, win_rate: 0.5 },
+        vs_humans: { total_games: 2, wins: 2, losses: 0, draws: 0, win_rate: 1.0 },
+        vs_bots: { total_games: 2, wins: 0, losses: 1, draws: 1, win_rate: 0.0 },
+        as_white: { total_games: 3, wins: 2, losses: 0, draws: 1, win_rate: 0.6667 },
+        as_black: { total_games: 1, wins: 0, losses: 1, draws: 0, win_rate: 0.0 },
+        opponents: [
+          { username: "haiku", role: "bot", total_games: 2, wins: 0, losses: 1, draws: 1, win_rate: 0.0 },
+          { username: "fil", role: "user", total_games: 2, wins: 2, losses: 0, draws: 0, win_rate: 1.0 },
+        ],
+        rulesets: [
+          { rule_variant: "wild16", total_games: 3, wins: 1, losses: 1, draws: 1, win_rate: 0.3333 },
+          { rule_variant: "berkeley_any", total_games: 1, wins: 1, losses: 0, draws: 0, win_rate: 1.0 },
+        ],
+      },
     })
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
     mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
@@ -203,6 +221,23 @@ describe("ProfilePage", () => {
     expect(screen.getByText(/Email address of this bot owner is bot-gpt-nano@kriegspiel\.org\./i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("href", "https://kriegspiel.org/blog/bot-registration-flow")
     expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("target", "_blank")
+    expect(screen.getByRole("heading", { name: "Bot metrics" })).toBeInTheDocument()
+    expect(screen.getByText("Completed games")).toBeInTheDocument()
+    expect(screen.getByText("4")).toBeInTheDocument()
+    expect(screen.getByText("vs Bots win rate")).toBeInTheDocument()
+    expect(screen.getAllByText("0.0%").length).toBeGreaterThan(0)
+    expect(screen.getByText("vs Humans win rate")).toBeInTheDocument()
+    expect(screen.getAllByText("100.0%").length).toBeGreaterThan(0)
+    expect(screen.getByText("Average turns")).toBeInTheDocument()
+    expect(screen.getByText("18.5")).toBeInTheDocument()
+    expect(screen.getByText("Average duration")).toBeInTheDocument()
+    expect(screen.getByText("7m")).toBeInTheDocument()
+    expect(screen.getByText("White")).toBeInTheDocument()
+    expect(screen.getByText("2-0-1 · 66.7%")).toBeInTheDocument()
+    expect(screen.getByText("haiku (bot)")).toBeInTheDocument()
+    expect(screen.getByText("0-1-1 · 0.0%")).toBeInTheDocument()
+    expect(screen.getByText("Wild 16")).toBeInTheDocument()
+    expect(screen.getByText("3 · 33.3%")).toBeInTheDocument()
   })
 
   it("shows_guest_conversion_section_for_own_guest_profile", async () => {
@@ -301,6 +336,7 @@ describe("ProfilePage", () => {
     await screen.findByRole("heading", { name: "haiku" })
     expect(screen.getByText("Member since Unknown.")).toBeInTheDocument()
     expect(screen.getByText(/Email address of this bot owner is unknown\./i)).toBeInTheDocument()
+    expect(screen.getByText("No completed bot games yet.")).toBeInTheDocument()
     expect(screen.getByText(/draw vs unknown/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/haiku/games")
   })

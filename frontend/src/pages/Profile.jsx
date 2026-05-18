@@ -66,6 +66,57 @@ function formatResultSummary(resultTrack) {
   }
 }
 
+function normalizeMetricBucket(bucket) {
+  return {
+    totalGames: statOrZero(bucket?.total_games),
+    wins: statOrZero(bucket?.wins),
+    losses: statOrZero(bucket?.losses),
+    draws: statOrZero(bucket?.draws),
+    winRate: Number.isFinite(Number(bucket?.win_rate)) ? Number(bucket.win_rate) : 0,
+  }
+}
+
+function normalizeBotMetrics(source) {
+  if (!source || typeof source !== "object") return null
+  return {
+    completedGames: statOrZero(source.completed_games),
+    averageDurationSeconds: statOrZero(source.average_duration_seconds),
+    averageTurnCount: Number.isFinite(Number(source.average_turn_count)) ? Number(source.average_turn_count) : 0,
+    overall: normalizeMetricBucket(source.overall),
+    vsHumans: normalizeMetricBucket(source.vs_humans),
+    vsBots: normalizeMetricBucket(source.vs_bots),
+    asWhite: normalizeMetricBucket(source.as_white),
+    asBlack: normalizeMetricBucket(source.as_black),
+    opponents: Array.isArray(source.opponents) ? source.opponents.map((row) => ({
+      username: row?.username || "unknown",
+      role: row?.role || "user",
+      ...normalizeMetricBucket(row),
+    })) : [],
+    rulesets: Array.isArray(source.rulesets) ? source.rulesets.map((row) => ({
+      ruleVariant: row?.rule_variant || "unknown",
+      ...normalizeMetricBucket(row),
+    })) : [],
+  }
+}
+
+function formatWinRate(value) {
+  return `${(Number(value || 0) * 100).toFixed(1)}%`
+}
+
+function formatMetricRecord(bucket) {
+  return `${bucket.wins}-${bucket.losses}-${bucket.draws}`
+}
+
+function formatDuration(seconds) {
+  const totalSeconds = statOrZero(seconds)
+  if (totalSeconds <= 0) return "0m"
+  const minutes = Math.round(totalSeconds / 60)
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  return remainingMinutes ? `${hours}h ${remainingMinutes}m` : `${hours}h`
+}
+
 function regularNameFromGuest(username) {
   return typeof username === "string" && username.startsWith("guest_")
     ? username.slice("guest_".length)
@@ -153,6 +204,10 @@ export default function ProfilePage() {
   const selectedRating = ratingTrack === "vs_humans" ? stats.ratings.vsHumans : ratingTrack === "vs_bots" ? stats.ratings.vsBots : stats.ratings.overall
   const selectedResults = ratingTrack === "vs_humans" ? stats.results.vsHumans : ratingTrack === "vs_bots" ? stats.results.vsBots : stats.results.overall
   const selectedHistoryStats = useMemo(() => formatResultSummary(selectedResults), [selectedResults])
+  const isBotProfile = profile?.role === "bot" || profile?.is_bot
+  const botMetrics = useMemo(() => normalizeBotMetrics(profile?.bot_metrics), [profile])
+  const botOpponentRows = useMemo(() => (botMetrics?.opponents ?? []).slice(0, 5), [botMetrics])
+  const botRulesetRows = useMemo(() => (botMetrics?.rulesets ?? []).slice(0, 4), [botMetrics])
   const isOwnGuestProfile = user?.is_guest === true && profile?.role === "guest" && user?.username === profile?.username
   const convertedUsername = regularNameFromGuest(profile?.username)
 
@@ -224,7 +279,7 @@ export default function ProfilePage() {
           </form>
         </section>
       ) : null}
-      {profile?.role === "bot" || profile?.is_bot ? (
+      {isBotProfile ? (
         <section className="profile-card profile-card--bot-note" aria-label="Bot information">
           <h2>This user is bot</h2>
           <p>
@@ -236,6 +291,57 @@ export default function ProfilePage() {
           </p>
           <p>You also can create your own bot – more bots, more fun.</p>
           <p>Email address of this bot owner is {profile?.owner_email ?? "unknown"}.</p>
+        </section>
+      ) : null}
+      {isBotProfile ? (
+        <section className="profile-card profile-card--bot-metrics" aria-label="Bot metrics">
+          <h2>Bot metrics</h2>
+          {botMetrics?.completedGames ? (
+            <>
+              <dl className="profile-stats-grid profile-bot-metrics-summary">
+                <div><dt>Completed games</dt><dd>{botMetrics.completedGames}</dd></div>
+                <div><dt>vs Bots win rate</dt><dd>{formatWinRate(botMetrics.vsBots.winRate)}</dd></div>
+                <div><dt>vs Humans win rate</dt><dd>{formatWinRate(botMetrics.vsHumans.winRate)}</dd></div>
+                <div><dt>Average turns</dt><dd>{botMetrics.averageTurnCount.toFixed(1)}</dd></div>
+                <div><dt>Average duration</dt><dd>{formatDuration(botMetrics.averageDurationSeconds)}</dd></div>
+              </dl>
+              <div className="profile-bot-metrics-panels">
+                <section className="profile-bot-metrics-panel" aria-labelledby="profile-bot-color-heading">
+                  <h3 id="profile-bot-color-heading">Color split</h3>
+                  <dl className="profile-bot-mini-list">
+                    <div><dt>White</dt><dd>{formatMetricRecord(botMetrics.asWhite)} · {formatWinRate(botMetrics.asWhite.winRate)}</dd></div>
+                    <div><dt>Black</dt><dd>{formatMetricRecord(botMetrics.asBlack)} · {formatWinRate(botMetrics.asBlack.winRate)}</dd></div>
+                  </dl>
+                </section>
+                <section className="profile-bot-metrics-panel" aria-labelledby="profile-bot-opponents-heading">
+                  <h3 id="profile-bot-opponents-heading">Top opponents</h3>
+                  {botOpponentRows.length ? (
+                    <ul className="profile-bot-row-list">
+                      {botOpponentRows.map((row) => (
+                        <li key={`${row.role}-${row.username}`}>
+                          <span>{row.username}{row.role === "bot" ? " (bot)" : ""}</span>
+                          <strong>{formatMetricRecord(row)} · {formatWinRate(row.winRate)}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : <p>No opponent rows yet.</p>}
+                </section>
+                <section className="profile-bot-metrics-panel" aria-labelledby="profile-bot-rulesets-heading">
+                  <h3 id="profile-bot-rulesets-heading">Rulesets</h3>
+                  {botRulesetRows.length ? (
+                    <ul className="profile-bot-row-list">
+                      {botRulesetRows.map((row) => (
+                        <li key={row.ruleVariant}>
+                          <span>{formatRuleVariant(row.ruleVariant)}</span>
+                          <strong>{row.totalGames} · {formatWinRate(row.winRate)}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : <p>No ruleset rows yet.</p>}
+                </section>
+              </div>
+            </>
+          ) : <p>No completed bot games yet.</p>}
         </section>
       ) : null}
 
