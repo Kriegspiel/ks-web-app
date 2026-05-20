@@ -24,8 +24,8 @@
 
 .profile-bot-metrics-panels {
   display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem 1.35rem;
+  grid-template-columns: minmax(12rem, 0.9fr) minmax(24rem, 1.4fr) minmax(12rem, 0.9fr);
   margin-top: 1rem;
 }
 
@@ -50,8 +50,9 @@
 .profile-bot-mini-list > div,
 .profile-bot-row-list li {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.15rem 0.75rem;
   align-items: baseline;
   min-width: 0;
 }
@@ -60,15 +61,35 @@
 .profile-bot-row-list span {
   color: var(--muted);
   min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.profile-bot-mini-list dt {
+  flex: 1 1 auto;
+}
+
+.profile-bot-row-list span {
+  flex: 1 1 9rem;
+  min-width: 9rem;
 }
 
 .profile-bot-mini-list dd,
 .profile-bot-row-list strong {
-  margin: 0;
+  margin: 0 0 0 auto;
   color: var(--text);
   font-weight: 700;
   text-align: right;
+  max-width: 100%;
+}
+
+.profile-bot-mini-list dd {
+  flex: 0 0 auto;
   white-space: nowrap;
+}
+
+.profile-bot-row-list strong {
+  flex: 0 1 auto;
+  overflow-wrap: anywhere;
 }
 
 .profile-card--guest-conversion {
@@ -169,10 +190,20 @@
   font-weight: 600;
 }
 
+@media (max-width: 900px) {
+  .profile-bot-metrics-panels {
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  }
+}
+
 @media (max-width: 700px) {
   .profile-recent-list li {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .profile-bot-metrics-panels {
+    grid-template-columns: 1fr;
   }
 
   .profile-bot-mini-list > div,
@@ -183,7 +214,12 @@
 
   .profile-bot-mini-list dd,
   .profile-bot-row-list strong {
+    margin-left: 0;
     text-align: left;
     white-space: normal;
+  }
+
+  .profile-bot-row-list span {
+    min-width: 0;
   }
 }
