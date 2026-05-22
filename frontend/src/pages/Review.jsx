@@ -127,7 +127,11 @@ function moveAnnouncements(move) {
 
   const main = formatCaptureAnnouncement(move?.answer)
   const special = formatAnnouncement(move?.answer?.special)
-  const items = [...new Set([main, special].filter(Boolean))]
+  const checks = String(move?.answer?.special ?? "").toUpperCase() === "CHECK_DOUBLE"
+    && Array.isArray(move?.answer?.checks)
+    ? move.answer.checks.map((check) => formatAnnouncement(check))
+    : []
+  const items = [...new Set([main, special, ...checks].filter(Boolean))]
 
   if (questionType !== "ASK_ANY" && normalizedUci) {
     const combined = items.length ? [`[${normalizedUci}]`, items.join(" · ")].join(" ") : `[${normalizedUci}]`

@@ -369,6 +369,7 @@ function getLogEntryTexts(entry) {
     entry.announcements,
     entry.message,
     entry.messages,
+    entry.checks,
     entry.text,
     entry.response,
     entry.responses,
