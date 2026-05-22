@@ -979,7 +979,12 @@ describe("ReviewPage", () => {
           color: "black",
           question_type: "ASK_ANY",
           uci: null,
-          answer: { main: null, capture_square: null, special: "CHECK_DOUBLE" },
+          answer: {
+            main: null,
+            capture_square: null,
+            special: "CHECK_DOUBLE",
+            checks: ["CHECK_KNIGHT", "CHECK_FILE"],
+          },
           move_done: false,
           timestamp: "2026-04-05T12:01:10Z",
           replay_fen: null,
@@ -1007,7 +1012,7 @@ describe("ReviewPage", () => {
     renderReviewPage()
 
     await screen.findByText(/Move log/i)
-    expect(screen.getByRole("button", { name: /Black Double check/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Black Double check.*Check by knight.*Check on file/i })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /White \[\?\?\] Move complete/i })).toBeInTheDocument()
     expect(screen.getByText("2m 20s")).toBeInTheDocument()
     const gameDetails = screen.getByRole("heading", { name: "Game details" }).closest(".review-page__stats-card")

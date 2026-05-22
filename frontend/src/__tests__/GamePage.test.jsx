@@ -2158,6 +2158,27 @@ describe("GamePage", () => {
     expect(within(refereeLog).getByText("Checkmate — Black wins")).toBeInTheDocument()
   })
 
+  it("renders_double_check_component_announcements_from_referee_log_checks", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      referee_log: [
+        {
+          turn: 1,
+          color: "white",
+          announcement: "CHECK_DOUBLE",
+          checks: ["CHECK_KNIGHT", "CHECK_LONG_DIAGONAL"],
+        },
+      ],
+    })
+
+    render(<GamePage />)
+
+    const refereeLog = await screen.findByRole("log", { name: "Referee log by turn" })
+    expect(within(refereeLog).getByText("Double check")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Check by knight")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Check on long diagonal")).toBeInTheDocument()
+  })
+
   it("formats_cincinnati_false_pawn_capture_metadata_as_no_pawn_captures", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
