@@ -98,6 +98,8 @@ const REFEREE_MAIN_ANNOUNCEMENT_TEXT = {
   DRAW_INSUFFICIENT: "Draw by insufficient material",
   CHECKMATE_WHITE_WINS: "Checkmate — White wins",
   CHECKMATE_BLACK_WINS: "Checkmate — Black wins",
+  STALEMATE_WHITE_WINS: "Stalemate — White wins",
+  STALEMATE_BLACK_WINS: "Stalemate — Black wins",
   CHECK_RANK: "Check on rank",
   CHECK_FILE: "Check on file",
   CHECK_LONG_DIAGONAL: "Check on long diagonal",
@@ -1302,6 +1304,10 @@ function resultFromMoveResponse(response) {
       return { winner: "white", reason: "checkmate" }
     case "CHECKMATE_BLACK_WINS":
       return { winner: "black", reason: "checkmate" }
+    case "STALEMATE_WHITE_WINS":
+      return { winner: "white", reason: "stalemate" }
+    case "STALEMATE_BLACK_WINS":
+      return { winner: "black", reason: "stalemate" }
     case "DRAW_STALEMATE":
       return { winner: null, reason: "stalemate" }
     case "DRAW_INSUFFICIENT":

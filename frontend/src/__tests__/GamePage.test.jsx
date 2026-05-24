@@ -458,6 +458,48 @@ describe("GamePage", () => {
     })
   })
 
+  it("shows_rand_stalemate_win_from_game_over_submit_response", async () => {
+    let resolveFollowupPoll
+    const completedFinalState = {
+      ...activeState,
+      state: "completed",
+      turn: null,
+      your_fen: "4k3/8/8/8/4P3/8/8/4K3",
+      allowed_moves: [],
+      possible_actions: [],
+      result: { winner: "white", reason: "stalemate" },
+      clock: { white_remaining: 612, black_remaining: 588, active_color: null },
+    }
+    mockApi.getGameState
+      .mockResolvedValueOnce(activeState)
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFollowupPoll = resolve
+          }),
+      )
+      .mockResolvedValue(completedFinalState)
+    mockApi.submitMove.mockResolvedValueOnce({
+      move_done: true,
+      game_over: true,
+      special_announcement: "STALEMATE_WHITE_WINS",
+      turn: null,
+      clock: { white_remaining: 612, black_remaining: 588, active_color: null },
+    })
+
+    render(<GamePage />)
+
+    await screen.findByRole("button", { name: "Square e2" })
+    fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+
+    const summary = await screen.findByLabelText("Completed game summary")
+    expect(within(summary).getByText("You won by stalemate")).toBeInTheDocument()
+    expect(within(summary).getByText("White wins by stalemate")).toBeInTheDocument()
+
+    resolveFollowupPoll(completedFinalState)
+  })
+
   it("hides_and_clears_phantoms_when_a_completed_game_loads", async () => {
     window.localStorage.setItem("phantoms_g-123", JSON.stringify({ placements: { d5: "q" } }))
     mockApi.getGameState.mockResolvedValueOnce({
@@ -2139,6 +2181,8 @@ describe("GamePage", () => {
         { turn: 5, color: "white", announcement: "DRAW_INSUFFICIENT" },
         { turn: 5, color: "black", announcement: "CHECKMATE_WHITE_WINS" },
         { turn: 6, color: "white", announcement: "CHECKMATE_BLACK_WINS" },
+        { turn: 6, color: "black", announcement: "STALEMATE_WHITE_WINS" },
+        { turn: 7, color: "white", announcement: "STALEMATE_BLACK_WINS" },
       ],
     })
 
@@ -2156,6 +2200,8 @@ describe("GamePage", () => {
     expect(within(refereeLog).getByText("Draw by insufficient material")).toBeInTheDocument()
     expect(within(refereeLog).getByText("Checkmate — White wins")).toBeInTheDocument()
     expect(within(refereeLog).getByText("Checkmate — Black wins")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Stalemate — White wins")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("Stalemate — Black wins")).toBeInTheDocument()
   })
 
   it("renders_double_check_component_announcements_from_referee_log_checks", async () => {

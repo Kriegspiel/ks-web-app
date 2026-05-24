@@ -103,6 +103,7 @@ describe("announcementSoundCategories", () => {
       "checkmate",
       "wins by resignation",
       "draw by stalemate",
+      "Stalemate — White wins",
     ])).toEqual([
       "capture",
       "capture",
@@ -115,6 +116,7 @@ describe("announcementSoundCategories", () => {
       "any_no",
       "check",
       "check",
+      "game_over",
       "game_over",
       "game_over",
       "game_over",
