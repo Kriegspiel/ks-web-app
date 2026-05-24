@@ -145,6 +145,24 @@ describe("ReviewPage", () => {
     expect(document.querySelectorAll(".review-page__announcement-badge").length).toBeGreaterThan(0)
   })
 
+  it("formats_rand_stalemate_winner_announcements", async () => {
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      ...transcript,
+      moves: [
+        {
+          ...transcript.moves[0],
+          answer: { ...transcript.moves[0].answer, special: "STALEMATE_BLACK_WINS" },
+        },
+      ],
+    })
+
+    renderReviewPage()
+
+    expect(
+      await screen.findByRole("button", { name: /White \[e2e4\] Move complete · Stalemate — Black wins/i }),
+    ).toBeInTheDocument()
+  })
+
   it("supports_keyboard_navigation_and_perspective_toggle", async () => {
     renderReviewPage()
 

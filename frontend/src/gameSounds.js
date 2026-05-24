@@ -95,6 +95,7 @@ export function announcementSoundCategories(messages = []) {
     }
     if (
       normalized.includes("checkmate") ||
+      normalized.includes("stalemate") ||
       normalized.includes("draw by") ||
       normalized.includes("wins by timeout") ||
       normalized.includes("wins by resignation")

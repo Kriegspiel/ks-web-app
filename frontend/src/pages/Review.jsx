@@ -26,6 +26,8 @@ const ANNOUNCEMENT_TEXT = {
   DRAW_INSUFFICIENT: "Draw by insufficient material",
   CHECKMATE_WHITE_WINS: "Checkmate — White wins",
   CHECKMATE_BLACK_WINS: "Checkmate — Black wins",
+  STALEMATE_WHITE_WINS: "Stalemate — White wins",
+  STALEMATE_BLACK_WINS: "Stalemate — Black wins",
   CHECK_RANK: "Check on rank",
   CHECK_FILE: "Check on file",
   CHECK_LONG_DIAGONAL: "Check on long diagonal",
