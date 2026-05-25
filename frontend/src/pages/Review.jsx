@@ -98,6 +98,10 @@ function formatCaptureAnnouncement(answer) {
     return main
   }
 
+  if (answer?.en_passant_announced === true) {
+    return captureSquare ? `En passant capture at ${captureSquare}` : "En passant capture"
+  }
+
   const capturedPiece = typeof answer?.captured_piece_announcement === "string" ? answer.captured_piece_announcement.trim().toUpperCase() : ""
   const captureLabels = {
     PAWN: "Pawn",

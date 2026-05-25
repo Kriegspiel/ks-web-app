@@ -259,13 +259,16 @@ function formatNextTurnPawnAnnouncementData({ nextTurnPawnTries, nextTurnHasPawn
   return ""
 }
 
-function formatRefereeCode(code, captureSquare, capturedPieceAnnouncement = "") {
+function formatRefereeCode(code, captureSquare, capturedPieceAnnouncement = "", enPassantAnnounced = false) {
   const text = REFEREE_MAIN_ANNOUNCEMENT_TEXT[code]
   if (!text) {
     return ""
   }
 
   if (code === 3 || code === "CAPTURE_DONE") {
+    if (enPassantAnnounced) {
+      return captureSquare ? "En passant capture at " + captureSquare : "En passant capture"
+    }
     const normalizedCapturedPiece = typeof capturedPieceAnnouncement === "string" ? capturedPieceAnnouncement.trim().toUpperCase() : ""
     const captureLabels = {
       PAWN: "Pawn",
@@ -328,9 +331,15 @@ function collectLogText(value, output) {
     })
     const droppedPieceMessage = formatDroppedPieceAnnouncement(value.dropped_piece_announcement)
     const promotionMessage = value.promotion_announced === true ? "Promotion" : ""
+    const enPassantAnnounced = value.en_passant_announced === true
 
     codes.forEach((code, index) => {
-      const formatted = formatRefereeCode(code, index === 0 ? captureSquare : "", index === 0 ? capturedPieceAnnouncement : "")
+      const formatted = formatRefereeCode(
+        code,
+        index === 0 ? captureSquare : "",
+        index === 0 ? capturedPieceAnnouncement : "",
+        index === 0 && enPassantAnnounced,
+      )
       if (formatted) {
         output.push(formatted)
       }
@@ -349,7 +358,7 @@ function collectLogText(value, output) {
       if (REFEREE_CAPTURE_SQUARE_KEYS.includes(key) || key === "captured_piece_announcement" || key === "dropped_piece_announcement") {
         return
       }
-      if (key === "next_turn_pawn_tries" || key === "next_turn_has_pawn_capture" || key === "next_turn_pawn_try_squares" || key === "promotion_announced") {
+      if (key === "next_turn_pawn_tries" || key === "next_turn_has_pawn_capture" || key === "next_turn_pawn_try_squares" || key === "promotion_announced" || key === "en_passant_announced") {
         return
       }
       if (REFEREE_CODE_KEYS.includes(key) && getRefereeCode(item)) {
