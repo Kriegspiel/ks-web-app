@@ -2010,6 +2010,15 @@ describe("GamePage", () => {
           turn: 2,
           color: "black",
           answer: {
+            main: "CAPTURE_DONE",
+            capture_square: "f3",
+            en_passant_announced: true,
+          },
+        },
+        {
+          turn: 2,
+          color: "black",
+          answer: {
             main: 4,
           },
         },
@@ -2029,6 +2038,7 @@ describe("GamePage", () => {
     expect(within(refereeLog).getByText("Illegal move")).toBeInTheDocument()
     expect(within(refereeLog).getByText("Move complete")).toBeInTheDocument()
     expect(within(refereeLog).getByText("Capture at C6")).toBeInTheDocument()
+    expect(within(refereeLog).getByText("En passant capture at F3")).toBeInTheDocument()
     expect(within(refereeLog).getByText("Has pawn captures")).toBeInTheDocument()
     expect(within(refereeLog).getByText("No pawn captures")).toBeInTheDocument()
     expect(screen.queryByText("ILLEGAL_MOVE")).not.toBeInTheDocument()

@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.56
+
+- **English En Passant**: show explicit en-passant capture text in live referee
+  messages and completed-game review when the API marks a capture as en
+  passant.
+
 ## ks-web-app frontend v. 1.3.54
 
 - **RAND Stalemate Results**: show RAND stalemates as wins for the

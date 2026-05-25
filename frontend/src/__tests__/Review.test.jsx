@@ -461,6 +461,33 @@ describe("ReviewPage", () => {
     expect(screen.queryByText(/Nonsense/i)).not.toBeInTheDocument()
   })
 
+  it("formats_en_passant_captures_in_the_move_log", async () => {
+    mockApi.getGameTranscript.mockResolvedValueOnce({
+      game_id: "g-ep",
+      rule_variant: "english",
+      moves: [
+        {
+          ply: 1,
+          color: "white",
+          question_type: "COMMON",
+          uci: "e5f6",
+          answer: {
+            main: "CAPTURE_DONE",
+            capture_square: "f6",
+            en_passant_announced: true,
+          },
+          move_done: true,
+          replay_fen: transcript.moves[0].replay_fen,
+        },
+      ],
+    })
+
+    renderReviewPage()
+
+    await screen.findByText(/Move log/i)
+    expect(screen.getByRole("button", { name: /White \[e5f6\] En passant capture at F6/i })).toBeInTheDocument()
+  })
+
   it("marks_crazykrieg_drops_with_a_green_board_circle", async () => {
     mockApi.getGameTranscript.mockResolvedValueOnce({
       game_id: "g-drop",
