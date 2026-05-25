@@ -1,5 +1,7 @@
 import footerMarkdown from "../../../content/site/footer/README.md?raw"
 
+const feedHref = "https://kriegspiel.org/feed.xml"
+
 const absoluteFooterLinks = new Map([
   ["/rules/berkeley", "https://kriegspiel.org/rules/berkeley"],
   ["/rules/cincinnati", "https://kriegspiel.org/rules/cincinnati"],
@@ -10,6 +12,7 @@ const absoluteFooterLinks = new Map([
   ["/rules/comparison/", "https://kriegspiel.org/rules/comparison/"],
   ["/blog", "https://kriegspiel.org/blog"],
   ["/changelog", "https://kriegspiel.org/changelog"],
+  ["/feed.xml", feedHref],
   ["/about", "https://kriegspiel.org/about"],
   ["/privacy", "https://kriegspiel.org/privacy"],
   ["/terms", "https://kriegspiel.org/terms"],
@@ -74,4 +77,27 @@ function parseFooterMarkdown(markdown) {
   return groups
 }
 
-export const footerGroups = parseFooterMarkdown(footerMarkdown)
+function withFeedFooterLink(groups) {
+  const communicationGroup = groups.find((group) => group.title.toLowerCase() === "communication")
+  if (!communicationGroup) {
+    groups.push({
+      title: "Communication",
+      links: [
+        { label: "Blog", href: "https://kriegspiel.org/blog" },
+        { label: "Changelog", href: "https://kriegspiel.org/changelog" },
+        { label: "RSS", href: feedHref },
+        { label: "About", href: "https://kriegspiel.org/about" },
+      ],
+    })
+    return groups
+  }
+
+  const feedLink = communicationGroup.links.find((link) => link.href === feedHref) ?? { label: "RSS", href: feedHref }
+  const linksWithoutFeed = communicationGroup.links.filter((link) => link.href !== feedHref)
+  const aboutIndex = linksWithoutFeed.findIndex((link) => link.href === "https://kriegspiel.org/about")
+  linksWithoutFeed.splice(aboutIndex === -1 ? linksWithoutFeed.length : aboutIndex, 0, feedLink)
+  communicationGroup.links = linksWithoutFeed
+  return groups
+}
+
+export const footerGroups = withFeedFooterLink(parseFooterMarkdown(footerMarkdown))
