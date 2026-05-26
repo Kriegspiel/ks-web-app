@@ -1,4 +1,4 @@
-import footerMarkdown from "../../../content/site/footer/README.md?raw"
+import footerMarkdown from "../../../ks-content/site/footer/README.md?raw"
 
 const feedHref = "https://kriegspiel.org/feed.xml"
 
