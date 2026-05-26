@@ -2688,13 +2688,17 @@ describe("GamePage", () => {
     expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--suggested")
   })
 
-  it("hides_ask_any_when_not_allowed", async () => {
+  it("keeps_ask_any_visible_but_disabled_when_already_used_this_ply", async () => {
     mockApi.getGameState.mockResolvedValueOnce({ ...activeState, possible_actions: ["move"] })
 
     render(<GamePage />)
 
     await screen.findByText(/Game code:/i)
-    expect(screen.queryByRole("button", { name: "Any pawn captures?" })).not.toBeInTheDocument()
+    const askButton = screen.getByRole("button", { name: "Any pawn captures?" })
+    expect(askButton).toBeDisabled()
+
+    fireEvent.click(askButton)
+    expect(mockApi.askAny).not.toHaveBeenCalled()
   })
 
   it("stops_polling_when_game_completed", async () => {

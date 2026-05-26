@@ -38,6 +38,7 @@ const PHANTOM_MENU_WIDTH = 164
 const PHANTOM_MENU_GAP = 6
 const GAME_SOUND_MUTE_STORAGE_KEY = "game_page_sounds_muted"
 const CLOCK_TICK_INTERVAL_MS = 250
+const ASK_ANY_RULE_VARIANTS = new Set(["berkeley_any", "english", "crazykrieg"])
 const OPPONENT_STARTING_PHANTOMS = {
   white: {
     a1: "r",
@@ -2260,12 +2261,12 @@ export default function GamePage() {
   const phantomsEnabled = !isCompleted && gameState?.state === "active"
   const boardPhantomSquares = phantomsEnabled ? phantomSquares : []
   const boardPhantomPlacements = phantomsEnabled ? placements : {}
+  const askAnySupported = ASK_ANY_RULE_VARIANTS.has(gameMeta?.rule_variant)
   const showAskAny =
     !isCompleted &&
     gameState?.state === "active" &&
-    ["berkeley_any", "english", "crazykrieg"].includes(gameMeta?.rule_variant) &&
-    possibleActions.includes("ask_any")
-  const canAskAny = showAskAny && !submittingAction
+    askAnySupported
+  const canAskAny = showAskAny && possibleActions.includes("ask_any") && !submittingAction
   const canResign = !isCompleted && gameState?.state === "active" && !submittingAction
   const canCloseWaitingGame = !isCompleted && gameState?.state === "waiting" && !submittingAction
 
