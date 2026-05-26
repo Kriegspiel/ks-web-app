@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.59
+
+- **Any? Button State**: keep the `Any pawn captures?` control visible in
+  rulesets that support it, and disable it when the current ply has already
+  used the once-per-ply question.
+
 ## ks-web-app frontend v. 1.3.56
 
 - **English En Passant**: show explicit en-passant capture text in live referee
