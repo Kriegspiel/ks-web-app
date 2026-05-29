@@ -1670,6 +1670,46 @@ describe("GamePage", () => {
     expect(screen.getByRole("button", { name: /Opening setup\. Show opponent starting phantoms\./i })).toBeInTheDocument()
   })
 
+  it("keeps_default_opponent_phantom_setup_visible_for_black_after_turn_start_status", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      your_color: "black",
+      turn: "black",
+      move_number: 2,
+      possible_actions: ["move"],
+      scoresheet: {
+        viewer_color: "black",
+        last_move_number: 1,
+        turns: [
+          {
+            turn: 1,
+            white: [
+              {
+                kind: "move",
+                actor: "opponent",
+                message: "Opponent move — Move complete",
+                messages: ["Move complete"],
+              },
+            ],
+            black: [
+              {
+                kind: "status",
+                actor: "self",
+                message: "No pawn captures",
+                messages: ["No pawn captures"],
+              },
+            ],
+          },
+        ],
+      },
+    })
+
+    render(<GamePage />)
+
+    await screen.findByLabelText("Remaining piece status")
+    expect(screen.getByRole("button", { name: /Opening setup\. Show opponent starting phantoms\./i })).toBeInTheDocument()
+  })
+
   it("falls_back_to_capture_announcements_when_material_summary_is_missing", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,

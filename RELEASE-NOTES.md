@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.61
+
+- **Opening Setup Phantoms**: keep the opponent starting-phantoms toggle
+  visible for black after white's first move when the referee log only contains
+  turn-start pawn-capture status entries.
+
 ## ks-web-app frontend v. 1.3.59
 
 - **Any? Button State**: keep the `Any pawn captures?` control visible in
