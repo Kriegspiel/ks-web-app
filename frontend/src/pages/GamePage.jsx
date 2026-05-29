@@ -7,7 +7,7 @@ import { useAuth } from "../hooks/useAuth"
 import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
 import { announcementSoundCategories, createGameSoundPlayer } from "../gameSounds"
 import { askAny, createGameEventsSource, deleteWaitingGame, getGame, getGameState, resignGame, submitMove } from "../services/api"
-import { getAllowedMoveTargets, PIECE_ASSETS } from "../components/chessboard"
+import { FILES, getAllowedMoveTargets, PIECE_ASSETS, RANKS } from "../components/chessboard"
 import { formatRuleVariant } from "../utils/rules"
 import { formatClock, projectClock, reconcileClockSnapshot } from "./gameClock"
 import "./GamePage.css"
@@ -1451,6 +1451,10 @@ function isTouchLikePointer(event) {
   return event?.pointerType === "touch" || event?.pointerType === "pen"
 }
 
+function isPrimaryPointerButton(event) {
+  return event?.button == null || event?.button === 0 || (isTouchLikePointer(event) && event?.button === -1)
+}
+
 function squareHasOwnPiece(fen, square, color) {
   const piece = pieceAtSquare(fen, square)
   if (!piece || !color) {
@@ -1820,7 +1824,7 @@ export default function GamePage() {
   const [dragHoverSquare, setDragHoverSquare] = useState("")
   const [draggingMoveFrom, setDraggingMoveFrom] = useState("")
   const [moveDragHoverSquare, setMoveDragHoverSquare] = useState("")
-  const [dragPreview, setDragPreview] = useState(null)
+  const [dragPreviewPiece, setDragPreviewPiece] = useState("")
   const [clockSnapshotAtMs, setClockSnapshotAtMs] = useState(() => Date.now())
   const [clockNowMs, setClockNowMs] = useState(() => Date.now())
   const [desktopRefereeHeight, setDesktopRefereeHeight] = useState(null)
@@ -1836,10 +1840,19 @@ export default function GamePage() {
   const lastTapRef = useRef({ square: "", time: 0 })
   const boardCardRef = useRef(null)
   const boardShellRef = useRef(null)
+  const boardRectRef = useRef(null)
+  const dragPreviewRef = useRef(null)
+  const dragPreviewPieceRef = useRef("")
+  const dragPreviewPositionRef = useRef({ x: 0, y: 0 })
+  const dragPreviewFrameRef = useRef(null)
   const dragPointerIdRef = useRef(null)
   const draggingPhantomFromRef = useRef("")
+  const draggingPhantomPieceRef = useRef("")
   const moveDragPointerIdRef = useRef(null)
   const draggingMoveFromRef = useRef("")
+  const draggingMovePieceRef = useRef("")
+  const dragHoverSquareRef = useRef("")
+  const moveDragHoverSquareRef = useRef("")
   const suppressClickRef = useRef(false)
   const suppressContextMenuRef = useRef(false)
   const logScrollRef = useRef(null)
@@ -1983,8 +1996,11 @@ export default function GamePage() {
     lastTapRef.current = { square: "", time: 0 }
     dragPointerIdRef.current = null
     draggingPhantomFromRef.current = ""
+    draggingPhantomPieceRef.current = ""
     moveDragPointerIdRef.current = null
     draggingMoveFromRef.current = ""
+    draggingMovePieceRef.current = ""
+    boardRectRef.current = null
     suppressClickRef.current = false
     suppressContextMenuRef.current = false
 
@@ -2007,10 +2023,10 @@ export default function GamePage() {
     setPhantomMenu(null)
     setMovingPhantomFrom("")
     setDraggingPhantomFrom("")
-    setDragHoverSquare("")
+    setDragHoverSquareValue("")
     setDraggingMoveFrom("")
-    setMoveDragHoverSquare("")
-    setDragPreview(null)
+    setMoveDragHoverSquareValue("")
+    clearDragPreview()
     setDesktopRefereeHeight(null)
   }, [gameRef])
 
@@ -2025,6 +2041,27 @@ export default function GamePage() {
     }
     window.localStorage.setItem(GAME_SOUND_MUTE_STORAGE_KEY, soundsMuted ? "1" : "0")
   }, [soundsMuted])
+
+  useEffect(() => {
+    return () => {
+      if (dragPreviewFrameRef.current !== null) {
+        if (typeof window !== "undefined" && typeof window.cancelAnimationFrame === "function") {
+          window.cancelAnimationFrame(dragPreviewFrameRef.current)
+        }
+        dragPreviewFrameRef.current = null
+      }
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    const node = dragPreviewRef.current
+    if (!dragPreviewPiece || !node) {
+      return
+    }
+
+    const { x, y } = dragPreviewPositionRef.current
+    node.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0) translate(-50%, -50%)`
+  }, [dragPreviewPiece])
 
   useEffect(() => {
     const primeAudio = () => {
@@ -2425,9 +2462,16 @@ export default function GamePage() {
     setMovingPhantomFrom("")
     setDraggingPhantomFrom("")
     draggingPhantomFromRef.current = ""
+    draggingPhantomPieceRef.current = ""
     dragPointerIdRef.current = null
-    setDragHoverSquare("")
-    setDragPreview(null)
+    setDraggingMoveFrom("")
+    draggingMoveFromRef.current = ""
+    draggingMovePieceRef.current = ""
+    moveDragPointerIdRef.current = null
+    clearBoardRect()
+    setDragHoverSquareValue("")
+    setMoveDragHoverSquareValue("")
+    clearDragPreview()
   }, [clearAll, isCompleted])
 
   useEffect(() => {
@@ -2579,6 +2623,26 @@ export default function GamePage() {
     setIllegalMoveSquares([])
   }
 
+  function setDragHoverSquareValue(square) {
+    const nextSquare = square || ""
+    if (dragHoverSquareRef.current === nextSquare) {
+      return
+    }
+
+    dragHoverSquareRef.current = nextSquare
+    setDragHoverSquare(nextSquare)
+  }
+
+  function setMoveDragHoverSquareValue(square) {
+    const nextSquare = square || ""
+    if (moveDragHoverSquareRef.current === nextSquare) {
+      return
+    }
+
+    moveDragHoverSquareRef.current = nextSquare
+    setMoveDragHoverSquare(nextSquare)
+  }
+
   function openPhantomMenu(square) {
     if (!phantomsEnabled) {
       return
@@ -2606,7 +2670,7 @@ export default function GamePage() {
 
   function beginMovePhantom(square) {
     setMovingPhantomFrom(square)
-    setDragHoverSquare("")
+    setDragHoverSquareValue("")
     closePhantomMenu()
   }
 
@@ -2617,26 +2681,81 @@ export default function GamePage() {
 
     if (targetSquare === movingPhantomFrom) {
       setMovingPhantomFrom("")
-      setDragHoverSquare("")
+      setDragHoverSquareValue("")
       return true
     }
 
     const moved = move(movingPhantomFrom, targetSquare)
     setMovingPhantomFrom("")
-    setDragHoverSquare("")
+    setDragHoverSquareValue("")
     if (!moved) {
       setActionError("That square cannot take the phantom piece.")
     }
     return moved
   }
 
-  function updateDragPreview(event, piece) {
-    if (!piece) {
-      setDragPreview(null)
+  function readBoardRect() {
+    const boardGrid = boardShellRef.current?.querySelector?.(".board-grid")
+    const rect = boardGrid?.getBoundingClientRect?.()
+    if (!rect || rect.width <= 0 || rect.height <= 0) {
+      return null
+    }
+
+    return {
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+    }
+  }
+
+  function captureBoardRect() {
+    boardRectRef.current = readBoardRect()
+  }
+
+  function clearBoardRect() {
+    boardRectRef.current = null
+  }
+
+  function applyDragPreviewPosition() {
+    const node = dragPreviewRef.current
+    if (!node) {
       return
     }
 
-    setDragPreview({ piece, x: event.clientX, y: event.clientY })
+    const { x, y } = dragPreviewPositionRef.current
+    node.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0) translate(-50%, -50%)`
+  }
+
+  function scheduleDragPreviewPosition(event) {
+    dragPreviewPositionRef.current = { x: event.clientX, y: event.clientY }
+
+    if (typeof window === "undefined" || typeof window.requestAnimationFrame !== "function") {
+      applyDragPreviewPosition()
+      return
+    }
+
+    if (dragPreviewFrameRef.current !== null) {
+      return
+    }
+
+    dragPreviewFrameRef.current = window.requestAnimationFrame(() => {
+      dragPreviewFrameRef.current = null
+      applyDragPreviewPosition()
+    })
+  }
+
+  function updateDragPreview(event, piece) {
+    if (!piece) {
+      clearDragPreview()
+      return
+    }
+
+    if (dragPreviewPieceRef.current !== piece) {
+      dragPreviewPieceRef.current = piece
+      setDragPreviewPiece(piece)
+    }
+    scheduleDragPreviewPosition(event)
   }
 
   function displayedPhantomPiece(piece) {
@@ -2644,13 +2763,54 @@ export default function GamePage() {
   }
 
   function clearDragPreview() {
-    setDragPreview(null)
+    dragPreviewPieceRef.current = ""
+    setDragPreviewPiece("")
+
+    if (dragPreviewFrameRef.current !== null) {
+      if (typeof window !== "undefined" && typeof window.cancelAnimationFrame === "function") {
+        window.cancelAnimationFrame(dragPreviewFrameRef.current)
+      }
+      dragPreviewFrameRef.current = null
+    }
   }
 
-  function findSquareFromPointerEvent(event) {
+  const findSquareFromPointerEvent = useCallback((event) => {
+    const boardGrid = boardShellRef.current?.querySelector?.(".board-grid")
+    const rect = boardRectRef.current || (() => {
+      const currentRect = boardGrid?.getBoundingClientRect?.()
+      if (!currentRect || currentRect.width <= 0 || currentRect.height <= 0) {
+        return null
+      }
+
+      return {
+        left: currentRect.left,
+        top: currentRect.top,
+        width: currentRect.width,
+        height: currentRect.height,
+      }
+    })()
+
+    if (rect && Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
+      const x = event.clientX - rect.left
+      const y = event.clientY - rect.top
+      if (x >= 0 && y >= 0 && x <= rect.width && y <= rect.height) {
+        const displayFileIndex = Math.min(7, Math.max(0, Math.floor((x / rect.width) * 8)))
+        const displayRankIndex = Math.min(7, Math.max(0, Math.floor((y / rect.height) * 8)))
+        const fileIndex = gameState?.your_color === "black" ? 7 - displayFileIndex : displayFileIndex
+        const rankIndex = gameState?.your_color === "black" ? 7 - displayRankIndex : displayRankIndex
+        const file = FILES[fileIndex]
+        const rank = RANKS[rankIndex]
+        return file && rank ? `${file}${rank}` : ""
+      }
+    }
+
+    if (typeof document === "undefined" || typeof document.elementFromPoint !== "function") {
+      return ""
+    }
+
     const target = document.elementFromPoint(event.clientX, event.clientY)
     return target?.closest?.("[data-square]")?.dataset?.square ?? ""
-  }
+  }, [gameState?.your_color])
 
   function finishDragPhantom(targetSquare) {
     const sourceSquare = draggingPhantomFromRef.current
@@ -2662,8 +2822,10 @@ export default function GamePage() {
       removeAt(sourceSquare)
       setDraggingPhantomFrom("")
       draggingPhantomFromRef.current = ""
-      setDragHoverSquare("")
+      draggingPhantomPieceRef.current = ""
+      setDragHoverSquareValue("")
       dragPointerIdRef.current = null
+      clearBoardRect()
       clearDragPreview()
       return
     }
@@ -2674,8 +2836,10 @@ export default function GamePage() {
     }
     setDraggingPhantomFrom("")
     draggingPhantomFromRef.current = ""
-    setDragHoverSquare("")
+    draggingPhantomPieceRef.current = ""
+    setDragHoverSquareValue("")
     dragPointerIdRef.current = null
+    clearBoardRect()
     clearDragPreview()
   }
 
@@ -2714,9 +2878,11 @@ export default function GamePage() {
     const destination = targetSquare || sourceSquare
     setDraggingMoveFrom("")
     draggingMoveFromRef.current = ""
+    draggingMovePieceRef.current = ""
     moveDragPointerIdRef.current = null
-    setMoveDragHoverSquare("")
+    setMoveDragHoverSquareValue("")
     suppressClickRef.current = true
+    clearBoardRect()
     clearDragPreview()
 
     if (destination === sourceSquare) {
@@ -2852,71 +3018,79 @@ export default function GamePage() {
       return
     }
 
-    if (event.button === 0 && placements[square] && !isTouchLikePointer(event)) {
+    const isPrimaryPointer = isPrimaryPointerButton(event)
+
+    if (isPrimaryPointer && placements[square] && !isTouchLikePointer(event)) {
+      event.preventDefault()
+      const piece = displayedPhantomPiece(placements[square])
       setActionError("")
       setDraggingPhantomFrom(square)
       draggingPhantomFromRef.current = square
-      setDragHoverSquare(square)
+      draggingPhantomPieceRef.current = piece
+      setDragHoverSquareValue(square)
       dragPointerIdRef.current = event.pointerId
-      updateDragPreview(event, displayedPhantomPiece(placements[square]))
+      captureBoardRect()
+      updateDragPreview(event, piece)
       event.currentTarget.setPointerCapture?.(event.pointerId)
       closePhantomMenu()
       return
     }
 
-    if (event.button === 0 && !isTouchLikePointer(event) && canMove && allowedMoveSourceSquares.includes(square)) {
+    if (isPrimaryPointer && canMove && allowedMoveSourceSquares.includes(square)) {
       const piece = pieceAtSquare(gameState?.your_fen, square)
+      event.preventDefault()
       setActionError("")
       setShowPromotionModal(false)
       setSelectedDropPiece("")
       setDraggingMoveFrom(square)
       draggingMoveFromRef.current = square
+      draggingMovePieceRef.current = piece
       moveDragPointerIdRef.current = event.pointerId
-      setMoveDragHoverSquare(square)
+      setMoveDragHoverSquareValue(square)
       setFromSquare(square)
       setToSquare("")
+      captureBoardRect()
       updateDragPreview(event, piece)
       event.currentTarget.setPointerCapture?.(event.pointerId)
-      return
-    }
-
-    if (!isTouchLikePointer(event)) {
       return
     }
   }
 
   function handleSquarePointerEnter(square, event) {
     if (draggingMoveFromRef.current && moveDragPointerIdRef.current === event.pointerId && (event.buttons & 1) === 1) {
-      setMoveDragHoverSquare(square)
+      setMoveDragHoverSquareValue(square)
     }
 
-    if (draggingPhantomFromRef.current && (event.buttons & 2) === 2) {
-      setDragHoverSquare(square)
+    if (draggingPhantomFromRef.current && dragPointerIdRef.current === event.pointerId && (event.buttons & 1) === 1) {
+      setDragHoverSquareValue(square)
     }
   }
 
   function handleSquarePointerMove(square, event) {
     if (draggingMoveFromRef.current && moveDragPointerIdRef.current === event.pointerId) {
+      event.preventDefault()
       const hoveredSquare = findSquareFromPointerEvent(event) || square
       if (hoveredSquare) {
-        setMoveDragHoverSquare(hoveredSquare)
+        setMoveDragHoverSquareValue(hoveredSquare)
       }
-      updateDragPreview(event, pieceAtSquare(gameState?.your_fen, draggingMoveFromRef.current))
+      updateDragPreview(event, draggingMovePieceRef.current)
     }
 
     if (!draggingPhantomFromRef.current || dragPointerIdRef.current !== event.pointerId) {
       return
     }
 
+    event.preventDefault()
     const hoveredSquare = findSquareFromPointerEvent(event)
     if (hoveredSquare) {
-      setDragHoverSquare(hoveredSquare)
+      setDragHoverSquareValue(hoveredSquare)
     }
-    updateDragPreview(event, displayedPhantomPiece(placements[draggingPhantomFromRef.current]))
+    updateDragPreview(event, draggingPhantomPieceRef.current)
   }
 
   function handleSquarePointerUp(square, event) {
     if (draggingMoveFromRef.current && moveDragPointerIdRef.current === event.pointerId) {
+      event.preventDefault()
       const hoveredSquare = findSquareFromPointerEvent(event)
       event.currentTarget.releasePointerCapture?.(event.pointerId)
       finishMoveDrag(hoveredSquare || square)
@@ -2924,6 +3098,7 @@ export default function GamePage() {
     }
 
     if (draggingPhantomFromRef.current && dragPointerIdRef.current === event.pointerId) {
+      event.preventDefault()
       const hoveredSquare = findSquareFromPointerEvent(event)
       event.currentTarget.releasePointerCapture?.(event.pointerId)
       finishDragPhantom(hoveredSquare)
@@ -2933,11 +3108,13 @@ export default function GamePage() {
 
   function handleSquarePointerCancel(_square, event) {
     if (draggingMoveFromRef.current && moveDragPointerIdRef.current === event.pointerId) {
+      event.preventDefault()
       event.currentTarget.releasePointerCapture?.(event.pointerId)
       finishMoveDrag(moveDragHoverSquare)
     }
 
     if (draggingPhantomFromRef.current && dragPointerIdRef.current === event.pointerId) {
+      event.preventDefault()
       event.currentTarget.releasePointerCapture?.(event.pointerId)
       finishDragPhantom(dragHoverSquare)
     }
@@ -2978,7 +3155,7 @@ export default function GamePage() {
       window.removeEventListener("pointerup", handleGlobalPointerUp)
       window.removeEventListener("pointercancel", handleGlobalPointerCancel)
     }
-  }, [dragHoverSquare, moveDragHoverSquare])
+  }, [dragHoverSquare, findSquareFromPointerEvent, moveDragHoverSquare])
 
   async function submitMoveWithUci(uci) {
     blurActiveInteractiveElement()
@@ -3343,9 +3520,9 @@ export default function GamePage() {
                 </div>
               </div>
 
-              {dragPreview ? (
-                <div className="game-drag-preview" style={{ left: dragPreview.x, top: dragPreview.y }} aria-hidden="true">
-                  <img src={PIECE_ASSETS[dragPreview.piece]} alt="" draggable="false" />
+              {dragPreviewPiece ? (
+                <div className="game-drag-preview" ref={dragPreviewRef} aria-hidden="true">
+                  <img src={PIECE_ASSETS[dragPreviewPiece]} alt="" draggable="false" />
                 </div>
               ) : null}
 

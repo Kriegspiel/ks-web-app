@@ -542,6 +542,27 @@ describe("GamePage", () => {
     })
   })
 
+  it("submits_legal_moves_from_touch_drag", async () => {
+    render(<GamePage />)
+
+    const source = await screen.findByRole("button", { name: "Square e2" })
+    const target = screen.getByRole("button", { name: "Square e4" })
+
+    fireEvent.pointerDown(source, { button: 0, buttons: 1, pointerId: 21, pointerType: "touch", clientX: 10, clientY: 10 })
+    fireEvent.pointerMove(target, { button: 0, buttons: 1, pointerId: 21, pointerType: "touch", clientX: 20, clientY: 20 })
+
+    expect(source).toHaveClass("square--highlighted")
+    expect(target).toHaveClass("square--highlighted")
+    expect(document.querySelector(".game-drag-preview")).toBeInTheDocument()
+
+    fireEvent.pointerUp(target, { button: 0, buttons: 0, pointerId: 21, pointerType: "touch", clientX: 20, clientY: 20 })
+
+    await waitFor(() => {
+      expect(mockApi.submitMove).toHaveBeenCalledWith("g-123", "e2e4")
+    })
+    expect(document.querySelector(".game-drag-preview")).not.toBeInTheDocument()
+  })
+
   it("shows_only_backend_legal_move_dots_for_the_selected_piece", async () => {
     render(<GamePage />)
 

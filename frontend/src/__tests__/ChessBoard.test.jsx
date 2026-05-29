@@ -84,6 +84,15 @@ describe("ChessBoard", () => {
     expect(css).toContain("background: rgba(86, 156, 255, 0.08);")
   })
 
+  it("uses_touch_safe_board_interaction_styles", () => {
+    const cssPath = resolve(dirname(fileURLToPath(import.meta.url)), "../components/ChessBoard.css")
+    const css = readFileSync(cssPath, "utf8")
+
+    expect(css).toContain("touch-action: none;")
+    expect(css).toContain("-webkit-tap-highlight-color: transparent;")
+    expect(css).toContain("@media (hover: none), (pointer: coarse)")
+  })
+
   it("renders_move_suggestion_dots_on_suggested_squares", () => {
     render(
       <ChessBoard

@@ -645,12 +645,16 @@
 
 .game-drag-preview {
   position: fixed;
+  left: 0;
+  top: 0;
   z-index: 20;
   width: min(10vw, 4.25rem);
   height: min(10vw, 4.25rem);
-  transform: translate(-50%, -50%);
+  transform: translate3d(-100vw, -100vh, 0) translate(-50%, -50%);
   pointer-events: none;
   opacity: 0.92;
+  contain: layout paint style;
+  will-change: transform;
 }
 
 .game-drag-preview img {
@@ -978,6 +982,20 @@
 
   .game-board-shell--your-turn::before {
     animation: none;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .game-board-shell,
+  .game-board-shell::before {
+    transition: none;
+  }
+
+  .game-board-shell--your-turn::before {
+    animation: none;
+    box-shadow:
+      0 0 0 0.16rem color-mix(in srgb, var(--success-bg) 82%, transparent),
+      0 0 1.35rem color-mix(in srgb, var(--success) 14%, transparent);
   }
 }
 
