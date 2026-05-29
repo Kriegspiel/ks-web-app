@@ -1752,6 +1752,60 @@ function isOpeningPromptText(text) {
   return /^(white|black) to move$/i.test(String(text || "").trim())
 }
 
+function isTurnStartStatusText(text) {
+  const normalized = String(text || "").trim().toLowerCase()
+  return (
+    CURRENT_MESSAGE_TURN_START_STATUS.has(normalized) ||
+    /^\d+ pawn tr(?:y|ies)$/i.test(normalized) ||
+    /^pawn tr(?:y|ies) from\b/i.test(normalized)
+  )
+}
+
+function isAskAnyPromptText(text) {
+  return /^(ask any pawn captures|opponent asked any pawn captures)$/i.test(String(text || "").trim())
+}
+
+function getTurnEntryMessages(entry) {
+  if (Array.isArray(entry?.messages)) {
+    return entry.messages.filter((message) => typeof message === "string" && message.trim())
+  }
+
+  const text = typeof entry?.text === "string" ? entry.text : typeof entry === "string" ? entry : ""
+  if (!text.trim()) {
+    return []
+  }
+
+  const parts = splitRefereeTextParts(text)
+  return parts.length ? parts : [text]
+}
+
+function isPlayerMoveAttemptEntry(entry) {
+  const kind = typeof entry?.kind === "string" ? entry.kind.trim().toLowerCase() : ""
+  if (kind === "move" || kind === "capture" || kind === "illegal_move") {
+    return true
+  }
+  if (kind === "status" || kind === "ask_any") {
+    return false
+  }
+
+  const questionType = typeof entry?.question_type === "string" ? entry.question_type.trim().toUpperCase() : ""
+  if (questionType === "ASK_ANY") {
+    return false
+  }
+
+  const prompt = typeof entry?.prompt === "string" ? entry.prompt : ""
+  if (isAskAnyPromptText(prompt)) {
+    return false
+  }
+
+  const text = typeof entry?.text === "string" ? entry.text : typeof entry === "string" ? entry : ""
+  if (isOpeningPromptText(text) || isAskAnyPromptText(text.split(/[—-]/)[0])) {
+    return false
+  }
+
+  return getTurnEntryMessages(entry).some((message) => !isOpeningPromptText(message) && !isTurnStartStatusText(message))
+}
+
 function hasPlayerTakenFirstTurn(turns, playerColor) {
   const normalizedColor = normalizeLogColor(playerColor)
   if (!Array.isArray(turns) || !normalizedColor) {
@@ -1760,7 +1814,7 @@ function hasPlayerTakenFirstTurn(turns, playerColor) {
 
   const sideKey = normalizedColor === "black" ? "black" : "white"
   return turns.some((turnEntry) =>
-    (Array.isArray(turnEntry?.[sideKey]) ? turnEntry[sideKey] : []).some((entry) => !isOpeningPromptText(entry?.text ?? entry)),
+    (Array.isArray(turnEntry?.[sideKey]) ? turnEntry[sideKey] : []).some(isPlayerMoveAttemptEntry),
   )
 }
 
