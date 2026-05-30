@@ -148,6 +148,13 @@ describe("LobbyPage", () => {
     ])
   })
 
+  it("shows_a_message_when_there_are_no_open_games", async () => {
+    renderPage()
+
+    expect(await screen.findByText("No open games yet. Create a waiting game and it will appear here.")).toBeInTheDocument()
+    expect(screen.queryAllByRole("listitem")).toHaveLength(0)
+  })
+
   it("shows_lobby_stats_after_join_by_code", async () => {
     renderPage()
 
