@@ -95,6 +95,7 @@ export default function GuestsReportPage() {
                     <th>Day started</th>
                     <th>Last game</th>
                     <th>Number of games</th>
+                    <th>Non-timeout endings</th>
                     <th>Total time played</th>
                   </tr>
                 </thead>
@@ -109,6 +110,7 @@ export default function GuestsReportPage() {
                       <td>{formatStartedDay(guest.day_started)}</td>
                       <td>{formatLastGame(guest.last_game)}</td>
                       <td>{formatGameCount(guest.number_of_games)}</td>
+                      <td>{formatGameCount(guest.non_timeout_games)}</td>
                       <td>{formatTotalTimePlayed(guest.total_time_played_seconds)}</td>
                     </tr>
                   ))}
