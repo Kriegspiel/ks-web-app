@@ -133,7 +133,7 @@ describe("ReviewPage", () => {
     expect(screen.getByText("Berkeley + Any")).toBeInTheDocument()
     const gameDetails = screen.getByRole("heading", { name: "Game details" }).closest(".review-page__stats-card")
     expect(within(gameDetails).getByText("Result")).toBeInTheDocument()
-    expect(within(gameDetails).getByText("white wins by checkmate")).toBeInTheDocument()
+    expect(within(gameDetails).getByText("White wins by checkmate")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
     expect(screen.getByText("1W/1B")).toBeInTheDocument()
@@ -143,6 +143,23 @@ describe("ReviewPage", () => {
     expect(screen.getByText("1B/1B")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i })).toHaveClass("is-active")
     expect(document.querySelectorAll(".review-page__announcement-badge").length).toBeGreaterThan(0)
+  })
+
+  it("formats_machine_result_reasons_for_game_details", async () => {
+    mockApi.getGame.mockResolvedValueOnce({
+      game_code: "33PKZV",
+      rule_variant: "berkeley_any",
+      created_at: "2026-06-02T08:50:41Z",
+      updated_at: "2026-06-02T14:45:16Z",
+      result: { winner: null, reason: "too_many_reversible_moves" },
+      white: { username: "simpleheuristics", connected: true, role: "bot" },
+      black: { username: "gptnano", connected: true, role: "bot" },
+    })
+
+    renderReviewPage()
+
+    const gameDetails = await screen.findByRole("heading", { name: "Game details" })
+    expect(within(gameDetails.closest(".review-page__stats-card")).getByText("Draw by too many reversible moves")).toBeInTheDocument()
   })
 
   it("formats_rand_stalemate_winner_announcements", async () => {
