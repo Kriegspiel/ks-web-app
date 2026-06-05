@@ -287,9 +287,34 @@ function formatResult(result) {
   if (!result || typeof result !== "object") {
     return "Result unavailable"
   }
-  const winner = result.winner ? `${result.winner} wins` : "Draw"
-  const reason = result.reason ? ` by ${result.reason}` : ""
-  return `${winner}${reason}`
+
+  const winner = result.winner
+    ? `${String(result.winner).charAt(0).toUpperCase()}${String(result.winner).slice(1)} wins`
+    : "Draw"
+  const reason = formatResultReason(result.reason)
+  return reason ? `${winner} by ${reason}` : winner
+}
+
+function formatResultReason(value) {
+  if (typeof value !== "string" || !value.trim()) {
+    return ""
+  }
+
+  const normalized = value.trim().toLowerCase()
+  const known = {
+    checkmate: "checkmate",
+    resignation: "resignation",
+    timeout: "timeout",
+    time: "timeout",
+    stalemate: "stalemate",
+    insufficient: "insufficient material",
+    too_many_reversible_moves: "too many reversible moves",
+  }
+  if (known[normalized]) {
+    return known[normalized]
+  }
+
+  return normalized.replace(/[_-]+/g, " ")
 }
 
 function formatPerspectiveLabel(group) {
