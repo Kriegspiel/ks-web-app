@@ -49,9 +49,8 @@
 
 .profile-bot-mini-list > div,
 .profile-bot-row-list li {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.15rem 0.75rem;
   align-items: baseline;
   min-width: 0;
@@ -65,17 +64,16 @@
 }
 
 .profile-bot-mini-list dt {
-  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .profile-bot-row-list span {
-  flex: 1 1 9rem;
-  min-width: 9rem;
+  min-width: 0;
 }
 
 .profile-bot-mini-list dd,
 .profile-bot-row-list strong {
-  margin: 0 0 0 auto;
+  margin: 0;
   color: var(--text);
   font-weight: 700;
   text-align: right;
@@ -83,12 +81,10 @@
 }
 
 .profile-bot-mini-list dd {
-  flex: 0 0 auto;
   white-space: nowrap;
 }
 
 .profile-bot-row-list strong {
-  flex: 0 1 auto;
   overflow-wrap: anywhere;
 }
 
@@ -208,18 +204,10 @@
 
   .profile-bot-mini-list > div,
   .profile-bot-row-list li {
-    align-items: flex-start;
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
-  .profile-bot-mini-list dd,
   .profile-bot-row-list strong {
-    margin-left: 0;
-    text-align: left;
-    white-space: normal;
-  }
-
-  .profile-bot-row-list span {
-    min-width: 0;
+    overflow-wrap: normal;
   }
 }
