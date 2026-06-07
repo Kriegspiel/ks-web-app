@@ -47,10 +47,18 @@
   gap: 0.45rem;
 }
 
-.profile-bot-mini-list > div,
 .profile-bot-row-list li {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.15rem 0.75rem;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.profile-bot-mini-list > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
   gap: 0.15rem 0.75rem;
   align-items: baseline;
   min-width: 0;
@@ -64,7 +72,8 @@
 }
 
 .profile-bot-mini-list dt {
-  min-width: 0;
+  flex: 0 0 auto;
+  overflow-wrap: normal;
 }
 
 .profile-bot-row-list span {
@@ -81,6 +90,7 @@
 }
 
 .profile-bot-mini-list dd {
+  margin-left: auto;
   white-space: nowrap;
 }
 
@@ -202,7 +212,6 @@
     grid-template-columns: 1fr;
   }
 
-  .profile-bot-mini-list > div,
   .profile-bot-row-list li {
     grid-template-columns: minmax(0, 1fr) auto;
   }
