@@ -59,6 +59,31 @@ describe("GameHistoryPage", () => {
     expect(screen.getByText("v. test-frontend / v. test-backend")).toBeInTheDocument()
   })
 
+  it("formats_machine_result_reasons", async () => {
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
+      games: [
+        {
+          game_id: "g-reversible",
+          game_code: "REV200",
+          rule_variant: "berkeley_any",
+          opponent: "amy",
+          opponent_role: "bot",
+          play_as: "white",
+          result: "draw",
+          reason: "too_many_reversible_moves",
+          turn_count: 1000,
+          played_at: "2026-06-02T14:45:16Z",
+        },
+      ],
+      pagination: { page: 1, pages: 1, total: 1 },
+    })
+
+    renderHistory()
+
+    expect(await screen.findByText("too many reversible moves")).toBeInTheDocument()
+    expect(screen.queryByText("too_many_reversible_moves")).not.toBeInTheDocument()
+  })
+
   it("renders_cincinnati_and_wild16_rule_labels", async () => {
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({
       games: [
