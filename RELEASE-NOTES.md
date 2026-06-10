@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.67
+
+- **Game History**: format machine result reasons such as
+  `too_many_reversible_moves` into readable labels.
+
 ## ks-web-app frontend v. 1.3.66
 
 - **Bot Profile Metrics**: keep desktop color split labels readable while

@@ -26,6 +26,25 @@ function turnCount(game) {
   return Number.isFinite(moveCount) ? Math.ceil(moveCount / 2) : 0
 }
 
+function formatReason(value) {
+  if (typeof value !== "string" || !value.trim()) {
+    return "—"
+  }
+
+  const normalized = value.trim().toLowerCase()
+  const known = {
+    checkmate: "checkmate",
+    resignation: "resignation",
+    timeout: "timeout",
+    time: "timeout",
+    stalemate: "stalemate",
+    insufficient: "insufficient material",
+    too_many_reversible_moves: "too many reversible moves",
+  }
+
+  return known[normalized] ?? normalized.replace(/[_-]+/g, " ")
+}
+
 export default function GameHistoryPage() {
   const { username = "" } = useParams()
   const [loading, setLoading] = useState(true)
@@ -88,7 +107,7 @@ export default function GameHistoryPage() {
                         {game.opponent ? <Link className="history-opponent-link" to={`/user/${game.opponent}`}>{opponentLabel(game)}</Link> : "—"}
                       </td>
                       <td>{game.result}</td>
-                      <td>{game.reason ?? "—"}</td>
+                      <td>{formatReason(game.reason)}</td>
                       <td>{turnCount(game)}</td>
                       <td>{formatDate(game.played_at)}</td>
                       <td><Link to={`/game/${game.game_code ?? game.game_id}/review`}>Open</Link></td>
