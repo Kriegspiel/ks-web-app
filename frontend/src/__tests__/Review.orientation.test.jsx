@@ -5,6 +5,7 @@ import ReviewPage from "../pages/Review"
 
 const mockApi = vi.hoisted(() => ({
   getGame: vi.fn(),
+  getGameReview: vi.fn(),
   getGameTranscript: vi.fn(),
 }))
 
@@ -100,7 +101,15 @@ function renderReviewPage() {
 
 beforeEach(() => {
   mockApi.getGame.mockReset()
+  mockApi.getGameReview.mockReset()
   mockApi.getGameTranscript.mockReset()
+  mockApi.getGameReview.mockImplementation(async (gameRef) => {
+    const [nextTranscript, nextGame] = await Promise.all([
+      mockApi.getGameTranscript(gameRef),
+      mockApi.getGame(gameRef),
+    ])
+    return { game: nextGame, transcript: nextTranscript }
+  })
   mockApi.getGame.mockResolvedValue(game)
 })
 
