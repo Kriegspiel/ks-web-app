@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom"
 import ReviewPage from "../pages/Review"
 const mockApi = vi.hoisted(() => ({
   getGame: vi.fn(),
+  getGameReview: vi.fn(),
   getGameTranscript: vi.fn(),
 }))
 
@@ -60,7 +61,15 @@ const transcript = {
 
 beforeEach(() => {
   mockApi.getGame.mockReset()
+  mockApi.getGameReview.mockReset()
   mockApi.getGameTranscript.mockReset()
+  mockApi.getGameReview.mockImplementation(async (gameRef) => {
+    const [nextTranscript, nextGame] = await Promise.all([
+      mockApi.getGameTranscript(gameRef),
+      mockApi.getGame(gameRef),
+    ])
+    return { game: nextGame, transcript: nextTranscript }
+  })
   mockApi.getGameTranscript.mockResolvedValue(transcript)
   mockApi.getGame.mockResolvedValue({
     game_code: "F5455A",
@@ -118,6 +127,7 @@ describe("ReviewPage", () => {
     )
 
     expect(await screen.findByText(/signed in as notifil\./i)).toBeInTheDocument()
+    expect(mockApi.getGameReview).toHaveBeenCalledWith("g-620")
   })
 
   it("loads_transcript_and_navigates_moves", async () => {

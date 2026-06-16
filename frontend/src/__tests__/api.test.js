@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import api, { askAny, convertGuest, createGame, createGameEventsSource, deleteWaitingGame, gameEventsUrl, getBots, getGame, getGameState, getGameTranscript, getLobbyStats, getMyActiveGames, getMyArchivedGames, getOpenGames, joinGame, login, logout, me, playAsGuest, register, resignGame, submitMove, techApi, userApi } from "../services/api"
+import api, { askAny, convertGuest, createGame, createGameEventsSource, deleteWaitingGame, gameEventsUrl, getBots, getGame, getGameReview, getGameState, getGameTranscript, getLobbyStats, getMyActiveGames, getMyArchivedGames, getOpenGames, joinGame, login, logout, me, playAsGuest, register, resignGame, submitMove, techApi, userApi } from "../services/api"
 
 describe("api client", () => {
   it("api_client_uses_relative_base_url", () => { expect(api.defaults.baseURL ?? "").toBe("") })
@@ -145,10 +145,12 @@ describe("game helpers", () => {
     await joinGame("ABC 123/?!")
     await getLobbyStats()
     await getGameTranscript("g/123")
+    await getGameReview("g/123")
 
     expect(postSpy).toHaveBeenCalledWith("/api/game/join/ABC%20123%2F%3F!")
     expect(getSpy).toHaveBeenNthCalledWith(1, "/api/game/stats")
     expect(getSpy).toHaveBeenNthCalledWith(2, "/api/game/g%2F123/moves")
+    expect(getSpy).toHaveBeenNthCalledWith(3, "/api/game/g%2F123/review")
   })
   it("move_ask_any_resign_use_expected_endpoints", async () => { const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { ok: true } }); await submitMove("g-123", "e2e4"); await askAny("g-123"); await resignGame("g-123"); expect(postSpy).toHaveBeenNthCalledWith(1, "/api/game/g-123/move", { uci: "e2e4" }); expect(postSpy).toHaveBeenNthCalledWith(2, "/api/game/g-123/ask-any"); expect(postSpy).toHaveBeenNthCalledWith(3, "/api/game/g-123/resign") })
   it("delete_waiting_game_uses_expected_endpoint", async () => { const deleteSpy = vi.spyOn(api, "delete").mockResolvedValue({ data: {} }); await deleteWaitingGame("g-123"); expect(deleteSpy).toHaveBeenCalledWith("/api/game/g-123") })
@@ -163,6 +165,7 @@ describe("game helpers", () => {
     ["getMyArchivedGames", "get", () => getMyArchivedGames(), "Unable to load your games right now."],
     ["getGame", "get", () => getGame("g-123"), "Unable to load game details right now."],
     ["getGameTranscript", "get", () => getGameTranscript("g-123"), "Unable to load game transcript right now."],
+    ["getGameReview", "get", () => getGameReview("g-123"), "Unable to load game review right now."],
     ["getGameState", "get", () => getGameState("g-123"), "Unable to load game state right now."],
     ["deleteWaitingGame", "delete", () => deleteWaitingGame("g-123"), "Unable to close this waiting game right now."],
     ["submitMove", "post", () => submitMove("g-123", "e2e4"), "Unable to submit move right now."],

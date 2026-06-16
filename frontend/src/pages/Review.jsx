@@ -4,7 +4,7 @@ import ChessBoard from "../components/ChessBoard.jsx"
 import { PIECE_ASSETS, parseFenBoard } from "../components/chessboard"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
-import { getGame, getGameTranscript } from "../services/api"
+import { getGameReview } from "../services/api"
 import { formatRuleVariant } from "../utils/rules"
 import { formatClock } from "./gameClock"
 import "./Review.css"
@@ -859,11 +859,13 @@ export default function ReviewPage() {
       setError("")
 
       try {
-        const [transcript, game] = await Promise.all([getGameTranscript(gameRef), getGame(gameRef)])
+        const review = await getGameReview(gameRef)
         if (!active) {
           return
         }
 
+        const transcript = review?.transcript
+        const game = review?.game
         if (!Array.isArray(transcript?.moves)) {
           setError("Replay transcript is unavailable.")
           return
