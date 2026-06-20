@@ -1863,6 +1863,48 @@ describe("GamePage", () => {
     expect(within(refereeLog).getByText("White in check")).toBeInTheDocument()
   })
 
+  it("opens_the_full_referee_log_in_a_mobile_drawer", async () => {
+    const originalInnerWidth = window.innerWidth
+    Object.defineProperty(window, "innerWidth", { value: 390, writable: true, configurable: true })
+
+    try {
+      mockApi.getGameState.mockResolvedValueOnce({
+        ...activeState,
+        referee_log: [
+          { turn: 1, color: "white", announcement: "White sees file blocked" },
+          { turn: 1, color: "black", announcement: "Black hears no capture" },
+          { turn: 2, color: "white", announcement: "White in check" },
+        ],
+      })
+
+      render(<GamePage />)
+
+      await screen.findByLabelText("Current message")
+      expect(screen.queryByRole("log", { name: "Referee log by turn" })).not.toBeInTheDocument()
+      expect(screen.getByText("2 turns · 3 responses · latest: Turn 2")).toBeInTheDocument()
+
+      fireEvent.click(screen.getByRole("button", { name: "Open referee log" }))
+
+      const dialog = screen.getByRole("dialog", { name: "Referee log" })
+      const refereeLog = within(dialog).getByRole("log", { name: "Referee log by turn" })
+      const firstTurn = within(refereeLog).getByText("Turn 1").closest("details")
+      const secondTurn = within(refereeLog).getByText("Turn 2").closest("details")
+
+      expect(within(refereeLog).getByText("White sees file blocked")).toBeInTheDocument()
+      expect(within(refereeLog).getByText("Black hears no capture")).toBeInTheDocument()
+      expect(within(refereeLog).getByText("White in check")).toBeInTheDocument()
+      expect(firstTurn).not.toHaveAttribute("open")
+      expect(secondTurn).toHaveAttribute("open")
+
+      fireEvent.click(within(dialog).getByRole("button", { name: "Close referee log" }))
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: "Referee log" })).not.toBeInTheDocument()
+      })
+    } finally {
+      Object.defineProperty(window, "innerWidth", { value: originalInnerWidth, writable: true, configurable: true })
+    }
+  })
+
   it("prefers_explicit_referee_turns_from_the_api_when_available", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,

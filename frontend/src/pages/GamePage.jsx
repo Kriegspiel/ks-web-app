@@ -38,6 +38,7 @@ const PHANTOM_MENU_WIDTH = 164
 const PHANTOM_MENU_GAP = 6
 const GAME_SOUND_MUTE_STORAGE_KEY = "game_page_sounds_muted"
 const CLOCK_TICK_INTERVAL_MS = 250
+const MOBILE_GAME_BREAKPOINT_PX = 760
 const ASK_ANY_RULE_VARIANTS = new Set(["berkeley_any", "english", "crazykrieg"])
 const OPPONENT_STARTING_PHANTOMS = {
   white: {
@@ -912,6 +913,95 @@ function formatCurrentMessageAccessibleText(segments) {
   return segments
     .map((segment) => `${formatCurrentMessageActor(segment.color)}: ${segment.text}`)
     .join(" \u2192 ")
+}
+
+function isMobileGameViewport() {
+  return typeof window !== "undefined" && window.innerWidth <= MOBILE_GAME_BREAKPOINT_PX
+}
+
+function countRefereeTurnEntries(turnEntry) {
+  return (Array.isArray(turnEntry?.white) ? turnEntry.white.length : 0) + (Array.isArray(turnEntry?.black) ? turnEntry.black.length : 0)
+}
+
+function formatRefereeResponseCount(count) {
+  return `${count} ${count === 1 ? "response" : "responses"}`
+}
+
+function formatRefereeLogSummary(turns, entryCount) {
+  if (!Array.isArray(turns) || !turns.length) {
+    return "No referee responses yet."
+  }
+
+  const turnCount = turns.length
+  const latestTurn = turns.at(-1)?.turn
+  const latestTurnText = Number.isFinite(latestTurn) ? ` · latest: Turn ${latestTurn}` : ""
+  return `${turnCount} ${turnCount === 1 ? "turn" : "turns"} · ${formatRefereeResponseCount(entryCount)}${latestTurnText}`
+}
+
+function RefereeLogColumn({ color, entries = [], turn }) {
+  const label = color === "black" ? "Black" : "White"
+
+  return (
+    <div className="game-referee-column">
+      <div className="game-referee-column__label">{label}</div>
+      {entries.length ? (
+        <ul className="game-referee-column__list">
+          {entries.map((entry, index) => (
+            <li key={`turn-${turn}-${color}-${index}`} className="game-referee-entry">
+              <span className="game-referee-entry__badge">{index + 1}</span>
+              <span className="game-referee-entry__text">{entry.text ?? entry}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="game-referee-column__empty">—</p>
+      )}
+    </div>
+  )
+}
+
+function RefereeTurnBody({ turnEntry }) {
+  return (
+    <div className="game-referee-turn__grid">
+      <RefereeLogColumn color="white" entries={turnEntry.white} turn={turnEntry.turn} />
+      <RefereeLogColumn color="black" entries={turnEntry.black} turn={turnEntry.turn} />
+    </div>
+  )
+}
+
+function RefereeLogTurn({ turnEntry }) {
+  return (
+    <section className="game-referee-turn">
+      <div className="game-referee-turn__title">Turn {turnEntry.turn}</div>
+      <RefereeTurnBody turnEntry={turnEntry} />
+    </section>
+  )
+}
+
+function RefereeLogDrawerTurn({ open, turnEntry }) {
+  return (
+    <details className="game-referee-turn game-referee-turn--drawer" open={open}>
+      <summary className="game-referee-turn__summary">
+        <span>Turn {turnEntry.turn}</span>
+        <span>{formatRefereeResponseCount(countRefereeTurnEntries(turnEntry))}</span>
+      </summary>
+      <RefereeTurnBody turnEntry={turnEntry} />
+    </details>
+  )
+}
+
+function RefereeLogList({ turns, variant = "inline", scrollRef }) {
+  return (
+    <div className={`game-referee-log__scroll game-referee-log__scroll--${variant}`} role="log" aria-label="Referee log by turn" ref={scrollRef}>
+      {turns.map((turnEntry, index) => (
+        variant === "drawer" ? (
+          <RefereeLogDrawerTurn key={`turn-${turnEntry.turn}`} turnEntry={turnEntry} open={index === turns.length - 1} />
+        ) : (
+          <RefereeLogTurn key={`turn-${turnEntry.turn}`} turnEntry={turnEntry} />
+        )
+      ))}
+    </div>
+  )
 }
 
 function getCaptureSquareFromTexts(messages = []) {
@@ -1882,6 +1972,8 @@ export default function GamePage() {
   const [clockSnapshotAtMs, setClockSnapshotAtMs] = useState(() => Date.now())
   const [clockNowMs, setClockNowMs] = useState(() => Date.now())
   const [desktopRefereeHeight, setDesktopRefereeHeight] = useState(null)
+  const [isMobileRefereeLog, setIsMobileRefereeLog] = useState(() => isMobileGameViewport())
+  const [refereeLogDrawerOpen, setRefereeLogDrawerOpen] = useState(false)
   const [soundsMuted, setSoundsMuted] = useState(() => {
     if (typeof window === "undefined") {
       return false
@@ -1910,6 +2002,7 @@ export default function GamePage() {
   const suppressClickRef = useRef(false)
   const suppressContextMenuRef = useRef(false)
   const logScrollRef = useRef(null)
+  const refereeLogCloseButtonRef = useRef(null)
   const lastScrollEntryKeysRef = useRef([])
   const viewportRestoreRef = useRef(null)
   const stateRequestIdRef = useRef(0)
@@ -2504,7 +2597,78 @@ export default function GamePage() {
     () => formatCurrentMessageAccessibleText(currentMessageSegments),
     [currentMessageSegments]
   )
+  const refereeLogSummary = useMemo(
+    () => formatRefereeLogSummary(groupedRefereeLog, flattenedRefereeEntries.length),
+    [flattenedRefereeEntries.length, groupedRefereeLog]
+  )
+  const scrollRefereeLogToLatest = useCallback(() => {
+    const logNode = logScrollRef.current
+    if (!logNode) {
+      return
+    }
+
+    logNode.scrollTop = logNode.scrollHeight
+  }, [])
   const refereePanelStyle = desktopRefereeHeight ? { height: `${desktopRefereeHeight}px`, maxHeight: `${desktopRefereeHeight}px` } : undefined
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined
+    }
+
+    const syncMobileRefereeLog = () => {
+      setIsMobileRefereeLog(isMobileGameViewport())
+    }
+
+    syncMobileRefereeLog()
+    window.addEventListener("resize", syncMobileRefereeLog)
+    return () => {
+      window.removeEventListener("resize", syncMobileRefereeLog)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isMobileRefereeLog && refereeLogDrawerOpen) {
+      setRefereeLogDrawerOpen(false)
+    }
+  }, [isMobileRefereeLog, refereeLogDrawerOpen])
+
+  useEffect(() => {
+    setRefereeLogDrawerOpen(false)
+  }, [gameRef])
+
+  useEffect(() => {
+    if (!refereeLogDrawerOpen || typeof document === "undefined") {
+      return undefined
+    }
+
+    const previousOverflow = document.body.style.overflow
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") {
+        setRefereeLogDrawerOpen(false)
+      }
+    }
+
+    document.body.style.overflow = "hidden"
+    document.addEventListener("keydown", closeOnEscape)
+    refereeLogCloseButtonRef.current?.focus()
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener("keydown", closeOnEscape)
+    }
+  }, [refereeLogDrawerOpen])
+
+  useEffect(() => {
+    if (!refereeLogDrawerOpen || typeof window === "undefined") {
+      return undefined
+    }
+
+    const frameId = window.requestAnimationFrame(scrollRefereeLogToLatest)
+    return () => {
+      window.cancelAnimationFrame(frameId)
+    }
+  }, [flattenedRefereeEntries.length, groupedRefereeLog.length, refereeLogDrawerOpen, scrollRefereeLogToLatest])
 
   useEffect(() => {
     if (!isCompleted) {
@@ -2585,7 +2749,7 @@ export default function GamePage() {
     }
 
     const syncHeight = () => {
-      if (window.innerWidth <= 760) {
+      if (isMobileGameViewport()) {
         setDesktopRefereeHeight(null)
         return
       }
@@ -3675,52 +3839,22 @@ export default function GamePage() {
 
               <div className="game-referee-log">
                 <div className="game-referee-log__header">
-                  <h3>Referee log</h3>
+                  <div>
+                    <h3>Referee log</h3>
+                    {isMobileRefereeLog ? <p className="game-referee-log__summary">{refereeLogSummary}</p> : null}
+                  </div>
+                  {isMobileRefereeLog && groupedRefereeLog.length ? (
+                    <button type="button" className="game-referee-log__open" onClick={() => setRefereeLogDrawerOpen(true)} aria-label="Open referee log">
+                      Open
+                    </button>
+                  ) : null}
                 </div>
 
-                {groupedRefereeLog.length ? (
-                  <div className="game-referee-log__scroll" role="log" aria-label="Referee log by turn" ref={logScrollRef}>
-                    {groupedRefereeLog.map((turnEntry) => (
-                      <section key={`turn-${turnEntry.turn}`} className="game-referee-turn">
-                        <div className="game-referee-turn__title">Turn {turnEntry.turn}</div>
-                        <div className="game-referee-turn__grid">
-                          <div className="game-referee-column">
-                            <div className="game-referee-column__label">White</div>
-                            {turnEntry.white.length ? (
-                              <ul className="game-referee-column__list">
-                                {turnEntry.white.map((entry, index) => (
-                                  <li key={`turn-${turnEntry.turn}-white-${index}`} className="game-referee-entry">
-                                    <span className="game-referee-entry__badge">{index + 1}</span>
-                                    <span className="game-referee-entry__text">{entry.text ?? entry}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p className="game-referee-column__empty">—</p>
-                            )}
-                          </div>
-                          <div className="game-referee-column">
-                            <div className="game-referee-column__label">Black</div>
-                            {turnEntry.black.length ? (
-                              <ul className="game-referee-column__list">
-                                {turnEntry.black.map((entry, index) => (
-                                  <li key={`turn-${turnEntry.turn}-black-${index}`} className="game-referee-entry">
-                                    <span className="game-referee-entry__badge">{index + 1}</span>
-                                    <span className="game-referee-entry__text">{entry.text ?? entry}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p className="game-referee-column__empty">—</p>
-                            )}
-                          </div>
-                        </div>
-                      </section>
-                    ))}
-                  </div>
-                ) : (
+                {groupedRefereeLog.length && !isMobileRefereeLog ? (
+                  <RefereeLogList turns={groupedRefereeLog} scrollRef={logScrollRef} />
+                ) : !groupedRefereeLog.length && !isMobileRefereeLog ? (
                   <p className="game-referee-column__empty">No referee responses yet.</p>
-                )}
+                ) : null}
               </div>
             </section>
 
@@ -3797,6 +3931,37 @@ export default function GamePage() {
             onSelect={handlePromotionSelect}
             onCancel={handlePromotionCancel}
           />
+          {isMobileRefereeLog && refereeLogDrawerOpen ? (
+            <div className="game-referee-log-drawer" role="presentation" onClick={() => setRefereeLogDrawerOpen(false)}>
+              <div className="game-referee-log-drawer__sheet" role="dialog" aria-modal="true" aria-labelledby="referee-log-dialog-title" onClick={(event) => event.stopPropagation()}>
+                <div className="game-referee-log-drawer__header">
+                  <div className="game-referee-log-drawer__title">
+                    <h3 id="referee-log-dialog-title">Referee log</h3>
+                    <p>{refereeLogSummary}</p>
+                  </div>
+                  <div className="game-referee-log-drawer__actions">
+                    <button type="button" className="game-referee-log-drawer__latest" onClick={scrollRefereeLogToLatest}>
+                      Latest
+                    </button>
+                    <button
+                      type="button"
+                      className="game-referee-log-drawer__close"
+                      onClick={() => setRefereeLogDrawerOpen(false)}
+                      aria-label="Close referee log"
+                      ref={refereeLogCloseButtonRef}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+                {groupedRefereeLog.length ? (
+                  <RefereeLogList turns={groupedRefereeLog} variant="drawer" scrollRef={logScrollRef} />
+                ) : (
+                  <p className="game-referee-column__empty">No referee responses yet.</p>
+                )}
+              </div>
+            </div>
+          ) : null}
           <VersionStamp />
         </>
       ) : null}
