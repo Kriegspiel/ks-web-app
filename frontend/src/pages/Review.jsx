@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import ChessBoard from "../components/ChessBoard.jsx"
 import { PIECE_ASSETS, parseFenBoard } from "../components/chessboard"
@@ -14,6 +14,8 @@ const STARTING_FENS = {
   white: "4K3/PPPPPPPP/8/8/8/8/8/8 w - - 0 1",
   black: "8/8/8/8/8/8/pppppppp/4k3 b - - 0 1",
 }
+
+const REVIEW_MOBILE_BREAKPOINT_PX = 768
 
 const ANNOUNCEMENT_TEXT = {
   ILLEGAL_MOVE: "Illegal move",
@@ -832,6 +834,88 @@ function measureReviewBoardCardHeight(boardCard) {
   return intrinsicHeight > 0 ? intrinsicHeight : fallbackHeight
 }
 
+function isMobileReviewViewport() {
+  return typeof window !== "undefined" && window.innerWidth <= REVIEW_MOBILE_BREAKPOINT_PX
+}
+
+function scrollReviewLogElement(element, options) {
+  if (typeof element?.scrollTo === "function") {
+    element.scrollTo(options)
+    return
+  }
+
+  if (element && typeof options?.top === "number") {
+    element.scrollTop = options.top
+  }
+}
+
+function formatReviewLogSummary(moveRows) {
+  const turnCount = Array.isArray(moveRows) ? moveRows.length : 0
+  const entryCount = Array.isArray(moveRows)
+    ? moveRows.reduce((count, row) => count + (row.white ? 1 : 0) + (row.black ? 1 : 0), 0)
+    : 0
+  return `${turnCount} ${turnCount === 1 ? "turn" : "turns"} · ${entryCount} ${entryCount === 1 ? "entry" : "entries"}`
+}
+
+function ReviewMoveRows({ gameCreatedAt, moveRows, moveRowsRef, onSelectMove, selectedPlyGroup }) {
+  return (
+    <ol className="review-page__move-rows" ref={moveRowsRef}>
+      {moveRows.map((row) => (
+        <li key={row.moveNumber} className="review-page__move-row">
+          {(() => {
+            const whiteCompletedAt = finalTimestampForGroup(row.white)
+            const blackCompletedAt = finalTimestampForGroup(row.black)
+            const rowStartedAt =
+              finalTimestampForGroup(moveRows[row.moveNumber - 2]?.black) ??
+              finalTimestampForGroup(moveRows[row.moveNumber - 2]?.white) ??
+              gameCreatedAt
+            const whiteElapsed = whiteCompletedAt ? formatElapsedBetween(rowStartedAt, whiteCompletedAt) : "—"
+            const blackElapsed = blackCompletedAt ? formatElapsedBetween(whiteCompletedAt ?? rowStartedAt, blackCompletedAt) : "—"
+
+            return (
+              <div className="review-page__row-header">
+                <span className="review-page__row-time review-page__row-time--white">{whiteElapsed}</span>
+                <span className="review-page__move-number">{formatTurnNumber(row.white ?? row.black)}</span>
+                <span className="review-page__row-time review-page__row-time--black">{blackElapsed}</span>
+              </div>
+            )
+          })()}
+          <div className="review-page__ply-grid">
+            {["white", "black"].map((color) => {
+              const move = row[color]
+              if (!move) {
+                return <div key={color} className="review-page__ply-card review-page__ply-card--empty" />
+              }
+
+              const announcements = summarizePlyGroup(move)
+              return (
+                <button
+                  key={color}
+                  type="button"
+                  className={`review-page__ply-card${selectedPlyGroup?.id === move.id ? " is-active" : ""}`}
+                  data-ply-index={move.index}
+                  aria-label={`${color === "white" ? "White" : "Black"} ${formatPlySummary(move)}`}
+                  onClick={() => onSelectMove(move)}
+                >
+                  <span className="review-page__ply-color">{color === "white" ? "White" : "Black"}</span>
+                  <ol className="review-page__announcement-list">
+                    {announcements.map((announcement, index) => (
+                      <li key={`${move.id}-${index}`} className="review-page__announcement-item">
+                        <span className="review-page__announcement-badge">{index + 1}</span>
+                        <span>{announcement}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </button>
+              )
+            })}
+          </div>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
 export default function ReviewPage() {
   const { gameCode, gameId } = useParams()
   const gameRef = gameCode ?? gameId ?? ""
@@ -846,9 +930,12 @@ export default function ReviewPage() {
   const [perspective, setPerspective] = useState("referee")
   const [boardOrientation, setBoardOrientation] = useState("white")
   const [reviewCardHeight, setReviewCardHeight] = useState(null)
+  const [isMobileReviewLog, setIsMobileReviewLog] = useState(() => isMobileReviewViewport())
+  const [reviewLogDrawerOpen, setReviewLogDrawerOpen] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const boardColumnRef = useRef(null)
   const moveRowsRef = useRef(null)
+  const reviewLogCloseButtonRef = useRef(null)
   const maxGroupIndexRef = useRef(-1)
 
   useEffect(() => {
@@ -896,9 +983,50 @@ export default function ReviewPage() {
 
   const plyGroups = useMemo(() => buildPlyGroups(moves), [moves])
   const moveRows = useMemo(() => buildMoveRows(moves), [moves])
+  const reviewLogSummary = useMemo(() => formatReviewLogSummary(moveRows), [moveRows])
   const maxGroupIndex = Math.max(plyGroups.length - 1, -1)
   const finalGroup = maxGroupIndex >= 0 ? plyGroups[maxGroupIndex] : null
   maxGroupIndexRef.current = maxGroupIndex
+
+  const scrollSelectedPlyIntoView = useCallback((behavior = "smooth") => {
+    const container = moveRowsRef.current
+    if (!(container instanceof HTMLElement)) {
+      return
+    }
+
+    if (currentPly < 0) {
+      scrollReviewLogElement(container, { top: 0, behavior })
+      return
+    }
+
+    const active = container.querySelector?.(`[data-ply-index="${currentPly}"]`)
+    if (!(active instanceof HTMLElement)) {
+      return
+    }
+
+    const containerRect = container.getBoundingClientRect()
+    const activeRect = active.getBoundingClientRect()
+    const topOverflow = activeRect.top < containerRect.top
+    const bottomOverflow = activeRect.bottom > containerRect.bottom
+
+    if (topOverflow || bottomOverflow) {
+      const targetTop = topOverflow
+        ? container.scrollTop + activeRect.top - containerRect.top
+        : container.scrollTop + activeRect.bottom - containerRect.bottom
+      scrollReviewLogElement(container, {
+        top: Math.max(0, targetTop),
+        behavior,
+      })
+    }
+  }, [currentPly])
+
+  const handleSelectReviewMove = useCallback((move) => {
+    setIsPlaying(false)
+    setCurrentPly(move.index)
+    if (isMobileReviewLog) {
+      setReviewLogDrawerOpen(false)
+    }
+  }, [isMobileReviewLog])
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -915,6 +1043,51 @@ export default function ReviewPage() {
       window.removeEventListener("keydown", onKeyDown)
     }
   }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined
+    }
+
+    const syncMobileReviewLog = () => {
+      setIsMobileReviewLog(isMobileReviewViewport())
+    }
+
+    syncMobileReviewLog()
+    window.addEventListener("resize", syncMobileReviewLog)
+    return () => {
+      window.removeEventListener("resize", syncMobileReviewLog)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isMobileReviewLog && reviewLogDrawerOpen) {
+      setReviewLogDrawerOpen(false)
+    }
+  }, [isMobileReviewLog, reviewLogDrawerOpen])
+
+  useEffect(() => {
+    setReviewLogDrawerOpen(false)
+  }, [gameRef])
+
+  useEffect(() => {
+    if (!reviewLogDrawerOpen || typeof document === "undefined") {
+      return undefined
+    }
+
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") {
+        setReviewLogDrawerOpen(false)
+      }
+    }
+
+    document.addEventListener("keydown", closeOnEscape)
+    reviewLogCloseButtonRef.current?.focus()
+
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape)
+    }
+  }, [reviewLogDrawerOpen])
 
   useEffect(() => {
     if (loading || error) {
@@ -984,34 +1157,30 @@ export default function ReviewPage() {
   }, [error, loading])
 
   useEffect(() => {
-    if (currentPly < 0) {
-      return
+    scrollSelectedPlyIntoView()
+  }, [scrollSelectedPlyIntoView])
+
+  useEffect(() => {
+    if (!reviewLogDrawerOpen || typeof window === "undefined") {
+      return undefined
     }
 
-    const container = moveRowsRef.current
-    const active = container?.querySelector?.(`[data-ply-index="${currentPly}"]`)
-    if (!(active instanceof HTMLElement)) {
-      return
+    const requestFrame = typeof window.requestAnimationFrame === "function"
+      ? window.requestAnimationFrame
+      : (callback) => {
+          callback()
+          return 0
+        }
+    const cancelFrame = typeof window.cancelAnimationFrame === "function"
+      ? window.cancelAnimationFrame
+      : () => {}
+    const frameId = requestFrame(() => {
+      scrollSelectedPlyIntoView("auto")
+    })
+    return () => {
+      cancelFrame(frameId)
     }
-
-    if (container instanceof HTMLElement) {
-      const containerRect = container.getBoundingClientRect()
-      const activeRect = active.getBoundingClientRect()
-      const topOverflow = activeRect.top < containerRect.top
-      const bottomOverflow = activeRect.bottom > containerRect.bottom
-
-      if (topOverflow || bottomOverflow) {
-        const offsetTop = active.offsetTop
-        const targetTop = topOverflow
-          ? offsetTop
-          : offsetTop - container.clientHeight + active.offsetHeight
-        container.scrollTo({
-          top: Math.max(0, targetTop),
-          behavior: "smooth",
-        })
-      }
-    }
-  }, [currentPly])
+  }, [moveRows.length, reviewLogDrawerOpen, scrollSelectedPlyIntoView])
 
   useEffect(() => {
     if (!isPlaying) {
@@ -1142,6 +1311,7 @@ export default function ReviewPage() {
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
 
       {!loading && !error ? (
+        <>
         <div className="review-page__layout">
           <section className="review-page__board-column" ref={boardColumnRef}>
             <div className="review-page__board-toolbar" aria-label="Replay view controls">
@@ -1282,72 +1452,80 @@ export default function ReviewPage() {
 
           <aside
             className="review-page__log-column"
-            style={reviewCardHeight ? { height: `${reviewCardHeight}px` } : undefined}
+            style={!isMobileReviewLog && reviewCardHeight ? { height: `${reviewCardHeight}px` } : undefined}
           >
             <div className="review-page__log-header">
-              <h2>Move log</h2>
+              <div>
+                <h2>Referee log</h2>
+                {isMobileReviewLog ? <p className="review-page__log-summary">{reviewLogSummary}</p> : null}
+              </div>
+              {isMobileReviewLog && moveRows.length ? (
+                <button
+                  type="button"
+                  className="review-page__log-open"
+                  onClick={() => setReviewLogDrawerOpen(true)}
+                  aria-label="Open referee log"
+                >
+                  Open
+                </button>
+              ) : null}
             </div>
-            <div className="review-page__log-frame">
-              <ol className="review-page__move-rows" ref={moveRowsRef}>
-                {moveRows.map((row) => (
-                  <li key={row.moveNumber} className="review-page__move-row">
-                    {(() => {
-                      const whiteCompletedAt = finalTimestampForGroup(row.white)
-                      const blackCompletedAt = finalTimestampForGroup(row.black)
-                      const rowStartedAt =
-                        finalTimestampForGroup(moveRows[row.moveNumber - 2]?.black) ??
-                        finalTimestampForGroup(moveRows[row.moveNumber - 2]?.white) ??
-                        game?.created_at
-                      const whiteElapsed = whiteCompletedAt ? formatElapsedBetween(rowStartedAt, whiteCompletedAt) : "—"
-                      const blackElapsed = blackCompletedAt ? formatElapsedBetween(whiteCompletedAt ?? rowStartedAt, blackCompletedAt) : "—"
-
-                      return (
-                        <div className="review-page__row-header">
-                          <span className="review-page__row-time review-page__row-time--white">{whiteElapsed}</span>
-                          <span className="review-page__move-number">{formatTurnNumber(row.white ?? row.black)}</span>
-                          <span className="review-page__row-time review-page__row-time--black">{blackElapsed}</span>
-                        </div>
-                      )
-                    })()}
-                    <div className="review-page__ply-grid">
-                      {["white", "black"].map((color) => {
-                        const move = row[color]
-                        if (!move) {
-                          return <div key={color} className="review-page__ply-card review-page__ply-card--empty" />
-                        }
-
-                        const announcements = summarizePlyGroup(move)
-                        return (
-                          <button
-                            key={color}
-                            type="button"
-                            className={`review-page__ply-card${selectedPlyGroup?.id === move.id ? " is-active" : ""}`}
-                            data-ply-index={move.index}
-                            aria-label={`${color === "white" ? "White" : "Black"} ${formatPlySummary(move)}`}
-                            onClick={() => {
-                              setIsPlaying(false)
-                              setCurrentPly(move.index)
-                            }}
-                          >
-                            <span className="review-page__ply-color">{color === "white" ? "White" : "Black"}</span>
-                            <ol className="review-page__announcement-list">
-                              {announcements.map((announcement, index) => (
-                                <li key={`${move.id}-${index}`} className="review-page__announcement-item">
-                                  <span className="review-page__announcement-badge">{index + 1}</span>
-                                  <span>{announcement}</span>
-                                </li>
-                              ))}
-                            </ol>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </div>
+            {!isMobileReviewLog ? (
+              <div className="review-page__log-frame">
+                {moveRows.length ? (
+                  <ReviewMoveRows
+                    gameCreatedAt={game?.created_at}
+                    moveRows={moveRows}
+                    moveRowsRef={moveRowsRef}
+                    onSelectMove={handleSelectReviewMove}
+                    selectedPlyGroup={selectedPlyGroup}
+                  />
+                ) : (
+                  <p className="review-page__log-empty">No referee entries yet.</p>
+                )}
+              </div>
+            ) : null}
           </aside>
         </div>
+        {isMobileReviewLog && reviewLogDrawerOpen ? (
+          <div className="review-page__log-drawer" role="presentation" onClick={() => setReviewLogDrawerOpen(false)}>
+            <div className="review-page__log-drawer-sheet" role="dialog" aria-modal="true" aria-labelledby="review-log-dialog-title" onClick={(event) => event.stopPropagation()}>
+              <div className="review-page__log-drawer-header">
+                <div className="review-page__log-drawer-title">
+                  <h2 id="review-log-dialog-title">Referee log</h2>
+                  <p>{reviewLogSummary}</p>
+                </div>
+                <div className="review-page__log-drawer-actions">
+                  <button type="button" className="review-page__log-drawer-current" onClick={() => scrollSelectedPlyIntoView("auto")}>
+                    Current
+                  </button>
+                  <button
+                    type="button"
+                    className="review-page__log-drawer-close"
+                    onClick={() => setReviewLogDrawerOpen(false)}
+                    aria-label="Close referee log"
+                    ref={reviewLogCloseButtonRef}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+              {moveRows.length ? (
+                <div className="review-page__log-drawer-body" role="log" aria-label="Referee log" ref={moveRowsRef}>
+                  <ReviewMoveRows
+                    gameCreatedAt={game?.created_at}
+                    moveRows={moveRows}
+                    onSelectMove={handleSelectReviewMove}
+                    selectedPlyGroup={selectedPlyGroup}
+                  />
+                </div>
+              ) : (
+                <p className="review-page__log-empty">No referee entries yet.</p>
+              )}
+            </div>
+          </div>
+        ) : null}
+        </>
       ) : null}
       {!loading && !error && game ? (
         <section className="review-page__stats" aria-labelledby="review-stats-heading">

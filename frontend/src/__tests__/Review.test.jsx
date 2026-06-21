@@ -133,7 +133,7 @@ describe("ReviewPage", () => {
   it("loads_transcript_and_navigates_moves", async () => {
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     expect(screen.getByText("Start/1B")).toBeInTheDocument()
     expect(screen.getByText("11s")).toBeInTheDocument()
     expect(screen.getByText("8s")).toBeInTheDocument()
@@ -153,6 +153,42 @@ describe("ReviewPage", () => {
     expect(screen.getByText("1B/1B")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i })).toHaveClass("is-active")
     expect(document.querySelectorAll(".review-page__announcement-badge").length).toBeGreaterThan(0)
+  })
+
+  it("opens_referee_log_in_a_mobile_drawer", async () => {
+    const originalInnerWidth = window.innerWidth
+    Object.defineProperty(window, "innerWidth", {
+      value: 390,
+      writable: true,
+      configurable: true,
+    })
+
+    try {
+      renderReviewPage()
+
+      await screen.findByText(/Referee log/i)
+      expect(screen.getByText("1 turn · 2 entries")).toBeInTheDocument()
+      expect(screen.queryByRole("log", { name: "Referee log" })).not.toBeInTheDocument()
+
+      fireEvent.click(screen.getByRole("button", { name: "Open referee log" }))
+
+      const dialog = screen.getByRole("dialog", { name: "Referee log" })
+      const log = within(dialog).getByRole("log", { name: "Referee log" })
+      expect(log).toHaveClass("review-page__log-drawer-body")
+
+      fireEvent.click(within(log).getByRole("button", { name: /White \[e2e4\] Move complete/i }))
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: "Referee log" })).not.toBeInTheDocument()
+      })
+      expect(screen.getByText("1W/1B")).toBeInTheDocument()
+    } finally {
+      Object.defineProperty(window, "innerWidth", {
+        value: originalInnerWidth,
+        writable: true,
+        configurable: true,
+      })
+    }
   })
 
   it("formats_machine_result_reasons_for_game_details", async () => {
@@ -193,7 +229,7 @@ describe("ReviewPage", () => {
   it("supports_keyboard_navigation_and_perspective_toggle", async () => {
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
 
     fireEvent.keyDown(window, { key: "ArrowRight" })
     await waitFor(() => {
@@ -220,7 +256,7 @@ describe("ReviewPage", () => {
   it("keeps_board_orientation_controls_above_the_replay_board", async () => {
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
 
     const perspectiveControls = screen.getByRole("tablist", { name: "Replay perspective" })
     const orientationControls = screen.getByRole("tablist", { name: "Board orientation" })
@@ -237,7 +273,7 @@ describe("ReviewPage", () => {
   it("keeps_replay_controls_immediately_under_the_board", async () => {
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
 
     const controls = screen.getByRole("group", { name: "Replay controls" })
     const logHeader = document.querySelector(".review-page__log-header")
@@ -272,7 +308,7 @@ describe("ReviewPage", () => {
 
     try {
       const { container } = renderReviewPage()
-      await screen.findByText(/Move log/i)
+      await screen.findByText(/Referee log/i)
 
       const boardCard = container.querySelector(".review-page__board-column")
       const [toolbar, chessBoard, replayControls, boardMeta] = boardCard.children
@@ -366,7 +402,7 @@ describe("ReviewPage", () => {
   it("uses_under_board_controls_to_step_through_replay", async () => {
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
 
     const controls = screen.getByRole("group", { name: "Replay controls" })
     fireEvent.click(within(controls).getByRole("button", { name: "Next" }))
@@ -382,7 +418,7 @@ describe("ReviewPage", () => {
   it("plays_and_pauses_replay_one_ply_per_second", async () => {
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     vi.useFakeTimers()
 
     try {
@@ -410,7 +446,7 @@ describe("ReviewPage", () => {
   it("hides_opponent_overlays_in_private_views", async () => {
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     fireEvent.click(screen.getByRole("button", { name: /Black \[e7e5\] Move complete/i }))
     expect(document.querySelectorAll(".board-overlay__arrow").length).toBeGreaterThan(0)
 
@@ -438,7 +474,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     fireEvent.click(screen.getByRole("tab", { name: "White" }))
     fireEvent.click(screen.getByRole("button", { name: /Black \[e7e5\] Capture at E4/i }))
 
@@ -480,7 +516,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     expect(
       screen.getByRole("button", { name: /White \[e5d4\] Pawn captured at D4 · Check on file/i }),
     ).toBeInTheDocument()
@@ -511,7 +547,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     expect(screen.getByRole("button", { name: /White \[e5f6\] En passant capture at F6/i })).toBeInTheDocument()
   })
 
@@ -539,7 +575,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     fireEvent.click(screen.getByRole("button", { name: /White \[p@e4\] Move complete/i }))
 
     expect(document.querySelector(".board-overlay__badge--success")).toBeInTheDocument()
@@ -612,7 +648,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     expect(screen.getByLabelText("White reserve")).toBeInTheDocument()
     expect(screen.getByLabelText("Black reserve")).toBeInTheDocument()
     expect(within(screen.getByLabelText("White reserve")).getByLabelText("Knight reserve piece (0)")).toBeInTheDocument()
@@ -658,7 +694,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     fireEvent.click(screen.getByRole("button", { name: /White \[e2e4\] Move complete/i }))
 
     const material = screen.getByLabelText("Replay material status")
@@ -725,7 +761,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     expect(screen.getByRole("button", { name: /White \[g2g4\] Move complete/i })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /White \[g2g4\] Move complete · No pawn captures/i })).not.toBeInTheDocument()
     expect(
@@ -796,7 +832,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     expect(screen.getByRole("button", { name: /Black No pawn captures · \[d7d5\] Move complete/i })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /White Pawn try from E4 · \[e4d5\] Pawn captured at D5/i })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Black Pawn tries from C7, E7 · \[g8f6\] Move complete/i })).toBeInTheDocument()
@@ -851,7 +887,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     fireEvent.click(screen.getByRole("button", { name: /White .* \[e4d5\] Pawn captured at D5/i }))
 
     const material = screen.getByLabelText("Replay material status")
@@ -915,7 +951,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     fireEvent.click(screen.getByRole("button", { name: /White \[f1b5\] Capture at B5/i }))
 
     const material = screen.getByLabelText("Replay material status")
@@ -972,7 +1008,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     expect(screen.getByRole("button", { name: /Black Has pawn capture · \[e3c5\] Move complete/i })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /Black No pawn captures · \[e3c5\] Move complete/i })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: /White No pawn captures · \[b1c3\] Move complete/i })).toBeInTheDocument()
@@ -1026,7 +1062,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     expect(screen.getByRole("button", { name: /White No pawn captures · \[b2b4\] Move complete/i })).toBeInTheDocument()
     expect(screen.queryByText("Ask any pawn captures")).not.toBeInTheDocument()
   })
@@ -1083,7 +1119,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     expect(screen.getByRole("button", { name: /Black Double check.*Check by knight.*Check on file/i })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /White \[\?\?\] Move complete/i })).toBeInTheDocument()
     expect(screen.getByText("2m 20s")).toBeInTheDocument()
@@ -1125,7 +1161,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     fireEvent.click(screen.getByRole("button", { name: /White \[e1g1\] Move complete/i }))
     expect(document.querySelectorAll(".board-overlay__arrow")).toHaveLength(2)
 
@@ -1169,7 +1205,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     fireEvent.click(screen.getByRole("button", { name: /White \[e1g1\] Move complete/i }))
     expect(document.querySelectorAll(".board-overlay__arrow")).toHaveLength(1)
   })
@@ -1193,7 +1229,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     fireEvent.click(screen.getByRole("button", { name: /Black \[e8c8\] Move complete/i }))
     expect(document.querySelectorAll(".board-overlay__arrow")).toHaveLength(2)
   })
@@ -1226,7 +1262,7 @@ describe("ReviewPage", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     fireEvent.click(screen.getByRole("button", { name: /White \[e1c1\] Move complete/i }))
     expect(document.querySelectorAll(".board-overlay__arrow")).toHaveLength(2)
 
@@ -1237,10 +1273,11 @@ describe("ReviewPage", () => {
   it("scrolls_the_active_move_into_view_when_it_overflows_the_log", async () => {
     const { container } = renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
 
     const moveRows = container.querySelector(".review-page__move-rows")
     moveRows.scrollTo = vi.fn()
+    moveRows.scrollTop = 80
     moveRows.getBoundingClientRect = () => ({
       top: 0,
       bottom: 100,
@@ -1310,7 +1347,7 @@ describe("ReviewPage", () => {
   it("skips_scrolling_when_the_active_row_lookup_returns_a_non_element", async () => {
     const { container } = renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
 
     const moveRows = container.querySelector(".review-page__move-rows")
     moveRows.scrollTo = vi.fn()
@@ -1330,10 +1367,11 @@ describe("ReviewPage", () => {
   it("scrolls_the_active_move_to_the_top_when_it_sits_above_the_log", async () => {
     const { container } = renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
 
     const moveRows = container.querySelector(".review-page__move-rows")
     moveRows.scrollTo = vi.fn()
+    moveRows.scrollTop = 44
     moveRows.getBoundingClientRect = () => ({
       top: 40,
       bottom: 140,
