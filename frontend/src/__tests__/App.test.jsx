@@ -116,6 +116,32 @@ describe("App routes", () => {
     await screen.findByRole("heading", { name: "Login" })
   })
 
+  it("redirects_tech_route_to_login_when_unauthenticated", async () => {
+    mockApi.me.mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
+
+    renderRoute("/tech")
+
+    await screen.findByRole("heading", { name: "Login" })
+  })
+
+  it("hides_tech_route_for_authenticated_non_operator", async () => {
+    mockApi.me.mockResolvedValueOnce({ username: "playerone", can_view_tech_reports: false })
+
+    renderRoute("/tech")
+
+    await screen.findByText("Tech reports are private.")
+    expect(screen.queryByRole("link", { name: "Bots report" })).not.toBeInTheDocument()
+  })
+
+  it("renders_tech_route_for_authorized_operator", async () => {
+    mockApi.me.mockResolvedValueOnce({ username: "fil", can_view_tech_reports: true })
+
+    renderRoute("/tech")
+
+    await screen.findByRole("heading", { name: "Tech" })
+    expect(screen.getByRole("link", { name: /Bots report/ })).toBeInTheDocument()
+  })
+
   it("redirects_authenticated_user_away_from_login", async () => {
     mockApi.me.mockResolvedValueOnce({ username: "fil" })
 

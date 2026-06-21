@@ -76,6 +76,46 @@ function RequireAuth({ children }) {
   return children
 }
 
+function TechAccessDeniedPage() {
+  return (
+    <main className="page-shell leaderboard-page">
+      <h1>Tech</h1>
+      <p className="page-meta-stamp">Tech reports are private.</p>
+    </main>
+  )
+}
+
+function RequireTechAccess({ children }) {
+  const { isAuthenticated, bootstrapping, user } = useAuth()
+  const location = useLocation()
+
+  if (bootstrapping) {
+    return <LoadingPage />
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Navigate
+        to="/auth/login"
+        replace
+        state={{
+          from: {
+            pathname: location.pathname,
+            search: location.search,
+            hash: location.hash,
+          },
+        }}
+      />
+    )
+  }
+
+  if (user?.can_view_tech_reports !== true) {
+    return <TechAccessDeniedPage />
+  }
+
+  return children
+}
+
 function RedirectIfAuthenticated({ children }) {
   const { isAuthenticated, bootstrapping } = useAuth()
   const location = useLocation()
@@ -150,11 +190,46 @@ export function AppRoutes() {
           <Route path="/user/:username" element={<ProfilePage />} />
           <Route path="/user/:username/games" element={<GameHistoryPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="/tech" element={<TechIndexPage />} />
-          <Route path="/tech/bots-report" element={<BotsReportPage />} />
-          <Route path="/tech/guests-report" element={<GuestsReportPage />} />
-          <Route path="/tech/users-report" element={<UsersReportPage />} />
-          <Route path="/tech/acquisition-report" element={<AcquisitionReportPage />} />
+          <Route
+            path="/tech"
+            element={(
+              <RequireTechAccess>
+                <TechIndexPage />
+              </RequireTechAccess>
+            )}
+          />
+          <Route
+            path="/tech/bots-report"
+            element={(
+              <RequireTechAccess>
+                <BotsReportPage />
+              </RequireTechAccess>
+            )}
+          />
+          <Route
+            path="/tech/guests-report"
+            element={(
+              <RequireTechAccess>
+                <GuestsReportPage />
+              </RequireTechAccess>
+            )}
+          />
+          <Route
+            path="/tech/users-report"
+            element={(
+              <RequireTechAccess>
+                <UsersReportPage />
+              </RequireTechAccess>
+            )}
+          />
+          <Route
+            path="/tech/acquisition-report"
+            element={(
+              <RequireTechAccess>
+                <AcquisitionReportPage />
+              </RequireTechAccess>
+            )}
+          />
           <Route
             path="/settings"
             element={(
