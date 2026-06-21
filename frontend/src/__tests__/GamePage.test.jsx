@@ -1887,6 +1887,7 @@ describe("GamePage", () => {
 
       const dialog = screen.getByRole("dialog", { name: "Referee log" })
       const refereeLog = within(dialog).getByRole("log", { name: "Referee log by turn" })
+      expect(refereeLog).toHaveClass("game-referee-log-drawer__body")
       const firstTurn = within(refereeLog).getByRole("button", { name: /Turn 1/ })
       const secondTurn = within(refereeLog).getByRole("button", { name: /Turn 2/ })
 

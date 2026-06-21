@@ -892,8 +892,8 @@
 }
 
 .game-referee-log-drawer__sheet {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 0.85rem;
   width: 100%;
   height: min(82vh, 42rem);
@@ -919,6 +919,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.85rem;
+  flex: 0 0 auto;
 }
 
 .game-referee-log-drawer__title {
@@ -962,16 +963,24 @@
   line-height: 1;
 }
 
+.game-referee-log-drawer__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 0.15rem 5.5rem 0;
+  scroll-padding-bottom: 5.5rem;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
 .game-referee-log__scroll--drawer {
   display: block;
   height: auto;
   min-height: 0;
   max-height: none;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 0 0.15rem 5.5rem 0;
-  scroll-padding-bottom: 5.5rem;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
+  padding: 0;
 }
 
 .game-referee-turn--drawer {
