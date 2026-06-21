@@ -126,7 +126,7 @@ describe("ReviewPage board orientation defaults", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     expect(document.querySelector(".chess-board")?.getAttribute("data-orientation")).toBe("black")
   })
 
@@ -138,7 +138,7 @@ describe("ReviewPage board orientation defaults", () => {
 
     renderReviewPage()
 
-    await screen.findByText(/Move log/i)
+    await screen.findByText(/Referee log/i)
     expect(document.querySelector(".chess-board")?.getAttribute("data-orientation")).toBe("white")
   })
 })
