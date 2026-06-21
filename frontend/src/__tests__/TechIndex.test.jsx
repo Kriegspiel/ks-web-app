@@ -15,5 +15,6 @@ describe("TechIndexPage", () => {
     expect(screen.getByRole("link", { name: /Bots report/i })).toHaveAttribute("href", "/tech/bots-report")
     expect(screen.getByRole("link", { name: /Guests report/i })).toHaveAttribute("href", "/tech/guests-report")
     expect(screen.getByRole("link", { name: /Users report/i })).toHaveAttribute("href", "/tech/users-report")
+    expect(screen.getByRole("link", { name: /Acquisition report/i })).toHaveAttribute("href", "/tech/acquisition-report")
   })
 })

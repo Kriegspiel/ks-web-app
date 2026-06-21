@@ -25,3 +25,27 @@
   background: color-mix(in srgb, var(--surface-strong) 94%, var(--surface) 6%);
   color: var(--text);
 }
+
+.report-range-control {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.report-range-control__button {
+  min-width: 3.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0.45rem 0.75rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.report-range-control__button--active {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--surface);
+}

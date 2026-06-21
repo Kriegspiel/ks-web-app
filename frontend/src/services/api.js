@@ -84,6 +84,14 @@ export async function me() {
     throw normalizeError(error, 'Unable to load auth state.')
   }
 }
+export async function recordCampaignVisit(payload) {
+  try {
+    const response = await api.post('/api/analytics/visit', payload)
+    return response.data
+  } catch (error) {
+    throw normalizeError(error, 'Unable to record campaign visit.')
+  }
+}
 export async function getBots() { try { const response = await api.get('/api/bots'); return response.data } catch (error) { throw normalizeError(error, 'Unable to load bots right now.') } }
 export async function createGame(payload) { try { const response = await api.post('/api/game/create', payload); return response.data } catch (error) { throw normalizeError(error, 'Unable to create game right now.') } }
 export async function joinGame(gameCode) { try { const response = await api.post(`/api/game/join/${encodeURIComponent(gameCode)}`); return response.data } catch (error) { throw normalizeError(error, 'Unable to join that game right now.') } }
@@ -117,5 +125,6 @@ export const techApi = {
   async getBotsReport(days = 10) { const response = await api.get("/api/tech/bots-report", { params: { days } }); return response.data },
   async getGuestsReport() { const response = await api.get("/api/tech/guests-report"); return response.data },
   async getUsersReport() { const response = await api.get("/api/tech/users-report"); return response.data },
+  async getAcquisitionReport(days = 30) { const response = await api.get("/api/tech/acquisition-report", { params: { days } }); return response.data },
 }
 export default api

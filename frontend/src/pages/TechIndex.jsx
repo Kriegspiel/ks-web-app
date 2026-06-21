@@ -17,6 +17,11 @@ const TECH_LINKS = [
     title: "Users report",
     description: "DAU, WAU, MAU, trend charts, and the latest user games.",
   },
+  {
+    href: "/tech/acquisition-report",
+    title: "Acquisition report",
+    description: "First-party campaign visits, sessions, signups, and games by UTM source.",
+  },
 ]
 
 export default function TechIndexPage() {
