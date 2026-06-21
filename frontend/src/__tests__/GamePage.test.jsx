@@ -1887,14 +1887,27 @@ describe("GamePage", () => {
 
       const dialog = screen.getByRole("dialog", { name: "Referee log" })
       const refereeLog = within(dialog).getByRole("log", { name: "Referee log by turn" })
-      const firstTurn = within(refereeLog).getByText("Turn 1").closest("details")
-      const secondTurn = within(refereeLog).getByText("Turn 2").closest("details")
+      const firstTurn = within(refereeLog).getByRole("button", { name: /Turn 1/ })
+      const secondTurn = within(refereeLog).getByRole("button", { name: /Turn 2/ })
 
+      expect(within(refereeLog).getByText("White in check")).toBeInTheDocument()
+      expect(within(refereeLog).queryByText("White sees file blocked")).not.toBeInTheDocument()
+      expect(firstTurn).toHaveAttribute("aria-expanded", "false")
+      expect(secondTurn).toHaveAttribute("aria-expanded", "true")
+
+      fireEvent.click(firstTurn)
+
+      expect(firstTurn).toHaveAttribute("aria-expanded", "true")
+      expect(secondTurn).toHaveAttribute("aria-expanded", "false")
       expect(within(refereeLog).getByText("White sees file blocked")).toBeInTheDocument()
       expect(within(refereeLog).getByText("Black hears no capture")).toBeInTheDocument()
+      expect(within(refereeLog).queryByText("White in check")).not.toBeInTheDocument()
+
+      fireEvent.click(within(dialog).getByRole("button", { name: "Latest" }))
+
+      expect(firstTurn).toHaveAttribute("aria-expanded", "false")
+      expect(secondTurn).toHaveAttribute("aria-expanded", "true")
       expect(within(refereeLog).getByText("White in check")).toBeInTheDocument()
-      expect(firstTurn).not.toHaveAttribute("open")
-      expect(secondTurn).toHaveAttribute("open")
 
       fireEvent.click(within(dialog).getByRole("button", { name: "Close referee log" }))
       await waitFor(() => {

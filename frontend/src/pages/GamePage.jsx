@@ -978,28 +978,38 @@ function RefereeLogTurn({ turnEntry }) {
   )
 }
 
-function RefereeLogDrawerTurn({ open, turnEntry }) {
+function refereeLogTurnKey(turnEntry, index) {
+  return `turn-${turnEntry?.turn ?? index + 1}-${index}`
+}
+
+function RefereeLogDrawerTurn({ onToggle, open, turnEntry }) {
   return (
-    <details className="game-referee-turn game-referee-turn--drawer" open={open}>
-      <summary className="game-referee-turn__summary">
+    <section className={`game-referee-turn game-referee-turn--drawer${open ? " game-referee-turn--open" : ""}`}>
+      <button type="button" className="game-referee-turn__summary" onClick={onToggle} aria-expanded={open}>
         <span>Turn {turnEntry.turn}</span>
         <span>{formatRefereeResponseCount(countRefereeTurnEntries(turnEntry))}</span>
-      </summary>
-      <RefereeTurnBody turnEntry={turnEntry} />
-    </details>
+      </button>
+      {open ? <RefereeTurnBody turnEntry={turnEntry} /> : null}
+    </section>
   )
 }
 
-function RefereeLogList({ turns, variant = "inline", scrollRef }) {
+function RefereeLogList({ onToggleTurn, openTurnKey, turns, variant = "inline", scrollRef }) {
   return (
     <div className={`game-referee-log__scroll game-referee-log__scroll--${variant}`} role="log" aria-label="Referee log by turn" ref={scrollRef}>
-      {turns.map((turnEntry, index) => (
-        variant === "drawer" ? (
-          <RefereeLogDrawerTurn key={`turn-${turnEntry.turn}`} turnEntry={turnEntry} open={index === turns.length - 1} />
+      {turns.map((turnEntry, index) => {
+        const key = refereeLogTurnKey(turnEntry, index)
+        return variant === "drawer" ? (
+          <RefereeLogDrawerTurn
+            key={key}
+            turnEntry={turnEntry}
+            open={openTurnKey === key}
+            onToggle={() => onToggleTurn?.(key)}
+          />
         ) : (
-          <RefereeLogTurn key={`turn-${turnEntry.turn}`} turnEntry={turnEntry} />
+          <RefereeLogTurn key={key} turnEntry={turnEntry} />
         )
-      ))}
+      })}
     </div>
   )
 }
@@ -1974,6 +1984,7 @@ export default function GamePage() {
   const [desktopRefereeHeight, setDesktopRefereeHeight] = useState(null)
   const [isMobileRefereeLog, setIsMobileRefereeLog] = useState(() => isMobileGameViewport())
   const [refereeLogDrawerOpen, setRefereeLogDrawerOpen] = useState(false)
+  const [openRefereeLogTurnKey, setOpenRefereeLogTurnKey] = useState("")
   const [soundsMuted, setSoundsMuted] = useState(() => {
     if (typeof window === "undefined") {
       return false
@@ -2601,6 +2612,10 @@ export default function GamePage() {
     () => formatRefereeLogSummary(groupedRefereeLog, flattenedRefereeEntries.length),
     [flattenedRefereeEntries.length, groupedRefereeLog]
   )
+  const latestRefereeLogTurnKey = useMemo(
+    () => (groupedRefereeLog.length ? refereeLogTurnKey(groupedRefereeLog.at(-1), groupedRefereeLog.length - 1) : ""),
+    [groupedRefereeLog]
+  )
   const scrollRefereeLogToLatest = useCallback(() => {
     const logNode = logScrollRef.current
     if (!logNode) {
@@ -2609,6 +2624,21 @@ export default function GamePage() {
 
     logNode.scrollTop = logNode.scrollHeight
   }, [])
+  const handleToggleRefereeLogTurn = useCallback((turnKey) => {
+    setOpenRefereeLogTurnKey((currentTurnKey) => (currentTurnKey === turnKey ? "" : turnKey))
+  }, [])
+  const handleShowLatestRefereeLogTurn = useCallback(() => {
+    if (latestRefereeLogTurnKey) {
+      setOpenRefereeLogTurnKey(latestRefereeLogTurnKey)
+    }
+
+    if (typeof window === "undefined") {
+      scrollRefereeLogToLatest()
+      return
+    }
+
+    window.requestAnimationFrame(scrollRefereeLogToLatest)
+  }, [latestRefereeLogTurnKey, scrollRefereeLogToLatest])
   const refereePanelStyle = desktopRefereeHeight ? { height: `${desktopRefereeHeight}px`, maxHeight: `${desktopRefereeHeight}px` } : undefined
 
   useEffect(() => {
@@ -2636,6 +2666,12 @@ export default function GamePage() {
   useEffect(() => {
     setRefereeLogDrawerOpen(false)
   }, [gameRef])
+
+  useEffect(() => {
+    if (refereeLogDrawerOpen) {
+      setOpenRefereeLogTurnKey(latestRefereeLogTurnKey)
+    }
+  }, [latestRefereeLogTurnKey, refereeLogDrawerOpen])
 
   useEffect(() => {
     if (!refereeLogDrawerOpen || typeof document === "undefined") {
@@ -3940,7 +3976,7 @@ export default function GamePage() {
                     <p>{refereeLogSummary}</p>
                   </div>
                   <div className="game-referee-log-drawer__actions">
-                    <button type="button" className="game-referee-log-drawer__latest" onClick={scrollRefereeLogToLatest}>
+                    <button type="button" className="game-referee-log-drawer__latest" onClick={handleShowLatestRefereeLogTurn}>
                       Latest
                     </button>
                     <button
@@ -3955,7 +3991,13 @@ export default function GamePage() {
                   </div>
                 </div>
                 {groupedRefereeLog.length ? (
-                  <RefereeLogList turns={groupedRefereeLog} variant="drawer" scrollRef={logScrollRef} />
+                  <RefereeLogList
+                    turns={groupedRefereeLog}
+                    variant="drawer"
+                    scrollRef={logScrollRef}
+                    openTurnKey={openRefereeLogTurnKey}
+                    onToggleTurn={handleToggleRefereeLogTurn}
+                  />
                 ) : (
                   <p className="game-referee-column__empty">No referee responses yet.</p>
                 )}
