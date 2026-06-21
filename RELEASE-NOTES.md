@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.75
+
+- **Private Tech Reports**: require the backend tech-report capability before
+  rendering `/tech` and report pages, redirecting unauthenticated visitors to
+  login and hiding reports from non-operators.
+
 ## ks-web-app frontend v. 1.3.74
 
 - **Campaign Attribution**: capture UTM campaign visits in the app and send

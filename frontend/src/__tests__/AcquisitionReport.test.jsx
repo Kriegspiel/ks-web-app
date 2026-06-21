@@ -9,7 +9,7 @@ vi.mock("../services/api", () => ({
 }))
 
 vi.mock("../components/VersionStamp", () => ({
-  default: () => <div>v. 1.3.74</div>,
+  default: () => <div>v. 1.3.75</div>,
 }))
 
 const { techApi } = await import("../services/api")
