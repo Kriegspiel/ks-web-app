@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom"
 import AppHeader from "./components/AppHeader"
 import AppFooter from "./components/AppFooter"
+import AttributionCapture from "./components/AttributionCapture"
 import { AuthProvider } from "./context/AuthContext"
 import { ThemeProvider } from "./context/ThemeContext"
 import { useAuth } from "./hooks/useAuth"
@@ -13,6 +14,7 @@ import ReviewPage from "./pages/Review"
 import ProfilePage from "./pages/Profile"
 import GameHistoryPage from "./pages/GameHistory"
 import LeaderboardPage from "./pages/Leaderboard"
+import AcquisitionReportPage from "./pages/AcquisitionReport"
 import BotsReportPage from "./pages/BotsReport"
 import GuestsReportPage from "./pages/GuestsReport"
 import TechIndexPage from "./pages/TechIndex"
@@ -92,74 +94,78 @@ function RedirectIfAuthenticated({ children }) {
 
 export function AppRoutes() {
   return (
-    <Routes>
-      <Route element={<AppLayout />}>
-        <Route
-          path="/"
-          element={(
-            <RequireAuth>
-              <LobbyPage />
-            </RequireAuth>
-          )}
-        />
-        <Route
-          path="/auth/login"
-          element={(
-            <RedirectIfAuthenticated>
-              <LoginPage />
-            </RedirectIfAuthenticated>
-          )}
-        />
-        <Route
-          path="/auth/register"
-          element={(
-            <RedirectIfAuthenticated>
-              <RegisterPage />
-            </RedirectIfAuthenticated>
-          )}
-        />
-        <Route
-          path="/lobby"
-          element={(
-            <RequireAuth>
-              <LobbyPage />
-            </RequireAuth>
-          )}
-        />
-        <Route path="/join/:gameCode" element={<JoinPage />} />
-        <Route
-          path="/game/:gameCode"
-          element={(
-            <RequireAuth>
-              <GamePage />
-            </RequireAuth>
-          )}
-        />
-        <Route
-          path="/game/:gameCode/review"
-          element={(
-            <RequireAuth>
-              <ReviewPage />
-            </RequireAuth>
-          )}
-        />
-        <Route path="/user/:username" element={<ProfilePage />} />
-        <Route path="/user/:username/games" element={<GameHistoryPage />} />
-        <Route path="/leaderboard" element={<LeaderboardPage />} />
-        <Route path="/tech" element={<TechIndexPage />} />
-        <Route path="/tech/bots-report" element={<BotsReportPage />} />
-        <Route path="/tech/guests-report" element={<GuestsReportPage />} />
-        <Route path="/tech/users-report" element={<UsersReportPage />} />
-        <Route
-          path="/settings"
-          element={(
-            <RequireAuth>
-              <SettingsPage />
-            </RequireAuth>
-          )}
-        />
-      </Route>
-    </Routes>
+    <>
+      <AttributionCapture />
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route
+            path="/"
+            element={(
+              <RequireAuth>
+                <LobbyPage />
+              </RequireAuth>
+            )}
+          />
+          <Route
+            path="/auth/login"
+            element={(
+              <RedirectIfAuthenticated>
+                <LoginPage />
+              </RedirectIfAuthenticated>
+            )}
+          />
+          <Route
+            path="/auth/register"
+            element={(
+              <RedirectIfAuthenticated>
+                <RegisterPage />
+              </RedirectIfAuthenticated>
+            )}
+          />
+          <Route
+            path="/lobby"
+            element={(
+              <RequireAuth>
+                <LobbyPage />
+              </RequireAuth>
+            )}
+          />
+          <Route path="/join/:gameCode" element={<JoinPage />} />
+          <Route
+            path="/game/:gameCode"
+            element={(
+              <RequireAuth>
+                <GamePage />
+              </RequireAuth>
+            )}
+          />
+          <Route
+            path="/game/:gameCode/review"
+            element={(
+              <RequireAuth>
+                <ReviewPage />
+              </RequireAuth>
+            )}
+          />
+          <Route path="/user/:username" element={<ProfilePage />} />
+          <Route path="/user/:username/games" element={<GameHistoryPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/tech" element={<TechIndexPage />} />
+          <Route path="/tech/bots-report" element={<BotsReportPage />} />
+          <Route path="/tech/guests-report" element={<GuestsReportPage />} />
+          <Route path="/tech/users-report" element={<UsersReportPage />} />
+          <Route path="/tech/acquisition-report" element={<AcquisitionReportPage />} />
+          <Route
+            path="/settings"
+            element={(
+              <RequireAuth>
+                <SettingsPage />
+              </RequireAuth>
+            )}
+          />
+        </Route>
+      </Routes>
+    </>
   )
 }
 

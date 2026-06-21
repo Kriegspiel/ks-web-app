@@ -5,6 +5,13 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.74
+
+- **Campaign Attribution**: capture UTM campaign visits in the app and send
+  privacy-minimal visit payloads to the first-party attribution API.
+- **Acquisition Report**: add `/tech/acquisition-report` for UTM-sourced visits,
+  sessions, acquired users, and created/completed games.
+
 ## ks-web-app frontend v. 1.3.68
 
 - **Review Loading**: load completed-game review data through the combined

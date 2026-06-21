@@ -23,8 +23,12 @@ const mockApi = vi.hoisted(() => ({
   askAny: vi.fn(),
   resignGame: vi.fn(),
   createGameEventsSource: vi.fn(() => null),
+  recordCampaignVisit: vi.fn(),
   userApi: {
     getGameHistory: vi.fn(),
+  },
+  techApi: {
+    getAcquisitionReport: vi.fn(),
   },
 }))
 
@@ -43,9 +47,13 @@ beforeEach(() => {
   mockApi.getOpenGames.mockResolvedValue({ games: [] })
   mockApi.getMyActiveGames.mockResolvedValue({ games: [] })
   mockApi.getMyArchivedGames.mockResolvedValue({ games: [] })
+  mockApi.recordCampaignVisit.mockResolvedValue({ attribution_id: "attr" })
+  window.sessionStorage.clear()
   mockApi.getGame.mockResolvedValue({ state: "waiting" })
   mockApi.userApi.getGameHistory.mockReset()
   mockApi.userApi.getGameHistory.mockResolvedValue({ games: [] })
+  mockApi.techApi.getAcquisitionReport.mockReset()
+  mockApi.techApi.getAcquisitionReport.mockResolvedValue({ rows: [] })
   mockApi.getGameState.mockResolvedValue({
     game_id: "abc-123",
     state: "active",
@@ -79,6 +87,25 @@ describe("App routes", () => {
     expect(screen.getByText(TEST_VERSION_STAMP)).toBeInTheDocument()
     expect(screen.getAllByRole("link", { name: "Login" }).length).toBeGreaterThan(0)
     expect(screen.getAllByRole("link", { name: "Register" }).length).toBeGreaterThan(0)
+  })
+
+  it("captures_utm_params_from_the_initial_route", async () => {
+    mockApi.me.mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
+
+    renderRoute("/auth/login?utm_source=reddit&utm_medium=post&utm_campaign=ruleset-default")
+
+    await screen.findByRole("heading", { name: "Login" })
+    await waitFor(() => {
+      expect(mockApi.recordCampaignVisit).toHaveBeenCalledWith({
+        landing_path: "/auth/login?utm_source=reddit&utm_medium=post&utm_campaign=ruleset-default",
+        referrer_host: null,
+        utm: {
+          source: "reddit",
+          medium: "post",
+          campaign: "ruleset-default",
+        },
+      })
+    })
   })
 
   it("redirects_protected_lobby_route_to_login_when_unauthenticated", async () => {
