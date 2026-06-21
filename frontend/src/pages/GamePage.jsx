@@ -999,8 +999,10 @@ function RefereeLogDrawerTurn({ onToggle, open, turnEntry }) {
 }
 
 function RefereeLogList({ onToggleTurn, openTurnKey, turns, variant = "inline", scrollRef }) {
+  const logProps = variant === "drawer" ? {} : { role: "log", "aria-label": "Referee log by turn" }
+
   return (
-    <div className={`game-referee-log__scroll game-referee-log__scroll--${variant}`} role="log" aria-label="Referee log by turn" ref={scrollRef}>
+    <div className={`game-referee-log__scroll game-referee-log__scroll--${variant}`} ref={variant === "drawer" ? undefined : scrollRef} {...logProps}>
       {turns.map((turnEntry, index) => {
         const key = refereeLogTurnKey(turnEntry, index)
         return variant === "drawer" ? (
@@ -2682,19 +2684,16 @@ export default function GamePage() {
       return undefined
     }
 
-    const previousOverflow = document.body.style.overflow
     const closeOnEscape = (event) => {
       if (event.key === "Escape") {
         setRefereeLogDrawerOpen(false)
       }
     }
 
-    document.body.style.overflow = "hidden"
     document.addEventListener("keydown", closeOnEscape)
     refereeLogCloseButtonRef.current?.focus()
 
     return () => {
-      document.body.style.overflow = previousOverflow
       document.removeEventListener("keydown", closeOnEscape)
     }
   }, [refereeLogDrawerOpen])
@@ -3995,13 +3994,14 @@ export default function GamePage() {
                   </div>
                 </div>
                 {groupedRefereeLog.length ? (
-                  <RefereeLogList
-                    turns={groupedRefereeLog}
-                    variant="drawer"
-                    scrollRef={logScrollRef}
-                    openTurnKey={openRefereeLogTurnKey}
-                    onToggleTurn={handleToggleRefereeLogTurn}
-                  />
+                  <div className="game-referee-log-drawer__body" role="log" aria-label="Referee log by turn" ref={logScrollRef}>
+                    <RefereeLogList
+                      turns={groupedRefereeLog}
+                      variant="drawer"
+                      openTurnKey={openRefereeLogTurnKey}
+                      onToggleTurn={handleToggleRefereeLogTurn}
+                    />
+                  </div>
                 ) : (
                   <p className="game-referee-column__empty">No referee responses yet.</p>
                 )}
