@@ -989,7 +989,11 @@ function RefereeLogDrawerTurn({ onToggle, open, turnEntry }) {
         <span>Turn {turnEntry.turn}</span>
         <span>{formatRefereeResponseCount(countRefereeTurnEntries(turnEntry))}</span>
       </button>
-      {open ? <RefereeTurnBody turnEntry={turnEntry} /> : null}
+      {open ? (
+        <div className="game-referee-turn__body">
+          <RefereeTurnBody turnEntry={turnEntry} />
+        </div>
+      ) : null}
     </section>
   )
 }

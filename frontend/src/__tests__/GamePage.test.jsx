@@ -1894,11 +1894,17 @@ describe("GamePage", () => {
       expect(within(refereeLog).queryByText("White sees file blocked")).not.toBeInTheDocument()
       expect(firstTurn).toHaveAttribute("aria-expanded", "false")
       expect(secondTurn).toHaveAttribute("aria-expanded", "true")
+      expect(secondTurn.closest(".game-referee-turn")).toContainElement(
+        secondTurn.closest(".game-referee-turn").querySelector(".game-referee-turn__body"),
+      )
 
       fireEvent.click(firstTurn)
 
       expect(firstTurn).toHaveAttribute("aria-expanded", "true")
       expect(secondTurn).toHaveAttribute("aria-expanded", "false")
+      expect(firstTurn.closest(".game-referee-turn")).toContainElement(
+        firstTurn.closest(".game-referee-turn").querySelector(".game-referee-turn__body"),
+      )
       expect(within(refereeLog).getByText("White sees file blocked")).toBeInTheDocument()
       expect(within(refereeLog).getByText("Black hears no capture")).toBeInTheDocument()
       expect(within(refereeLog).queryByText("White in check")).not.toBeInTheDocument()

@@ -963,18 +963,30 @@
 }
 
 .game-referee-log__scroll--drawer {
+  display: block;
   height: auto;
   min-height: 0;
   max-height: none;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-right: 0.15rem;
+  padding: 0 0.15rem 5.5rem 0;
+  scroll-padding-bottom: 5.5rem;
   -webkit-overflow-scrolling: touch;
 }
 
 .game-referee-turn--drawer {
+  display: block;
+  gap: 0;
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
+}
+
+.game-referee-log__scroll--drawer .game-referee-turn--drawer {
+  margin-bottom: 0.75rem;
+}
+
+.game-referee-log__scroll--drawer .game-referee-turn--drawer:last-child {
+  margin-bottom: 0;
 }
 
 .game-referee-turn__summary {
@@ -1030,7 +1042,11 @@
 
 .game-referee-turn--drawer .game-referee-turn__grid {
   align-items: start;
-  padding: 0 0.85rem 0.85rem;
+  padding: 0;
+}
+
+.game-referee-turn__body {
+  padding: 0 0.85rem 0.9rem;
 }
 
 .game-referee-turn--drawer .game-referee-column {
