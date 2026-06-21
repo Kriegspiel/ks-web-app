@@ -887,7 +887,8 @@
   display: grid;
   align-items: end;
   background: rgba(12, 9, 7, 0.48);
-  padding-top: 4rem;
+  overflow: hidden;
+  padding-top: max(3rem, env(safe-area-inset-top));
 }
 
 .game-referee-log-drawer__sheet {
@@ -895,13 +896,22 @@
   grid-template-rows: auto minmax(0, 1fr);
   gap: 0.85rem;
   width: 100%;
-  max-height: min(86vh, 44rem);
-  padding: 0.95rem;
+  height: min(82vh, 42rem);
+  max-height: calc(100vh - 4rem);
+  min-height: 0;
+  padding: 0.95rem 0.95rem max(0.95rem, env(safe-area-inset-bottom));
   border: 1px solid var(--border);
   border-bottom: 0;
   border-radius: 1rem 1rem 0 0;
   background: var(--surface);
   box-shadow: var(--shadow);
+}
+
+@supports (height: 100svh) {
+  .game-referee-log-drawer__sheet {
+    height: min(82svh, 42rem);
+    max-height: calc(100svh - 4rem);
+  }
 }
 
 .game-referee-log-drawer__header {
@@ -953,8 +963,13 @@
 }
 
 .game-referee-log__scroll--drawer {
-  height: min(70vh, 36rem);
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding-right: 0.15rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .game-referee-turn--drawer {
@@ -967,13 +982,20 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.8rem;
+  width: 100%;
+  margin: 0;
   padding: 0.82rem 0.85rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   cursor: pointer;
-  list-style: none;
+  text-align: left;
 }
 
-.game-referee-turn__summary::-webkit-details-marker {
-  display: none;
+.game-referee-turn__summary:hover:not(:disabled),
+.game-referee-turn__summary:focus-visible {
+  background: color-mix(in srgb, var(--surface-alt) 70%, transparent);
 }
 
 .game-referee-turn__summary span:first-child {
@@ -1002,12 +1024,23 @@
   font-weight: 800;
 }
 
-.game-referee-turn--drawer[open] .game-referee-turn__summary::after {
+.game-referee-turn--open .game-referee-turn__summary::after {
   content: "-";
 }
 
 .game-referee-turn--drawer .game-referee-turn__grid {
+  align-items: start;
   padding: 0 0.85rem 0.85rem;
+}
+
+.game-referee-turn--drawer .game-referee-column {
+  grid-template-rows: auto auto;
+  align-content: start;
+}
+
+.game-referee-turn--drawer .game-referee-column__list,
+.game-referee-turn--drawer .game-referee-column__empty {
+  align-self: start;
 }
 
 .game-danger-button {
