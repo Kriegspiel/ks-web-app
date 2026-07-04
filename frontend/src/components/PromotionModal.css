@@ -9,16 +9,27 @@
 }
 
 .promotion-modal {
+  --promotion-modal-background: rgba(255, 248, 240, 0.98);
+  --promotion-modal-text: #1e1611;
+  --promotion-modal-border: rgba(85, 58, 34, 0.24);
+  --promotion-modal-button-bg: #1e1611;
+  --promotion-modal-button-hover-bg: #2f241c;
+  --promotion-modal-button-border: rgba(30, 22, 17, 0.72);
+  --promotion-modal-button-text: #fff8f0;
+
   width: min(90vw, 24rem);
-  background: rgba(255, 255, 255, 0.97);
+  color-scheme: light;
+  background: var(--promotion-modal-background);
+  color: var(--promotion-modal-text);
   border-radius: var(--radius);
   padding: 1.15rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--promotion-modal-border);
   box-shadow: 0 18px 50px rgba(15, 23, 42, 0.28);
 }
 
 .promotion-modal h2 {
   margin-top: 0;
+  color: var(--promotion-modal-text);
 }
 
 .promotion-modal__choices {
@@ -30,6 +41,19 @@
 
 .promotion-modal__choices button {
   padding: 0.7rem 0.6rem;
+}
+
+.promotion-modal button {
+  background: var(--promotion-modal-button-bg);
+  border-color: var(--promotion-modal-button-border);
+  color: var(--promotion-modal-button-text);
+}
+
+.promotion-modal button:hover:not(:disabled),
+.promotion-modal button:focus-visible {
+  background: var(--promotion-modal-button-hover-bg);
+  border-color: var(--promotion-modal-button-hover-bg);
+  color: var(--promotion-modal-button-text);
 }
 
 .promotion-modal__cancel {
