@@ -29,7 +29,7 @@ beforeEach(() => {
   mockApi.getLobbyStats.mockResolvedValue({ active_games_now: 123456789, completed_last_hour: 3, completed_last_24_hours: 42, completed_total: 314 })
   mockApi.getGame.mockResolvedValue({ state: "waiting" })
   mockApi.deleteWaitingGame.mockResolvedValue({})
-  mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-2", username: "gptnano", display_name: "GPT Nano", description: "Model-driven Kriegspiel bot that chooses moves using GPT nano model.", elo: 1342, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-3", username: "randobotany", display_name: "Random Any Bot", description: "Asks any pawn captures first, then plays random legal-looking moves.", elo: 1200, supported_rule_variants: ["berkeley_any"] }] })
+  mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-2", username: "gptnano", display_name: "GPT Nano", description: "Model-driven Kriegspiel bot that chooses moves using GPT nano model.", elo: 1342, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "128 ply limit" }, { bot_id: "bot-3", username: "randobotany", display_name: "Random Any Bot", description: "Asks any pawn captures first, then plays random legal-looking moves.", elo: 1200, supported_rule_variants: ["berkeley_any"] }] })
 })
 afterEach(() => { cleanup(); window.localStorage.clear(); vi.useRealTimers() })
 
@@ -375,12 +375,12 @@ describe("LobbyPage", () => {
     expect(screen.getByText("Plays random legal-looking moves.")).toBeInTheDocument()
     expect(screen.getByLabelText("Bot opponent")).toHaveValue("bot-1")
     expect(screen.getByRole("option", { name: "1201 - Random Bot" })).toBeInTheDocument()
-    expect(screen.getByRole("option", { name: "1342 - GPT Nano" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1342 - GPT Nano (128 ply limit)" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1200 - Random Any Bot" })).toBeInTheDocument()
     const botOptions = within(screen.getByLabelText("Bot opponent")).getAllByRole("option").map((option) => option.textContent)
     expect(botOptions).toEqual([
       "Select a bot",
-      "1342 - GPT Nano",
+      "1342 - GPT Nano (128 ply limit)",
       "1201 - Random Bot",
       "1200 - Random Any Bot",
     ])
@@ -464,7 +464,7 @@ describe("LobbyPage", () => {
     expect(await screen.findByLabelText("Bot opponent")).toBeInTheDocument()
     expect(screen.queryByRole("option", { name: "1200 - Random Any Bot" })).not.toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1201 - Random Bot" })).toBeInTheDocument()
-    expect(screen.getByRole("option", { name: "1342 - GPT Nano" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1342 - GPT Nano (128 ply limit)" })).toBeInTheDocument()
   })
 
   it("falls_back_to_the_first_supported_bot_and_its_raw_description", async () => {
