@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import VersionStamp from "../components/VersionStamp"
 import { userApi } from "../services/api"
@@ -11,6 +12,8 @@ const PAGE_SIZE_OPTIONS = [100, 500, 1000, 10000]
 const EMPTY_FILTER_VALUE = "__empty__"
 const SORT_NONE_VALUE = "none"
 const DEFAULT_SORT = Object.freeze({ key: "played_at", direction: "desc" })
+const FILTER_MENU_VIEWPORT_MARGIN = 16
+const FILTER_MENU_MAX_WIDTH = 352
 
 const SORT_COLUMNS = [
   { key: "rule_set", label: "Rule set", type: "text", value: (game) => formatRuleVariant(game?.rule_variant) },
@@ -327,12 +330,54 @@ function filterMenuGroups(options) {
   return groupFilterOptions(options)
 }
 
-function HistoryFilterMenu({ config, options, selectedValues, onToggle, onClear }) {
+function useFilterMenuStyle(open, anchorRef) {
+  const [style, setStyle] = useState(null)
+
+  useEffect(() => {
+    if (!open) {
+      setStyle(null)
+      return undefined
+    }
+
+    function updateStyle() {
+      const anchor = anchorRef.current
+      if (!anchor) {
+        return
+      }
+
+      const rect = anchor.getBoundingClientRect()
+      const maxMenuWidth = Math.min(
+        FILTER_MENU_MAX_WIDTH,
+        Math.max(0, window.innerWidth - (FILTER_MENU_VIEWPORT_MARGIN * 2)),
+      )
+      const maxLeft = Math.max(FILTER_MENU_VIEWPORT_MARGIN, window.innerWidth - maxMenuWidth - FILTER_MENU_VIEWPORT_MARGIN)
+      const left = Math.min(Math.max(FILTER_MENU_VIEWPORT_MARGIN, rect.left), maxLeft)
+
+      setStyle({
+        left: `${Math.round(left)}px`,
+        minWidth: `${Math.ceil(rect.width)}px`,
+        top: `${Math.round(rect.bottom + 6)}px`,
+      })
+    }
+
+    updateStyle()
+    window.addEventListener("resize", updateStyle)
+    window.addEventListener("scroll", updateStyle, true)
+    return () => {
+      window.removeEventListener("resize", updateStyle)
+      window.removeEventListener("scroll", updateStyle, true)
+    }
+  }, [anchorRef, open])
+
+  return style
+}
+
+function HistoryFilterMenu({ config, options, selectedValues, onToggle, onClear, style }) {
   const selected = new Set(selectedValues)
   const groups = filterMenuGroups(options)
 
   return (
-    <div className="history-filter-menu__panel" role="menu">
+    <div className="history-filter-menu__panel" role="menu" style={style}>
       {groups.length ? groups.map((group) => (
         <div className="history-filter-menu__group" key={group.label || "values"}>
           {group.label ? <p className="history-filter-menu__group-title">{group.label}</p> : null}
@@ -353,6 +398,21 @@ function HistoryFilterMenu({ config, options, selectedValues, onToggle, onClear 
   )
 }
 
+function SortIcon({ direction }) {
+  const iconDirections = direction === "asc" || direction === "desc" ? [direction] : ["asc", "desc"]
+
+  return (
+    <span className="history-sort-toggle__triangles" aria-hidden="true">
+      {iconDirections.map((iconDirection) => (
+        <span
+          className={`history-sort-toggle__triangle history-sort-toggle__triangle--${iconDirection}`}
+          key={iconDirection}
+        />
+      ))}
+    </span>
+  )
+}
+
 function SortToggle({ column, sort, onSort }) {
   const active = sort?.key === column.key
   const direction = active ? sort.direction : "none"
@@ -365,19 +425,21 @@ function SortToggle({ column, sort, onSort }) {
       title={`Sort ${column.label}`}
       onClick={() => onSort(column.key)}
     >
-      <span className="history-sort-toggle__triangle" aria-hidden="true" />
+      <SortIcon direction={direction} />
     </button>
   )
 }
 
 function ColumnHeader({ column, sort, filterConfig, filterOptions, selectedValues, open, onOpen, onSort, onToggleFilter, onClearFilter }) {
+  const menuAnchorRef = useRef(null)
+  const menuStyle = useFilterMenuStyle(open, menuAnchorRef)
   const active = sort?.key === column.key
   const ariaSort = active ? (sort.direction === "asc" ? "ascending" : "descending") : "none"
   const selectedCount = selectedValues.length
 
   return (
     <th aria-sort={ariaSort}>
-      <div className="history-column-filter">
+      <div className="history-column-filter" ref={menuAnchorRef}>
         <div className="history-column-heading">
           {filterConfig ? (
             <button
@@ -395,15 +457,16 @@ function ColumnHeader({ column, sort, filterConfig, filterOptions, selectedValue
           )}
           <SortToggle column={column} sort={sort} onSort={onSort} />
         </div>
-        {filterConfig && open ? (
+        {filterConfig && open && menuStyle ? createPortal((
           <HistoryFilterMenu
             config={filterConfig}
             options={filterOptions}
             selectedValues={selectedValues}
             onToggle={(value) => onToggleFilter(filterConfig.key, value)}
             onClear={() => onClearFilter(filterConfig.key)}
+            style={menuStyle}
           />
-        ) : null}
+        ), document.body) : null}
       </div>
     </th>
   )
@@ -429,7 +492,7 @@ export default function GameHistoryPage() {
     }
 
     function closeOnPointerDown(event) {
-      if (event.target instanceof Element && event.target.closest(".history-column-filter")) {
+      if (event.target instanceof Element && event.target.closest(".history-column-filter, .history-filter-menu__panel")) {
         return
       }
       setOpenFilterKey("")
@@ -479,11 +542,27 @@ export default function GameHistoryPage() {
   const filterOptions = useMemo(() => Object.fromEntries(
     FILTER_CONFIGS.map((config) => [config.key, buildFilterOptions(history.games, config, filters[config.key] ?? [])]),
   ), [filters, history.games])
+  const filteredGames = useMemo(
+    () => history.games.filter((game) => gameMatchesFilters(game, filters)),
+    [filters, history.games],
+  )
   const visibleGames = useMemo(
-    () => sortGames(history.games.filter((game) => gameMatchesFilters(game, filters)), sort),
-    [filters, history.games, sort],
+    () => sortGames(filteredGames, sort),
+    [filteredGames, sort],
   )
   const activeFilterCount = selectedFilterCount(filters)
+  const displayPagination = useMemo(() => {
+    if (activeFilterCount) {
+      return { page: 1, pages: Math.max(1, Math.ceil(filteredGames.length / pageSize)) }
+    }
+
+    return {
+      page: pagination.page ?? page,
+      pages: pagination.pages ?? 0,
+    }
+  }, [activeFilterCount, filteredGames.length, page, pageSize, pagination.page, pagination.pages])
+  const canPageBackward = !activeFilterCount && page > 1
+  const canPageForward = !activeFilterCount && (pagination.pages > 0 ? page < pagination.pages : history.games.length > 0)
 
   function updateSearch(updater, options = { replace: true }) {
     const next = new URLSearchParams(searchParams)
@@ -656,9 +735,9 @@ export default function GameHistoryPage() {
             </>
           )}
           <div className="pagination-controls">
-            <button type="button" onClick={() => setPage(Math.max(page - 1, 1))} disabled={page <= 1}>Prev</button>
-            <span>Page {pagination.page ?? page} of {pagination.pages ?? 0}</span>
-            <button type="button" onClick={() => setPage(page + 1)} disabled={pagination.pages > 0 ? page >= pagination.pages : history.games.length === 0}>Next</button>
+            <button type="button" onClick={() => setPage(Math.max(page - 1, 1))} disabled={!canPageBackward}>Prev</button>
+            <span>Page {displayPagination.page} of {displayPagination.pages}</span>
+            <button type="button" onClick={() => setPage(page + 1)} disabled={!canPageForward}>Next</button>
           </div>
         </>
       ) : null}

@@ -53,7 +53,9 @@ describe("GameHistoryPage", () => {
     expect(css).toContain("max-height: min(72vh, 46rem);")
     expect(css).toContain(".history-sort-toggle--asc")
     expect(css).toContain(".history-sort-toggle--desc")
+    expect(css).toContain(".history-sort-toggle--none")
     expect(css).toContain(".history-page-size-control")
+    expect(css).toContain("position: fixed;")
     expect(css).toContain("color: var(--text);")
     expect(css).not.toContain("background: rgba(248, 250, 252, 0.92);")
     expect(css).not.toContain("border-bottom: 1px solid #e5eaf2;")
@@ -89,6 +91,12 @@ describe("GameHistoryPage", () => {
     renderHistory()
 
     expect(await screen.findByRole("columnheader", { name: /Date and time/ })).toHaveAttribute("aria-sort", "descending")
+    const dateSortButton = screen.getByRole("button", { name: "Sort Date and time" })
+    expect(dateSortButton).toHaveClass("history-sort-toggle--desc")
+    expect(dateSortButton.querySelectorAll(".history-sort-toggle__triangle")).toHaveLength(1)
+    const inactiveSortButton = screen.getByRole("button", { name: "Sort Turns" })
+    expect(inactiveSortButton).toHaveClass("history-sort-toggle--none")
+    expect(inactiveSortButton.querySelectorAll(".history-sort-toggle__triangle")).toHaveLength(2)
     expect(historyRows().map((row) => within(row).getAllByRole("cell")[2].textContent)).toEqual(["new", "middle (bot)", "old"])
   })
 
@@ -142,6 +150,7 @@ describe("GameHistoryPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Opponent" }))
     const opponentMenu = await screen.findByRole("menu")
+    expect(opponentMenu.parentElement).toBe(document.body)
     await within(opponentMenu).findByText("Humans")
     expect(within(opponentMenu).getAllByText(/Humans|Bots/).map((node) => node.textContent)).toEqual(["Humans", "Bots"])
 
@@ -158,6 +167,29 @@ describe("GameHistoryPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Clear filters" }))
     expect(historyRows()).toHaveLength(3)
+  })
+
+  it("shows_filtered_pagination_for_single_match_filters", async () => {
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
+      games: [
+        { game_id: "g-human", game_code: "HUM001", rule_variant: "berkeley", opponent: "lgyanf", opponent_role: "user", play_as: "white", result: "loss", reason: "checkmate", turn_count: 6, played_at: "2026-01-04T00:00:00Z" },
+        { game_id: "g-bot", game_code: "BOT001", rule_variant: "berkeley_any", opponent: "randobot", opponent_role: "bot", play_as: "black", result: "win", reason: "timeout", turn_count: 8, played_at: "2026-01-03T00:00:00Z" },
+      ],
+      pagination: { page: 1, pages: 2, total: 121 },
+    })
+
+    renderHistory()
+
+    expect(await screen.findByText("Page 1 of 2")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "Opponent" }))
+    const opponentMenu = await screen.findByRole("menu")
+    fireEvent.click(within(opponentMenu).getByLabelText("lgyanf"))
+
+    expect(historyRows()).toHaveLength(1)
+    expect(within(historyRows()[0]).getByRole("link", { name: "lgyanf" })).toBeInTheDocument()
+    expect(screen.getByText("Page 1 of 1")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Prev" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled()
   })
 
   it("closes_an_open_filter_menu_when_clicking_elsewhere", async () => {

@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.88
+
+- **Game History Controls**: show inactive sort columns with both up/down
+  triangles, keep filter dropdowns from being clipped by short tables, and
+  collapse pagination to the filtered result count while filters are active.
+
 ## ks-web-app frontend v. 1.3.87
 
 - **Bot Matrix Report**: load the matrix from the live private backend report
