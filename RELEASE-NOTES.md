@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.81
+
+- **Bot Matrix Report**: add `/tech/bot-matrix` with the Kriegsspiel bot matrix,
+  linked bot names, row matchup aggregates, end-condition counts, and token/cost
+  totals.
+
 ## ks-web-app frontend v. 1.3.79
 
 - **Footer Links**: map the shared `Playing guide` footer link to the public

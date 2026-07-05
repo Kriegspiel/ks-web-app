@@ -15,6 +15,7 @@ import ProfilePage from "./pages/Profile"
 import GameHistoryPage from "./pages/GameHistory"
 import LeaderboardPage from "./pages/Leaderboard"
 import AcquisitionReportPage from "./pages/AcquisitionReport"
+import BotMatrixReportPage from "./pages/BotMatrixReport"
 import BotsReportPage from "./pages/BotsReport"
 import GuestsReportPage from "./pages/GuestsReport"
 import TechIndexPage from "./pages/TechIndex"
@@ -203,6 +204,14 @@ export function AppRoutes() {
             element={(
               <RequireTechAccess>
                 <BotsReportPage />
+              </RequireTechAccess>
+            )}
+          />
+          <Route
+            path="/tech/bot-matrix"
+            element={(
+              <RequireTechAccess>
+                <BotMatrixReportPage />
               </RequireTechAccess>
             )}
           />
