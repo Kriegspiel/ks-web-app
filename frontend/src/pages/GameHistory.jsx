@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import VersionStamp from "../components/VersionStamp"
 import { userApi } from "../services/api"
 import { formatUtcDateTime } from "../utils/dateTime"
 import { formatRuleVariant } from "../utils/rules"
 import "./GameHistory.css"
 
-const HISTORY_PAGE_SIZE = 100
+const DEFAULT_PAGE_SIZE = 100
+const PAGE_SIZE_OPTIONS = [100, 500, 1000, 10000]
 const EMPTY_FILTER_VALUE = "__empty__"
+const SORT_NONE_VALUE = "none"
 const DEFAULT_SORT = Object.freeze({ key: "played_at", direction: "desc" })
 
 const SORT_COLUMNS = [
@@ -41,7 +43,9 @@ const FILTER_CONFIGS = [
     label: "Opponent",
     value: (game) => `${opponentGroup(game)}:${filterValue(game?.opponent)}`,
     labelForGame: (game) => opponentLabel(game),
+    labelForValue: opponentFilterLabel,
     groupForGame: (game) => opponentGroup(game) === "bot" ? "Bots" : "Humans",
+    groupForValue: (value) => splitOpponentFilterValue(value).group === "bot" ? "Bots" : "Humans",
   },
   {
     key: "result",
@@ -57,6 +61,7 @@ const FILTER_CONFIGS = [
   },
 ]
 
+const FILTER_CONFIG_BY_KEY = new Map(FILTER_CONFIGS.map((config) => [config.key, config]))
 const OPPONENT_GROUP_ORDER = { Humans: 0, Bots: 1 }
 
 function formatDate(value) {
@@ -77,6 +82,21 @@ function filterValue(value) {
 
 function filterLabel(value) {
   return value === EMPTY_FILTER_VALUE ? "—" : displayValue(value)
+}
+
+function splitOpponentFilterValue(value) {
+  const text = String(value ?? "")
+  const separator = text.indexOf(":")
+  if (separator < 0) {
+    return { group: "human", value: text }
+  }
+  return { group: text.slice(0, separator), value: text.slice(separator + 1) }
+}
+
+function opponentFilterLabel(value) {
+  const parsed = splitOpponentFilterValue(value)
+  const label = filterLabel(parsed.value)
+  return parsed.group === "bot" && label !== "—" ? `${label} (bot)` : label
 }
 
 function opponentLabel(game) {
@@ -166,6 +186,10 @@ function compareSortValues(left, right, type, direction) {
 }
 
 function sortGames(games, sort) {
+  if (!sort) {
+    return games
+  }
+
   const column = SORT_COLUMN_BY_KEY.get(sort.key) ?? SORT_COLUMN_BY_KEY.get(DEFAULT_SORT.key)
   const direction = sort.direction === "asc" ? "asc" : "desc"
 
@@ -181,7 +205,7 @@ function sortGames(games, sort) {
     .map((entry) => entry.game)
 }
 
-function buildFilterOptions(games, config) {
+function buildFilterOptions(games, config, selectedValues = []) {
   const options = new Map()
 
   games.forEach((game) => {
@@ -191,6 +215,16 @@ function buildFilterOptions(games, config) {
         value,
         label: config.labelForGame?.(game) ?? config.labelForValue(value),
         group: config.groupForGame?.(game) ?? "",
+      })
+    }
+  })
+
+  selectedValues.forEach((value) => {
+    if (!options.has(value)) {
+      options.set(value, {
+        value,
+        label: config.labelForValue(value),
+        group: config.groupForValue?.(value) ?? "",
       })
     }
   })
@@ -230,56 +264,147 @@ function isInteractiveTarget(target) {
   return target instanceof Element && Boolean(target.closest("a, button, input, label, select, textarea, summary"))
 }
 
-function HistoryFilterDropdown({ label, options, selectedValues, onToggle, onClear }) {
-  const [open, setOpen] = useState(false)
+function defaultSortDirection(columnKey) {
+  return columnKey === DEFAULT_SORT.key ? DEFAULT_SORT.direction : "asc"
+}
+
+function parsePage(value) {
+  const parsed = Number.parseInt(value ?? "", 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1
+}
+
+function parsePageSize(value) {
+  const parsed = Number.parseInt(value ?? "", 10)
+  return PAGE_SIZE_OPTIONS.includes(parsed) ? parsed : DEFAULT_PAGE_SIZE
+}
+
+function parseSort(searchParams) {
+  const sortKey = searchParams.get("sort")
+  if (sortKey === SORT_NONE_VALUE) {
+    return null
+  }
+  if (!sortKey) {
+    return DEFAULT_SORT
+  }
+  if (!SORT_COLUMN_BY_KEY.has(sortKey)) {
+    return DEFAULT_SORT
+  }
+  const requestedDirection = searchParams.get("dir")
+  const direction = requestedDirection === "asc" || requestedDirection === "desc"
+    ? requestedDirection
+    : defaultSortDirection(sortKey)
+  return { key: sortKey, direction }
+}
+
+function parseFilterValues(searchParams, key) {
+  return searchParams
+    .getAll(key)
+    .flatMap((value) => value.split(","))
+    .map((value) => value.trim())
+    .filter(Boolean)
+}
+
+function parseFilters(searchParams) {
+  return Object.fromEntries(FILTER_CONFIGS.map((config) => [config.key, parseFilterValues(searchParams, config.key)]))
+}
+
+function setPageParam(searchParams, page) {
+  if (page <= 1) {
+    searchParams.delete("page")
+  } else {
+    searchParams.set("page", String(page))
+  }
+}
+
+function setFilterParam(searchParams, key, values) {
+  searchParams.delete(key)
+  if (values.length) {
+    searchParams.set(key, values.join(","))
+  }
+}
+
+function filterMenuGroups(options) {
+  return groupFilterOptions(options)
+}
+
+function HistoryFilterMenu({ config, options, selectedValues, onToggle, onClear }) {
   const selected = new Set(selectedValues)
-  const groups = groupFilterOptions(options)
-  const summary = selectedValues.length ? `${selectedValues.length} selected` : "All"
+  const groups = filterMenuGroups(options)
 
   return (
-    <details className="history-filter-menu" onToggle={(event) => setOpen(event.currentTarget.open)}>
-      <summary aria-label={`Filter ${label}`}>
-        <span>{label}</span>
-        <span className="history-filter-menu__count">{summary}</span>
-      </summary>
-      {open ? (
-        <div className="history-filter-menu__panel">
-          {groups.length ? groups.map((group) => (
-            <div className="history-filter-menu__group" key={group.label || "values"}>
-              {group.label ? <p className="history-filter-menu__group-title">{group.label}</p> : null}
-              {group.options.map((option) => (
-                <label className="history-filter-menu__option" key={option.value}>
-                  <input
-                    type="checkbox"
-                    checked={selected.has(option.value)}
-                    onChange={() => onToggle(option.value)}
-                  />
-                  <span>{option.label}</span>
-                </label>
-              ))}
-            </div>
-          )) : <p className="history-filter-menu__empty">No values</p>}
-          <button className="history-filter-menu__clear" type="button" onClick={onClear} disabled={!selectedValues.length}>Clear</button>
+    <div className="history-filter-menu__panel" role="menu">
+      {groups.length ? groups.map((group) => (
+        <div className="history-filter-menu__group" key={group.label || "values"}>
+          {group.label ? <p className="history-filter-menu__group-title">{group.label}</p> : null}
+          {group.options.map((option) => (
+            <label className="history-filter-menu__option" key={option.value}>
+              <input
+                type="checkbox"
+                checked={selected.has(option.value)}
+                onChange={() => onToggle(option.value)}
+              />
+              <span>{option.label}</span>
+            </label>
+          ))}
         </div>
-      ) : null}
-    </details>
+      )) : <p className="history-filter-menu__empty">No values</p>}
+      <button className="history-filter-menu__clear" type="button" onClick={onClear} disabled={!selectedValues.length}>Clear {config.label}</button>
+    </div>
   )
 }
 
-function SortHeader({ column, sort, onSort }) {
-  const active = sort.key === column.key
+function SortToggle({ column, sort, onSort }) {
+  const active = sort?.key === column.key
+  const direction = active ? sort.direction : "none"
+
+  return (
+    <button
+      type="button"
+      className={`history-sort-toggle history-sort-toggle--${direction}`}
+      aria-label={`Sort ${column.label}`}
+      title={`Sort ${column.label}`}
+      onClick={() => onSort(column.key)}
+    >
+      <span className="history-sort-toggle__triangle" aria-hidden="true" />
+    </button>
+  )
+}
+
+function ColumnHeader({ column, sort, filterConfig, filterOptions, selectedValues, open, onOpen, onSort, onToggleFilter, onClearFilter }) {
+  const active = sort?.key === column.key
   const ariaSort = active ? (sort.direction === "asc" ? "ascending" : "descending") : "none"
+  const selectedCount = selectedValues.length
 
   return (
     <th aria-sort={ariaSort}>
-      <button
-        type="button"
-        className={`history-sort-button${active ? " history-sort-button--active" : ""}`.trim()}
-        onClick={() => onSort(column.key)}
-      >
-        <span>{column.label}</span>
-        <span className="history-sort-button__indicator" aria-hidden="true">{active ? (sort.direction === "asc" ? "Asc" : "Desc") : ""}</span>
-      </button>
+      <div className="history-column-filter">
+        <div className="history-column-heading">
+          {filterConfig ? (
+            <button
+              type="button"
+              className="history-column-title-button"
+              aria-haspopup="menu"
+              aria-expanded={open}
+              onClick={() => onOpen(open ? "" : column.key)}
+            >
+              <span>{column.label}</span>
+              {selectedCount ? <span className="history-column-title-count">{selectedCount}</span> : null}
+            </button>
+          ) : (
+            <span className="history-column-title">{column.label}</span>
+          )}
+          <SortToggle column={column} sort={sort} onSort={onSort} />
+        </div>
+        {filterConfig && open ? (
+          <HistoryFilterMenu
+            config={filterConfig}
+            options={filterOptions}
+            selectedValues={selectedValues}
+            onToggle={(value) => onToggleFilter(filterConfig.key, value)}
+            onClear={() => onClearFilter(filterConfig.key)}
+          />
+        ) : null}
+      </div>
     </th>
   )
 }
@@ -287,12 +412,42 @@ function SortHeader({ column, sort, onSort }) {
 export default function GameHistoryPage() {
   const { username = "" } = useParams()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [page, setPage] = useState(1)
   const [history, setHistory] = useState({ games: [], pagination: { page: 1, pages: 0, total: 0 } })
-  const [sort, setSort] = useState(DEFAULT_SORT)
-  const [filters, setFilters] = useState({})
+  const [openFilterKey, setOpenFilterKey] = useState("")
+
+  const page = parsePage(searchParams.get("page"))
+  const pageSize = parsePageSize(searchParams.get("per_page"))
+  const sort = useMemo(() => parseSort(searchParams), [searchParams])
+  const filters = useMemo(() => parseFilters(searchParams), [searchParams])
+
+  useEffect(() => {
+    if (!openFilterKey) {
+      return undefined
+    }
+
+    function closeOnPointerDown(event) {
+      if (event.target instanceof Element && event.target.closest(".history-column-filter")) {
+        return
+      }
+      setOpenFilterKey("")
+    }
+
+    function closeOnEscape(event) {
+      if (event.key === "Escape") {
+        setOpenFilterKey("")
+      }
+    }
+
+    document.addEventListener("pointerdown", closeOnPointerDown)
+    document.addEventListener("keydown", closeOnEscape)
+    return () => {
+      document.removeEventListener("pointerdown", closeOnPointerDown)
+      document.removeEventListener("keydown", closeOnEscape)
+    }
+  }, [openFilterKey])
 
   useEffect(() => {
     let cancelled = false
@@ -300,7 +455,7 @@ export default function GameHistoryPage() {
       setLoading(true)
       setError("")
       try {
-        const payload = await userApi.getGameHistory(username, page, HISTORY_PAGE_SIZE)
+        const payload = await userApi.getGameHistory(username, page, pageSize)
         if (!cancelled) {
           setHistory({
             games: Array.isArray(payload?.games) ? payload.games : [],
@@ -318,45 +473,89 @@ export default function GameHistoryPage() {
     }
     loadHistory()
     return () => { cancelled = true }
-  }, [username, page])
+  }, [username, page, pageSize])
 
   const pagination = history.pagination ?? { page, pages: 0, total: 0 }
   const filterOptions = useMemo(() => Object.fromEntries(
-    FILTER_CONFIGS.map((config) => [config.key, buildFilterOptions(history.games, config)]),
-  ), [history.games])
+    FILTER_CONFIGS.map((config) => [config.key, buildFilterOptions(history.games, config, filters[config.key] ?? [])]),
+  ), [filters, history.games])
   const visibleGames = useMemo(
     () => sortGames(history.games.filter((game) => gameMatchesFilters(game, filters)), sort),
     [filters, history.games, sort],
   )
   const activeFilterCount = selectedFilterCount(filters)
 
+  function updateSearch(updater, options = { replace: true }) {
+    const next = new URLSearchParams(searchParams)
+    updater(next)
+    setSearchParams(next, options)
+  }
+
   function handleSort(columnKey) {
-    setSort((current) => {
-      if (current.key !== columnKey) {
-        return { key: columnKey, direction: columnKey === "played_at" ? "desc" : "asc" }
+    setOpenFilterKey("")
+    updateSearch((next) => {
+      let nextSort
+      if (!sort || sort.key !== columnKey) {
+        nextSort = { key: columnKey, direction: "asc" }
+      } else if (sort.direction === "asc") {
+        nextSort = { key: columnKey, direction: "desc" }
+      } else {
+        nextSort = null
       }
-      return { key: columnKey, direction: current.direction === "asc" ? "desc" : "asc" }
+
+      if (!nextSort) {
+        next.set("sort", SORT_NONE_VALUE)
+        next.delete("dir")
+      } else {
+        next.set("sort", nextSort.key)
+        next.set("dir", nextSort.direction)
+      }
     })
   }
 
   function toggleFilter(filterKey, value) {
-    setFilters((current) => {
-      const values = new Set(current[filterKey] ?? [])
+    updateSearch((next) => {
+      const values = new Set(parseFilterValues(next, filterKey))
       if (values.has(value)) {
         values.delete(value)
       } else {
         values.add(value)
       }
-      return { ...current, [filterKey]: [...values] }
+      setFilterParam(next, filterKey, [...values])
+      setPageParam(next, 1)
     })
   }
 
   function clearFilter(filterKey) {
-    setFilters((current) => ({ ...current, [filterKey]: [] }))
+    updateSearch((next) => {
+      setFilterParam(next, filterKey, [])
+      setPageParam(next, 1)
+    })
   }
 
   function clearAllFilters() {
-    setFilters({})
+    setOpenFilterKey("")
+    updateSearch((next) => {
+      FILTER_CONFIGS.forEach((config) => next.delete(config.key))
+      setPageParam(next, 1)
+    })
+  }
+
+  function handlePageSizeChange(event) {
+    const nextPageSize = parsePageSize(event.target.value)
+    setOpenFilterKey("")
+    updateSearch((next) => {
+      if (nextPageSize === DEFAULT_PAGE_SIZE) {
+        next.delete("per_page")
+      } else {
+        next.set("per_page", String(nextPageSize))
+      }
+      setPageParam(next, 1)
+    })
+  }
+
+  function setPage(nextPage) {
+    updateSearch((next) => setPageParam(next, nextPage), { replace: false })
   }
 
   function openReview(game) {
@@ -391,24 +590,36 @@ export default function GameHistoryPage() {
         <>
           {history.games.length === 0 ? <p>No games found on this page.</p> : (
             <>
-              <div className="history-controls" aria-label="Game history filters">
-                {FILTER_CONFIGS.map((config) => (
-                  <HistoryFilterDropdown
-                    key={config.key}
-                    label={config.label}
-                    options={filterOptions[config.key] ?? []}
-                    selectedValues={filters[config.key] ?? []}
-                    onToggle={(value) => toggleFilter(config.key, value)}
-                    onClear={() => clearFilter(config.key)}
-                  />
-                ))}
+              <div className="history-controls" aria-label="Game history controls">
                 <button className="history-clear-filters" type="button" onClick={clearAllFilters} disabled={!activeFilterCount}>Clear filters</button>
+                <label className="history-page-size-control">
+                  <span>Games per page</span>
+                  <select value={pageSize} onChange={handlePageSizeChange}>
+                    {PAGE_SIZE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{option.toLocaleString("en-US")}</option>
+                    ))}
+                  </select>
+                </label>
               </div>
               <div className="history-table-wrap">
                 <table className="history-table">
                   <thead>
                     <tr>
-                      {SORT_COLUMNS.map((column) => <SortHeader key={column.key} column={column} sort={sort} onSort={handleSort} />)}
+                      {SORT_COLUMNS.map((column) => (
+                        <ColumnHeader
+                          key={column.key}
+                          column={column}
+                          sort={sort}
+                          filterConfig={FILTER_CONFIG_BY_KEY.get(column.key)}
+                          filterOptions={filterOptions[column.key] ?? []}
+                          selectedValues={filters[column.key] ?? []}
+                          open={openFilterKey === column.key}
+                          onOpen={setOpenFilterKey}
+                          onSort={handleSort}
+                          onToggleFilter={toggleFilter}
+                          onClearFilter={clearFilter}
+                        />
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
@@ -445,9 +656,9 @@ export default function GameHistoryPage() {
             </>
           )}
           <div className="pagination-controls">
-            <button type="button" onClick={() => setPage((current) => Math.max(current - 1, 1))} disabled={page <= 1}>Prev</button>
+            <button type="button" onClick={() => setPage(Math.max(page - 1, 1))} disabled={page <= 1}>Prev</button>
             <span>Page {pagination.page ?? page} of {pagination.pages ?? 0}</span>
-            <button type="button" onClick={() => setPage((current) => current + 1)} disabled={pagination.pages > 0 ? page >= pagination.pages : history.games.length === 0}>Next</button>
+            <button type="button" onClick={() => setPage(page + 1)} disabled={pagination.pages > 0 ? page >= pagination.pages : history.games.length === 0}>Next</button>
           </div>
         </>
       ) : null}
