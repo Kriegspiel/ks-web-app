@@ -27,7 +27,6 @@ export default function AppFooter() {
                   <li key={`${group.title}-${link.href}`}>
                     <a href={link.href} {...externalLinkProps(link.href)}>
                       {link.label}
-                      {isExternalHref(link.href) ? <span className="app-footer__external-icon" aria-hidden="true">&#8599;</span> : null}
                     </a>
                   </li>
                 ))}

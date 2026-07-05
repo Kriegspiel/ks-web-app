@@ -11,7 +11,7 @@ describe("AppFooter", () => {
     const communication = screen.getByRole("region", { name: "Communication" })
     const links = within(communication).getAllByRole("link")
 
-    expect(links.map((link) => link.textContent.replace(/\u2197/g, ""))).toEqual(["Blog", "Changelog", "RSS", "About"])
+    expect(links.map((link) => link.textContent)).toEqual(["Blog", "Changelog", "RSS", "About"])
     expect(links.map((link) => link.getAttribute("href"))).toEqual([
       "https://kriegspiel.org/blog",
       "https://kriegspiel.org/changelog",
@@ -29,6 +29,6 @@ describe("AppFooter", () => {
     expect(githubLink).toHaveAttribute("href", "https://github.com/Kriegspiel")
     expect(githubLink).toHaveAttribute("target", "_blank")
     expect(githubLink).toHaveAttribute("rel", "noreferrer noopener")
-    expect(githubLink.querySelector(".app-footer__external-icon")?.textContent).toBe("\u2197")
+    expect(githubLink.querySelector(".app-footer__external-icon")).toBeNull()
   })
 })
