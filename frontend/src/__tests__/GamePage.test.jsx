@@ -88,7 +88,7 @@ beforeEach(() => {
     opponent_type: "bot",
     white: { username: "fil", role: "user", connected: true },
     black: {
-      username: "gptnano",
+      username: "llm_gptnano",
       role: "bot",
       connected: true,
       elo: 1342,
@@ -1291,7 +1291,7 @@ describe("GamePage", () => {
       opponent_type: "bot",
       white: { username: "fil", role: "user", elo: 1400 },
       black: {
-        username: "gptnano",
+        username: "llm_gptnano",
         role: "bot",
         elo: 1342,
         ratings: {
@@ -1308,8 +1308,8 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     expect(await screen.findByText("Berkeley + Any")).toBeInTheDocument()
-    const opponentLink = screen.getByRole("link", { name: "gptnano (bot)" })
-    expect(opponentLink).toHaveAttribute("href", "/user/gptnano")
+    const opponentLink = screen.getByRole("link", { name: "llm_gptnano (bot)" })
+    expect(opponentLink).toHaveAttribute("href", "/user/llm_gptnano")
     expect(screen.getByText("1342")).toBeInTheDocument()
     expect(screen.getByText("1301")).toBeInTheDocument()
     expect(screen.getByText("1333")).toBeInTheDocument()
@@ -1324,7 +1324,7 @@ describe("GamePage", () => {
         state: "active",
         opponent_type: "bot",
         white: { username: "notifil", role: "user", connected: true },
-        black: { username: "haiku", role: "bot", connected: true },
+        black: { username: "llm_haiku", role: "bot", connected: true },
         turn: "black",
         move_number: 32,
         created_at: "2026-04-05T12:00:00Z",
@@ -1347,7 +1347,7 @@ describe("GamePage", () => {
           },
         },
         black: {
-          username: "haiku",
+          username: "llm_haiku",
           role: "bot",
           connected: true,
           elo: 1296,
@@ -1386,7 +1386,7 @@ describe("GamePage", () => {
     expect(within(summary).getByText("2026-04-05 12:03:12 UTC")).toBeInTheDocument()
     expect(within(summary).getByText("3m 12s")).toBeInTheDocument()
     expect(within(summary).getByRole("link", { name: "notifil" })).toHaveAttribute("href", "/user/notifil")
-    expect(within(summary).getByRole("link", { name: "haiku (bot)" })).toHaveAttribute("href", "/user/haiku")
+    expect(within(summary).getByRole("link", { name: "llm_haiku (bot)" })).toHaveAttribute("href", "/user/llm_haiku")
     expect(within(summary).getByText("1500 → 1516 (+16)")).toBeInTheDocument()
     expect(within(summary).getByText("1490 → 1490 (no change)")).toBeInTheDocument()
     expect(within(summary).getByText("1508 → 1524 (+16)")).toBeInTheDocument()
@@ -2777,7 +2777,7 @@ describe("GamePage", () => {
       state: "active",
       opponent_type: "user",
       white: { username: "fil", role: "user", connected: true },
-      black: { username: "gptnano", role: "bot", connected: true },
+      black: { username: "llm_gptnano", role: "bot", connected: true },
       turn: "black",
       move_number: 2,
       created_at: "2026-04-02T12:00:00Z",

@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.82
+
+- **LLM Bot Identity Rename**: updated bot matrix links, bot picker fixtures,
+  and report/profile test data to use the `llm_*` model bot usernames and
+  visible `LLM ... (bot)` display names.
+
 ## ks-web-app frontend v. 1.3.81
 
 - **Bot Matrix Report**: add `/tech/bot-matrix` with the Kriegsspiel bot matrix,

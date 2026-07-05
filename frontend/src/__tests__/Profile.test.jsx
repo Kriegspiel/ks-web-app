@@ -177,7 +177,7 @@ describe("ProfilePage", () => {
 
   it("shows_bot_note_with_external_blog_link", async () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
-      username: "gptnano",
+      username: "llm_gptnano",
       role: "bot",
       owner_email: "bot-gpt-nano@kriegspiel.org",
       member_since: "2026-04-03T01:10:41Z",
@@ -200,7 +200,7 @@ describe("ProfilePage", () => {
         as_white: { total_games: 3, wins: 2, losses: 0, draws: 1, win_rate: 0.6667 },
         as_black: { total_games: 1, wins: 0, losses: 1, draws: 0, win_rate: 0.0 },
         opponents: [
-          { username: "haiku", role: "bot", total_games: 2, wins: 0, losses: 1, draws: 1, win_rate: 0.0 },
+          { username: "llm_haiku", role: "bot", total_games: 2, wins: 0, losses: 1, draws: 1, win_rate: 0.0 },
           { username: "fil", role: "user", total_games: 2, wins: 2, losses: 0, draws: 0, win_rate: 1.0 },
         ],
         rulesets: [
@@ -212,9 +212,9 @@ describe("ProfilePage", () => {
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
     mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
 
-    renderProfile("/user/gptnano")
+    renderProfile("/user/llm_gptnano")
 
-    await screen.findByRole("heading", { name: "gptnano" })
+    await screen.findByRole("heading", { name: "llm_gptnano" })
     expect(screen.getByRole("heading", { name: "This user is bot" })).toBeInTheDocument()
     expect(screen.getByText(/On Kriegspiel\.org we allow bots\./i)).toBeInTheDocument()
     expect(screen.getByText(/You also can create your own bot – more bots, more fun\./i)).toBeInTheDocument()
@@ -234,7 +234,7 @@ describe("ProfilePage", () => {
     expect(screen.getByText("7m")).toBeInTheDocument()
     expect(screen.getByText("White")).toBeInTheDocument()
     expect(screen.getByText("2-0-1 · 66.7%")).toBeInTheDocument()
-    expect(screen.getByText("haiku (bot)")).toBeInTheDocument()
+    expect(screen.getByText("llm_haiku (bot)")).toBeInTheDocument()
     expect(screen.getByText("0-1-1 · 0.0%")).toBeInTheDocument()
     expect(screen.getByText("Wild 16")).toBeInTheDocument()
     expect(screen.getByText("3 · 33.3%")).toBeInTheDocument()
@@ -314,7 +314,7 @@ describe("ProfilePage", () => {
 
   it("falls_back_to_unknown_bot_values_and_recent_game_labels", async () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
-      username: "haiku",
+      username: "llm_haiku",
       is_bot: true,
       owner_email: null,
       member_since: null,
@@ -331,13 +331,13 @@ describe("ProfilePage", () => {
     })
     mockApi.userApi.getRatingHistory.mockRejectedValueOnce(new Error("history failed"))
 
-    renderProfile("/user/haiku")
+    renderProfile("/user/llm_haiku")
 
-    await screen.findByRole("heading", { name: "haiku" })
+    await screen.findByRole("heading", { name: "llm_haiku" })
     expect(screen.getByText("Member since Unknown.")).toBeInTheDocument()
     expect(screen.getByText(/Email address of this bot owner is unknown\./i)).toBeInTheDocument()
     expect(screen.getByText("No completed bot games yet.")).toBeInTheDocument()
     expect(screen.getByText(/draw vs unknown/i)).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/haiku/games")
+    expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/llm_haiku/games")
   })
 })

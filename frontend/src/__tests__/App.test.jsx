@@ -149,8 +149,8 @@ describe("App routes", () => {
     renderRoute("/tech/bot-matrix")
 
     await screen.findByRole("heading", { name: "Kriegsspiel bot matrix" })
-    const haikuLinks = await screen.findAllByRole("link", { name: "LLM Haiku bot" })
-    expect(haikuLinks[0]).toHaveAttribute("href", "/user/haiku")
+    const haikuLinks = await screen.findAllByRole("link", { name: "LLM Haiku (bot)" })
+    expect(haikuLinks[0]).toHaveAttribute("href", "/user/llm_haiku")
   })
 
   it("redirects_authenticated_user_away_from_login", async () => {

@@ -53,7 +53,7 @@ const game = {
     },
   },
   black: {
-    username: "haiku",
+    username: "llm_haiku",
     connected: true,
     role: "bot",
     ratings: {
