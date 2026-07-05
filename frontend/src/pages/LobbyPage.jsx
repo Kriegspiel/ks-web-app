@@ -84,7 +84,8 @@ function botRating(bot) {
 }
 
 function formatBotPickerLabel(bot) {
-  return `${botRating(bot)} - ${bot?.display_name ?? "Unknown bot"}`
+  const limitLabel = bot?.llm_backed && typeof bot?.llm_bot_limit_label === "string" ? bot.llm_bot_limit_label.trim() : ""
+  return `${botRating(bot)} - ${bot?.display_name ?? "Unknown bot"}${limitLabel ? ` (${limitLabel})` : ""}`
 }
 
 function botSupportsRuleVariant(bot, ruleVariant) {
