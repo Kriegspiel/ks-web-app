@@ -1,9 +1,13 @@
 import { footerGroups } from "../footerContent"
 
-function externalLinkProps(href) {
+function isExternalHref(href) {
   return /^https?:\/\//.test(href)
-    ? { target: "_blank", rel: "noreferrer" }
-    : {}
+}
+
+function externalLinkProps(href) {
+  return isExternalHref(href)
+    ? { className: "app-footer__link app-footer__link--external", target: "_blank", rel: "noreferrer noopener" }
+    : { className: "app-footer__link" }
 }
 
 export default function AppFooter() {
@@ -21,7 +25,10 @@ export default function AppFooter() {
               <ul>
                 {group.links.map((link) => (
                   <li key={`${group.title}-${link.href}`}>
-                    <a href={link.href} {...externalLinkProps(link.href)}>{link.label}</a>
+                    <a href={link.href} {...externalLinkProps(link.href)}>
+                      {link.label}
+                      {isExternalHref(link.href) ? <span className="app-footer__external-icon" aria-hidden="true">&#8599;</span> : null}
+                    </a>
                   </li>
                 ))}
               </ul>

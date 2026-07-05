@@ -50,13 +50,33 @@
 }
 
 .app-footer__group a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
   text-decoration: none;
   color: var(--muted);
+}
+
+.app-footer__link--external {
+  font-weight: 500;
+}
+
+.app-footer__external-icon {
+  color: var(--text);
+  font-size: 0.78em;
+  line-height: 1;
+  opacity: 0.8;
+  transform: translateY(-0.05rem);
 }
 
 .app-footer__group a:hover,
 .app-footer__group a:focus-visible {
   color: var(--text);
+}
+
+.app-footer__group a:hover .app-footer__external-icon,
+.app-footer__group a:focus-visible .app-footer__external-icon {
+  opacity: 1;
 }
 
 .app-header {
