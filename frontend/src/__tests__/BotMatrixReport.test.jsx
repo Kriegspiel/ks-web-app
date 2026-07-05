@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router-dom"
 import BotMatrixReportPage from "../pages/BotMatrixReport"
 
 vi.mock("../components/VersionStamp", () => ({
-  default: () => <div>v. 1.3.84</div>,
+  default: () => <div>v. 1.3.85</div>,
 }))
 
 afterEach(() => {
@@ -60,10 +60,10 @@ describe("BotMatrixReportPage", () => {
     expect(screen.getByText("Built from 54 completed bot games and 108 row-perspective records.")).toBeInTheDocument()
     expect(screen.getByRole("row", { name: "Resignation 14" })).toBeInTheDocument()
     expect(screen.queryByRole("row", { name: "Resignation 15" })).not.toBeInTheDocument()
-    expect(within(screen.getAllByRole("table")[2]).getByRole("row", { name: /LLM Haiku \(bot\) — 7\.89M \$2\.337/ })).toBeInTheDocument()
+    expect(within(screen.getAllByRole("table")[2]).getByRole("row", { name: /LLM Haiku \(bot\) 9 225 — 877k \$0\.26 67% 33% 0%/ })).toBeInTheDocument()
   })
 
-  it("renders_end_condition_counts_and_total_spend_rows", async () => {
+  it("renders_end_condition_counts_and_sortable_total_rows", async () => {
     render(<MemoryRouter><BotMatrixReportPage /></MemoryRouter>)
 
     await screen.findByRole("heading", { name: "End conditions" })
@@ -77,9 +77,27 @@ describe("BotMatrixReportPage", () => {
     expect(screen.getByRole("row", { name: "Insufficient material 2" })).toBeInTheDocument()
 
     const totalsTable = screen.getAllByRole("table")[2]
-    const haikuTotal = within(totalsTable).getByRole("row", { name: /LLM Haiku \(bot\) 1055 9.11M \$2.688/ })
+    expect(within(totalsTable).getByRole("columnheader", { name: /Total games DESC/ })).toHaveAttribute("aria-sort", "descending")
+    const haikuTotal = within(totalsTable).getByRole("row", { name: /LLM Haiku \(bot\) 10 228 105\.5 910k \$0\.269 70% 30% 0%/ })
     expect(haikuTotal).toBeInTheDocument()
-    const randomTotal = within(totalsTable).getByRole("row", { name: /Random bot 0 0 \$0/ })
+    const randomTotal = within(totalsTable).getByRole("row", { name: /Random bot 10 246\.1 0 0 \$0 70% 20% 10%/ })
     expect(randomTotal).toBeInTheDocument()
+
+    fireEvent.click(within(totalsTable).getByRole("button", { name: "Sort by Win share desc" }))
+
+    expect(within(totalsTable).getByRole("columnheader", { name: /Win share DESC/ })).toHaveAttribute("aria-sort", "descending")
+    const sortedRows = within(totalsTable).getAllByRole("row")
+    expect(sortedRows[1]).toHaveTextContent(/Random Any bot/)
+  })
+
+  it("filters_bot_totals_by_opponent_scope", async () => {
+    render(<MemoryRouter><BotMatrixReportPage /></MemoryRouter>)
+
+    await screen.findByRole("heading", { name: "Bot totals" })
+    fireEvent.click(screen.getByRole("button", { name: "vs Humans" }))
+
+    const totalsTable = screen.getAllByRole("table")[2]
+    expect(screen.getByRole("button", { name: "vs Humans" })).toHaveAttribute("aria-pressed", "true")
+    expect(within(totalsTable).getByRole("row", { name: /LLM Haiku \(bot\) 0 — — — — 0% 0% 0%/ })).toBeInTheDocument()
   })
 })
