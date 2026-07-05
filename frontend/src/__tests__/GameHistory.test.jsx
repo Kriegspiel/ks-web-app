@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom"
 import GameHistoryPage from "../pages/GameHistory"
 
 const mockApi = vi.hoisted(() => ({
@@ -22,9 +22,15 @@ beforeEach(() => {
   mockApi.userApi.getGameHistory.mockReset()
 })
 
+function LocationProbe() {
+  const location = useLocation()
+  return <div data-testid="location">{location.pathname}{location.search}</div>
+}
+
 function renderHistory(path = "/user/fil/games") {
   render(
     <MemoryRouter initialEntries={[path]}>
+      <LocationProbe />
       <Routes>
         <Route path="/user/:username/games" element={<GameHistoryPage />} />
         <Route path="/game/:gameRef/review" element={<div>Review opened</div>} />
@@ -45,6 +51,9 @@ describe("GameHistoryPage", () => {
     expect(css).toContain("position: sticky;")
     expect(css).toContain("top: 0;")
     expect(css).toContain("max-height: min(72vh, 46rem);")
+    expect(css).toContain(".history-sort-toggle--asc")
+    expect(css).toContain(".history-sort-toggle--desc")
+    expect(css).toContain(".history-page-size-control")
     expect(css).toContain("color: var(--text);")
     expect(css).not.toContain("background: rgba(248, 250, 252, 0.92);")
     expect(css).not.toContain("border-bottom: 1px solid #e5eaf2;")
@@ -79,7 +88,7 @@ describe("GameHistoryPage", () => {
 
     renderHistory()
 
-    expect(await screen.findByRole("columnheader", { name: "Date and time" })).toHaveAttribute("aria-sort", "descending")
+    expect(await screen.findByRole("columnheader", { name: /Date and time/ })).toHaveAttribute("aria-sort", "descending")
     expect(historyRows().map((row) => within(row).getAllByRole("cell")[2].textContent)).toEqual(["new", "middle (bot)", "old"])
   })
 
@@ -95,19 +104,27 @@ describe("GameHistoryPage", () => {
     renderHistory()
 
     for (const label of ["Rule set", "Color", "Opponent", "Result", "Reason", "Turns", "Date and time", "Review"]) {
-      expect(await screen.findByRole("button", { name: label })).toBeInTheDocument()
+      expect(await screen.findByRole("button", { name: `Sort ${label}` })).toBeInTheDocument()
     }
 
-    fireEvent.click(screen.getByRole("button", { name: "Turns" }))
-    expect(screen.getByRole("columnheader", { name: "Turns" })).toHaveAttribute("aria-sort", "ascending")
+    fireEvent.click(screen.getByRole("button", { name: "Sort Turns" }))
+    expect(screen.getByRole("columnheader", { name: /Turns/ })).toHaveAttribute("aria-sort", "ascending")
     expect(historyRows().map((row) => within(row).getAllByRole("cell")[5].textContent)).toEqual(["2", "9"])
+    expect(screen.getByTestId("location")).toHaveTextContent("sort=turns")
+    expect(screen.getByTestId("location")).toHaveTextContent("dir=asc")
 
-    fireEvent.click(screen.getByRole("button", { name: "Turns" }))
-    expect(screen.getByRole("columnheader", { name: "Turns" })).toHaveAttribute("aria-sort", "descending")
+    fireEvent.click(screen.getByRole("button", { name: "Sort Turns" }))
+    expect(screen.getByRole("columnheader", { name: /Turns/ })).toHaveAttribute("aria-sort", "descending")
     expect(historyRows().map((row) => within(row).getAllByRole("cell")[5].textContent)).toEqual(["9", "2"])
+    expect(screen.getByTestId("location")).toHaveTextContent("dir=desc")
+
+    fireEvent.click(screen.getByRole("button", { name: "Sort Turns" }))
+    expect(screen.getByRole("columnheader", { name: /Turns/ })).toHaveAttribute("aria-sort", "none")
+    expect(historyRows().map((row) => within(row).getAllByRole("cell")[5].textContent)).toEqual(["2", "9"])
+    expect(screen.getByTestId("location")).toHaveTextContent("sort=none")
   })
 
-  it("filters_categorical_fields_with_grouped_multi_select_opponents", async () => {
+  it("opens_header_filter_menus_and_groups_multi_select_opponents", async () => {
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({
       games: [
         { game_id: "g-human", game_code: "HUM001", rule_variant: "berkeley", opponent: "bob", opponent_role: "user", play_as: "white", result: "win", reason: "checkmate", turn_count: 6, played_at: "2026-01-04T00:00:00Z" },
@@ -120,25 +137,82 @@ describe("GameHistoryPage", () => {
     renderHistory()
 
     for (const label of ["Rule set", "Color", "Opponent", "Result", "Reason"]) {
-      expect(await screen.findByLabelText(`Filter ${label}`)).toBeInTheDocument()
+      expect(await screen.findByRole("button", { name: label })).toBeInTheDocument()
     }
 
-    fireEvent.click(screen.getByLabelText("Filter Opponent"))
-    const opponentMenu = screen.getByLabelText("Filter Opponent").closest("details")
+    fireEvent.click(screen.getByRole("button", { name: "Opponent" }))
+    const opponentMenu = await screen.findByRole("menu")
     await within(opponentMenu).findByText("Humans")
     expect(within(opponentMenu).getAllByText(/Humans|Bots/).map((node) => node.textContent)).toEqual(["Humans", "Bots"])
 
     fireEvent.click(within(opponentMenu).getByLabelText("bob"))
     expect(historyRows()).toHaveLength(1)
     expect(within(historyRows()[0]).getByRole("link", { name: "bob" })).toBeInTheDocument()
+    expect(screen.getByTestId("location")).toHaveTextContent("opponent=human%3Abob")
 
     fireEvent.click(within(opponentMenu).getByLabelText("randobot (bot)"))
     expect(historyRows()).toHaveLength(2)
     expect(within(historyRows()[0]).getByRole("link", { name: "bob" })).toBeInTheDocument()
     expect(within(historyRows()[1]).getByRole("link", { name: "randobot (bot)" })).toBeInTheDocument()
+    expect(screen.getByTestId("location")).toHaveTextContent("bot%3Arandobot")
 
     fireEvent.click(screen.getByRole("button", { name: "Clear filters" }))
     expect(historyRows()).toHaveLength(3)
+  })
+
+  it("closes_an_open_filter_menu_when_clicking_elsewhere", async () => {
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
+      games: [
+        { game_id: "g-human", game_code: "HUM001", rule_variant: "berkeley", opponent: "bob", opponent_role: "user", play_as: "white", result: "win", reason: "checkmate", turn_count: 6, played_at: "2026-01-04T00:00:00Z" },
+      ],
+      pagination: { page: 1, pages: 1, total: 1 },
+    })
+
+    renderHistory()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Opponent" }))
+    expect(await screen.findByRole("menu")).toBeInTheDocument()
+
+    fireEvent.pointerDown(document.body)
+
+    await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument())
+  })
+
+  it("loads_sort_filters_page_and_page_size_from_the_url", async () => {
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
+      games: [
+        { game_id: "g-bob", game_code: "BOB001", rule_variant: "berkeley", opponent: "bob", opponent_role: "user", play_as: "white", result: "win", reason: "checkmate", turn_count: 8, played_at: "2026-01-04T00:00:00Z" },
+        { game_id: "g-claire", game_code: "CLA001", rule_variant: "wild16", opponent: "claire", opponent_role: "user", play_as: "black", result: "win", reason: "timeout", turn_count: 3, played_at: "2026-01-03T00:00:00Z" },
+      ],
+      pagination: { page: 2, pages: 4, total: 2000 },
+    })
+
+    renderHistory("/user/fil/games?page=2&per_page=500&sort=turns&dir=asc&result=win&opponent=human%3Abob")
+
+    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenCalledWith("fil", 2, 500))
+    expect(screen.getByLabelText("Games per page")).toHaveValue("500")
+    expect(screen.getByRole("columnheader", { name: /Turns/ })).toHaveAttribute("aria-sort", "ascending")
+    expect(historyRows()).toHaveLength(1)
+    expect(within(historyRows()[0]).getByRole("link", { name: "bob" })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Opponent 1" }))
+    expect(await screen.findByLabelText("bob")).toBeChecked()
+  })
+
+  it("changes_the_backend_page_size_from_the_toolbar", async () => {
+    mockApi.userApi.getGameHistory
+      .mockResolvedValueOnce({ games: [{ game_id: "g-1", opponent: "amy" }], pagination: { page: 1, pages: 3, total: 241 } })
+      .mockResolvedValueOnce({ games: [{ game_id: "g-2", opponent: "bob" }], pagination: { page: 1, pages: 1, total: 241 } })
+
+    renderHistory("/user/fil/games?page=3")
+
+    await screen.findByText("amy")
+    fireEvent.change(screen.getByLabelText("Games per page"), { target: { value: "1000" } })
+
+    await screen.findByText("bob")
+    expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(2, "fil", 1, 1000)
+    expect(screen.getByTestId("location")).toHaveTextContent("per_page=1000")
+    expect(screen.getByTestId("location")).not.toHaveTextContent("page=3")
   })
 
   it("opens_the_game_review_when_clicking_a_history_row", async () => {
