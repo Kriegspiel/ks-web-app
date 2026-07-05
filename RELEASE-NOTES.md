@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.83
+
+- **Bot Matrix Report**: keep the outcome matrix player column and opponent
+  header row fixed while the matchup cells scroll.
+
 ## ks-web-app frontend v. 1.3.82
 
 - **LLM Bot Identity Rename**: updated bot matrix links, bot picker fixtures,

@@ -225,34 +225,36 @@ export default function BotMatrixReportPage() {
         <>
           <section className="leaderboard-table-wrap bot-matrix-wrap" aria-labelledby="bot-matrix-heading">
             <h2 id="bot-matrix-heading">Outcome matrix</h2>
-            <table className="leaderboard-table bot-matrix-table">
-              <thead>
-                <tr>
-                  <th>Player</th>
-                  {BOT_MATRIX_PLAYERS.map((player) => (
-                    <th key={player.code}>
-                      <PlayerLink player={player} />
-                    </th>
-                  ))}
-                  <th>Average</th>
-                </tr>
-              </thead>
-              <tbody>
-                {report.matrixRows.map((row) => (
-                  <tr key={row.player.code}>
-                    <th scope="row"><PlayerLink player={row.player} /></th>
-                    {row.cells.map((cell) => (
-                      <td key={`${row.player.code}-${cell.opponent.code}`}>
-                        <MatrixCell rowPlayer={row.player} summary={cell.summary} />
-                      </td>
+            <div className="bot-matrix-scroll">
+              <table className="leaderboard-table bot-matrix-table">
+                <thead>
+                  <tr>
+                    <th>Player</th>
+                    {BOT_MATRIX_PLAYERS.map((player) => (
+                      <th key={player.code}>
+                        <PlayerLink player={player} />
+                      </th>
                     ))}
-                    <td>
-                      <MatrixCell rowPlayer={row.player} summary={row.average} average />
-                    </td>
+                    <th>Average</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {report.matrixRows.map((row) => (
+                    <tr key={row.player.code}>
+                      <th scope="row"><PlayerLink player={row.player} /></th>
+                      {row.cells.map((cell) => (
+                        <td key={`${row.player.code}-${cell.opponent.code}`}>
+                          <MatrixCell rowPlayer={row.player} summary={cell.summary} />
+                        </td>
+                      ))}
+                      <td>
+                        <MatrixCell rowPlayer={row.player} summary={row.average} average />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
 
           <section className="leaderboard-table-wrap bot-matrix-small-table" aria-labelledby="bot-matrix-endings-heading">
