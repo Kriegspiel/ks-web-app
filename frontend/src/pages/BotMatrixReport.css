@@ -107,3 +107,62 @@
 .bot-matrix-small-table {
   max-width: 44rem;
 }
+
+.bot-matrix-totals-table {
+  max-width: min(100%, 88rem);
+}
+
+.bot-matrix-totals-table .leaderboard-table {
+  min-width: 76rem;
+}
+
+.bot-matrix-total-scope {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin: 0 0 0.75rem;
+  padding: 0.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.bot-matrix-total-scope__button {
+  border: 0;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 0.42rem 0.7rem;
+}
+
+.bot-matrix-total-scope__button--active {
+  background: var(--text);
+  color: var(--surface);
+}
+
+.bot-matrix-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 0;
+  text-align: left;
+}
+
+.bot-matrix-sort-button__direction {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+
+.bot-matrix-sort-button--active .bot-matrix-sort-button__direction {
+  color: var(--accent);
+}

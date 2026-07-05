@@ -34,6 +34,23 @@ const PERIOD_DAY_WINDOWS = {
   month: 30,
   year: 365,
 }
+const TOTAL_SCOPE_OPTIONS = [
+  { value: "all", label: "All" },
+  { value: "humans", label: "vs Humans" },
+  { value: "bots", label: "vs Bots" },
+]
+const TOTAL_SORT_FIELDS = [
+  { key: "player", label: "Player" },
+  { key: "games", label: "Total games" },
+  { key: "avgPlies", label: "Avg plies" },
+  { key: "avgCalls", label: "Avg calls" },
+  { key: "avgTokens", label: "Avg tokens" },
+  { key: "avgCost", label: "Avg cost" },
+  { key: "winShare", label: "Win share" },
+  { key: "drawShare", label: "Draw share" },
+  { key: "lossShare", label: "Loss share" },
+]
+const DEFAULT_TOTALS_SORT = { key: "games", direction: "desc" }
 
 function parseCompactNumber(value) {
   const text = String(value ?? "").trim().replace(/[$,]/g, "")
@@ -86,6 +103,21 @@ function formatCost(value) {
   if (!Number.isFinite(number) || number <= 0) return "$0"
   const digits = number < 0.01 ? 4 : 3
   return `$${stripTrailingZeros(number.toFixed(digits))}`
+}
+
+function formatAverage(value) {
+  if (value === null) return "—"
+  const number = Number(value)
+  if (!Number.isFinite(number)) return "—"
+  return Number.isInteger(number) ? number.toLocaleString("en-US") : number.toFixed(1)
+}
+
+function formatShare(value) {
+  if (value === null) return "0%"
+  const number = Number(value)
+  if (!Number.isFinite(number) || number <= 0) return "0%"
+  const percent = number * 100
+  return `${stripTrailingZeros(percent.toFixed(percent < 10 ? 1 : 0))}%`
 }
 
 function conditionLabel(condition) {
@@ -163,35 +195,87 @@ function summarizeGames(games) {
   }
 }
 
-function buildTotalRows(games, playerByCode, period, allRowRecordCount) {
-  if (period === "lifetime" || games.length === allRowRecordCount) {
-    return BOT_MATRIX_TOTALS.map((row) => ({
-      ...row,
-      player: playerByCode.get(row.code),
-    })).filter((row) => row.player)
-  }
-
-  const totalsByCode = new Map(BOT_MATRIX_PLAYERS.map((player) => [
-    player.code,
-    { code: player.code, calls: "—", tokens: 0, cost: 0 },
-  ]))
-  games.forEach((game) => {
-    const total = totalsByCode.get(game.player)
-    if (!total) return
-    total.tokens += game.playerTokens
-    total.cost += game.playerCost
-  })
-
-  return Array.from(totalsByCode.values()).map((row) => ({
-    code: row.code,
-    calls: row.calls,
-    tokens: formatTokens(row.tokens),
-    cost: formatCost(row.cost),
-    player: playerByCode.get(row.code),
-  })).filter((row) => row.player)
+function totalCallsByCode() {
+  return new Map(BOT_MATRIX_TOTALS.map((row) => [row.code, parseCompactNumber(row.calls)]))
 }
 
-function buildBotMatrixReport(period = "lifetime", now = new Date(Date.now())) {
+function opponentMatchesScope(game, scope, playerByCode) {
+  if (scope === "all") return true
+  const opponentIsBot = playerByCode.has(game.opponent)
+  return scope === "bots" ? opponentIsBot : !opponentIsBot
+}
+
+function buildTotalRows(games, allGames, playerByCode, scope, sort) {
+  const callsByCode = totalCallsByCode()
+  const scopedGames = games.filter((game) => opponentMatchesScope(game, scope, playerByCode))
+  const allScopedGames = allGames.filter((game) => opponentMatchesScope(game, scope, playerByCode))
+  const allGamesByPlayer = new Map()
+  const allScopedGamesByPlayer = new Map()
+
+  BOT_MATRIX_PLAYERS.forEach((player) => {
+    allGamesByPlayer.set(player.code, allGames.filter((game) => game.player === player.code))
+    allScopedGamesByPlayer.set(player.code, allScopedGames.filter((game) => game.player === player.code))
+  })
+
+  const rows = BOT_MATRIX_PLAYERS.map((player) => {
+    const playerGames = scopedGames.filter((game) => game.player === player.code)
+    const count = playerGames.length
+    const totals = playerGames.reduce((current, game) => {
+      current.plies += game.plies
+      current.tokens += game.playerTokens
+      current.cost += game.playerCost
+      if (game.result === "W") current.wins += 1
+      if (game.result === "D") current.draws += 1
+      if (game.result === "L") current.losses += 1
+      return current
+    }, { plies: 0, tokens: 0, cost: 0, wins: 0, draws: 0, losses: 0 })
+    const fullPlayerGames = allGamesByPlayer.get(player.code) ?? []
+    const fullScopedPlayerGames = allScopedGamesByPlayer.get(player.code) ?? []
+    const callsAreExact = count > 0 && count === fullPlayerGames.length && fullScopedPlayerGames.length === fullPlayerGames.length
+    const totalCalls = callsAreExact ? callsByCode.get(player.code) ?? 0 : null
+
+    return {
+      code: player.code,
+      player,
+      playerName: player.name,
+      games: count,
+      avgPlies: count ? totals.plies / count : null,
+      avgCalls: count && totalCalls !== null ? totalCalls / count : null,
+      avgTokens: count ? totals.tokens / count : null,
+      avgCost: count ? totals.cost / count : null,
+      winShare: count ? totals.wins / count : null,
+      drawShare: count ? totals.draws / count : null,
+      lossShare: count ? totals.losses / count : null,
+    }
+  })
+
+  return sortTotalRows(rows, sort)
+}
+
+function sortTotalRows(rows, sort) {
+  const field = TOTAL_SORT_FIELDS.some((item) => item.key === sort.key) ? sort.key : DEFAULT_TOTALS_SORT.key
+  const direction = sort.direction === "asc" ? "asc" : "desc"
+  const multiplier = direction === "asc" ? 1 : -1
+
+  return [...rows].sort((left, right) => {
+    if (field === "player") {
+      return left.playerName.localeCompare(right.playerName) * multiplier
+    }
+
+    const leftValue = left[field]
+    const rightValue = right[field]
+    const leftMissing = leftValue === null || !Number.isFinite(Number(leftValue))
+    const rightMissing = rightValue === null || !Number.isFinite(Number(rightValue))
+    if (leftMissing && rightMissing) return left.playerName.localeCompare(right.playerName)
+    if (leftMissing) return 1
+    if (rightMissing) return -1
+
+    const difference = Number(leftValue) - Number(rightValue)
+    return difference === 0 ? left.playerName.localeCompare(right.playerName) : difference * multiplier
+  })
+}
+
+function buildBotMatrixReport(period = "lifetime", now = new Date(Date.now()), totalScope = "all", totalSort = DEFAULT_TOTALS_SORT) {
   const playerByCode = new Map(BOT_MATRIX_PLAYERS.map((player) => [player.code, player]))
   const allGames = normalizedGames()
   const games = gamesForPeriod(allGames, period, now)
@@ -232,7 +316,7 @@ function buildBotMatrixReport(period = "lifetime", now = new Date(Date.now())) {
   return {
     matrixRows,
     endConditionRows,
-    totalRows: buildTotalRows(games, playerByCode, period, allGames.length),
+    totalRows: buildTotalRows(games, allGames, playerByCode, totalScope, totalSort),
     uniqueGameCount: uniqueGames.length,
     rowRecordCount: games.length,
   }
@@ -262,18 +346,56 @@ function MatrixCell({ rowPlayer, summary, average = false }) {
   )
 }
 
+function SortableHeader({ field, sort, onSort }) {
+  const active = sort.key === field.key
+  const nextDirection = active && sort.direction === "desc" ? "asc" : field.key === "player" ? "asc" : "desc"
+  const ariaSort = active ? (sort.direction === "asc" ? "ascending" : "descending") : "none"
+
+  return (
+    <th aria-sort={ariaSort}>
+      <button
+        type="button"
+        className={active ? "bot-matrix-sort-button bot-matrix-sort-button--active" : "bot-matrix-sort-button"}
+        onClick={() => onSort(field.key)}
+        aria-label={`Sort by ${field.label} ${nextDirection}`}
+      >
+        <span>{field.label}</span>
+        {active ? <span className="bot-matrix-sort-button__direction">{sort.direction.toUpperCase()}</span> : null}
+      </button>
+    </th>
+  )
+}
+
+function TotalMetric({ value, kind }) {
+  if (kind === "number") return value.toLocaleString("en-US")
+  if (kind === "plies" || kind === "calls") return formatAverage(value)
+  if (kind === "tokens") return value !== null && Number.isFinite(Number(value)) ? formatTokens(value) : "—"
+  if (kind === "cost") return value !== null && Number.isFinite(Number(value)) ? formatCost(value) : "—"
+  if (kind === "share") return formatShare(value)
+  return "—"
+}
+
 export default function BotMatrixReportPage() {
   const [period, setPeriod] = useState("lifetime")
+  const [totalScope, setTotalScope] = useState("all")
+  const [totalSort, setTotalSort] = useState(DEFAULT_TOTALS_SORT)
   const [loading, setLoading] = useState(true)
   const [loadDurationMs, setLoadDurationMs] = useState(null)
   const [report, setReport] = useState(null)
 
   useEffect(() => {
     const startedAt = Date.now()
-    setReport(buildBotMatrixReport(period, new Date(startedAt)))
+    setReport(buildBotMatrixReport(period, new Date(startedAt), totalScope, totalSort))
     setLoadDurationMs(Date.now() - startedAt)
     setLoading(false)
-  }, [period])
+  }, [period, totalScope, totalSort])
+
+  function handleTotalSort(field) {
+    setTotalSort((current) => ({
+      key: field,
+      direction: current.key === field && current.direction === "desc" ? "asc" : field === "player" ? "asc" : "desc",
+    }))
+  }
 
   return (
     <main className="page-shell leaderboard-page bot-matrix-page">
@@ -349,24 +471,41 @@ export default function BotMatrixReportPage() {
             </table>
           </section>
 
-          <section className="leaderboard-table-wrap bot-matrix-small-table" aria-labelledby="bot-matrix-totals-heading">
+          <section className="leaderboard-table-wrap bot-matrix-totals-table" aria-labelledby="bot-matrix-totals-heading">
             <h2 id="bot-matrix-totals-heading">Bot totals</h2>
+            <div className="bot-matrix-total-scope" aria-label="Bot totals opponent scope">
+              {TOTAL_SCOPE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={option.value === totalScope ? "bot-matrix-total-scope__button bot-matrix-total-scope__button--active" : "bot-matrix-total-scope__button"}
+                  aria-pressed={option.value === totalScope}
+                  onClick={() => setTotalScope(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
             <table className="leaderboard-table">
               <thead>
                 <tr>
-                  <th>Player</th>
-                  <th>Calls</th>
-                  <th>Tokens</th>
-                  <th>Cost</th>
+                  {TOTAL_SORT_FIELDS.map((field) => (
+                    <SortableHeader key={field.key} field={field} sort={totalSort} onSort={handleTotalSort} />
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {report.totalRows.map((row) => (
                   <tr key={row.code}>
                     <td><PlayerLink player={row.player} /></td>
-                    <td>{row.calls}</td>
-                    <td>{row.tokens}</td>
-                    <td>{row.cost}</td>
+                    <td>{row.games.toLocaleString("en-US")}</td>
+                    <td><TotalMetric value={row.avgPlies} kind="plies" /></td>
+                    <td><TotalMetric value={row.avgCalls} kind="calls" /></td>
+                    <td><TotalMetric value={row.avgTokens} kind="tokens" /></td>
+                    <td><TotalMetric value={row.avgCost} kind="cost" /></td>
+                    <td><TotalMetric value={row.winShare} kind="share" /></td>
+                    <td><TotalMetric value={row.drawShare} kind="share" /></td>
+                    <td><TotalMetric value={row.lossShare} kind="share" /></td>
                   </tr>
                 ))}
               </tbody>
