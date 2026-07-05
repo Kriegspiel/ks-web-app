@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router-dom"
 import BotMatrixReportPage from "../pages/BotMatrixReport"
 
 vi.mock("../components/VersionStamp", () => ({
-  default: () => <div>v. 1.3.81</div>,
+  default: () => <div>v. 1.3.82</div>,
 }))
 
 afterEach(() => {
@@ -26,18 +26,18 @@ describe("BotMatrixReportPage", () => {
     expect(screen.queryByRole("columnheader", { name: "H" })).not.toBeInTheDocument()
     expect(screen.queryByRole("columnheader", { name: "G25" })).not.toBeInTheDocument()
 
-    const haikuLinks = screen.getAllByRole("link", { name: "LLM Haiku bot" })
-    expect(haikuLinks[0]).toHaveAttribute("href", "/user/haiku")
-    expect(screen.getAllByRole("link", { name: "LLM GPT-Nano bot" })[0]).toHaveAttribute("href", "/user/gptnano")
-    expect(screen.getAllByRole("link", { name: "LLM Gemini 2.5 flashlight bot" })[0]).toHaveAttribute("href", "/user/bot_gemini25_lite")
-    expect(screen.getAllByRole("link", { name: "LLM DeepSeek 4 flash bot" })[0]).toHaveAttribute("href", "/user/bot_deepseekv4_flash")
-    expect(screen.getAllByRole("link", { name: "LLM Llama 3.5 8B bot" })[0]).toHaveAttribute("href", "/user/bot_llama31_8b")
+    const haikuLinks = screen.getAllByRole("link", { name: "LLM Haiku (bot)" })
+    expect(haikuLinks[0]).toHaveAttribute("href", "/user/llm_haiku")
+    expect(screen.getAllByRole("link", { name: "LLM GPT-Nano (bot)" })[0]).toHaveAttribute("href", "/user/llm_gptnano")
+    expect(screen.getAllByRole("link", { name: "LLM Gemini 2.5 flashlight (bot)" })[0]).toHaveAttribute("href", "/user/llm_gemini25_lite")
+    expect(screen.getAllByRole("link", { name: "LLM DeepSeek 4 flash (bot)" })[0]).toHaveAttribute("href", "/user/llm_deepseekv4_flash")
+    expect(screen.getAllByRole("link", { name: "LLM Llama 3.5 8B (bot)" })[0]).toHaveAttribute("href", "/user/llm_llama31_8b")
 
     expect(screen.getAllByText("1-0-0").length).toBeGreaterThan(0)
     expect(screen.getAllByText("255 avg plies").length).toBeGreaterThan(0)
     expect(screen.getByText("this bot 1.21M / $0.351")).toBeInTheDocument()
     expect(screen.getByText("opponent 246k / $0.057")).toBeInTheDocument()
-    expect(screen.getAllByRole("link", { name: "LLM Haiku bot games" })[0]).toHaveAttribute("href", "/user/haiku/games")
+    expect(screen.getAllByRole("link", { name: "LLM Haiku (bot) games" })[0]).toHaveAttribute("href", "/user/llm_haiku/games")
     expect(screen.getByText("7-3-0")).toBeInTheDocument()
     expect(screen.getByText("228 avg plies")).toBeInTheDocument()
 
@@ -58,7 +58,7 @@ describe("BotMatrixReportPage", () => {
     expect(screen.getByRole("row", { name: "Insufficient material 2" })).toBeInTheDocument()
 
     const totalsTable = screen.getAllByRole("table")[2]
-    const haikuTotal = within(totalsTable).getByRole("row", { name: /LLM Haiku bot 1055 9.11M \$2.688/ })
+    const haikuTotal = within(totalsTable).getByRole("row", { name: /LLM Haiku \(bot\) 1055 9.11M \$2.688/ })
     expect(haikuTotal).toBeInTheDocument()
     const randomTotal = within(totalsTable).getByRole("row", { name: /Random bot 0 0 \$0/ })
     expect(randomTotal).toBeInTheDocument()

@@ -88,7 +88,7 @@ beforeEach(() => {
       },
     },
     black: {
-      username: "haiku",
+      username: "llm_haiku",
       connected: true,
       role: "bot",
       ratings: {
@@ -199,7 +199,7 @@ describe("ReviewPage", () => {
       updated_at: "2026-06-02T14:45:16Z",
       result: { winner: null, reason: "too_many_reversible_moves" },
       white: { username: "simpleheuristics", connected: true, role: "bot" },
-      black: { username: "gptnano", connected: true, role: "bot" },
+      black: { username: "llm_gptnano", connected: true, role: "bot" },
     })
 
     renderReviewPage()
@@ -590,7 +590,7 @@ describe("ReviewPage", () => {
       updated_at: "2026-04-05T12:03:12Z",
       result: null,
       white: { username: "notifil", role: "user" },
-      black: { username: "haiku", role: "bot" },
+      black: { username: "llm_haiku", role: "bot" },
     })
     mockApi.getGameTranscript.mockResolvedValueOnce({
       game_id: "g-crazy",
@@ -669,7 +669,7 @@ describe("ReviewPage", () => {
       updated_at: "2026-04-05T12:03:12Z",
       result: null,
       white: { username: "notifil", role: "user" },
-      black: { username: "haiku", role: "bot" },
+      black: { username: "llm_haiku", role: "bot" },
     })
     mockApi.getGameTranscript.mockResolvedValueOnce({
       game_id: "g-crazy-pocket",
@@ -846,7 +846,7 @@ describe("ReviewPage", () => {
       updated_at: "2026-04-05T12:03:12Z",
       result: { winner: "white", reason: "checkmate" },
       white: { username: "notifil", connected: true, role: "user" },
-      black: { username: "haiku", connected: true, role: "bot" },
+      black: { username: "llm_haiku", connected: true, role: "bot" },
     })
     mockApi.getGameTranscript.mockResolvedValueOnce({
       game_id: "g-620",
@@ -1072,7 +1072,7 @@ describe("ReviewPage", () => {
 
     await screen.findByText(/Game stats/i)
     expect(screen.getByRole("link", { name: "notifil" })).toHaveAttribute("href", "/user/notifil")
-    expect(screen.getByRole("link", { name: "haiku (bot)" })).toHaveAttribute("href", "/user/haiku")
+    expect(screen.getByRole("link", { name: "llm_haiku (bot)" })).toHaveAttribute("href", "/user/llm_haiku")
     expect(screen.getByText("2026-04-05 12:00:00 UTC")).toBeInTheDocument()
     expect(screen.getByText("3m 12s")).toBeInTheDocument()
   })
