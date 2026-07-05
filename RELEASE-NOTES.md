@@ -7,7 +7,7 @@ need version entries unless they ship a user-visible change.
 
 ## ks-web-app frontend v. 1.3.79
 
-- **Footer Links**: map the shared `Playing here` footer link to the public
+- **Footer Links**: map the shared `Playing guide` footer link to the public
   `kriegspiel.org/playing` guide from the app footer.
 
 ## ks-web-app frontend v. 1.3.75
