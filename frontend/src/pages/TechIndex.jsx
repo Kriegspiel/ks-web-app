@@ -8,6 +8,11 @@ const TECH_LINKS = [
     description: "Daily bot game counts and win-rate splits for recent completed games.",
   },
   {
+    href: "/tech/bot-matrix",
+    title: "Kriegsspiel bot matrix",
+    description: "Round-robin LLM and simple-bot matchup matrix with token and cost statistics.",
+  },
+  {
     href: "/tech/guests-report",
     title: "Guests report",
     description: "Guest accounts, first-seen days, latest games, and remaining guest-name capacity.",

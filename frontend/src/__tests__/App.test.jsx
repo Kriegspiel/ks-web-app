@@ -140,6 +140,17 @@ describe("App routes", () => {
 
     await screen.findByRole("heading", { name: "Tech" })
     expect(screen.getByRole("link", { name: /Bots report/ })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /Kriegsspiel bot matrix/ })).toBeInTheDocument()
+  })
+
+  it("renders_bot_matrix_report_for_authorized_operator", async () => {
+    mockApi.me.mockResolvedValueOnce({ username: "fil", can_view_tech_reports: true })
+
+    renderRoute("/tech/bot-matrix")
+
+    await screen.findByRole("heading", { name: "Kriegsspiel bot matrix" })
+    const haikuLinks = await screen.findAllByRole("link", { name: "LLM Haiku bot" })
+    expect(haikuLinks[0]).toHaveAttribute("href", "/user/haiku")
   })
 
   it("redirects_authenticated_user_away_from_login", async () => {
