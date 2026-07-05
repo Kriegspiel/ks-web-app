@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { cleanup, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import BotMatrixReportPage from "../pages/BotMatrixReport"
 
 vi.mock("../components/VersionStamp", () => ({
-  default: () => <div>v. 1.3.83</div>,
+  default: () => <div>v. 1.3.84</div>,
 }))
 
 afterEach(() => {
@@ -22,6 +22,7 @@ describe("BotMatrixReportPage", () => {
     expect(await screen.findByRole("heading", { name: "Kriegsspiel bot matrix" })).toBeInTheDocument()
     expect(screen.getByText("Loaded in 27 ms.")).toBeInTheDocument()
     expect(screen.getByText("Built from 55 completed bot games and 110 row-perspective records.")).toBeInTheDocument()
+    expect(screen.getByLabelText("Time period")).toHaveValue("lifetime")
 
     expect(document.querySelector(".bot-matrix-scroll .bot-matrix-table")).toBeInTheDocument()
     expect(screen.queryByRole("columnheader", { name: "H" })).not.toBeInTheDocument()
@@ -43,6 +44,23 @@ describe("BotMatrixReportPage", () => {
     expect(screen.getByText("228 avg plies")).toBeInTheDocument()
 
     nowSpy.mockRestore()
+  })
+
+  it("filters_the_report_by_selected_time_period", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(Date.UTC(2026, 6, 5, 22, 0, 0))
+
+    render(<MemoryRouter><BotMatrixReportPage /></MemoryRouter>)
+
+    const periodSelect = await screen.findByLabelText("Time period")
+    expect(periodSelect).toHaveValue("lifetime")
+
+    fireEvent.change(periodSelect, { target: { value: "today" } })
+
+    expect(periodSelect).toHaveValue("today")
+    expect(screen.getByText("Built from 54 completed bot games and 108 row-perspective records.")).toBeInTheDocument()
+    expect(screen.getByRole("row", { name: "Resignation 14" })).toBeInTheDocument()
+    expect(screen.queryByRole("row", { name: "Resignation 15" })).not.toBeInTheDocument()
+    expect(within(screen.getAllByRole("table")[2]).getByRole("row", { name: /LLM Haiku \(bot\) — 7\.89M \$2\.337/ })).toBeInTheDocument()
   })
 
   it("renders_end_condition_counts_and_total_spend_rows", async () => {

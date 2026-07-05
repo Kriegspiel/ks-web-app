@@ -11,6 +11,31 @@
   margin: 0 0 0.75rem;
 }
 
+.bot-matrix-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.bot-matrix-period-field {
+  align-items: center;
+  color: var(--muted);
+  display: inline-flex;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+
+.bot-matrix-period-field select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font: inherit;
+  min-width: 9rem;
+  padding: 0.45rem 0.75rem;
+}
+
 .bot-matrix-scroll {
   max-height: 76vh;
   overflow: auto;
