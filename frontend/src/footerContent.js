@@ -3,6 +3,7 @@ import footerMarkdown from "../../../ks-content/site/footer/README.md?raw"
 const feedHref = "https://kriegspiel.org/feed.xml"
 
 const absoluteFooterLinks = new Map([
+  ["/playing", "https://kriegspiel.org/playing"],
   ["/rules/berkeley", "https://kriegspiel.org/rules/berkeley"],
   ["/rules/cincinnati", "https://kriegspiel.org/rules/cincinnati"],
   ["/rules/wild16", "https://kriegspiel.org/rules/wild16"],
