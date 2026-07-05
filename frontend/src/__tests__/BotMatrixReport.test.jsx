@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router-dom"
 import BotMatrixReportPage from "../pages/BotMatrixReport"
 
 vi.mock("../components/VersionStamp", () => ({
-  default: () => <div>v. 1.3.82</div>,
+  default: () => <div>v. 1.3.83</div>,
 }))
 
 afterEach(() => {
@@ -23,6 +23,7 @@ describe("BotMatrixReportPage", () => {
     expect(screen.getByText("Loaded in 27 ms.")).toBeInTheDocument()
     expect(screen.getByText("Built from 55 completed bot games and 110 row-perspective records.")).toBeInTheDocument()
 
+    expect(document.querySelector(".bot-matrix-scroll .bot-matrix-table")).toBeInTheDocument()
     expect(screen.queryByRole("columnheader", { name: "H" })).not.toBeInTheDocument()
     expect(screen.queryByRole("columnheader", { name: "G25" })).not.toBeInTheDocument()
 

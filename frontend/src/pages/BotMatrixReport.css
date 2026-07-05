@@ -3,7 +3,7 @@
 }
 
 .bot-matrix-wrap {
-  max-height: 76vh;
+  overflow: visible;
 }
 
 .bot-matrix-wrap h2,
@@ -11,8 +11,17 @@
   margin: 0 0 0.75rem;
 }
 
+.bot-matrix-scroll {
+  max-height: 76vh;
+  overflow: auto;
+  border-radius: var(--radius);
+}
+
 .bot-matrix-table {
+  border-collapse: separate;
+  border-spacing: 0;
   min-width: 210rem;
+  overflow: visible;
 }
 
 .bot-matrix-table th,
@@ -24,6 +33,7 @@
 .bot-matrix-table thead th {
   position: sticky;
   top: 0;
+  background: color-mix(in srgb, var(--surface-strong) 94%, var(--surface) 6%);
   z-index: 2;
 }
 
@@ -34,10 +44,12 @@
   z-index: 1;
   min-width: 15rem;
   background: var(--surface-strong);
+  box-shadow: 1px 0 0 var(--border);
 }
 
 .bot-matrix-table thead th:first-child {
-  z-index: 3;
+  left: 0;
+  z-index: 4;
 }
 
 .bot-matrix-table a {
