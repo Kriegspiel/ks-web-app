@@ -1,27 +1,11 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import TechReportLoadTime from "../components/TechReportLoadTime"
 import VersionStamp from "../components/VersionStamp"
-import { BOT_MATRIX_GAME_DATES, BOT_MATRIX_GAMES, BOT_MATRIX_PLAYERS, BOT_MATRIX_TOTALS } from "../data/botMatrixReport"
+import { techApi } from "../services/api"
 import "./BotMatrixReport.css"
 import "./Leaderboard.css"
 
-const DAY_MS = 24 * 60 * 60 * 1000
-
-const GAME_FIELDS = {
-  player: 0,
-  opponent: 1,
-  result: 2,
-  plies: 3,
-  gameCode: 4,
-  playerTokens: 5,
-  playerCost: 6,
-  opponentTokens: 7,
-  opponentCost: 8,
-  endCondition: 9,
-}
-
-const END_CONDITION_ORDER = ["timeout", "resignation", "checkmate", "stalemate", "insufficient"]
 const PERIOD_OPTIONS = [
   { value: "today", label: "Today" },
   { value: "week", label: "Week" },
@@ -29,11 +13,6 @@ const PERIOD_OPTIONS = [
   { value: "year", label: "Year" },
   { value: "lifetime", label: "Lifetime" },
 ]
-const PERIOD_DAY_WINDOWS = {
-  week: 7,
-  month: 30,
-  year: 365,
-}
 const TOTAL_SCOPE_OPTIONS = [
   { value: "all", label: "All" },
   { value: "humans", label: "vs Humans" },
@@ -52,41 +31,26 @@ const TOTAL_SORT_FIELDS = [
 ]
 const DEFAULT_TOTALS_SORT = { key: "games", direction: "desc" }
 
-function parseCompactNumber(value) {
-  const text = String(value ?? "").trim().replace(/[$,]/g, "")
-  if (!text) return 0
-  const suffix = text.at(-1)?.toLowerCase()
-  const multiplier = suffix === "m" ? 1_000_000 : suffix === "k" ? 1_000 : 1
-  const numberText = multiplier === 1 ? text : text.slice(0, -1)
-  const number = Number(numberText)
-  return Number.isFinite(number) ? number * multiplier : 0
-}
-
-function parseCost(value) {
-  const number = Number(String(value ?? "").replace(/[$,]/g, ""))
-  return Number.isFinite(number) ? number : 0
-}
-
-function parseUtcTimestamp(value) {
-  const text = String(value ?? "").trim()
-  if (!text) return null
-  const timestamp = Date.parse(/(?:Z|[+-]\d\d:\d\d)$/.test(text) ? text : `${text}Z`)
-  return Number.isFinite(timestamp) ? timestamp : null
-}
-
 function stripTrailingZeros(value) {
   return value.replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1")
 }
 
-function formatAveragePlies(value) {
+function numberOrNull(value) {
+  if (value === null || value === undefined) return null
   const number = Number(value)
-  if (!Number.isFinite(number)) return "0"
+  return Number.isFinite(number) ? number : null
+}
+
+function formatAveragePlies(value) {
+  const number = numberOrNull(value)
+  if (number === null) return "—"
   return Number.isInteger(number) ? number.toLocaleString("en-US") : number.toFixed(1)
 }
 
 function formatTokens(value) {
-  const number = Number(value)
-  if (!Number.isFinite(number) || number <= 0) return "0"
+  const number = numberOrNull(value)
+  if (number === null) return "—"
+  if (number <= 0) return "0"
   if (number >= 1_000_000) {
     const scaled = number / 1_000_000
     return `${stripTrailingZeros(scaled.toFixed(scaled < 10 ? 2 : 1))}M`
@@ -99,157 +63,64 @@ function formatTokens(value) {
 }
 
 function formatCost(value) {
-  const number = Number(value)
-  if (!Number.isFinite(number) || number <= 0) return "$0"
+  const number = numberOrNull(value)
+  if (number === null) return "—"
+  if (number <= 0) return "$0"
   const digits = number < 0.01 ? 4 : 3
   return `$${stripTrailingZeros(number.toFixed(digits))}`
 }
 
 function formatAverage(value) {
-  if (value === null) return "—"
-  const number = Number(value)
-  if (!Number.isFinite(number)) return "—"
+  const number = numberOrNull(value)
+  if (number === null) return "—"
   return Number.isInteger(number) ? number.toLocaleString("en-US") : number.toFixed(1)
 }
 
 function formatShare(value) {
-  if (value === null) return "0%"
-  const number = Number(value)
-  if (!Number.isFinite(number) || number <= 0) return "0%"
+  const number = numberOrNull(value)
+  if (number === null || number <= 0) return "0%"
   const percent = number * 100
   return `${stripTrailingZeros(percent.toFixed(percent < 10 ? 1 : 0))}%`
 }
 
-function conditionLabel(condition) {
+function normalizePlayer(player) {
+  const username = String(player?.username ?? "").trim()
+  const name = String(player?.name ?? player?.display_name ?? player?.displayName ?? username).trim()
   return {
-    checkmate: "Checkmate",
-    insufficient: "Insufficient material",
-    resignation: "Resignation",
-    stalemate: "Stalemate",
-    timeout: "Timeout",
-  }[condition] ?? "Unknown"
-}
-
-function normalizedGames() {
-  return BOT_MATRIX_GAMES.map((game) => ({
-    player: game[GAME_FIELDS.player],
-    opponent: game[GAME_FIELDS.opponent],
-    result: game[GAME_FIELDS.result],
-    plies: Number(game[GAME_FIELDS.plies]) || 0,
-    gameCode: game[GAME_FIELDS.gameCode],
-    playerTokens: parseCompactNumber(game[GAME_FIELDS.playerTokens]),
-    playerCost: parseCost(game[GAME_FIELDS.playerCost]),
-    opponentTokens: parseCompactNumber(game[GAME_FIELDS.opponentTokens]),
-    opponentCost: parseCost(game[GAME_FIELDS.opponentCost]),
-    endCondition: game[GAME_FIELDS.endCondition],
-    playedAt: parseUtcTimestamp(BOT_MATRIX_GAME_DATES[game[GAME_FIELDS.gameCode]]),
-  }))
-}
-
-function periodCutoff(period, now) {
-  if (period === "today") {
-    return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  }
-  const days = PERIOD_DAY_WINDOWS[period]
-  return days ? now.getTime() - days * DAY_MS : null
-}
-
-function gamesForPeriod(games, period, now) {
-  const cutoff = periodCutoff(period, now)
-  if (cutoff === null) return games
-  const nowMs = now.getTime()
-  return games.filter((game) => typeof game.playedAt === "number" && game.playedAt >= cutoff && game.playedAt <= nowMs)
-}
-
-function summarizeGames(games) {
-  const summary = games.reduce((current, game) => {
-    if (game.result === "W") current.wins += 1
-    if (game.result === "D") current.draws += 1
-    if (game.result === "L") current.losses += 1
-    current.plies += game.plies
-    current.playerTokens += game.playerTokens
-    current.playerCost += game.playerCost
-    current.opponentTokens += game.opponentTokens
-    current.opponentCost += game.opponentCost
-    return current
-  }, {
-    wins: 0,
-    draws: 0,
-    losses: 0,
-    plies: 0,
-    playerTokens: 0,
-    playerCost: 0,
-    opponentTokens: 0,
-    opponentCost: 0,
-  })
-
-  const count = games.length
-  return {
-    games: count,
-    record: `${summary.wins}-${summary.draws}-${summary.losses}`,
-    averagePlies: count ? summary.plies / count : 0,
-    playerTokens: count ? summary.playerTokens / count : 0,
-    playerCost: count ? summary.playerCost / count : 0,
-    opponentTokens: count ? summary.opponentTokens / count : 0,
-    opponentCost: count ? summary.opponentCost / count : 0,
+    username,
+    name: name || username || "Unknown bot",
+    code: username,
   }
 }
 
-function totalCallsByCode() {
-  return new Map(BOT_MATRIX_TOTALS.map((row) => [row.code, parseCompactNumber(row.calls)]))
+function normalizeSummary(summary) {
+  if (!summary) return null
+  return {
+    games: Number(summary.games ?? 0) || 0,
+    record: String(summary.record ?? `${Number(summary.wins ?? 0)}-${Number(summary.draws ?? 0)}-${Number(summary.losses ?? 0)}`),
+    averagePlies: numberOrNull(summary.average_plies ?? summary.averagePlies ?? summary.avg_plies ?? summary.avgPlies),
+    playerTokens: numberOrNull(summary.player_tokens ?? summary.playerTokens),
+    playerCost: numberOrNull(summary.player_cost ?? summary.playerCost),
+    opponentTokens: numberOrNull(summary.opponent_tokens ?? summary.opponentTokens),
+    opponentCost: numberOrNull(summary.opponent_cost ?? summary.opponentCost),
+  }
 }
 
-function opponentMatchesScope(game, scope, playerByCode) {
-  if (scope === "all") return true
-  const opponentIsBot = playerByCode.has(game.opponent)
-  return scope === "bots" ? opponentIsBot : !opponentIsBot
-}
-
-function buildTotalRows(games, allGames, playerByCode, scope, sort) {
-  const callsByCode = totalCallsByCode()
-  const scopedGames = games.filter((game) => opponentMatchesScope(game, scope, playerByCode))
-  const allScopedGames = allGames.filter((game) => opponentMatchesScope(game, scope, playerByCode))
-  const allGamesByPlayer = new Map()
-  const allScopedGamesByPlayer = new Map()
-
-  BOT_MATRIX_PLAYERS.forEach((player) => {
-    allGamesByPlayer.set(player.code, allGames.filter((game) => game.player === player.code))
-    allScopedGamesByPlayer.set(player.code, allScopedGames.filter((game) => game.player === player.code))
-  })
-
-  const rows = BOT_MATRIX_PLAYERS.map((player) => {
-    const playerGames = scopedGames.filter((game) => game.player === player.code)
-    const count = playerGames.length
-    const totals = playerGames.reduce((current, game) => {
-      current.plies += game.plies
-      current.tokens += game.playerTokens
-      current.cost += game.playerCost
-      if (game.result === "W") current.wins += 1
-      if (game.result === "D") current.draws += 1
-      if (game.result === "L") current.losses += 1
-      return current
-    }, { plies: 0, tokens: 0, cost: 0, wins: 0, draws: 0, losses: 0 })
-    const fullPlayerGames = allGamesByPlayer.get(player.code) ?? []
-    const fullScopedPlayerGames = allScopedGamesByPlayer.get(player.code) ?? []
-    const callsAreExact = count > 0 && count === fullPlayerGames.length && fullScopedPlayerGames.length === fullPlayerGames.length
-    const totalCalls = callsAreExact ? callsByCode.get(player.code) ?? 0 : null
-
-    return {
-      code: player.code,
-      player,
-      playerName: player.name,
-      games: count,
-      avgPlies: count ? totals.plies / count : null,
-      avgCalls: count && totalCalls !== null ? totalCalls / count : null,
-      avgTokens: count ? totals.tokens / count : null,
-      avgCost: count ? totals.cost / count : null,
-      winShare: count ? totals.wins / count : null,
-      drawShare: count ? totals.draws / count : null,
-      lossShare: count ? totals.losses / count : null,
-    }
-  })
-
-  return sortTotalRows(rows, sort)
+function normalizeTotalRow(row) {
+  const player = normalizePlayer(row?.player ?? row)
+  return {
+    code: player.username,
+    player,
+    playerName: player.name,
+    games: Number(row?.games ?? 0) || 0,
+    avgPlies: numberOrNull(row?.avg_plies ?? row?.avgPlies ?? row?.average_plies ?? row?.averagePlies),
+    avgCalls: numberOrNull(row?.avg_calls ?? row?.avgCalls),
+    avgTokens: numberOrNull(row?.avg_tokens ?? row?.avgTokens),
+    avgCost: numberOrNull(row?.avg_cost ?? row?.avgCost),
+    winShare: numberOrNull(row?.win_share ?? row?.winShare),
+    drawShare: numberOrNull(row?.draw_share ?? row?.drawShare),
+    lossShare: numberOrNull(row?.loss_share ?? row?.lossShare),
+  }
 }
 
 function sortTotalRows(rows, sort) {
@@ -275,50 +146,29 @@ function sortTotalRows(rows, sort) {
   })
 }
 
-function buildBotMatrixReport(period = "lifetime", now = new Date(Date.now()), totalScope = "all", totalSort = DEFAULT_TOTALS_SORT) {
-  const playerByCode = new Map(BOT_MATRIX_PLAYERS.map((player) => [player.code, player]))
-  const allGames = normalizedGames()
-  const games = gamesForPeriod(allGames, period, now)
-  const gamesByCell = new Map()
-
-  games.forEach((game) => {
-    const key = `${game.player}:${game.opponent}`
-    const cellGames = gamesByCell.get(key) ?? []
-    cellGames.push(game)
-    gamesByCell.set(key, cellGames)
-  })
-
-  const matrixRows = BOT_MATRIX_PLAYERS.map((player) => {
-    const rowGames = games.filter((game) => game.player === player.code)
-    return {
-      player,
-      cells: BOT_MATRIX_PLAYERS.map((opponent) => ({
-        opponent,
-        summary: player.code === opponent.code ? null : summarizeGames(gamesByCell.get(`${player.code}:${opponent.code}`) ?? []),
-      })),
-      average: summarizeGames(rowGames),
-    }
-  })
-
-  const uniqueGameByCode = new Map()
-  games.forEach((game) => {
-    if (!uniqueGameByCode.has(game.gameCode)) {
-      uniqueGameByCode.set(game.gameCode, game)
-    }
-  })
-  const uniqueGames = Array.from(uniqueGameByCode.values())
-  const endConditionRows = END_CONDITION_ORDER.map((condition) => ({
-    condition,
-    label: conditionLabel(condition),
-    games: uniqueGames.filter((game) => game.endCondition === condition).length,
-  }))
+function normalizeReport(payload, totalScope, totalSort) {
+  const players = Array.isArray(payload?.players) ? payload.players.map(normalizePlayer) : []
+  const totalRowsByScope = payload?.total_rows ?? payload?.totalRows ?? {}
+  const scopedRows = Array.isArray(totalRowsByScope[totalScope]) ? totalRowsByScope[totalScope] : []
 
   return {
-    matrixRows,
-    endConditionRows,
-    totalRows: buildTotalRows(games, allGames, playerByCode, totalScope, totalSort),
-    uniqueGameCount: uniqueGames.length,
-    rowRecordCount: games.length,
+    players,
+    matrixRows: (Array.isArray(payload?.matrix_rows) ? payload.matrix_rows : payload?.matrixRows ?? []).map((row) => ({
+      player: normalizePlayer(row.player),
+      cells: (Array.isArray(row.cells) ? row.cells : []).map((cell) => ({
+        opponent: normalizePlayer(cell.opponent),
+        summary: normalizeSummary(cell.summary),
+      })),
+      average: normalizeSummary(row.average),
+    })),
+    endConditionRows: (Array.isArray(payload?.end_condition_rows) ? payload.end_condition_rows : payload?.endConditionRows ?? []).map((row) => ({
+      condition: row.condition ?? row.label,
+      label: row.label ?? row.condition ?? "Unknown",
+      games: Number(row.games ?? 0) || 0,
+    })),
+    totalRows: sortTotalRows(scopedRows.map(normalizeTotalRow), totalSort),
+    uniqueGameCount: Number(payload?.unique_game_count ?? payload?.uniqueGameCount ?? 0) || 0,
+    rowRecordCount: Number(payload?.row_record_count ?? payload?.rowRecordCount ?? 0) || 0,
   }
 }
 
@@ -369,8 +219,8 @@ function SortableHeader({ field, sort, onSort }) {
 function TotalMetric({ value, kind }) {
   if (kind === "number") return value.toLocaleString("en-US")
   if (kind === "plies" || kind === "calls") return formatAverage(value)
-  if (kind === "tokens") return value !== null && Number.isFinite(Number(value)) ? formatTokens(value) : "—"
-  if (kind === "cost") return value !== null && Number.isFinite(Number(value)) ? formatCost(value) : "—"
+  if (kind === "tokens") return formatTokens(value)
+  if (kind === "cost") return formatCost(value)
   if (kind === "share") return formatShare(value)
   return "—"
 }
@@ -380,15 +230,38 @@ export default function BotMatrixReportPage() {
   const [totalScope, setTotalScope] = useState("all")
   const [totalSort, setTotalSort] = useState(DEFAULT_TOTALS_SORT)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const [loadDurationMs, setLoadDurationMs] = useState(null)
-  const [report, setReport] = useState(null)
+  const [payload, setPayload] = useState(null)
+  const report = useMemo(() => normalizeReport(payload, totalScope, totalSort), [payload, totalScope, totalSort])
 
   useEffect(() => {
-    const startedAt = Date.now()
-    setReport(buildBotMatrixReport(period, new Date(startedAt), totalScope, totalSort))
-    setLoadDurationMs(Date.now() - startedAt)
-    setLoading(false)
-  }, [period, totalScope, totalSort])
+    let cancelled = false
+
+    async function loadReport() {
+      const startedAt = Date.now()
+      setLoading(true)
+      setError("")
+      setLoadDurationMs(null)
+      try {
+        const data = await techApi.getBotMatrixReport(period)
+        if (!cancelled) setPayload(data)
+      } catch (apiError) {
+        if (!cancelled) {
+          setError(apiError?.message ?? "Unable to load bot matrix report.")
+          setPayload(null)
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadDurationMs(Date.now() - startedAt)
+          setLoading(false)
+        }
+      }
+    }
+
+    loadReport()
+    return () => { cancelled = true }
+  }, [period])
 
   function handleTotalSort(field) {
     setTotalSort((current) => ({
@@ -401,7 +274,7 @@ export default function BotMatrixReportPage() {
     <main className="page-shell leaderboard-page bot-matrix-page">
       <h1>Kriegsspiel bot matrix</h1>
       <p className="page-meta-stamp">
-        Built from {report?.uniqueGameCount ?? 0} completed bot games and {report?.rowRecordCount ?? 0} row-perspective records.
+        Built from {report.uniqueGameCount.toLocaleString("en-US")} completed bot-vs-bot games and {report.rowRecordCount.toLocaleString("en-US")} row-perspective records.
       </p>
       <div className="bot-matrix-controls">
         <label className="bot-matrix-period-field" htmlFor="bot-matrix-period">
@@ -413,9 +286,10 @@ export default function BotMatrixReportPage() {
           </select>
         </label>
       </div>
-      <TechReportLoadTime durationMs={loadDurationMs} />
+      <TechReportLoadTime durationMs={loadDurationMs} failed={Boolean(error)} />
       {loading ? <p>Loading bot matrix...</p> : null}
-      {!loading && report ? (
+      {error ? <p className="auth-error" role="alert">{error}</p> : null}
+      {!loading && !error ? (
         <>
           <section className="leaderboard-table-wrap bot-matrix-wrap" aria-labelledby="bot-matrix-heading">
             <h2 id="bot-matrix-heading">Outcome matrix</h2>
@@ -424,8 +298,8 @@ export default function BotMatrixReportPage() {
                 <thead>
                   <tr>
                     <th>Player</th>
-                    {BOT_MATRIX_PLAYERS.map((player) => (
-                      <th key={player.code}>
+                    {report.players.map((player) => (
+                      <th key={player.username}>
                         <PlayerLink player={player} />
                       </th>
                     ))}
@@ -434,10 +308,10 @@ export default function BotMatrixReportPage() {
                 </thead>
                 <tbody>
                   {report.matrixRows.map((row) => (
-                    <tr key={row.player.code}>
+                    <tr key={row.player.username}>
                       <th scope="row"><PlayerLink player={row.player} /></th>
                       {row.cells.map((cell) => (
-                        <td key={`${row.player.code}-${cell.opponent.code}`}>
+                        <td key={`${row.player.username}-${cell.opponent.username}`}>
                           <MatrixCell rowPlayer={row.player} summary={cell.summary} />
                         </td>
                       ))}

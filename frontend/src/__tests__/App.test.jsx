@@ -29,6 +29,7 @@ const mockApi = vi.hoisted(() => ({
   },
   techApi: {
     getAcquisitionReport: vi.fn(),
+    getBotMatrixReport: vi.fn(),
   },
 }))
 
@@ -54,6 +55,21 @@ beforeEach(() => {
   mockApi.userApi.getGameHistory.mockResolvedValue({ games: [] })
   mockApi.techApi.getAcquisitionReport.mockReset()
   mockApi.techApi.getAcquisitionReport.mockResolvedValue({ rows: [] })
+  mockApi.techApi.getBotMatrixReport.mockReset()
+  mockApi.techApi.getBotMatrixReport.mockResolvedValue({
+    players: [{ username: "llm_haiku", name: "LLM Haiku (bot)" }],
+    matrix_rows: [
+      {
+        player: { username: "llm_haiku", name: "LLM Haiku (bot)" },
+        cells: [{ opponent: { username: "llm_haiku", name: "LLM Haiku (bot)" }, summary: null }],
+        average: { games: 0, record: "0-0-0", average_plies: null },
+      },
+    ],
+    end_condition_rows: [],
+    total_rows: { all: [], humans: [], bots: [] },
+    unique_game_count: 27350,
+    row_record_count: 54700,
+  })
   mockApi.getGameState.mockResolvedValue({
     game_id: "abc-123",
     state: "active",
