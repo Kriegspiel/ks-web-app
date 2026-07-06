@@ -192,16 +192,37 @@ function PlayerLink({ player, className = "" }) {
   )
 }
 
-function MatrixCell({ rowPlayer, summary, average = false }) {
+function botMatchupName(player) {
+  return String(player?.name || player?.username || "Unknown bot")
+    .replace(/^\s*LLM\s+/i, "")
+    .replace(/\s*\(bot\)\s*$/i, "")
+    .replace(/\bGPT-Nano\b/g, "GPT Nano")
+    .replace(/\bGPT-OSS\b/g, "GPT OSS")
+    .trim() || "Unknown bot"
+}
+
+function botMatchupGamesPath(rowPlayer, opponent) {
+  if (!opponent?.username) {
+    return `/user/${rowPlayer.username}/games`
+  }
+  const params = new URLSearchParams({ opponent: `bot:${opponent.username}` })
+  return `/user/${rowPlayer.username}/games?${params.toString()}`
+}
+
+function MatrixCell({ rowPlayer, opponent, summary, average = false }) {
   if (!summary) {
     return <div className="bot-matrix-cell bot-matrix-cell--empty">Same player</div>
   }
+
+  const gamesLabel = opponent?.username
+    ? `${botMatchupName(rowPlayer)} versus ${botMatchupName(opponent)} games`
+    : `${rowPlayer.name} games`
 
   return (
     <div className={average ? "bot-matrix-cell bot-matrix-cell--average" : "bot-matrix-cell"}>
       <strong>{summary.record}</strong>
       <span>{formatAveragePlies(summary.averagePlies)} avg plies</span>
-      <Link to={`/user/${rowPlayer.username}/games`}>{rowPlayer.name} games</Link>
+      <Link to={botMatchupGamesPath(rowPlayer, opponent)}>{gamesLabel}</Link>
       <span title={usageTooltip(summary.usageStartDate)}>
         this bot {formatTokens(summary.playerTokens)} / {formatCost(summary.playerCost)}
       </span>
@@ -333,7 +354,7 @@ export default function BotMatrixReportPage() {
                       <th scope="row"><PlayerLink player={row.player} /></th>
                       {row.cells.map((cell) => (
                         <td key={`${row.player.username}-${cell.opponent.username}`}>
-                          <MatrixCell rowPlayer={row.player} summary={cell.summary} />
+                          <MatrixCell rowPlayer={row.player} opponent={cell.opponent} summary={cell.summary} />
                         </td>
                       ))}
                       <td>
