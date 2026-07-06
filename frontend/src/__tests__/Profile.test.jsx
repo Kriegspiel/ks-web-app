@@ -50,6 +50,7 @@ describe("ProfilePage", () => {
   it("renders_profile_stats_and_recent_games", async () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username: "fil",
+      llm_bot_tier: "tier2",
       member_since: "2026-01-01T00:00:00Z",
       stats: {
         elo: 1345,
@@ -132,6 +133,9 @@ describe("ProfilePage", () => {
 
     await screen.findByRole("heading", { name: "fil" })
     expect(screen.getByText("Member since 2026-01-01.")).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "Player tier" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
+    expect(screen.getByText("256-ply language-model bot games")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Overall rating." })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Overall results." })).toBeInTheDocument()
     expect(screen.getByText(/games played/i)).toBeInTheDocument()
@@ -179,6 +183,7 @@ describe("ProfilePage", () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username: "llm_gptnano",
       role: "bot",
+      llm_bot_tier: "tier4",
       owner_email: "bot-gpt-nano@kriegspiel.org",
       member_since: "2026-04-03T01:10:41Z",
       stats: {
@@ -215,6 +220,7 @@ describe("ProfilePage", () => {
     renderProfile("/user/llm_gptnano")
 
     await screen.findByRole("heading", { name: "llm_gptnano" })
+    expect(screen.queryByRole("region", { name: "Player tier" })).not.toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "This user is bot" })).toBeInTheDocument()
     expect(screen.getByText(/On Kriegspiel\.org we allow bots\./i)).toBeInTheDocument()
     expect(screen.getByText(/You also can create your own bot – more bots, more fun\./i)).toBeInTheDocument()
