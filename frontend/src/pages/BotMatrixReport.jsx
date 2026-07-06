@@ -30,6 +30,11 @@ const TOTAL_SORT_FIELDS = [
   { key: "lossShare", label: "Loss share" },
 ]
 const DEFAULT_TOTALS_SORT = { key: "games", direction: "desc" }
+const DEFAULT_USAGE_START_DATE = "2026-07-04"
+
+function usageTooltip(startDate = DEFAULT_USAGE_START_DATE) {
+  return `Average over known cost records starting ${startDate}.`
+}
 
 function stripTrailingZeros(value) {
   return value.replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1")
@@ -103,10 +108,13 @@ function normalizeSummary(summary) {
     playerCost: numberOrNull(summary.player_cost ?? summary.playerCost),
     opponentTokens: numberOrNull(summary.opponent_tokens ?? summary.opponentTokens),
     opponentCost: numberOrNull(summary.opponent_cost ?? summary.opponentCost),
+    usageRecordedGames: Number(summary.usage_recorded_games ?? summary.usageRecordedGames ?? 0) || 0,
+    opponentUsageRecordedGames: Number(summary.opponent_usage_recorded_games ?? summary.opponentUsageRecordedGames ?? 0) || 0,
+    usageStartDate: String(summary.usage_start_date ?? summary.usageStartDate ?? DEFAULT_USAGE_START_DATE),
   }
 }
 
-function normalizeTotalRow(row) {
+function normalizeTotalRow(row, usageStartDate) {
   const player = normalizePlayer(row?.player ?? row)
   return {
     code: player.username,
@@ -117,6 +125,8 @@ function normalizeTotalRow(row) {
     avgCalls: numberOrNull(row?.avg_calls ?? row?.avgCalls),
     avgTokens: numberOrNull(row?.avg_tokens ?? row?.avgTokens),
     avgCost: numberOrNull(row?.avg_cost ?? row?.avgCost),
+    usageRecordedGames: Number(row?.usage_recorded_games ?? row?.usageRecordedGames ?? 0) || 0,
+    usageStartDate: String(row?.usage_start_date ?? row?.usageStartDate ?? usageStartDate ?? DEFAULT_USAGE_START_DATE),
     winShare: numberOrNull(row?.win_share ?? row?.winShare),
     drawShare: numberOrNull(row?.draw_share ?? row?.drawShare),
     lossShare: numberOrNull(row?.loss_share ?? row?.lossShare),
@@ -150,6 +160,7 @@ function normalizeReport(payload, totalScope, totalSort) {
   const players = Array.isArray(payload?.players) ? payload.players.map(normalizePlayer) : []
   const totalRowsByScope = payload?.total_rows ?? payload?.totalRows ?? {}
   const scopedRows = Array.isArray(totalRowsByScope[totalScope]) ? totalRowsByScope[totalScope] : []
+  const usageStartDate = String(payload?.usage_start_date ?? payload?.usageStartDate ?? DEFAULT_USAGE_START_DATE)
 
   return {
     players,
@@ -166,9 +177,10 @@ function normalizeReport(payload, totalScope, totalSort) {
       label: row.label ?? row.condition ?? "Unknown",
       games: Number(row.games ?? 0) || 0,
     })),
-    totalRows: sortTotalRows(scopedRows.map(normalizeTotalRow), totalSort),
+    totalRows: sortTotalRows(scopedRows.map((row) => normalizeTotalRow(row, usageStartDate)), totalSort),
     uniqueGameCount: Number(payload?.unique_game_count ?? payload?.uniqueGameCount ?? 0) || 0,
     rowRecordCount: Number(payload?.row_record_count ?? payload?.rowRecordCount ?? 0) || 0,
+    usageStartDate,
   }
 }
 
@@ -190,8 +202,12 @@ function MatrixCell({ rowPlayer, summary, average = false }) {
       <strong>{summary.record}</strong>
       <span>{formatAveragePlies(summary.averagePlies)} avg plies</span>
       <Link to={`/user/${rowPlayer.username}/games`}>{rowPlayer.name} games</Link>
-      <span>this bot {formatTokens(summary.playerTokens)} / {formatCost(summary.playerCost)}</span>
-      <span>opponent {formatTokens(summary.opponentTokens)} / {formatCost(summary.opponentCost)}</span>
+      <span title={usageTooltip(summary.usageStartDate)}>
+        this bot {formatTokens(summary.playerTokens)} / {formatCost(summary.playerCost)}
+      </span>
+      <span title={usageTooltip(summary.usageStartDate)}>
+        opponent {formatTokens(summary.opponentTokens)} / {formatCost(summary.opponentCost)}
+      </span>
     </div>
   )
 }
@@ -216,13 +232,18 @@ function SortableHeader({ field, sort, onSort }) {
   )
 }
 
-function TotalMetric({ value, kind }) {
-  if (kind === "number") return value.toLocaleString("en-US")
-  if (kind === "plies" || kind === "calls") return formatAverage(value)
-  if (kind === "tokens") return formatTokens(value)
-  if (kind === "cost") return formatCost(value)
-  if (kind === "share") return formatShare(value)
-  return "—"
+function TotalMetric({ value, kind, usageStartDate }) {
+  let text = "—"
+  if (kind === "number") text = value.toLocaleString("en-US")
+  else if (kind === "plies" || kind === "calls") text = formatAverage(value)
+  else if (kind === "tokens") text = formatTokens(value)
+  else if (kind === "cost") text = formatCost(value)
+  else if (kind === "share") text = formatShare(value)
+
+  if (kind === "calls" || kind === "tokens" || kind === "cost") {
+    return <span title={usageTooltip(usageStartDate)}>{text}</span>
+  }
+  return text
 }
 
 export default function BotMatrixReportPage() {
@@ -374,9 +395,9 @@ export default function BotMatrixReportPage() {
                     <td><PlayerLink player={row.player} /></td>
                     <td>{row.games.toLocaleString("en-US")}</td>
                     <td><TotalMetric value={row.avgPlies} kind="plies" /></td>
-                    <td><TotalMetric value={row.avgCalls} kind="calls" /></td>
-                    <td><TotalMetric value={row.avgTokens} kind="tokens" /></td>
-                    <td><TotalMetric value={row.avgCost} kind="cost" /></td>
+                    <td><TotalMetric value={row.avgCalls} kind="calls" usageStartDate={row.usageStartDate} /></td>
+                    <td><TotalMetric value={row.avgTokens} kind="tokens" usageStartDate={row.usageStartDate} /></td>
+                    <td><TotalMetric value={row.avgCost} kind="cost" usageStartDate={row.usageStartDate} /></td>
                     <td><TotalMetric value={row.winShare} kind="share" /></td>
                     <td><TotalMetric value={row.drawShare} kind="share" /></td>
                     <td><TotalMetric value={row.lossShare} kind="share" /></td>

@@ -47,6 +47,7 @@ function summary(record, games, averagePlies, overrides = {}) {
 
 const LIFETIME_REPORT = {
   period: "lifetime",
+  usage_start_date: "2026-07-04",
   players: PLAYERS,
   unique_game_count: 27350,
   row_record_count: 54700,
@@ -55,7 +56,18 @@ const LIFETIME_REPORT = {
       player: PLAYERS[0],
       cells: [
         { opponent: PLAYERS[0], summary: null },
-        { opponent: PLAYERS[1], summary: summary("38-32-43", 113, 751.548) },
+        {
+          opponent: PLAYERS[1],
+          summary: summary("38-32-43", 113, 751.548, {
+            player_tokens: 180,
+            player_cost: 0.015,
+            opponent_tokens: 75,
+            opponent_cost: 0.02,
+            usage_recorded_games: 1,
+            opponent_usage_recorded_games: 1,
+            usage_start_date: "2026-07-04",
+          }),
+        },
         { opponent: PLAYERS[2], summary: summary("3-2-1", 6, 92) },
       ],
       average: summary("41-34-44", 119, 718.2),
@@ -86,7 +98,19 @@ const LIFETIME_REPORT = {
   ],
   total_rows: {
     all: [
-      { player: PLAYERS[0], ...summary("101-6-6", 113, 751.548, { win_share: 0.894, draw_share: 0.053, loss_share: 0.053 }) },
+      {
+        player: PLAYERS[0],
+        ...summary("101-6-6", 113, 751.548, {
+          avg_calls: 2,
+          avg_tokens: 180,
+          avg_cost: 0.015,
+          usage_recorded_games: 1,
+          usage_start_date: "2026-07-04",
+          win_share: 0.894,
+          draw_share: 0.053,
+          loss_share: 0.053,
+        }),
+      },
       { player: PLAYERS[1], ...summary("100-50-50", 200, 700.4) },
       { player: PLAYERS[2], ...summary("9000-6000-1032", 16032, 246.1) },
     ],
@@ -143,6 +167,14 @@ describe("BotMatrixReportPage", () => {
 
     expect(screen.getByText("38-32-43")).toBeInTheDocument()
     expect(screen.getAllByText("751.5 avg plies").length).toBeGreaterThan(0)
+    expect(screen.getByText("this bot 180 / $0.015")).toHaveAttribute(
+      "title",
+      "Average over known cost records starting 2026-07-04.",
+    )
+    expect(screen.getByText("opponent 75 / $0.02")).toHaveAttribute(
+      "title",
+      "Average over known cost records starting 2026-07-04.",
+    )
     expect(screen.getAllByText("this bot — / —").length).toBeGreaterThan(0)
     expect(screen.getAllByRole("link", { name: "LLM Haiku (bot) games" })[0]).toHaveAttribute("href", "/user/llm_haiku/games")
 
@@ -163,7 +195,7 @@ describe("BotMatrixReportPage", () => {
 
     await waitFor(() => expect(mockApi.techApi.getBotMatrixReport).toHaveBeenLastCalledWith("today"))
     expect(periodSelect).toHaveValue("today")
-    expect(screen.getByText("Built from 12 completed bot-vs-bot games and 24 row-perspective records.")).toBeInTheDocument()
+    expect(await screen.findByText("Built from 12 completed bot-vs-bot games and 24 row-perspective records.")).toBeInTheDocument()
     expect(screen.getByRole("row", { name: "Timeout 12" })).toBeInTheDocument()
   })
 
@@ -182,6 +214,10 @@ describe("BotMatrixReportPage", () => {
     expect(within(totalsTable).getByRole("columnheader", { name: /Total games DESC/ })).toHaveAttribute("aria-sort", "descending")
     const randomTotal = within(totalsTable).getByRole("row", { name: /Random Any Bot 16,032 246\.1 — — — 56% 37% 6\.4%/ })
     expect(randomTotal).toBeInTheDocument()
+    expect(within(totalsTable).getByText("$0.015")).toHaveAttribute(
+      "title",
+      "Average over known cost records starting 2026-07-04.",
+    )
 
     fireEvent.click(within(totalsTable).getByRole("button", { name: "Sort by Win share desc" }))
 
