@@ -534,10 +534,23 @@ export default function GameHistoryPage() {
   const [openFilterKey, setOpenFilterKey] = useState("")
   const filterOptionsUsernameRef = useRef(username)
 
+  const searchString = searchParams.toString()
+  const canonicalSearchString = useMemo(() => {
+    const next = new URLSearchParams(searchString)
+    canonicalizeFilterParams(next)
+    return next.toString()
+  }, [searchString])
+  const isSearchCanonical = canonicalSearchString === searchString
   const page = parsePage(searchParams.get("page"))
   const pageSize = parsePageSize(searchParams.get("per_page"))
   const sort = useMemo(() => parseSort(searchParams), [searchParams])
   const filters = useMemo(() => parseFilters(searchParams), [searchParams])
+
+  useEffect(() => {
+    if (!isSearchCanonical) {
+      setSearchParams(new URLSearchParams(canonicalSearchString), { replace: true })
+    }
+  }, [canonicalSearchString, isSearchCanonical, setSearchParams])
 
   useEffect(() => {
     filterOptionsUsernameRef.current = username
@@ -571,6 +584,10 @@ export default function GameHistoryPage() {
   }, [openFilterKey])
 
   useEffect(() => {
+    if (!isSearchCanonical) {
+      return undefined
+    }
+
     let cancelled = false
     async function loadHistory() {
       setLoading(true)
@@ -608,7 +625,7 @@ export default function GameHistoryPage() {
     }
     loadHistory()
     return () => { cancelled = true }
-  }, [username, page, pageSize, sort, filters])
+  }, [username, page, pageSize, sort, filters, isSearchCanonical])
 
   useEffect(() => {
     if (!openFilterKey || filterOptionsState.loaded || filterOptionsState.loading) {

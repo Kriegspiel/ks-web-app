@@ -377,6 +377,8 @@ describe("GameHistoryPage", () => {
 
     renderHistory("/user/randobotany/games?opponent=bot%3Abot_gemini31_lite")
 
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("opponent=bot_gemini31_lite"))
+    expect(screen.getByTestId("location")).not.toHaveTextContent("bot%3A")
     await screen.findByText("Page 1 of 1")
     await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenCalledWith(
       "randobotany",
@@ -427,6 +429,8 @@ describe("GameHistoryPage", () => {
 
     renderHistory("/user/fil/games?page=2&per_page=500&sort=turns&dir=asc&result=win&opponent=human%3Abob")
 
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("opponent=bob"))
+    expect(screen.getByTestId("location")).not.toHaveTextContent("human%3A")
     await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenCalledWith(
       "fil",
       2,
