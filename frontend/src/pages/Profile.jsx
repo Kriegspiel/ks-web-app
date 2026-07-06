@@ -471,16 +471,16 @@ export default function ProfilePage() {
         </section>
       ) : null}
       {userMetrics ? (
-        <section className="profile-card profile-card--bot-metrics" aria-label="User metrics">
+        <section className="profile-card profile-card--user-metrics profile-card--bot-metrics" aria-label="User metrics">
           <h2>User metrics</h2>
           {userMetrics.completedGames ? (
             <>
               <dl className="profile-stats-grid profile-bot-metrics-summary">
-                <div><dt>Completed games</dt><dd>{userMetrics.completedGames}</dd></div>
-                <div><dt>vs Bots win rate</dt><dd>{formatWinRate(userMetrics.vsBots.winRate)}</dd></div>
-                <div><dt>vs Humans win rate</dt><dd>{formatWinRate(userMetrics.vsHumans.winRate)}</dd></div>
-                <div><dt>Average turns count</dt><dd>{userMetrics.averageTurnCount.toFixed(1)}</dd></div>
-                <div><dt>Average duration</dt><dd>{formatDuration(userMetrics.averageDurationSeconds)}</dd></div>
+                <div className="profile-metric-tile profile-metric-tile--games"><dt>Completed games</dt><dd>{userMetrics.completedGames}</dd></div>
+                <div className="profile-metric-tile profile-metric-tile--bots"><dt>vs Bots win rate</dt><dd>{formatWinRate(userMetrics.vsBots.winRate)}</dd></div>
+                <div className="profile-metric-tile profile-metric-tile--humans"><dt>vs Humans win rate</dt><dd>{formatWinRate(userMetrics.vsHumans.winRate)}</dd></div>
+                <div className="profile-metric-tile profile-metric-tile--turns"><dt>Average turns count</dt><dd>{userMetrics.averageTurnCount.toFixed(1)}</dd></div>
+                <div className="profile-metric-tile profile-metric-tile--duration"><dt>Average duration</dt><dd>{formatDuration(userMetrics.averageDurationSeconds)}</dd></div>
               </dl>
               <div className="profile-bot-metrics-panels">
                 <section className="profile-bot-metrics-panel" aria-labelledby="profile-bot-color-heading">

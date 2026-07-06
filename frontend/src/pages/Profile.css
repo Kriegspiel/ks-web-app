@@ -88,27 +88,83 @@
   margin-bottom: 0;
 }
 
+.profile-card--user-metrics {
+  border-color: color-mix(in srgb, var(--text) 22%, var(--border));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-alt) 72%, transparent), var(--surface));
+  box-shadow: inset 0 0.18rem 0 color-mix(in srgb, #255660 72%, var(--border));
+}
+
+.profile-card--user-metrics h2,
 .profile-card--bot-metrics h2 {
   margin-top: 0;
 }
 
 .profile-bot-metrics-summary {
-  margin-top: 0.8rem;
+  margin-top: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(8.4rem, 1fr));
+}
+
+.profile-card--user-metrics .profile-stats-grid > div {
+  position: relative;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--metric-accent, var(--text)) 28%, var(--border));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-alt) 88%, var(--metric-accent, var(--text)) 12%), var(--surface-alt));
+}
+
+.profile-card--user-metrics .profile-stats-grid > div::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0.22rem;
+  background: var(--metric-accent, var(--text));
+}
+
+.profile-card--user-metrics .profile-stats-grid dt {
+  letter-spacing: 0;
+}
+
+.profile-card--user-metrics .profile-stats-grid dd {
+  letter-spacing: 0;
+}
+
+.profile-metric-tile--games {
+  --metric-accent: #255660;
+}
+
+.profile-metric-tile--bots {
+  --metric-accent: #5a4a1f;
+}
+
+.profile-metric-tile--humans {
+  --metric-accent: #31553f;
+}
+
+.profile-metric-tile--turns {
+  --metric-accent: #2f4772;
+}
+
+.profile-metric-tile--duration {
+  --metric-accent: #4a3325;
 }
 
 .profile-bot-metrics-panels {
   display: grid;
-  gap: 1rem 1.35rem;
+  gap: 1.05rem 1.35rem;
   grid-template-columns: minmax(12rem, 0.9fr) minmax(24rem, 1.4fr) minmax(12rem, 0.9fr);
-  margin-top: 1rem;
+  margin-top: 1.1rem;
 }
 
 .profile-bot-metrics-panel {
   min-width: 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
 }
 
 .profile-bot-metrics-panel h3 {
-  margin: 0 0 0.55rem;
+  margin: 0 0 0.6rem;
+  color: var(--text);
   font-size: 0.95rem;
 }
 
@@ -127,6 +183,12 @@
   gap: 0.15rem 0.75rem;
   align-items: baseline;
   min-width: 0;
+  padding-block: 0.12rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 56%, transparent);
+}
+
+.profile-bot-row-list li:last-child {
+  border-bottom: 0;
 }
 
 .profile-bot-mini-list > div {
@@ -136,6 +198,12 @@
   gap: 0.15rem 0.75rem;
   align-items: baseline;
   min-width: 0;
+  padding-block: 0.12rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 56%, transparent);
+}
+
+.profile-bot-mini-list > div:last-child {
+  border-bottom: 0;
 }
 
 .profile-bot-mini-list dt,

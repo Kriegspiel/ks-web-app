@@ -30,6 +30,23 @@ function blockFor(source, token) {
 }
 
 describe("Profile bot metrics CSS", () => {
+  it("styles the user metrics card as a designed metrics module", () => {
+    const metricsCardRule = blockFor(profileCss, ".profile-card--user-metrics")
+    expect(metricsCardRule).toMatch(/border-color:\s*color-mix/)
+    expect(metricsCardRule).toMatch(/box-shadow:\s*inset 0 0\.18rem 0/)
+
+    const metricsTileRule = blockFor(profileCss, ".profile-card--user-metrics .profile-stats-grid > div")
+    expect(metricsTileRule).toMatch(/--metric-accent/)
+    expect(metricsTileRule).toMatch(/background:\s*[\s\S]*linear-gradient/)
+
+    const metricsLabelRule = blockFor(profileCss, ".profile-card--user-metrics .profile-stats-grid dt")
+    expect(metricsLabelRule).toMatch(/letter-spacing:\s*0;/)
+
+    expect(profileCss).toMatch(
+      /\n\.profile-bot-row-link\s*\{\s*font-weight:\s*400;\s*text-decoration-line:\s*underline;/,
+    )
+  })
+
   it("lets color split labels wrap as whole words", () => {
     const colorSplitRule = blockFor(profileCss, ".profile-bot-mini-list > div")
     expect(colorSplitRule).toMatch(/display:\s*flex;/)
