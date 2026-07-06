@@ -156,7 +156,7 @@ describe("App routes", () => {
 
     await screen.findByRole("heading", { name: "Tech" })
     expect(screen.getByRole("link", { name: /Bots report/ })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: /Kriegsspiel bot matrix/ })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /Bots' matrix/ })).toBeInTheDocument()
   })
 
   it("renders_bot_matrix_report_for_authorized_operator", async () => {
@@ -164,7 +164,7 @@ describe("App routes", () => {
 
     renderRoute("/tech/bot-matrix")
 
-    await screen.findByRole("heading", { name: "Kriegsspiel bot matrix" })
+    await screen.findByRole("heading", { name: "Bots' matrix" })
     const haikuLinks = await screen.findAllByRole("link", { name: "LLM Haiku (bot)" })
     expect(haikuLinks[0]).toHaveAttribute("href", "/user/llm_haiku")
   })
