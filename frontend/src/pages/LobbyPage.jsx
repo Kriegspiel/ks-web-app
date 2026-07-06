@@ -55,7 +55,7 @@ function normalizeBotDescription(bot) {
     displayName === "llm gpt-4.5 nano (bot)" ||
     displayName === "llm gpt-nano (bot)"
   ) {
-    return "LLM GPT-4.5 Nano (bot) Kriegspiel model bot."
+    return "LLM GPT-Nano (bot) Kriegspiel model bot."
   }
 
   if (
