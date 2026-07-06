@@ -206,7 +206,7 @@ function botMatchupGamesPath(rowPlayer, opponent) {
   if (!opponent?.username) {
     return `/user/${rowPlayer.username}/games`
   }
-  const params = new URLSearchParams({ opponent: `bot:${opponent.username}` })
+  const params = new URLSearchParams({ opponent: opponent.username })
   return `/user/${rowPlayer.username}/games?${params.toString()}`
 }
 
