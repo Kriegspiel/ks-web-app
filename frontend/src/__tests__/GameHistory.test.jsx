@@ -185,9 +185,9 @@ describe("GameHistoryPage", () => {
     const claireGame = { game_id: "g-other", game_code: "OTH001", rule_variant: "wild16", opponent: "claire", opponent_role: "user", play_as: "white", result: "draw", reason: "stalemate", turn_count: 10, played_at: "2026-01-02T00:00:00Z" }
     const filterOptions = {
       opponent: [
-        { value: "human:bob", label: "bob", group: "Humans" },
-        { value: "human:claire", label: "claire", group: "Humans" },
-        { value: "bot:randobot", label: "randobot (bot)", group: "Bots" },
+        { value: "bob", label: "bob", group: "Humans" },
+        { value: "claire", label: "claire", group: "Humans" },
+        { value: "randobot", label: "randobot (bot)", group: "Bots" },
       ],
     }
     mockApi.userApi.getGameHistoryFilterOptions.mockResolvedValueOnce({ filter_options: filterOptions })
@@ -216,11 +216,11 @@ describe("GameHistoryPage", () => {
       "fil",
       1,
       100,
-      expectedHistoryOptions({ filters: { opponent: ["human:bob"] } }),
+      expectedHistoryOptions({ filters: { opponent: ["bob"] } }),
     ))
     expect(historyRows()).toHaveLength(1)
     expect(within(historyRows()[0]).getByRole("link", { name: "bob" })).toBeInTheDocument()
-    expect(screen.getByTestId("location")).toHaveTextContent("opponent=human%3Abob")
+    expect(screen.getByTestId("location")).toHaveTextContent("opponent=bob")
 
     const updatedOpponentMenu = await screen.findByRole("menu")
     fireEvent.click(filterCheckbox(updatedOpponentMenu, "randobot (bot)"))
@@ -229,12 +229,12 @@ describe("GameHistoryPage", () => {
       "fil",
       1,
       100,
-      expectedHistoryOptions({ filters: { opponent: ["human:bob", "bot:randobot"] } }),
+      expectedHistoryOptions({ filters: { opponent: ["bob", "randobot"] } }),
     ))
     expect(historyRows()).toHaveLength(2)
     expect(within(historyRows()[0]).getByRole("link", { name: "bob" })).toBeInTheDocument()
     expect(within(historyRows()[1]).getByRole("link", { name: "randobot (bot)" })).toBeInTheDocument()
-    expect(screen.getByTestId("location")).toHaveTextContent("bot%3Arandobot")
+    expect(screen.getByTestId("location")).toHaveTextContent("randobot")
 
     fireEvent.click(screen.getByRole("button", { name: "Clear filters" }))
     await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(
@@ -254,9 +254,9 @@ describe("GameHistoryPage", () => {
     mockApi.userApi.getGameHistoryFilterOptions.mockResolvedValueOnce({
       filter_options: {
         opponent: [
-          { value: "human:bob", label: "bob", group: "Humans" },
-          { value: "human:claire", label: "claire", group: "Humans" },
-          { value: "bot:randobot", label: "randobot (bot)", group: "Bots" },
+          { value: "bob", label: "bob", group: "Humans" },
+          { value: "claire", label: "claire", group: "Humans" },
+          { value: "randobot", label: "randobot (bot)", group: "Bots" },
         ],
       },
     })
@@ -265,6 +265,7 @@ describe("GameHistoryPage", () => {
       .mockResolvedValueOnce({ games: [randobotGame], pagination: { page: 1, pages: 1, total: 1 } })
       .mockResolvedValueOnce({ games: [bobGame, randobotGame, claireGame], pagination: { page: 1, pages: 1, total: 3 } })
       .mockResolvedValueOnce({ games: [bobGame, claireGame], pagination: { page: 1, pages: 1, total: 2 } })
+      .mockResolvedValueOnce({ games: [bobGame, randobotGame, claireGame], pagination: { page: 1, pages: 1, total: 3 } })
 
     renderHistory()
 
@@ -308,6 +309,18 @@ describe("GameHistoryPage", () => {
     expect(historyRows()).toHaveLength(2)
     expect(within(historyRows()[0]).getByRole("link", { name: "bob" })).toBeInTheDocument()
     expect(within(historyRows()[1]).getByRole("link", { name: "claire" })).toBeInTheDocument()
+
+    const allHumansMenu = await screen.findByRole("menu")
+    fireEvent.click(filterCheckbox(allHumansMenu, "randobot (bot)"))
+    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(
+      5,
+      "fil",
+      1,
+      100,
+      expectedHistoryOptions({ filters: { opponent: ["human:*", "randobot"] } }),
+    ))
+    expect(screen.getByTestId("location")).toHaveTextContent("human%3A*")
+    expect(screen.getByTestId("location")).toHaveTextContent("randobot")
   })
 
   it("shows_filtered_pagination_for_single_match_filters", async () => {
@@ -315,8 +328,8 @@ describe("GameHistoryPage", () => {
     const randobotGame = { game_id: "g-bot", game_code: "BOT001", rule_variant: "berkeley_any", opponent: "randobot", opponent_role: "bot", play_as: "black", result: "win", reason: "timeout", turn_count: 8, played_at: "2026-01-03T00:00:00Z" }
     const filterOptions = {
       opponent: [
-        { value: "human:lgyanf", label: "lgyanf", group: "Humans" },
-        { value: "bot:randobot", label: "randobot (bot)", group: "Bots" },
+        { value: "lgyanf", label: "lgyanf", group: "Humans" },
+        { value: "randobot", label: "randobot (bot)", group: "Bots" },
       ],
     }
     mockApi.userApi.getGameHistoryFilterOptions.mockResolvedValueOnce({ filter_options: filterOptions })
@@ -336,7 +349,7 @@ describe("GameHistoryPage", () => {
       "fil",
       1,
       100,
-      expectedHistoryOptions({ filters: { opponent: ["human:lgyanf"] } }),
+      expectedHistoryOptions({ filters: { opponent: ["lgyanf"] } }),
     ))
     expect(historyRows()).toHaveLength(1)
     expect(within(historyRows()[0]).getByRole("link", { name: "lgyanf" })).toBeInTheDocument()
@@ -349,9 +362,9 @@ describe("GameHistoryPage", () => {
     mockApi.userApi.getGameHistoryFilterOptions.mockResolvedValueOnce({
       filter_options: {
         opponent: [
-          { value: "human:lgyanf", label: "lgyanf", group: "Humans" },
-          { value: "bot:bot_gemini31_lite", label: "bot_gemini31_lite (bot)", group: "Bots" },
-          { value: "bot:randobot", label: "randobot (bot)", group: "Bots" },
+          { value: "lgyanf", label: "lgyanf", group: "Humans" },
+          { value: "bot_gemini31_lite", label: "bot_gemini31_lite (bot)", group: "Bots" },
+          { value: "randobot", label: "randobot (bot)", group: "Bots" },
         ],
       },
     })
@@ -369,7 +382,7 @@ describe("GameHistoryPage", () => {
       "randobotany",
       1,
       100,
-      expectedHistoryOptions({ filters: { opponent: ["bot:bot_gemini31_lite"] } }),
+      expectedHistoryOptions({ filters: { opponent: ["bot_gemini31_lite"] } }),
     ))
     fireEvent.click(screen.getByRole("button", { name: "Opponent 1" }))
     const opponentMenu = await screen.findByRole("menu")
@@ -401,7 +414,7 @@ describe("GameHistoryPage", () => {
   it("loads_sort_filters_page_and_page_size_from_the_url", async () => {
     mockApi.userApi.getGameHistoryFilterOptions.mockResolvedValueOnce({
       filter_options: {
-        opponent: [{ value: "human:bob", label: "bob", group: "Humans" }],
+        opponent: [{ value: "bob", label: "bob", group: "Humans" }],
         result: [{ value: "win", label: "win" }],
       },
     })
@@ -420,7 +433,7 @@ describe("GameHistoryPage", () => {
       500,
       expectedHistoryOptions({
         sort: { key: "turns", direction: "asc" },
-        filters: { result: ["win"], opponent: ["human:bob"] },
+        filters: { result: ["win"], opponent: ["bob"] },
       }),
     ))
     expect(screen.getByLabelText("Games per page")).toHaveValue("500")
