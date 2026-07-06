@@ -139,7 +139,8 @@
 }
 
 .profile-bot-mini-list dt,
-.profile-bot-row-list span {
+.profile-bot-row-list span,
+.profile-bot-opponent-link {
   color: var(--muted);
   min-width: 0;
   overflow-wrap: anywhere;
@@ -152,6 +153,17 @@
 
 .profile-bot-row-list span {
   min-width: 0;
+}
+
+.profile-bot-opponent-link {
+  font-weight: 700;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.14em;
+}
+
+.profile-bot-opponent-link:hover,
+.profile-bot-opponent-link:focus-visible {
+  color: var(--text);
 }
 
 .profile-bot-mini-list dd,

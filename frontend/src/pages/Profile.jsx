@@ -224,7 +224,7 @@ function normalizeBotMetrics(source) {
     asWhite: normalizeMetricBucket(source.as_white),
     asBlack: normalizeMetricBucket(source.as_black),
     opponents: Array.isArray(source.opponents) ? source.opponents.map((row) => ({
-      username: row?.username || "unknown",
+      username: typeof row?.username === "string" && row.username.trim() ? row.username.trim() : "unknown",
       role: row?.role || "user",
       ...normalizeMetricBucket(row),
     })) : [],
@@ -257,6 +257,10 @@ function regularNameFromGuest(username) {
   return typeof username === "string" && username.startsWith("guest_")
     ? username.slice("guest_".length)
     : username
+}
+
+function profilePath(username) {
+  return `/user/${encodeURIComponent(username)}`
 }
 
 function tierDetailsForProfile(profile) {
@@ -481,7 +485,9 @@ export default function ProfilePage() {
                     <ul className="profile-bot-row-list">
                       {botOpponentRows.map((row) => (
                         <li key={`${row.role}-${row.username}`}>
-                          <span>{row.username}{row.role === "bot" ? " (bot)" : ""}</span>
+                          <Link className="profile-bot-opponent-link" to={profilePath(row.username)}>
+                            {row.username}{row.role === "bot" ? " (bot)" : ""}
+                          </Link>
                           <strong>{formatMetricRecord(row)} · {formatWinRate(row.winRate)}</strong>
                         </li>
                       ))}
