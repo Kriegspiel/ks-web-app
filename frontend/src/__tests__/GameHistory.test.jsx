@@ -70,8 +70,10 @@ describe("GameHistoryPage", () => {
     const css = readFileSync(resolve(process.cwd(), "src/pages/GameHistory.css"), "utf8")
 
     expect(css).toContain("background: color-mix(in srgb, var(--surface-strong) 94%, var(--surface) 6%);")
-    expect(css).toContain("position: sticky;")
-    expect(css).toContain("top: 0;")
+    expect(css).toContain("overflow-y: auto;")
+    expect(css).toContain("border-collapse: separate;")
+    expect(css).toContain(".history-table thead {\n  position: sticky;\n  top: 0;")
+    expect(css).toContain("z-index: 3;")
     expect(css).toContain("max-height: min(72vh, 46rem);")
     expect(css).toContain(".history-sort-toggle--asc")
     expect(css).toContain(".history-sort-toggle--desc")
