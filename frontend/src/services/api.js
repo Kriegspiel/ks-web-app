@@ -116,7 +116,24 @@ export async function askAny(gameId) { try { const response = await api.post(`/a
 export async function resignGame(gameId) { try { const response = await api.post(`/api/game/${encodeURIComponent(gameId)}/resign`); return response.data } catch (error) { throw normalizeError(error, 'Unable to resign this game right now.') } }
 export const userApi = {
   async getProfile(username) { const response = await api.get(`/api/user/${encodeURIComponent(username)}`); return response.data },
-  async getGameHistory(username, page = 1, perPage = 20) { const response = await api.get(`/api/user/${encodeURIComponent(username)}/games`, { params: { page, per_page: perPage } }); return response.data },
+  async getGameHistory(username, page = 1, perPage = 20, options = {}) {
+    const params = { page, per_page: perPage }
+    if (options.sort === null) {
+      params.sort = "none"
+    } else if (options.sort?.key) {
+      params.sort = options.sort.key
+      if (options.sort.direction) {
+        params.dir = options.sort.direction
+      }
+    }
+    Object.entries(options.filters ?? {}).forEach(([key, values]) => {
+      if (Array.isArray(values) && values.length > 0) {
+        params[key] = values.join(",")
+      }
+    })
+    const response = await api.get(`/api/user/${encodeURIComponent(username)}/games`, { params })
+    return response.data
+  },
   async getRatingHistory(username, track = "overall", limit = 100) { const response = await api.get(`/api/user/${encodeURIComponent(username)}/rating-history`, { params: { track, limit } }); return response.data },
   async getLeaderboard(page = 1, perPage = 20) { const response = await api.get('/api/leaderboard', { params: { page, per_page: perPage } }); return response.data },
   async updateSettings(payload) { const response = await api.patch('/api/user/settings', payload); return response.data },

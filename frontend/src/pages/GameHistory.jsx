@@ -152,75 +152,35 @@ function compareText(left, right) {
   return String(left).localeCompare(String(right), undefined, { numeric: true, sensitivity: "base" })
 }
 
-function compareSortValues(left, right, type, direction) {
-  if (type === "number") {
-    const leftNumber = Number(left)
-    const rightNumber = Number(right)
-    const leftMissing = !Number.isFinite(leftNumber)
-    const rightMissing = !Number.isFinite(rightNumber)
-    if (leftMissing || rightMissing) {
-      return leftMissing === rightMissing ? 0 : leftMissing ? 1 : -1
-    }
-    const comparison = leftNumber - rightNumber
-    return direction === "asc" ? comparison : -comparison
-  }
-
-  if (type === "date") {
-    const leftTime = Date.parse(left)
-    const rightTime = Date.parse(right)
-    const leftMissing = !Number.isFinite(leftTime)
-    const rightMissing = !Number.isFinite(rightTime)
-    if (leftMissing || rightMissing) {
-      return leftMissing === rightMissing ? 0 : leftMissing ? 1 : -1
-    }
-    const comparison = leftTime - rightTime
-    return direction === "asc" ? comparison : -comparison
-  }
-
-  const leftText = displayValue(left)
-  const rightText = displayValue(right)
-  const leftMissing = leftText === "—"
-  const rightMissing = rightText === "—"
-  if (leftMissing || rightMissing) {
-    return leftMissing === rightMissing ? 0 : leftMissing ? 1 : -1
-  }
-  const comparison = compareText(leftText, rightText)
-  return direction === "asc" ? comparison : -comparison
-}
-
-function sortGames(games, sort) {
-  if (!sort) {
-    return games
-  }
-
-  const column = SORT_COLUMN_BY_KEY.get(sort.key) ?? SORT_COLUMN_BY_KEY.get(DEFAULT_SORT.key)
-  const direction = sort.direction === "asc" ? "asc" : "desc"
-
-  return games
-    .map((game, index) => ({ game, index }))
-    .sort((left, right) => {
-      const comparison = compareSortValues(column.value(left.game), column.value(right.game), column.type, direction)
-      if (comparison !== 0) {
-        return comparison
-      }
-      return left.index - right.index
-    })
-    .map((entry) => entry.game)
-}
-
-function buildFilterOptions(games, config, selectedValues = []) {
+function buildFilterOptions(sourceOptions, config, selectedValues = [], fallbackGames = []) {
   const options = new Map()
+  const facetOptions = Array.isArray(sourceOptions) ? sourceOptions : []
 
-  games.forEach((game) => {
-    const value = config.value(game)
+  facetOptions.forEach((option) => {
+    const value = typeof option === "object" && option !== null ? filterValue(option.value) : filterValue(option)
     if (!options.has(value)) {
+      const label = typeof option === "object" && option !== null ? stringValue(option.label) : ""
+      const group = typeof option === "object" && option !== null ? stringValue(option.group) : ""
       options.set(value, {
         value,
-        label: config.labelForGame?.(game) ?? config.labelForValue(value),
-        group: config.groupForGame?.(game) ?? "",
+        label: label || config.labelForValue(value),
+        group: group || config.groupForValue?.(value) || "",
       })
     }
   })
+
+  if (options.size === 0) {
+    fallbackGames.forEach((game) => {
+      const value = config.value(game)
+      if (!options.has(value)) {
+        options.set(value, {
+          value,
+          label: config.labelForGame?.(game) ?? config.labelForValue(value),
+          group: config.groupForGame?.(game) ?? "",
+        })
+      }
+    })
+  }
 
   selectedValues.forEach((value) => {
     if (!options.has(value)) {
@@ -254,13 +214,6 @@ function groupFilterOptions(options) {
 
 function selectedFilterCount(filters) {
   return Object.values(filters).reduce((total, values) => total + (Array.isArray(values) ? values.length : 0), 0)
-}
-
-function gameMatchesFilters(game, filters) {
-  return FILTER_CONFIGS.every((config) => {
-    const selectedValues = filters[config.key] ?? []
-    return selectedValues.length === 0 || selectedValues.includes(config.value(game))
-  })
 }
 
 function isInteractiveTarget(target) {
@@ -478,7 +431,7 @@ export default function GameHistoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [history, setHistory] = useState({ games: [], pagination: { page: 1, pages: 0, total: 0 } })
+  const [history, setHistory] = useState({ games: [], pagination: { page: 1, pages: 0, total: 0 }, filter_options: {} })
   const [openFilterKey, setOpenFilterKey] = useState("")
 
   const page = parsePage(searchParams.get("page"))
@@ -518,17 +471,18 @@ export default function GameHistoryPage() {
       setLoading(true)
       setError("")
       try {
-        const payload = await userApi.getGameHistory(username, page, pageSize)
+        const payload = await userApi.getGameHistory(username, page, pageSize, { sort, filters })
         if (!cancelled) {
           setHistory({
             games: Array.isArray(payload?.games) ? payload.games : [],
             pagination: payload?.pagination ?? { page, pages: 0, total: 0 },
+            filter_options: payload?.filter_options ?? {},
           })
         }
       } catch (apiError) {
         if (!cancelled) {
           setError(apiError?.status === 404 ? "User not found." : (apiError?.message ?? "Unable to load game history."))
-          setHistory({ games: [], pagination: { page, pages: 0, total: 0 } })
+          setHistory({ games: [], pagination: { page, pages: 0, total: 0 }, filter_options: {} })
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -536,33 +490,23 @@ export default function GameHistoryPage() {
     }
     loadHistory()
     return () => { cancelled = true }
-  }, [username, page, pageSize])
+  }, [username, page, pageSize, sort, filters])
 
   const pagination = history.pagination ?? { page, pages: 0, total: 0 }
   const filterOptions = useMemo(() => Object.fromEntries(
-    FILTER_CONFIGS.map((config) => [config.key, buildFilterOptions(history.games, config, filters[config.key] ?? [])]),
-  ), [filters, history.games])
-  const filteredGames = useMemo(
-    () => history.games.filter((game) => gameMatchesFilters(game, filters)),
-    [filters, history.games],
-  )
-  const visibleGames = useMemo(
-    () => sortGames(filteredGames, sort),
-    [filteredGames, sort],
-  )
+    FILTER_CONFIGS.map((config) => [
+      config.key,
+      buildFilterOptions(history.filter_options?.[config.key], config, filters[config.key] ?? [], history.games),
+    ]),
+  ), [filters, history.filter_options, history.games])
+  const visibleGames = history.games
   const activeFilterCount = selectedFilterCount(filters)
-  const displayPagination = useMemo(() => {
-    if (activeFilterCount) {
-      return { page: 1, pages: Math.max(1, Math.ceil(filteredGames.length / pageSize)) }
-    }
-
-    return {
-      page: pagination.page ?? page,
-      pages: pagination.pages ?? 0,
-    }
-  }, [activeFilterCount, filteredGames.length, page, pageSize, pagination.page, pagination.pages])
-  const canPageBackward = !activeFilterCount && page > 1
-  const canPageForward = !activeFilterCount && (pagination.pages > 0 ? page < pagination.pages : history.games.length > 0)
+  const displayPagination = {
+    page: pagination.page ?? page,
+    pages: pagination.pages ?? 0,
+  }
+  const canPageBackward = page > 1
+  const canPageForward = pagination.pages > 0 ? page < pagination.pages : history.games.length > 0
 
   function updateSearch(updater, options = { replace: true }) {
     const next = new URLSearchParams(searchParams)
@@ -582,6 +526,7 @@ export default function GameHistoryPage() {
         nextSort = null
       }
 
+      setPageParam(next, 1)
       if (!nextSort) {
         next.set("sort", SORT_NONE_VALUE)
         next.delete("dir")
