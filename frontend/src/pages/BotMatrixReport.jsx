@@ -23,8 +23,8 @@ const TOTAL_SORT_FIELDS = [
   { key: "games", label: "Total games" },
   { key: "avgPlies", label: "Avg plies" },
   { key: "avgCalls", label: "Avg calls" },
-  { key: "avgTokens", label: "Avg tokens" },
-  { key: "avgCost", label: "Avg cost" },
+  { key: "avgTokens", label: "Avg tokens (in/cache/out)" },
+  { key: "avgCost", label: "Avg spend" },
   { key: "winShare", label: "Win share" },
   { key: "drawShare", label: "Draw share" },
   { key: "lossShare", label: "Loss share" },
@@ -33,7 +33,7 @@ const DEFAULT_TOTALS_SORT = { key: "games", direction: "desc" }
 const DEFAULT_USAGE_START_DATE = "2026-07-04"
 
 function usageTooltip(startDate = DEFAULT_USAGE_START_DATE) {
-  return `Average over known cost records starting ${startDate}.`
+  return `Average over games completed since ${startDate}, when usage collection started.`
 }
 
 function stripTrailingZeros(value) {
@@ -67,12 +67,14 @@ function formatTokens(value) {
   return Math.round(number).toLocaleString("en-US")
 }
 
-function formatCost(value) {
+function formatSpend(value) {
   const number = numberOrNull(value)
   if (number === null) return "—"
-  if (number <= 0) return "$0"
-  const digits = number < 0.01 ? 4 : 3
-  return `$${stripTrailingZeros(number.toFixed(digits))}`
+  return `$${Math.max(0, number).toFixed(6)}`
+}
+
+function formatTokenSplit(input, cache, output) {
+  return `${formatTokens(input)}/${formatTokens(cache)}/${formatTokens(output)}`
 }
 
 function formatAverage(value) {
@@ -105,10 +107,18 @@ function normalizeSummary(summary) {
     record: String(summary.record ?? `${Number(summary.wins ?? 0)}-${Number(summary.draws ?? 0)}-${Number(summary.losses ?? 0)}`),
     averagePlies: numberOrNull(summary.average_plies ?? summary.averagePlies ?? summary.avg_plies ?? summary.avgPlies),
     playerTokens: numberOrNull(summary.player_tokens ?? summary.playerTokens),
+    playerInputTokens: numberOrNull(summary.player_input_tokens ?? summary.playerInputTokens ?? summary.avg_input_tokens ?? summary.avgInputTokens),
+    playerCacheTokens: numberOrNull(summary.player_cache_tokens ?? summary.playerCacheTokens ?? summary.avg_cache_tokens ?? summary.avgCacheTokens),
+    playerOutputTokens: numberOrNull(summary.player_output_tokens ?? summary.playerOutputTokens ?? summary.avg_output_tokens ?? summary.avgOutputTokens),
     playerCost: numberOrNull(summary.player_cost ?? summary.playerCost),
     opponentTokens: numberOrNull(summary.opponent_tokens ?? summary.opponentTokens),
+    opponentInputTokens: numberOrNull(summary.opponent_input_tokens ?? summary.opponentInputTokens),
+    opponentCacheTokens: numberOrNull(summary.opponent_cache_tokens ?? summary.opponentCacheTokens),
+    opponentOutputTokens: numberOrNull(summary.opponent_output_tokens ?? summary.opponentOutputTokens),
     opponentCost: numberOrNull(summary.opponent_cost ?? summary.opponentCost),
+    usageEligibleGames: Number(summary.usage_eligible_games ?? summary.usageEligibleGames ?? 0) || 0,
     usageRecordedGames: Number(summary.usage_recorded_games ?? summary.usageRecordedGames ?? 0) || 0,
+    opponentUsageEligibleGames: Number(summary.opponent_usage_eligible_games ?? summary.opponentUsageEligibleGames ?? 0) || 0,
     opponentUsageRecordedGames: Number(summary.opponent_usage_recorded_games ?? summary.opponentUsageRecordedGames ?? 0) || 0,
     usageStartDate: String(summary.usage_start_date ?? summary.usageStartDate ?? DEFAULT_USAGE_START_DATE),
   }
@@ -124,7 +134,11 @@ function normalizeTotalRow(row, usageStartDate) {
     avgPlies: numberOrNull(row?.avg_plies ?? row?.avgPlies ?? row?.average_plies ?? row?.averagePlies),
     avgCalls: numberOrNull(row?.avg_calls ?? row?.avgCalls),
     avgTokens: numberOrNull(row?.avg_tokens ?? row?.avgTokens),
+    avgInputTokens: numberOrNull(row?.avg_input_tokens ?? row?.avgInputTokens),
+    avgCacheTokens: numberOrNull(row?.avg_cache_tokens ?? row?.avgCacheTokens),
+    avgOutputTokens: numberOrNull(row?.avg_output_tokens ?? row?.avgOutputTokens),
     avgCost: numberOrNull(row?.avg_cost ?? row?.avgCost),
+    usageEligibleGames: Number(row?.usage_eligible_games ?? row?.usageEligibleGames ?? 0) || 0,
     usageRecordedGames: Number(row?.usage_recorded_games ?? row?.usageRecordedGames ?? 0) || 0,
     usageStartDate: String(row?.usage_start_date ?? row?.usageStartDate ?? usageStartDate ?? DEFAULT_USAGE_START_DATE),
     winShare: numberOrNull(row?.win_share ?? row?.winShare),
@@ -225,10 +239,10 @@ function MatrixCell({ rowPlayer, opponent, summary, average = false }) {
       <span>{formatAveragePlies(summary.averagePlies)} avg plies</span>
       <Link to={botMatchupGamesPath(rowPlayer, opponent)}>{gamesLabel}</Link>
       <span title={usageTooltip(summary.usageStartDate)}>
-        this bot {formatTokens(summary.playerTokens)} / {formatCost(summary.playerCost)}
+        Avg. tokens (in/cache/out): {formatTokenSplit(summary.playerInputTokens, summary.playerCacheTokens, summary.playerOutputTokens)}
       </span>
       <span title={usageTooltip(summary.usageStartDate)}>
-        opponent {formatTokens(summary.opponentTokens)} / {formatCost(summary.opponentCost)}
+        Avg. spend: {formatSpend(summary.playerCost)}
       </span>
     </div>
   )
@@ -259,10 +273,11 @@ function TotalMetric({ value, kind, usageStartDate }) {
   if (kind === "number") text = value.toLocaleString("en-US")
   else if (kind === "plies" || kind === "calls") text = formatAverage(value)
   else if (kind === "tokens") text = formatTokens(value)
-  else if (kind === "cost") text = formatCost(value)
+  else if (kind === "tokenSplit") text = formatTokenSplit(value?.input, value?.cache, value?.output)
+  else if (kind === "cost") text = formatSpend(value)
   else if (kind === "share") text = formatShare(value)
 
-  if (kind === "calls" || kind === "tokens" || kind === "cost") {
+  if (kind === "calls" || kind === "tokens" || kind === "tokenSplit" || kind === "cost") {
     return <span title={usageTooltip(usageStartDate)}>{text}</span>
   }
   return text
@@ -418,7 +433,17 @@ export default function BotMatrixReportPage() {
                     <td>{row.games.toLocaleString("en-US")}</td>
                     <td><TotalMetric value={row.avgPlies} kind="plies" /></td>
                     <td><TotalMetric value={row.avgCalls} kind="calls" usageStartDate={row.usageStartDate} /></td>
-                    <td><TotalMetric value={row.avgTokens} kind="tokens" usageStartDate={row.usageStartDate} /></td>
+                    <td>
+                      <TotalMetric
+                        value={{
+                          input: row.avgInputTokens,
+                          cache: row.avgCacheTokens,
+                          output: row.avgOutputTokens,
+                        }}
+                        kind="tokenSplit"
+                        usageStartDate={row.usageStartDate}
+                      />
+                    </td>
                     <td><TotalMetric value={row.avgCost} kind="cost" usageStartDate={row.usageStartDate} /></td>
                     <td><TotalMetric value={row.winShare} kind="share" /></td>
                     <td><TotalMetric value={row.drawShare} kind="share" /></td>

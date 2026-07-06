@@ -33,10 +33,19 @@ function summary(record, games, averagePlies, overrides = {}) {
     avg_plies: averagePlies,
     avg_calls: null,
     avg_tokens: null,
+    avg_input_tokens: null,
+    avg_cache_tokens: null,
+    avg_output_tokens: null,
     avg_cost: null,
     player_tokens: null,
+    player_input_tokens: null,
+    player_cache_tokens: null,
+    player_output_tokens: null,
     player_cost: null,
     opponent_tokens: null,
+    opponent_input_tokens: null,
+    opponent_cache_tokens: null,
+    opponent_output_tokens: null,
     opponent_cost: null,
     win_share: games ? wins / games : null,
     draw_share: games ? draws / games : null,
@@ -60,10 +69,18 @@ const LIFETIME_REPORT = {
           opponent: PLAYERS[1],
           summary: summary("38-32-43", 113, 751.548, {
             player_tokens: 180,
-            player_cost: 0.015,
+            player_input_tokens: 130,
+            player_cache_tokens: 20,
+            player_output_tokens: 30,
+            player_cost: 0.005,
             opponent_tokens: 75,
+            opponent_input_tokens: 70,
+            opponent_cache_tokens: 0,
+            opponent_output_tokens: 5,
             opponent_cost: 0.02,
+            usage_eligible_games: 113,
             usage_recorded_games: 1,
+            opponent_usage_eligible_games: 113,
             opponent_usage_recorded_games: 1,
             usage_start_date: "2026-07-04",
           }),
@@ -103,7 +120,11 @@ const LIFETIME_REPORT = {
         ...summary("101-6-6", 113, 751.548, {
           avg_calls: 2,
           avg_tokens: 180,
-          avg_cost: 0.015,
+          avg_input_tokens: 130,
+          avg_cache_tokens: 20,
+          avg_output_tokens: 30,
+          avg_cost: 0.005,
+          usage_eligible_games: 113,
           usage_recorded_games: 1,
           usage_start_date: "2026-07-04",
           win_share: 0.894,
@@ -167,15 +188,16 @@ describe("BotMatrixReportPage", () => {
 
     expect(screen.getByText("38-32-43")).toBeInTheDocument()
     expect(screen.getAllByText("751.5 avg plies").length).toBeGreaterThan(0)
-    expect(screen.getByText("this bot 180 / $0.015")).toHaveAttribute(
+    expect(screen.getByText("Avg. tokens (in/cache/out): 130/20/30")).toHaveAttribute(
       "title",
-      "Average over known cost records starting 2026-07-04.",
+      "Average over games completed since 2026-07-04, when usage collection started.",
     )
-    expect(screen.getByText("opponent 75 / $0.02")).toHaveAttribute(
+    expect(screen.getByText("Avg. spend: $0.005000")).toHaveAttribute(
       "title",
-      "Average over known cost records starting 2026-07-04.",
+      "Average over games completed since 2026-07-04, when usage collection started.",
     )
-    expect(screen.getAllByText("this bot — / —").length).toBeGreaterThan(0)
+    expect(screen.queryByText(/opponent 75/)).not.toBeInTheDocument()
+    expect(screen.getAllByText("Avg. tokens (in/cache/out): —/—/—").length).toBeGreaterThan(0)
     expect(screen.getByRole("link", { name: "Haiku versus GPT 4.5 Nano games" })).toHaveAttribute(
       "href",
       "/user/llm_haiku/games?opponent=llm_gptnano",
@@ -219,11 +241,15 @@ describe("BotMatrixReportPage", () => {
 
     const totalsTable = screen.getAllByRole("table")[2]
     expect(within(totalsTable).getByRole("columnheader", { name: /Total games DESC/ })).toHaveAttribute("aria-sort", "descending")
-    const randomTotal = within(totalsTable).getByRole("row", { name: /Random Any Bot 16,032 246\.1 — — — 56% 37% 6\.4%/ })
+    const randomTotal = within(totalsTable).getByRole("row", { name: /Random Any Bot 16,032 246\.1 — —\/—\/— — 56% 37% 6\.4%/ })
     expect(randomTotal).toBeInTheDocument()
-    expect(within(totalsTable).getByText("$0.015")).toHaveAttribute(
+    expect(within(totalsTable).getByText("130/20/30")).toHaveAttribute(
       "title",
-      "Average over known cost records starting 2026-07-04.",
+      "Average over games completed since 2026-07-04, when usage collection started.",
+    )
+    expect(within(totalsTable).getByText("$0.005000")).toHaveAttribute(
+      "title",
+      "Average over games completed since 2026-07-04, when usage collection started.",
     )
 
     fireEvent.click(within(totalsTable).getByRole("button", { name: "Sort by Win share desc" }))
@@ -241,6 +267,6 @@ describe("BotMatrixReportPage", () => {
 
     const totalsTable = screen.getAllByRole("table")[2]
     expect(screen.getByRole("button", { name: "vs Humans" })).toHaveAttribute("aria-pressed", "true")
-    expect(within(totalsTable).getByRole("row", { name: /LLM Haiku \(bot\) 5 12 — — — 40% 20% 40%/ })).toBeInTheDocument()
+    expect(within(totalsTable).getByRole("row", { name: /LLM Haiku \(bot\) 5 12 — —\/—\/— — 40% 20% 40%/ })).toBeInTheDocument()
   })
 })

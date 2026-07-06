@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.104
+
+- **Bot Matrix Report**: simplify matchup usage rows to average
+  input/cache/output tokens and six-decimal average spend.
+
 ## ks-web-app frontend v. 1.3.103
 
 - **Profile Metrics Links**: use plain usernames for exact opponent links from
