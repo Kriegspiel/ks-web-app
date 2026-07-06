@@ -315,7 +315,7 @@ export default function BotMatrixReportPage() {
 
   return (
     <main className="page-shell leaderboard-page bot-matrix-page">
-      <h1>Kriegsspiel bot matrix</h1>
+      <h1>Bots' matrix</h1>
       <p className="page-meta-stamp">
         Built from {report.uniqueGameCount.toLocaleString("en-US")} completed bot-vs-bot games and {report.rowRecordCount.toLocaleString("en-US")} row-perspective records.
       </p>

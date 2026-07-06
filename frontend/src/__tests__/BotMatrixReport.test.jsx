@@ -152,7 +152,7 @@ describe("BotMatrixReportPage", () => {
 
     render(<MemoryRouter><BotMatrixReportPage /></MemoryRouter>)
 
-    expect(await screen.findByRole("heading", { name: "Kriegsspiel bot matrix" })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "Bots' matrix" })).toBeInTheDocument()
     expect(mockApi.techApi.getBotMatrixReport).toHaveBeenCalledWith("lifetime")
     expect(screen.getByText("Loaded in 42 ms.")).toBeInTheDocument()
     expect(screen.getByText("Built from 27,350 completed bot-vs-bot games and 54,700 row-perspective records.")).toBeInTheDocument()

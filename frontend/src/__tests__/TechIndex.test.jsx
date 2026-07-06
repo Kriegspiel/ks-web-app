@@ -13,7 +13,7 @@ describe("TechIndexPage", () => {
 
     expect(screen.getByRole("heading", { name: "Tech" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Bots report/i })).toHaveAttribute("href", "/tech/bots-report")
-    expect(screen.getByRole("link", { name: /Kriegsspiel bot matrix/i })).toHaveAttribute("href", "/tech/bot-matrix")
+    expect(screen.getByRole("link", { name: /Bots' matrix/i })).toHaveAttribute("href", "/tech/bot-matrix")
     expect(screen.getByRole("link", { name: /Guests report/i })).toHaveAttribute("href", "/tech/guests-report")
     expect(screen.getByRole("link", { name: /Users report/i })).toHaveAttribute("href", "/tech/users-report")
     expect(screen.getByRole("link", { name: /Acquisition report/i })).toHaveAttribute("href", "/tech/acquisition-report")

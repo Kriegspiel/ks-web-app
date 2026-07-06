@@ -9,7 +9,7 @@ const TECH_LINKS = [
   },
   {
     href: "/tech/bot-matrix",
-    title: "Kriegsspiel bot matrix",
+    title: "Bots' matrix",
     description: "Round-robin LLM and simple-bot matchup matrix with token and cost statistics.",
   },
   {
