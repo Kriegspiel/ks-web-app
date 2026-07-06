@@ -37,6 +37,13 @@
   padding: 0.45rem 0.75rem;
 }
 
+.bot-matrix-period-range {
+  align-self: center;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
 .bot-matrix-scroll {
   max-height: 76vh;
   overflow: auto;

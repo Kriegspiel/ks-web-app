@@ -56,6 +56,7 @@ function summary(record, games, averagePlies, overrides = {}) {
 
 const LIFETIME_REPORT = {
   period: "lifetime",
+  generated_at: "2026-07-06T13:30:00Z",
   usage_start_date: "2026-07-04",
   players: PLAYERS,
   unique_game_count: 27350,
@@ -186,10 +187,11 @@ describe("BotMatrixReportPage", () => {
     render(<MemoryRouter><BotMatrixReportPage /></MemoryRouter>)
 
     expect(await screen.findByRole("heading", { name: "Bots' matrix" })).toBeInTheDocument()
-    expect(mockApi.techApi.getBotMatrixReport).toHaveBeenCalledWith("lifetime")
+    expect(mockApi.techApi.getBotMatrixReport).toHaveBeenCalledWith("week")
     expect(screen.getByText("Loaded in 42 ms.")).toBeInTheDocument()
     expect(screen.getByText("Built from 27,350 completed bot-vs-bot games and 54,700 row-perspective records.")).toBeInTheDocument()
-    expect(screen.getByLabelText("Time period")).toHaveValue("lifetime")
+    expect(screen.getByLabelText("Time period")).toHaveValue("week")
+    expect(screen.getByText("2026-06-29 — 2026-07-06")).toBeInTheDocument()
 
     expect(document.querySelector(".bot-matrix-scroll .bot-matrix-table")).toBeInTheDocument()
     expect(screen.queryByRole("columnheader", { name: "H" })).not.toBeInTheDocument()
@@ -238,12 +240,14 @@ describe("BotMatrixReportPage", () => {
     render(<MemoryRouter><BotMatrixReportPage /></MemoryRouter>)
 
     const periodSelect = await screen.findByLabelText("Time period")
-    expect(periodSelect).toHaveValue("lifetime")
+    expect(periodSelect).toHaveValue("week")
+    expect(screen.getByText("2026-06-29 — 2026-07-06")).toBeInTheDocument()
 
     fireEvent.change(periodSelect, { target: { value: "today" } })
 
     await waitFor(() => expect(mockApi.techApi.getBotMatrixReport).toHaveBeenLastCalledWith("today"))
     expect(periodSelect).toHaveValue("today")
+    expect(screen.getByText("2026-07-06 — 2026-07-06")).toBeInTheDocument()
     expect(await screen.findByText("Built from 12 completed bot-vs-bot games and 24 row-perspective records.")).toBeInTheDocument()
     expect(screen.getByRole("row", { name: "Timeout 12" })).toBeInTheDocument()
   })

@@ -32,6 +32,12 @@ const TOTAL_SORT_FIELDS = [
 ]
 const DEFAULT_TOTALS_SORT = { key: "games", direction: "desc" }
 const DEFAULT_USAGE_START_DATE = "2026-07-04"
+const DEFAULT_PERIOD = "week"
+const PERIOD_DAY_WINDOWS = {
+  week: 7,
+  month: 30,
+  year: 365,
+}
 const TOTAL_FILTER_MENU_VIEWPORT_MARGIN = 16
 const TOTAL_FILTER_MENU_MAX_WIDTH = 352
 
@@ -91,6 +97,32 @@ function formatShare(value) {
   if (number === null || number <= 0) return "0%"
   const percent = number * 100
   return `${stripTrailingZeros(percent.toFixed(percent < 10 ? 1 : 0))}%`
+}
+
+function parseUtcDate(value) {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function formatUtcDate(value) {
+  const date = parseUtcDate(value)
+  return date ? date.toISOString().slice(0, 10) : ""
+}
+
+function addUtcDays(date, days) {
+  const next = new Date(date.getTime())
+  next.setUTCDate(next.getUTCDate() + days)
+  return next
+}
+
+function periodRangeLabel(period, generatedAt) {
+  const end = parseUtcDate(generatedAt)
+  if (!end) return ""
+  const endLabel = formatUtcDate(end)
+  if (period === "today") return `${endLabel} — ${endLabel}`
+  const days = PERIOD_DAY_WINDOWS[period]
+  if (!days) return `Through ${endLabel}`
+  return `${formatUtcDate(addUtcDays(end, -days))} — ${endLabel}`
 }
 
 function normalizePlayer(player) {
@@ -192,6 +224,7 @@ function normalizeReport(payload, totalScope, totalSort, totalPlayerFilters) {
   const totalRowsByScope = payload?.total_rows ?? payload?.totalRows ?? {}
   const scopedRows = Array.isArray(totalRowsByScope[totalScope]) ? totalRowsByScope[totalScope] : []
   const usageStartDate = String(payload?.usage_start_date ?? payload?.usageStartDate ?? DEFAULT_USAGE_START_DATE)
+  const generatedAt = String(payload?.generated_at ?? payload?.generatedAt ?? "")
   const normalizedTotalRows = scopedRows.map((row) => normalizeTotalRow(row, usageStartDate))
   const filteredTotalRows = filterTotalRows(normalizedTotalRows, totalPlayerFilters)
 
@@ -214,6 +247,7 @@ function normalizeReport(payload, totalScope, totalSort, totalPlayerFilters) {
     totalPlayerOptions: normalizeTotalPlayerOptions(normalizedTotalRows),
     uniqueGameCount: Number(payload?.unique_game_count ?? payload?.uniqueGameCount ?? 0) || 0,
     rowRecordCount: Number(payload?.row_record_count ?? payload?.rowRecordCount ?? 0) || 0,
+    generatedAt,
     usageStartDate,
   }
 }
@@ -487,7 +521,7 @@ function TotalMetric({ value, kind, usageStartDate }) {
 }
 
 export default function BotMatrixReportPage() {
-  const [period, setPeriod] = useState("lifetime")
+  const [period, setPeriod] = useState(DEFAULT_PERIOD)
   const [totalScope, setTotalScope] = useState("all")
   const [totalSort, setTotalSort] = useState(DEFAULT_TOTALS_SORT)
   const [totalPlayerFilters, setTotalPlayerFilters] = useState([])
@@ -578,6 +612,8 @@ export default function BotMatrixReportPage() {
     setTotalPlayerFilters([])
   }
 
+  const selectedPeriodRange = periodRangeLabel(period, report.generatedAt)
+
   return (
     <main className="page-shell leaderboard-page bot-matrix-page">
       <h1>Bots' matrix</h1>
@@ -593,6 +629,9 @@ export default function BotMatrixReportPage() {
             ))}
           </select>
         </label>
+        {selectedPeriodRange ? (
+          <span className="bot-matrix-period-range" aria-live="polite">{selectedPeriodRange}</span>
+        ) : null}
       </div>
       <TechReportLoadTime durationMs={loadDurationMs} failed={Boolean(error)} />
       {loading ? <p>Loading bot matrix...</p> : null}
