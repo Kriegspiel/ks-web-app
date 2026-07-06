@@ -460,6 +460,10 @@ function BotSelectionMenu({ label, options, selectedValues, onToggle, onSelectAl
 
   return (
     <div className="bot-matrix-filter-menu__panel" role="menu" aria-label={label} style={style}>
+      <div className="bot-matrix-filter-menu__actions">
+        <button type="button" onClick={onClearAll} disabled={noneSelected}>Clear all</button>
+        <button type="button" onClick={onSelectAll} disabled={allSelected}>Select all</button>
+      </div>
       {options.length ? options.map((option) => (
         <label className="bot-matrix-filter-menu__option" key={option.value}>
           <input
@@ -470,10 +474,6 @@ function BotSelectionMenu({ label, options, selectedValues, onToggle, onSelectAl
           <span>{option.label}</span>
         </label>
       )) : <p className="bot-matrix-filter-menu__empty">No bots</p>}
-      <div className="bot-matrix-filter-menu__actions">
-        <button type="button" onClick={onSelectAll} disabled={allSelected}>Select all</button>
-        <button type="button" onClick={onClearAll} disabled={noneSelected}>Clear all</button>
-      </div>
     </div>
   )
 }

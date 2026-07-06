@@ -1,4 +1,5 @@
 .bot-matrix-page {
+  --bot-matrix-player-column-width: 15.5rem;
   max-width: min(100vw - 2rem, 112rem);
 }
 
@@ -75,14 +76,24 @@
   position: sticky;
   left: 0;
   z-index: 1;
-  min-width: 15rem;
+  width: var(--bot-matrix-player-column-width);
+  min-width: var(--bot-matrix-player-column-width);
+  max-width: var(--bot-matrix-player-column-width);
   background: var(--surface-strong);
   box-shadow: 1px 0 0 var(--border);
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .bot-matrix-table thead th:first-child {
   left: 0;
   z-index: 4;
+}
+
+.bot-matrix-table tbody th a {
+  display: inline;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .bot-matrix-table a {
@@ -429,7 +440,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.45rem;
-  margin-top: 0.4rem;
+  margin-bottom: 0.4rem;
 }
 
 .bot-matrix-filter-menu__actions button {

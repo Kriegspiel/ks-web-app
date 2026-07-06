@@ -246,6 +246,7 @@ describe("BotMatrixReportPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Row bots 3/3" }))
     const rowMenu = await screen.findByRole("menu", { name: "Row bots" })
+    expect(within(rowMenu).getAllByRole("button").map((button) => button.textContent)).toEqual(["Clear all", "Select all"])
     expect(within(rowMenu).getByLabelText("LLM Haiku (bot)")).toBeChecked()
     expect(within(rowMenu).getByLabelText("LLM GPT-Nano (bot)")).toBeChecked()
     expect(within(rowMenu).getByLabelText("Random Any Bot")).toBeChecked()
