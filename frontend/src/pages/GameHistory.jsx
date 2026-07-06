@@ -43,7 +43,7 @@ const FILTER_CONFIGS = [
   {
     key: "opponent",
     label: "Opponent",
-    value: (game) => `${opponentGroup(game)}:${filterValue(game?.opponent)}`,
+    value: (game) => filterValue(game?.opponent),
     labelForGame: (game) => opponentLabel(game),
     labelForValue: opponentFilterLabel,
     groupForGame: (game) => opponentGroup(game) === "bot" ? "Bots" : "Humans",
@@ -99,6 +99,19 @@ function splitOpponentFilterValue(value) {
   return { group: text.slice(0, separator), value: text.slice(separator + 1) }
 }
 
+function normalizeOpponentFilterValue(value) {
+  const parsed = splitOpponentFilterValue(value)
+  if ((parsed.group === "human" || parsed.group === "bot") && parsed.value !== "*") {
+    return parsed.value
+  }
+  return String(value ?? "")
+}
+
+function normalizeFilterValue(key, value) {
+  const text = String(value ?? "").trim()
+  return key === "opponent" ? normalizeOpponentFilterValue(text) : text
+}
+
 function opponentGroupFilterForValue(value) {
   return OPPONENT_GROUP_FILTERS.find((option) => option.value === value) ?? null
 }
@@ -107,10 +120,13 @@ function opponentGroupFilterForGroupLabel(group) {
   return OPPONENT_GROUP_FILTERS.find((option) => option.group === group) ?? null
 }
 
-function opponentGroupFilterValueForOpponentValue(value) {
+function opponentGroupFilterValueForOpponentValue(value, group = "") {
+  if (group === "Bots" || group === "Humans") {
+    return opponentGroupFilterForGroupLabel(group)?.value ?? ""
+  }
   const parsed = splitOpponentFilterValue(value)
-  const group = parsed.group === "bot" ? "Bots" : "Humans"
-  return opponentGroupFilterForGroupLabel(group)?.value ?? ""
+  const groupLabel = parsed.group === "bot" ? "Bots" : "Humans"
+  return opponentGroupFilterForGroupLabel(groupLabel)?.value ?? ""
 }
 
 function isOpponentGroupFilterValue(value) {
@@ -182,7 +198,8 @@ function buildFilterOptions(sourceOptions, config, selectedValues = [], fallback
   const facetOptions = Array.isArray(sourceOptions) ? sourceOptions : []
 
   facetOptions.forEach((option) => {
-    const value = typeof option === "object" && option !== null ? filterValue(option.value) : filterValue(option)
+    const rawValue = typeof option === "object" && option !== null ? filterValue(option.value) : filterValue(option)
+    const value = config.key === "opponent" ? normalizeOpponentFilterValue(rawValue) : rawValue
     if (!options.has(value)) {
       const label = typeof option === "object" && option !== null ? stringValue(option.label) : ""
       const group = typeof option === "object" && option !== null ? stringValue(option.group) : ""
@@ -298,7 +315,7 @@ function parseFilterValues(searchParams, key) {
   return searchParams
     .getAll(key)
     .flatMap((value) => value.split(","))
-    .map((value) => value.trim())
+    .map((value) => normalizeFilterValue(key, value))
     .filter(Boolean)
 }
 
@@ -318,6 +335,12 @@ function setFilterParam(searchParams, key, values) {
   searchParams.delete(key)
   if (values.length) {
     searchParams.set(key, values.join(","))
+  }
+}
+
+function canonicalizeFilterParams(searchParams) {
+  if (searchParams.has("opponent")) {
+    setFilterParam(searchParams, "opponent", parseFilterValues(searchParams, "opponent"))
   }
 }
 
@@ -382,7 +405,7 @@ function HistoryFilterMenu({ config, options, selectedValues, loading, error, on
                 <input
                   type="checkbox"
                   checked={groupSelected}
-                  onChange={() => onToggle(groupFilter.value)}
+                  onChange={() => onToggle(groupFilter.value, group.label)}
                 />
                 <span>{groupFilter.label}</span>
               </label>
@@ -393,7 +416,7 @@ function HistoryFilterMenu({ config, options, selectedValues, loading, error, on
                   type="checkbox"
                   checked={selected.has(option.value) || groupSelected}
                   disabled={groupSelected}
-                  onChange={() => onToggle(option.value)}
+                  onChange={() => onToggle(option.value, option.group)}
                 />
                 <span>{option.label}</span>
               </label>
@@ -485,7 +508,7 @@ function ColumnHeader({
             selectedValues={selectedValues}
             loading={filterOptionsLoading}
             error={filterOptionsError}
-            onToggle={(value) => onToggleFilter(filterConfig.key, value)}
+            onToggle={(value, group) => onToggleFilter(filterConfig.key, value, group)}
             onClear={() => onClearFilter(filterConfig.key)}
             style={menuStyle}
           />
@@ -638,6 +661,7 @@ export default function GameHistoryPage() {
   function updateSearch(updater, options = { replace: true }) {
     const next = new URLSearchParams(searchParams)
     updater(next)
+    canonicalizeFilterParams(next)
     setSearchParams(next, options)
   }
 
@@ -664,11 +688,12 @@ export default function GameHistoryPage() {
     })
   }
 
-  function toggleFilter(filterKey, value) {
+  function toggleFilter(filterKey, value, group = "") {
     updateSearch((next) => {
       const values = new Set(parseFilterValues(next, filterKey))
       if (filterKey === "opponent") {
-        const groupFilterValue = opponentGroupFilterValueForOpponentValue(value)
+        const opponentOptions = filterOptions.opponent ?? []
+        const groupFilterValue = opponentGroupFilterValueForOpponentValue(value, group)
         if (isOpponentGroupFilterValue(value)) {
           if (values.has(value)) {
             values.delete(value)
@@ -676,7 +701,8 @@ export default function GameHistoryPage() {
             values.add(value)
             const candidates = [...values]
             candidates.forEach((candidate) => {
-              if (candidate !== value && opponentGroupFilterValueForOpponentValue(candidate) === value) {
+              const candidateGroup = opponentOptions.find((option) => option.value === candidate)?.group ?? ""
+              if (candidate !== value && opponentGroupFilterValueForOpponentValue(candidate, candidateGroup) === value) {
                 values.delete(candidate)
               }
             })
