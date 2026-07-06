@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.91
+
+- **Bot Matrix Report**: show matchup-specific game-history links in matrix
+  cells with the column bot preselected as the opponent.
+
 ## ks-web-app frontend v. 1.3.90
 
 - **Game History Controls**: send URL sort/filter state to the backend and use

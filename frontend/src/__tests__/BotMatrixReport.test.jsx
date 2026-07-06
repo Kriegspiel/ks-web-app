@@ -176,7 +176,14 @@ describe("BotMatrixReportPage", () => {
       "Average over known cost records starting 2026-07-04.",
     )
     expect(screen.getAllByText("this bot — / —").length).toBeGreaterThan(0)
-    expect(screen.getAllByRole("link", { name: "LLM Haiku (bot) games" })[0]).toHaveAttribute("href", "/user/llm_haiku/games")
+    expect(screen.getByRole("link", { name: "Haiku versus GPT Nano games" })).toHaveAttribute(
+      "href",
+      "/user/llm_haiku/games?opponent=bot%3Allm_gptnano",
+    )
+    expect(screen.getByRole("link", { name: "GPT Nano versus Haiku games" })).toHaveAttribute(
+      "href",
+      "/user/llm_gptnano/games?opponent=bot%3Allm_haiku",
+    )
 
     nowSpy.mockRestore()
   })
