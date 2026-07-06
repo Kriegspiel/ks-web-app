@@ -201,25 +201,26 @@ describe("BotMatrixReportPage", () => {
     expect(screen.getAllByRole("link", { name: "LLM GPT-Nano (bot)" })[0]).toHaveAttribute("href", "/user/llm_gptnano")
 
     expect(screen.getByText("38-32-43")).toBeInTheDocument()
+    expect(screen.getAllByText("Total games: 113").length).toBeGreaterThan(0)
     expect(screen.getAllByText("751.5 avg plies").length).toBeGreaterThan(0)
-    expect(screen.getByText("Avg. tokens (in/cache/out): 130/20/30")).toHaveAttribute(
+    expect(screen.getByText("Avg. tokens per game (in/cache/out): 130/20/30")).toHaveAttribute(
       "title",
       "Average over games completed since 2026-07-04, when usage collection started.",
     )
-    expect(screen.getByText("Avg. spend: $0.005000")).toHaveAttribute(
+    expect(screen.getByText("Avg. spend per game: $0.005000")).toHaveAttribute(
       "title",
       "Average over games completed since 2026-07-04, when usage collection started.",
     )
-    expect(screen.getByText("Opponent avg. tokens (in/cache/out): 130/20/30")).toHaveAttribute(
+    expect(screen.getByText("Opponent avg. tokens per game (in/cache/out): 130/20/30")).toHaveAttribute(
       "title",
       "Average over games completed since 2026-07-04, when usage collection started.",
     )
-    expect(screen.getByText("Opponent avg. spend: $0.005000")).toHaveAttribute(
+    expect(screen.getByText("Opponent avg. spend per game: $0.005000")).toHaveAttribute(
       "title",
       "Average over games completed since 2026-07-04, when usage collection started.",
     )
     expect(screen.queryByText(/opponent 75/)).not.toBeInTheDocument()
-    expect(screen.getAllByText("Avg. tokens (in/cache/out): —/—/—").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("Avg. tokens per game (in/cache/out): —/—/—").length).toBeGreaterThan(0)
     expect(screen.getByRole("link", { name: "Haiku vs. GPT Nano games" })).toHaveAttribute(
       "href",
       "/user/llm_haiku/games?opponent=llm_gptnano",
