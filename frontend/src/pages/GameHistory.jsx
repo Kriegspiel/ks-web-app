@@ -66,6 +66,10 @@ const FILTER_CONFIGS = [
 
 const FILTER_CONFIG_BY_KEY = new Map(FILTER_CONFIGS.map((config) => [config.key, config]))
 const OPPONENT_GROUP_ORDER = { Humans: 0, Bots: 1 }
+const OPPONENT_GROUP_FILTERS = [
+  { group: "Humans", value: "human:*", label: "All humans" },
+  { group: "Bots", value: "bot:*", label: "All bots" },
+]
 
 function formatDate(value) {
   return formatUtcDateTime(value) || "—"
@@ -96,7 +100,29 @@ function splitOpponentFilterValue(value) {
   return { group: text.slice(0, separator), value: text.slice(separator + 1) }
 }
 
+function opponentGroupFilterForValue(value) {
+  return OPPONENT_GROUP_FILTERS.find((option) => option.value === value) ?? null
+}
+
+function opponentGroupFilterForGroupLabel(group) {
+  return OPPONENT_GROUP_FILTERS.find((option) => option.group === group) ?? null
+}
+
+function opponentGroupFilterValueForOpponentValue(value) {
+  const parsed = splitOpponentFilterValue(value)
+  const group = parsed.group === "bot" ? "Bots" : "Humans"
+  return opponentGroupFilterForGroupLabel(group)?.value ?? ""
+}
+
+function isOpponentGroupFilterValue(value) {
+  return Boolean(opponentGroupFilterForValue(value))
+}
+
 function opponentFilterLabel(value) {
+  const groupFilter = opponentGroupFilterForValue(value)
+  if (groupFilter) {
+    return groupFilter.label
+  }
   const parsed = splitOpponentFilterValue(value)
   const label = filterLabel(parsed.value)
   return parsed.group === "bot" && label !== "—" ? `${label} (bot)` : label
@@ -183,6 +209,9 @@ function buildFilterOptions(sourceOptions, config, selectedValues = [], fallback
   }
 
   selectedValues.forEach((value) => {
+    if (config.key === "opponent" && isOpponentGroupFilterValue(value)) {
+      return
+    }
     if (!options.has(value)) {
       options.set(value, {
         value,
@@ -209,6 +238,20 @@ function groupFilterOptions(options) {
     }
     group.options.push(option)
   })
+  return groups
+}
+
+function filterMenuGroups(config, options, selectedValues = []) {
+  const groups = groupFilterOptions(options)
+  if (config.key === "opponent") {
+    const selected = new Set(selectedValues)
+    OPPONENT_GROUP_FILTERS.forEach((groupFilter) => {
+      if (selected.has(groupFilter.value) && !groups.some((group) => group.label === groupFilter.group)) {
+        groups.push({ label: groupFilter.group, options: [] })
+      }
+    })
+    groups.sort((left, right) => (OPPONENT_GROUP_ORDER[left.label] ?? 10) - (OPPONENT_GROUP_ORDER[right.label] ?? 10))
+  }
   return groups
 }
 
@@ -279,10 +322,6 @@ function setFilterParam(searchParams, key, values) {
   }
 }
 
-function filterMenuGroups(options) {
-  return groupFilterOptions(options)
-}
-
 function useFilterMenuStyle(open, anchorRef) {
   const [style, setStyle] = useState(null)
 
@@ -327,27 +366,42 @@ function useFilterMenuStyle(open, anchorRef) {
 
 function HistoryFilterMenu({ config, options, selectedValues, loading, error, onToggle, onClear, style }) {
   const selected = new Set(selectedValues)
-  const groups = filterMenuGroups(options)
+  const groups = filterMenuGroups(config, options, selectedValues)
 
   return (
     <div className="history-filter-menu__panel" role="menu" style={style}>
       {loading ? <p className="history-filter-menu__status">Loading values...</p> : null}
       {error ? <p className="history-filter-menu__status history-filter-menu__status--error" role="alert">{error}</p> : null}
-      {groups.length ? groups.map((group) => (
-        <div className="history-filter-menu__group" key={group.label || "values"}>
-          {group.label ? <p className="history-filter-menu__group-title">{group.label}</p> : null}
-          {group.options.map((option) => (
-            <label className="history-filter-menu__option" key={option.value}>
-              <input
-                type="checkbox"
-                checked={selected.has(option.value)}
-                onChange={() => onToggle(option.value)}
-              />
-              <span>{option.label}</span>
-            </label>
-          ))}
-        </div>
-      )) : !loading ? <p className="history-filter-menu__empty">No values</p> : null}
+      {groups.length ? groups.map((group) => {
+        const groupFilter = config.key === "opponent" ? opponentGroupFilterForGroupLabel(group.label) : null
+        const groupSelected = groupFilter ? selected.has(groupFilter.value) : false
+        return (
+          <div className="history-filter-menu__group" key={group.label || "values"}>
+            {group.label ? <p className="history-filter-menu__group-title">{group.label}</p> : null}
+            {groupFilter ? (
+              <label className="history-filter-menu__option history-filter-menu__option--group-all">
+                <input
+                  type="checkbox"
+                  checked={groupSelected}
+                  onChange={() => onToggle(groupFilter.value)}
+                />
+                <span>{groupFilter.label}</span>
+              </label>
+            ) : null}
+            {group.options.map((option) => (
+              <label className="history-filter-menu__option" key={option.value}>
+                <input
+                  type="checkbox"
+                  checked={selected.has(option.value) || groupSelected}
+                  disabled={groupSelected}
+                  onChange={() => onToggle(option.value)}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+        )
+      }) : !loading ? <p className="history-filter-menu__empty">No values</p> : null}
       <button className="history-filter-menu__clear" type="button" onClick={onClear} disabled={!selectedValues.length}>Clear {config.label}</button>
     </div>
   )
@@ -614,7 +668,29 @@ export default function GameHistoryPage() {
   function toggleFilter(filterKey, value) {
     updateSearch((next) => {
       const values = new Set(parseFilterValues(next, filterKey))
-      if (values.has(value)) {
+      if (filterKey === "opponent") {
+        const groupFilterValue = opponentGroupFilterValueForOpponentValue(value)
+        if (isOpponentGroupFilterValue(value)) {
+          if (values.has(value)) {
+            values.delete(value)
+          } else {
+            values.add(value)
+            const candidates = [...values]
+            candidates.forEach((candidate) => {
+              if (candidate !== value && opponentGroupFilterValueForOpponentValue(candidate) === value) {
+                values.delete(candidate)
+              }
+            })
+          }
+        } else {
+          values.delete(groupFilterValue)
+          if (values.has(value)) {
+            values.delete(value)
+          } else {
+            values.add(value)
+          }
+        }
+      } else if (values.has(value)) {
         values.delete(value)
       } else {
         values.add(value)

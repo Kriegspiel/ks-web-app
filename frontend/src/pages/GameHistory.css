@@ -217,6 +217,13 @@
   background: var(--accent-soft);
 }
 
+.history-filter-menu__option--group-all {
+  margin-bottom: 0.15rem;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  font-weight: 800;
+}
+
 .history-filter-menu__option input {
   width: auto;
   margin: 0;

@@ -243,6 +243,69 @@ describe("GameHistoryPage", () => {
     expect(historyRows()).toHaveLength(3)
   })
 
+  it("lets_the_opponent_filter_select_all_humans_or_all_bots", async () => {
+    const bobGame = { game_id: "g-human", game_code: "HUM001", rule_variant: "berkeley", opponent: "bob", opponent_role: "user", play_as: "white", result: "win", reason: "checkmate", turn_count: 6, played_at: "2026-01-04T00:00:00Z" }
+    const claireGame = { game_id: "g-other", game_code: "OTH001", rule_variant: "wild16", opponent: "claire", opponent_role: "user", play_as: "white", result: "draw", reason: "stalemate", turn_count: 10, played_at: "2026-01-02T00:00:00Z" }
+    const randobotGame = { game_id: "g-bot", game_code: "BOT001", rule_variant: "berkeley_any", opponent: "randobot", opponent_role: "bot", play_as: "black", result: "loss", reason: "timeout", turn_count: 8, played_at: "2026-01-03T00:00:00Z" }
+    mockApi.userApi.getGameHistoryFilterOptions.mockResolvedValueOnce({
+      filter_options: {
+        opponent: [
+          { value: "human:bob", label: "bob", group: "Humans" },
+          { value: "human:claire", label: "claire", group: "Humans" },
+          { value: "bot:randobot", label: "randobot (bot)", group: "Bots" },
+        ],
+      },
+    })
+    mockApi.userApi.getGameHistory
+      .mockResolvedValueOnce({ games: [bobGame, randobotGame, claireGame], pagination: { page: 1, pages: 1, total: 3 } })
+      .mockResolvedValueOnce({ games: [randobotGame], pagination: { page: 1, pages: 1, total: 1 } })
+      .mockResolvedValueOnce({ games: [bobGame, randobotGame, claireGame], pagination: { page: 1, pages: 1, total: 3 } })
+      .mockResolvedValueOnce({ games: [bobGame, claireGame], pagination: { page: 1, pages: 1, total: 2 } })
+
+    renderHistory()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Opponent" }))
+    const opponentMenu = await screen.findByRole("menu")
+    expect(filterCheckbox(opponentMenu, "All humans")).toBeInTheDocument()
+    expect(filterCheckbox(opponentMenu, "All bots")).toBeInTheDocument()
+
+    fireEvent.click(filterCheckbox(opponentMenu, "All bots"))
+    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(
+      2,
+      "fil",
+      1,
+      100,
+      expectedHistoryOptions({ filters: { opponent: ["bot:*"] } }),
+    ))
+    expect(screen.getByTestId("location")).toHaveTextContent("opponent=bot%3A*")
+    const allBotsMenu = await screen.findByRole("menu")
+    expect(filterCheckbox(allBotsMenu, "All bots")).toBeChecked()
+    expect(filterCheckbox(allBotsMenu, "randobot (bot)")).toBeDisabled()
+    expect(historyRows()).toHaveLength(1)
+
+    fireEvent.click(filterCheckbox(allBotsMenu, "All bots"))
+    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(
+      3,
+      "fil",
+      1,
+      100,
+      expectedHistoryOptions(),
+    ))
+
+    const clearedOpponentMenu = await screen.findByRole("menu")
+    fireEvent.click(filterCheckbox(clearedOpponentMenu, "All humans"))
+    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(
+      4,
+      "fil",
+      1,
+      100,
+      expectedHistoryOptions({ filters: { opponent: ["human:*"] } }),
+    ))
+    expect(historyRows()).toHaveLength(2)
+    expect(within(historyRows()[0]).getByRole("link", { name: "bob" })).toBeInTheDocument()
+    expect(within(historyRows()[1]).getByRole("link", { name: "claire" })).toBeInTheDocument()
+  })
+
   it("shows_filtered_pagination_for_single_match_filters", async () => {
     const lgyanfGame = { game_id: "g-human", game_code: "HUM001", rule_variant: "berkeley", opponent: "lgyanf", opponent_role: "user", play_as: "white", result: "loss", reason: "checkmate", turn_count: 6, played_at: "2026-01-04T00:00:00Z" }
     const randobotGame = { game_id: "g-bot", game_code: "BOT001", rule_variant: "berkeley_any", opponent: "randobot", opponent_role: "bot", play_as: "black", result: "win", reason: "timeout", turn_count: 8, played_at: "2026-01-03T00:00:00Z" }
