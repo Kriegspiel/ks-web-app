@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import EloChart from "../components/EloChart"
 import { ELO_TRACKS } from "../components/eloChartConstants"
+import TierBadge from "../components/TierBadge"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import { userApi } from "../services/api"
@@ -40,6 +41,18 @@ const PROFILE_TIER_DETAILS = {
     name: "Expert",
     limit: "Unlimited language-model bot games",
     className: "profile-tier-card--tier4",
+  },
+  tier5: {
+    code: "T5",
+    name: "Master",
+    limit: "Not available yet",
+    className: "profile-tier-card--tier5",
+  },
+  tier6: {
+    code: "T6",
+    name: "Elite",
+    limit: "Not available yet",
+    className: "profile-tier-card--tier6",
   },
 }
 const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
@@ -411,7 +424,7 @@ export default function ProfilePage() {
       <p>Member since {formatDate(profile?.member_since)}.</p>
       {profileTier ? (
         <section className={`profile-card profile-tier-card ${profileTier.className}`} aria-label={profileTier.ariaLabel || "Player tier"}>
-          <span className="profile-tier-card__code">{profileTier.code}</span>
+          <TierBadge code={profileTier.code} className="profile-tier-card__code" />
           <div className="profile-tier-card__body">
             <h2>Tier {profileTier.code} {profileTier.name}</h2>
             <p>{profileTier.limit}</p>

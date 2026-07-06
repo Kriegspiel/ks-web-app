@@ -1,0 +1,80 @@
+.tier-badge {
+  --tier-badge-color: #2a231d;
+  --tier-badge-corner: #8c725e;
+  --tier-badge-size: 2rem;
+  --tier-badge-corner-size: 0.9rem;
+  --tier-badge-font-size: 0.75rem;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tier-badge-size);
+  min-width: var(--tier-badge-size);
+  height: var(--tier-badge-size);
+  padding: 0;
+  border: 1px solid rgba(255, 248, 240, 0.18);
+  border-radius: 0;
+  overflow: hidden;
+  background: var(--tier-badge-color);
+  color: #f4ede4;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  font-size: var(--tier-badge-font-size);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
+  flex: 0 0 auto;
+}
+
+.tier-badge::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--tier-badge-corner-size);
+  height: var(--tier-badge-corner-size);
+  background: var(--tier-badge-corner);
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+  pointer-events: none;
+}
+
+.tier-badge--t0 {
+  --tier-badge-color: #2a231d;
+  --tier-badge-corner: #8c725e;
+}
+
+.tier-badge--t1 {
+  --tier-badge-color: #4a3325;
+  --tier-badge-corner: #d38555;
+}
+
+.tier-badge--t2 {
+  --tier-badge-color: #5a4a1f;
+  --tier-badge-corner: #d8bb45;
+}
+
+.tier-badge--t3 {
+  --tier-badge-color: #31553f;
+  --tier-badge-corner: #7bd995;
+}
+
+.tier-badge--t4 {
+  --tier-badge-color: #255660;
+  --tier-badge-corner: #67d9ec;
+}
+
+.tier-badge--t5 {
+  --tier-badge-color: #2f4772;
+  --tier-badge-corner: #86a8ff;
+}
+
+.tier-badge--t6 {
+  --tier-badge-color: #56345d;
+  --tier-badge-corner: #d88fe8;
+}
+
+:root[data-theme="dark"] .tier-badge {
+  border-color: rgba(255, 248, 240, 0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.28);
+}
