@@ -10,6 +10,38 @@ import { formatRuleVariant } from "../utils/rules"
 import "./Profile.css"
 
 const BOT_BLOG_URL = "https://kriegspiel.org/blog/bot-registration-flow"
+const PROFILE_TIER_DETAILS = {
+  guest: {
+    code: "T0",
+    name: "Guest",
+    limit: "No language-model bots",
+    className: "profile-tier-card--guest",
+  },
+  tier1: {
+    code: "T1",
+    name: "Casual",
+    limit: "128-ply language-model bot games",
+    className: "profile-tier-card--tier1",
+  },
+  tier2: {
+    code: "T2",
+    name: "Club",
+    limit: "256-ply language-model bot games",
+    className: "profile-tier-card--tier2",
+  },
+  tier3: {
+    code: "T3",
+    name: "Strong",
+    limit: "1024-ply language-model bot games",
+    className: "profile-tier-card--tier3",
+  },
+  tier4: {
+    code: "T4",
+    name: "Expert",
+    limit: "Unlimited language-model bot games",
+    className: "profile-tier-card--tier4",
+  },
+}
 
 function formatDate(value) {
   return formatUtcDate(value) || "Unknown"
@@ -123,6 +155,11 @@ function regularNameFromGuest(username) {
     : username
 }
 
+function tierDetailsForProfile(profile) {
+  if (profile?.role === "bot" || profile?.is_bot) return null
+  return PROFILE_TIER_DETAILS[profile?.llm_bot_tier] ?? null
+}
+
 export default function ProfilePage() {
   const { username = "" } = useParams()
   const navigate = useNavigate()
@@ -210,6 +247,7 @@ export default function ProfilePage() {
   const botRulesetRows = useMemo(() => (botMetrics?.rulesets ?? []).slice(0, 4), [botMetrics])
   const isOwnGuestProfile = user?.is_guest === true && profile?.role === "guest" && user?.username === profile?.username
   const convertedUsername = regularNameFromGuest(profile?.username)
+  const profileTier = tierDetailsForProfile(profile)
 
   async function onConvertGuest(event) {
     event.preventDefault()
@@ -242,6 +280,15 @@ export default function ProfilePage() {
     <main className="page-shell profile-page">
       <h1>{profile?.username}</h1>
       <p>Member since {formatDate(profile?.member_since)}.</p>
+      {profileTier ? (
+        <section className={`profile-card profile-tier-card ${profileTier.className}`} aria-label="Player tier">
+          <span className="profile-tier-card__code">{profileTier.code}</span>
+          <div className="profile-tier-card__body">
+            <h2>Tier {profileTier.code} {profileTier.name}</h2>
+            <p>{profileTier.limit}</p>
+          </div>
+        </section>
+      ) : null}
       {isOwnGuestProfile ? (
         <section className="profile-card profile-card--guest-conversion" aria-label="Convert guest account">
           <h2>Keep this account.</h2>
