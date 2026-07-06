@@ -43,6 +43,24 @@ function historyRows() {
   return screen.getAllByRole("row").slice(1)
 }
 
+function filterCheckbox(menu, label) {
+  const labelElement = within(menu).getByText(label).closest("label")
+  expect(labelElement).toBeTruthy()
+  const checkbox = labelElement.querySelector('input[type="checkbox"]')
+  expect(checkbox).toBeTruthy()
+  return checkbox
+}
+
+const DEFAULT_SORT = { key: "played_at", direction: "desc" }
+const DEFAULT_FILTERS = { rule_set: [], color: [], opponent: [], result: [], reason: [] }
+
+function expectedHistoryOptions({ sort = DEFAULT_SORT, filters = {} } = {}) {
+  return {
+    sort,
+    filters: { ...DEFAULT_FILTERS, ...filters },
+  }
+}
+
 describe("GameHistoryPage", () => {
   it("uses_theme_surface_tokens_for_history_table_headers", () => {
     const css = readFileSync(resolve(process.cwd(), "src/pages/GameHistory.css"), "utf8")
@@ -81,9 +99,9 @@ describe("GameHistoryPage", () => {
   it("sorts_by_date_and_time_descending_by_default", async () => {
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({
       games: [
-        { game_id: "g-old", game_code: "OLD001", rule_variant: "berkeley", opponent: "old", opponent_role: "user", play_as: "white", result: "loss", reason: "timeout", turn_count: 8, played_at: "2026-01-01T00:00:00Z" },
         { game_id: "g-new", game_code: "NEW001", rule_variant: "cincinnati", opponent: "new", opponent_role: "user", play_as: "black", result: "win", reason: "checkmate", turn_count: 5, played_at: "2026-01-03T00:00:00Z" },
         { game_id: "g-mid", game_code: "MID001", rule_variant: "wild16", opponent: "middle", opponent_role: "bot", play_as: "white", result: "draw", reason: "stalemate", turn_count: 10, played_at: "2026-01-02T00:00:00Z" },
+        { game_id: "g-old", game_code: "OLD001", rule_variant: "berkeley", opponent: "old", opponent_role: "user", play_as: "white", result: "loss", reason: "timeout", turn_count: 8, played_at: "2026-01-01T00:00:00Z" },
       ],
       pagination: { page: 1, pages: 1, total: 3 },
     })
@@ -101,13 +119,13 @@ describe("GameHistoryPage", () => {
   })
 
   it("makes_each_history_column_sortable_from_the_header", async () => {
-    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
-      games: [
-        { game_id: "g-low", game_code: "LOW001", rule_variant: "berkeley", opponent: "low", opponent_role: "user", play_as: "white", result: "loss", reason: "timeout", turn_count: 2, played_at: "2026-01-01T00:00:00Z" },
-        { game_id: "g-high", game_code: "HIGH01", rule_variant: "wild16", opponent: "high", opponent_role: "bot", play_as: "black", result: "win", reason: "checkmate", turn_count: 9, played_at: "2026-01-02T00:00:00Z" },
-      ],
-      pagination: { page: 1, pages: 1, total: 2 },
-    })
+    const lowTurnsGame = { game_id: "g-low", game_code: "LOW001", rule_variant: "berkeley", opponent: "low", opponent_role: "user", play_as: "white", result: "loss", reason: "timeout", turn_count: 2, played_at: "2026-01-01T00:00:00Z" }
+    const highTurnsGame = { game_id: "g-high", game_code: "HIGH01", rule_variant: "wild16", opponent: "high", opponent_role: "bot", play_as: "black", result: "win", reason: "checkmate", turn_count: 9, played_at: "2026-01-02T00:00:00Z" }
+    mockApi.userApi.getGameHistory
+      .mockResolvedValueOnce({ games: [lowTurnsGame, highTurnsGame], pagination: { page: 1, pages: 1, total: 2 } })
+      .mockResolvedValueOnce({ games: [lowTurnsGame, highTurnsGame], pagination: { page: 1, pages: 1, total: 2 } })
+      .mockResolvedValueOnce({ games: [highTurnsGame, lowTurnsGame], pagination: { page: 1, pages: 1, total: 2 } })
+      .mockResolvedValueOnce({ games: [lowTurnsGame, highTurnsGame], pagination: { page: 1, pages: 1, total: 2 } })
 
     renderHistory()
 
@@ -116,31 +134,59 @@ describe("GameHistoryPage", () => {
     }
 
     fireEvent.click(screen.getByRole("button", { name: "Sort Turns" }))
+    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(
+      2,
+      "fil",
+      1,
+      100,
+      expectedHistoryOptions({ sort: { key: "turns", direction: "asc" } }),
+    ))
     expect(screen.getByRole("columnheader", { name: /Turns/ })).toHaveAttribute("aria-sort", "ascending")
-    expect(historyRows().map((row) => within(row).getAllByRole("cell")[5].textContent)).toEqual(["2", "9"])
+    await waitFor(() => expect(historyRows().map((row) => within(row).getAllByRole("cell")[5].textContent)).toEqual(["2", "9"]))
     expect(screen.getByTestId("location")).toHaveTextContent("sort=turns")
     expect(screen.getByTestId("location")).toHaveTextContent("dir=asc")
 
     fireEvent.click(screen.getByRole("button", { name: "Sort Turns" }))
+    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(
+      3,
+      "fil",
+      1,
+      100,
+      expectedHistoryOptions({ sort: { key: "turns", direction: "desc" } }),
+    ))
     expect(screen.getByRole("columnheader", { name: /Turns/ })).toHaveAttribute("aria-sort", "descending")
-    expect(historyRows().map((row) => within(row).getAllByRole("cell")[5].textContent)).toEqual(["9", "2"])
+    await waitFor(() => expect(historyRows().map((row) => within(row).getAllByRole("cell")[5].textContent)).toEqual(["9", "2"]))
     expect(screen.getByTestId("location")).toHaveTextContent("dir=desc")
 
     fireEvent.click(screen.getByRole("button", { name: "Sort Turns" }))
+    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(
+      4,
+      "fil",
+      1,
+      100,
+      expectedHistoryOptions({ sort: null }),
+    ))
     expect(screen.getByRole("columnheader", { name: /Turns/ })).toHaveAttribute("aria-sort", "none")
-    expect(historyRows().map((row) => within(row).getAllByRole("cell")[5].textContent)).toEqual(["2", "9"])
+    await waitFor(() => expect(historyRows().map((row) => within(row).getAllByRole("cell")[5].textContent)).toEqual(["2", "9"]))
     expect(screen.getByTestId("location")).toHaveTextContent("sort=none")
   })
 
   it("opens_header_filter_menus_and_groups_multi_select_opponents", async () => {
-    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
-      games: [
-        { game_id: "g-human", game_code: "HUM001", rule_variant: "berkeley", opponent: "bob", opponent_role: "user", play_as: "white", result: "win", reason: "checkmate", turn_count: 6, played_at: "2026-01-04T00:00:00Z" },
-        { game_id: "g-bot", game_code: "BOT001", rule_variant: "berkeley_any", opponent: "randobot", opponent_role: "bot", play_as: "black", result: "loss", reason: "timeout", turn_count: 8, played_at: "2026-01-03T00:00:00Z" },
-        { game_id: "g-other", game_code: "OTH001", rule_variant: "wild16", opponent: "claire", opponent_role: "user", play_as: "white", result: "draw", reason: "stalemate", turn_count: 10, played_at: "2026-01-02T00:00:00Z" },
+    const bobGame = { game_id: "g-human", game_code: "HUM001", rule_variant: "berkeley", opponent: "bob", opponent_role: "user", play_as: "white", result: "win", reason: "checkmate", turn_count: 6, played_at: "2026-01-04T00:00:00Z" }
+    const randobotGame = { game_id: "g-bot", game_code: "BOT001", rule_variant: "berkeley_any", opponent: "randobot", opponent_role: "bot", play_as: "black", result: "loss", reason: "timeout", turn_count: 8, played_at: "2026-01-03T00:00:00Z" }
+    const claireGame = { game_id: "g-other", game_code: "OTH001", rule_variant: "wild16", opponent: "claire", opponent_role: "user", play_as: "white", result: "draw", reason: "stalemate", turn_count: 10, played_at: "2026-01-02T00:00:00Z" }
+    const filterOptions = {
+      opponent: [
+        { value: "human:bob", label: "bob", group: "Humans" },
+        { value: "human:claire", label: "claire", group: "Humans" },
+        { value: "bot:randobot", label: "randobot (bot)", group: "Bots" },
       ],
-      pagination: { page: 1, pages: 1, total: 3 },
-    })
+    }
+    mockApi.userApi.getGameHistory
+      .mockResolvedValueOnce({ games: [bobGame, randobotGame, claireGame], pagination: { page: 1, pages: 1, total: 3 }, filter_options: filterOptions })
+      .mockResolvedValueOnce({ games: [bobGame], pagination: { page: 1, pages: 1, total: 1 }, filter_options: filterOptions })
+      .mockResolvedValueOnce({ games: [bobGame, randobotGame], pagination: { page: 1, pages: 1, total: 2 }, filter_options: filterOptions })
+      .mockResolvedValueOnce({ games: [bobGame, randobotGame, claireGame], pagination: { page: 1, pages: 1, total: 3 }, filter_options: filterOptions })
 
     renderHistory()
 
@@ -154,42 +200,108 @@ describe("GameHistoryPage", () => {
     await within(opponentMenu).findByText("Humans")
     expect(within(opponentMenu).getAllByText(/Humans|Bots/).map((node) => node.textContent)).toEqual(["Humans", "Bots"])
 
-    fireEvent.click(within(opponentMenu).getByLabelText("bob"))
+    fireEvent.click(filterCheckbox(opponentMenu, "bob"))
+    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(
+      2,
+      "fil",
+      1,
+      100,
+      expectedHistoryOptions({ filters: { opponent: ["human:bob"] } }),
+    ))
     expect(historyRows()).toHaveLength(1)
     expect(within(historyRows()[0]).getByRole("link", { name: "bob" })).toBeInTheDocument()
     expect(screen.getByTestId("location")).toHaveTextContent("opponent=human%3Abob")
 
-    fireEvent.click(within(opponentMenu).getByLabelText("randobot (bot)"))
+    const updatedOpponentMenu = await screen.findByRole("menu")
+    fireEvent.click(filterCheckbox(updatedOpponentMenu, "randobot (bot)"))
+    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(
+      3,
+      "fil",
+      1,
+      100,
+      expectedHistoryOptions({ filters: { opponent: ["human:bob", "bot:randobot"] } }),
+    ))
     expect(historyRows()).toHaveLength(2)
     expect(within(historyRows()[0]).getByRole("link", { name: "bob" })).toBeInTheDocument()
     expect(within(historyRows()[1]).getByRole("link", { name: "randobot (bot)" })).toBeInTheDocument()
     expect(screen.getByTestId("location")).toHaveTextContent("bot%3Arandobot")
 
     fireEvent.click(screen.getByRole("button", { name: "Clear filters" }))
+    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(
+      4,
+      "fil",
+      1,
+      100,
+      expectedHistoryOptions(),
+    ))
     expect(historyRows()).toHaveLength(3)
   })
 
   it("shows_filtered_pagination_for_single_match_filters", async () => {
-    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
-      games: [
-        { game_id: "g-human", game_code: "HUM001", rule_variant: "berkeley", opponent: "lgyanf", opponent_role: "user", play_as: "white", result: "loss", reason: "checkmate", turn_count: 6, played_at: "2026-01-04T00:00:00Z" },
-        { game_id: "g-bot", game_code: "BOT001", rule_variant: "berkeley_any", opponent: "randobot", opponent_role: "bot", play_as: "black", result: "win", reason: "timeout", turn_count: 8, played_at: "2026-01-03T00:00:00Z" },
+    const lgyanfGame = { game_id: "g-human", game_code: "HUM001", rule_variant: "berkeley", opponent: "lgyanf", opponent_role: "user", play_as: "white", result: "loss", reason: "checkmate", turn_count: 6, played_at: "2026-01-04T00:00:00Z" }
+    const randobotGame = { game_id: "g-bot", game_code: "BOT001", rule_variant: "berkeley_any", opponent: "randobot", opponent_role: "bot", play_as: "black", result: "win", reason: "timeout", turn_count: 8, played_at: "2026-01-03T00:00:00Z" }
+    const filterOptions = {
+      opponent: [
+        { value: "human:lgyanf", label: "lgyanf", group: "Humans" },
+        { value: "bot:randobot", label: "randobot (bot)", group: "Bots" },
       ],
-      pagination: { page: 1, pages: 2, total: 121 },
-    })
+    }
+    mockApi.userApi.getGameHistory
+      .mockResolvedValueOnce({ games: [lgyanfGame, randobotGame], pagination: { page: 1, pages: 2, total: 121 }, filter_options: filterOptions })
+      .mockResolvedValueOnce({ games: [lgyanfGame], pagination: { page: 1, pages: 1, total: 1 }, filter_options: filterOptions })
 
     renderHistory()
 
     expect(await screen.findByText("Page 1 of 2")).toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "Opponent" }))
     const opponentMenu = await screen.findByRole("menu")
-    fireEvent.click(within(opponentMenu).getByLabelText("lgyanf"))
+    fireEvent.click(filterCheckbox(opponentMenu, "lgyanf"))
 
+    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(
+      2,
+      "fil",
+      1,
+      100,
+      expectedHistoryOptions({ filters: { opponent: ["human:lgyanf"] } }),
+    ))
     expect(historyRows()).toHaveLength(1)
     expect(within(historyRows()[0]).getByRole("link", { name: "lgyanf" })).toBeInTheDocument()
     expect(screen.getByText("Page 1 of 1")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Prev" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "Next" })).toBeDisabled()
+  })
+
+  it("keeps_full_filter_options_available_when_a_filter_returns_one_game", async () => {
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
+      games: [
+        { game_id: "g-bot", game_code: "BOT001", rule_variant: "berkeley_any", opponent: "bot_gemini31_lite", opponent_role: "bot", play_as: "black", result: "win", reason: "timeout", turn_count: 8, played_at: "2026-01-03T00:00:00Z" },
+      ],
+      pagination: { page: 1, pages: 1, total: 1 },
+      filter_options: {
+        opponent: [
+          { value: "human:lgyanf", label: "lgyanf", group: "Humans" },
+          { value: "bot:bot_gemini31_lite", label: "bot_gemini31_lite (bot)", group: "Bots" },
+          { value: "bot:randobot", label: "randobot (bot)", group: "Bots" },
+        ],
+      },
+    })
+
+    renderHistory("/user/randobotany/games?opponent=bot%3Abot_gemini31_lite")
+
+    await screen.findByText("Page 1 of 1")
+    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenCalledWith(
+      "randobotany",
+      1,
+      100,
+      expectedHistoryOptions({ filters: { opponent: ["bot:bot_gemini31_lite"] } }),
+    ))
+    fireEvent.click(screen.getByRole("button", { name: "Opponent 1" }))
+    const opponentMenu = await screen.findByRole("menu")
+
+    expect(opponentMenu.parentElement).toBe(document.body)
+    expect(filterCheckbox(opponentMenu, "lgyanf")).toBeInTheDocument()
+    expect(filterCheckbox(opponentMenu, "bot_gemini31_lite (bot)")).toBeChecked()
+    expect(filterCheckbox(opponentMenu, "randobot (bot)")).toBeInTheDocument()
   })
 
   it("closes_an_open_filter_menu_when_clicking_elsewhere", async () => {
@@ -214,21 +326,32 @@ describe("GameHistoryPage", () => {
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({
       games: [
         { game_id: "g-bob", game_code: "BOB001", rule_variant: "berkeley", opponent: "bob", opponent_role: "user", play_as: "white", result: "win", reason: "checkmate", turn_count: 8, played_at: "2026-01-04T00:00:00Z" },
-        { game_id: "g-claire", game_code: "CLA001", rule_variant: "wild16", opponent: "claire", opponent_role: "user", play_as: "black", result: "win", reason: "timeout", turn_count: 3, played_at: "2026-01-03T00:00:00Z" },
       ],
       pagination: { page: 2, pages: 4, total: 2000 },
+      filter_options: {
+        opponent: [{ value: "human:bob", label: "bob", group: "Humans" }],
+        result: [{ value: "win", label: "win" }],
+      },
     })
 
     renderHistory("/user/fil/games?page=2&per_page=500&sort=turns&dir=asc&result=win&opponent=human%3Abob")
 
-    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenCalledWith("fil", 2, 500))
+    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenCalledWith(
+      "fil",
+      2,
+      500,
+      expectedHistoryOptions({
+        sort: { key: "turns", direction: "asc" },
+        filters: { result: ["win"], opponent: ["human:bob"] },
+      }),
+    ))
     expect(screen.getByLabelText("Games per page")).toHaveValue("500")
     expect(screen.getByRole("columnheader", { name: /Turns/ })).toHaveAttribute("aria-sort", "ascending")
     expect(historyRows()).toHaveLength(1)
     expect(within(historyRows()[0]).getByRole("link", { name: "bob" })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Opponent 1" }))
-    expect(await screen.findByLabelText("bob")).toBeChecked()
+    expect(filterCheckbox(await screen.findByRole("menu"), "bob")).toBeChecked()
   })
 
   it("changes_the_backend_page_size_from_the_toolbar", async () => {
@@ -242,7 +365,7 @@ describe("GameHistoryPage", () => {
     fireEvent.change(screen.getByLabelText("Games per page"), { target: { value: "1000" } })
 
     await screen.findByText("bob")
-    expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(2, "fil", 1, 1000)
+    expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(2, "fil", 1, 1000, expectedHistoryOptions())
     expect(screen.getByTestId("location")).toHaveTextContent("per_page=1000")
     expect(screen.getByTestId("location")).not.toHaveTextContent("page=3")
   })
@@ -335,10 +458,10 @@ describe("GameHistoryPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
 
     await screen.findByText("bob")
-    expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(2, "fil", 2, 100)
+    expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(2, "fil", 2, 100, expectedHistoryOptions())
 
     fireEvent.click(screen.getByRole("button", { name: "Prev" }))
-    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(3, "fil", 1, 100))
+    await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(3, "fil", 1, 100, expectedHistoryOptions()))
   })
 
   it("falls_back_to_full_turns_when_only_move_count_is_present", async () => {
