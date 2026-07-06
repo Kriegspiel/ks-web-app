@@ -148,6 +148,7 @@
 
 .profile-bot-mini-list dt {
   flex: 0 0 auto;
+  font-weight: 400;
   overflow-wrap: normal;
 }
 
@@ -156,7 +157,8 @@
 }
 
 .profile-bot-row-link {
-  font-weight: 700;
+  font-weight: 400;
+  text-decoration-line: underline;
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.14em;
 }

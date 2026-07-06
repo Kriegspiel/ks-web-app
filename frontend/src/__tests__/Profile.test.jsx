@@ -195,7 +195,7 @@ describe("ProfilePage", () => {
           vs_bots: { elo: 1200, peak: 1200 },
         },
       },
-      bot_metrics: {
+      user_metrics: {
         completed_games: 4,
         average_duration_seconds: 420,
         average_turn_count: 18.5,
@@ -230,25 +230,65 @@ describe("ProfilePage", () => {
     expect(screen.getByText(/Email address of this bot owner is bot-gpt-nano@kriegspiel\.org\./i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("href", "https://kriegspiel.org/blog/bot-registration-flow")
     expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("target", "_blank")
-    expect(screen.getByRole("heading", { name: "Bot metrics" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "User metrics" })).toBeInTheDocument()
     expect(screen.getByText("Completed games")).toBeInTheDocument()
     expect(screen.getByText("4")).toBeInTheDocument()
     expect(screen.getByText("vs Bots win rate")).toBeInTheDocument()
     expect(screen.getAllByText("0.0%").length).toBeGreaterThan(0)
     expect(screen.getByText("vs Humans win rate")).toBeInTheDocument()
     expect(screen.getAllByText("100.0%").length).toBeGreaterThan(0)
-    expect(screen.getByText("Average turns")).toBeInTheDocument()
+    expect(screen.getByText("Average turns count")).toBeInTheDocument()
     expect(screen.getByText("18.5")).toBeInTheDocument()
     expect(screen.getByText("Average duration")).toBeInTheDocument()
     expect(screen.getByText("7m")).toBeInTheDocument()
-    expect(screen.getByText("White")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "White" })).toHaveAttribute("href", "/user/llm_gpt45nano/games?color=white")
+    expect(screen.getByRole("link", { name: "Black" })).toHaveAttribute("href", "/user/llm_gpt45nano/games?color=black")
     expect(screen.getByText("2-0-1 · 66.7%")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "llm_haiku (bot)" })).toHaveAttribute("href", "/user/llm_haiku")
-    expect(screen.getByRole("link", { name: "fil" })).toHaveAttribute("href", "/user/fil")
+    expect(screen.getByRole("link", { name: "llm_haiku (bot)" })).toHaveAttribute("href", "/user/llm_gpt45nano/games?opponent=bot%3Allm_haiku")
+    expect(screen.getByRole("link", { name: "fil" })).toHaveAttribute("href", "/user/llm_gpt45nano/games?opponent=human%3Afil")
     expect(screen.getByText("0-1-1 · 0.0%")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Wild 16" })).toHaveAttribute("href", "/user/llm_gpt45nano/games?rule_set=wild16")
     expect(screen.getByRole("link", { name: "Berkeley + Any" })).toHaveAttribute("href", "/user/llm_gpt45nano/games?rule_set=berkeley_any")
     expect(screen.getByText("3 · 33.3%")).toBeInTheDocument()
+  })
+
+  it("shows_user_metrics_for_human_profiles", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "fil",
+      role: "user",
+      llm_bot_tier: "tier2",
+      member_since: "2026-01-01T00:00:00Z",
+      stats: {},
+      user_metrics: {
+        completed_games: 2,
+        average_duration_seconds: 540,
+        average_turn_count: 12.5,
+        overall: { total_games: 2, wins: 1, losses: 1, draws: 0, win_rate: 0.5 },
+        vs_humans: { total_games: 1, wins: 1, losses: 0, draws: 0, win_rate: 1.0 },
+        vs_bots: { total_games: 1, wins: 0, losses: 1, draws: 0, win_rate: 0.0 },
+        as_white: { total_games: 1, wins: 0, losses: 1, draws: 0, win_rate: 0.0 },
+        as_black: { total_games: 1, wins: 1, losses: 0, draws: 0, win_rate: 1.0 },
+        opponents: [
+          { username: "randobot", role: "bot", total_games: 1, wins: 0, losses: 1, draws: 0, win_rate: 0.0 },
+        ],
+        rulesets: [
+          { rule_variant: "english", total_games: 1, wins: 1, losses: 0, draws: 0, win_rate: 1.0 },
+        ],
+      },
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile("/user/fil")
+
+    await screen.findByRole("heading", { name: "fil" })
+    expect(screen.getByRole("heading", { name: "User metrics" })).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "This user is bot" })).not.toBeInTheDocument()
+    expect(screen.getByText("Average turns count")).toBeInTheDocument()
+    expect(screen.getByText("12.5")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "White" })).toHaveAttribute("href", "/user/fil/games?color=white")
+    expect(screen.getByRole("link", { name: "randobot (bot)" })).toHaveAttribute("href", "/user/fil/games?opponent=bot%3Arandobot")
+    expect(screen.getByRole("link", { name: "English" })).toHaveAttribute("href", "/user/fil/games?rule_set=english")
   })
 
   it("shows_guest_conversion_section_for_own_guest_profile", async () => {
@@ -348,6 +388,7 @@ describe("ProfilePage", () => {
       owner_email: null,
       member_since: null,
       stats: {},
+      user_metrics: { completed_games: 0 },
     })
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({
       games: [
@@ -367,7 +408,7 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("heading", { name: "Tier T2 LLM bot" })).toBeInTheDocument()
     expect(screen.getByText("Claude Haiku 4.5 model bot for T2 Club.")).toBeInTheDocument()
     expect(screen.getByText(/Email address of this bot owner is unknown\./i)).toBeInTheDocument()
-    expect(screen.getByText("No completed bot games yet.")).toBeInTheDocument()
+    expect(screen.getByText("No completed games yet.")).toBeInTheDocument()
     expect(screen.getByText(/draw vs unknown/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/llm_haiku/games")
   })

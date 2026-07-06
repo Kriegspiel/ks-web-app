@@ -212,7 +212,7 @@ function normalizeMetricBucket(bucket) {
   }
 }
 
-function normalizeBotMetrics(source) {
+function normalizeUserMetrics(source) {
   if (!source || typeof source !== "object") return null
   return {
     completedGames: statOrZero(source.completed_games),
@@ -266,6 +266,11 @@ function profilePath(username) {
 function profileGamesFilterPath(username, key, value) {
   const params = new URLSearchParams({ [key]: value })
   return `${profilePath(username)}/games?${params.toString()}`
+}
+
+function opponentFilterValue(row) {
+  const role = String(row?.role || "user").toLowerCase()
+  return `${role === "bot" ? "bot" : "human"}:${row.username}`
 }
 
 function tierDetailsForProfile(profile) {
@@ -366,9 +371,9 @@ export default function ProfilePage() {
   const selectedResults = ratingTrack === "vs_humans" ? stats.results.vsHumans : ratingTrack === "vs_bots" ? stats.results.vsBots : stats.results.overall
   const selectedHistoryStats = useMemo(() => formatResultSummary(selectedResults), [selectedResults])
   const isBotProfile = profile?.role === "bot" || profile?.is_bot
-  const botMetrics = useMemo(() => normalizeBotMetrics(profile?.bot_metrics), [profile])
-  const botOpponentRows = useMemo(() => (botMetrics?.opponents ?? []).slice(0, 5), [botMetrics])
-  const botRulesetRows = useMemo(() => (botMetrics?.rulesets ?? []).slice(0, 4), [botMetrics])
+  const userMetrics = useMemo(() => normalizeUserMetrics(profile?.user_metrics ?? profile?.bot_metrics), [profile])
+  const userOpponentRows = useMemo(() => (userMetrics?.opponents ?? []).slice(0, 5), [userMetrics])
+  const userRulesetRows = useMemo(() => (userMetrics?.rulesets ?? []).slice(0, 4), [userMetrics])
   const profileUsername = profile?.username || username
   const isOwnGuestProfile = user?.is_guest === true && profile?.role === "guest" && user?.username === profile?.username
   const convertedUsername = regularNameFromGuest(profile?.username)
@@ -465,33 +470,39 @@ export default function ProfilePage() {
           <p>Email address of this bot owner is {profile?.owner_email ?? "unknown"}.</p>
         </section>
       ) : null}
-      {isBotProfile ? (
-        <section className="profile-card profile-card--bot-metrics" aria-label="Bot metrics">
-          <h2>Bot metrics</h2>
-          {botMetrics?.completedGames ? (
+      {userMetrics ? (
+        <section className="profile-card profile-card--bot-metrics" aria-label="User metrics">
+          <h2>User metrics</h2>
+          {userMetrics.completedGames ? (
             <>
               <dl className="profile-stats-grid profile-bot-metrics-summary">
-                <div><dt>Completed games</dt><dd>{botMetrics.completedGames}</dd></div>
-                <div><dt>vs Bots win rate</dt><dd>{formatWinRate(botMetrics.vsBots.winRate)}</dd></div>
-                <div><dt>vs Humans win rate</dt><dd>{formatWinRate(botMetrics.vsHumans.winRate)}</dd></div>
-                <div><dt>Average turns</dt><dd>{botMetrics.averageTurnCount.toFixed(1)}</dd></div>
-                <div><dt>Average duration</dt><dd>{formatDuration(botMetrics.averageDurationSeconds)}</dd></div>
+                <div><dt>Completed games</dt><dd>{userMetrics.completedGames}</dd></div>
+                <div><dt>vs Bots win rate</dt><dd>{formatWinRate(userMetrics.vsBots.winRate)}</dd></div>
+                <div><dt>vs Humans win rate</dt><dd>{formatWinRate(userMetrics.vsHumans.winRate)}</dd></div>
+                <div><dt>Average turns count</dt><dd>{userMetrics.averageTurnCount.toFixed(1)}</dd></div>
+                <div><dt>Average duration</dt><dd>{formatDuration(userMetrics.averageDurationSeconds)}</dd></div>
               </dl>
               <div className="profile-bot-metrics-panels">
                 <section className="profile-bot-metrics-panel" aria-labelledby="profile-bot-color-heading">
                   <h3 id="profile-bot-color-heading">Color split</h3>
                   <dl className="profile-bot-mini-list">
-                    <div><dt>White</dt><dd>{formatMetricRecord(botMetrics.asWhite)} · {formatWinRate(botMetrics.asWhite.winRate)}</dd></div>
-                    <div><dt>Black</dt><dd>{formatMetricRecord(botMetrics.asBlack)} · {formatWinRate(botMetrics.asBlack.winRate)}</dd></div>
+                    <div>
+                      <dt><Link className="profile-bot-row-link profile-bot-color-link" to={profileGamesFilterPath(profileUsername, "color", "white")}>White</Link></dt>
+                      <dd>{formatMetricRecord(userMetrics.asWhite)} · {formatWinRate(userMetrics.asWhite.winRate)}</dd>
+                    </div>
+                    <div>
+                      <dt><Link className="profile-bot-row-link profile-bot-color-link" to={profileGamesFilterPath(profileUsername, "color", "black")}>Black</Link></dt>
+                      <dd>{formatMetricRecord(userMetrics.asBlack)} · {formatWinRate(userMetrics.asBlack.winRate)}</dd>
+                    </div>
                   </dl>
                 </section>
                 <section className="profile-bot-metrics-panel" aria-labelledby="profile-bot-opponents-heading">
                   <h3 id="profile-bot-opponents-heading">Top opponents</h3>
-                  {botOpponentRows.length ? (
+                  {userOpponentRows.length ? (
                     <ul className="profile-bot-row-list">
-                      {botOpponentRows.map((row) => (
+                      {userOpponentRows.map((row) => (
                         <li key={`${row.role}-${row.username}`}>
-                          <Link className="profile-bot-row-link profile-bot-opponent-link" to={profilePath(row.username)}>
+                          <Link className="profile-bot-row-link profile-bot-opponent-link" to={profileGamesFilterPath(profileUsername, "opponent", opponentFilterValue(row))}>
                             {row.username}{row.role === "bot" ? " (bot)" : ""}
                           </Link>
                           <strong>{formatMetricRecord(row)} · {formatWinRate(row.winRate)}</strong>
@@ -502,9 +513,9 @@ export default function ProfilePage() {
                 </section>
                 <section className="profile-bot-metrics-panel" aria-labelledby="profile-bot-rulesets-heading">
                   <h3 id="profile-bot-rulesets-heading">Rulesets</h3>
-                  {botRulesetRows.length ? (
+                  {userRulesetRows.length ? (
                     <ul className="profile-bot-row-list">
-                      {botRulesetRows.map((row) => (
+                      {userRulesetRows.map((row) => (
                         <li key={row.ruleVariant}>
                           <Link className="profile-bot-row-link profile-bot-ruleset-link" to={profileGamesFilterPath(profileUsername, "rule_set", row.ruleVariant)}>
                             {formatRuleVariant(row.ruleVariant)}
@@ -517,7 +528,7 @@ export default function ProfilePage() {
                 </section>
               </div>
             </>
-          ) : <p>No completed bot games yet.</p>}
+          ) : <p>No completed games yet.</p>}
         </section>
       ) : null}
 
