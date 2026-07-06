@@ -49,8 +49,13 @@ function normalizeBotDescription(bot) {
   const displayName = String(bot.display_name || "").trim().toLowerCase()
   const description = String(bot.description || "").trim()
 
-  if (username === "llm_gptnano" || displayName === "llm gpt-nano (bot)") {
-    return "LLM GPT-Nano (bot) Kriegspiel model bot."
+  if (
+    username === "llm_gpt45nano" ||
+    username === "llm_gptnano" ||
+    displayName === "llm gpt-4.5 nano (bot)" ||
+    displayName === "llm gpt-nano (bot)"
+  ) {
+    return "LLM GPT-4.5 Nano (bot) Kriegspiel model bot."
   }
 
   if (

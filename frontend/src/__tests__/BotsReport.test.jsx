@@ -32,7 +32,7 @@ describe("BotsReportPage", () => {
       timezone: "America/New_York",
       bots: [
         {
-          username: "llm_gptnano",
+          username: "llm_gpt45nano",
           rows: [
             {
               date: "2026-04-08",
@@ -65,7 +65,7 @@ describe("BotsReportPage", () => {
     expect(await screen.findByText("Bots report")).toBeInTheDocument()
     expect(screen.getByText("Loaded in 418 ms.")).toBeInTheDocument()
     expect((await screen.findAllByText("2026-04-08")).length).toBe(2)
-    expect(screen.getByRole("link", { name: "llm_gptnano" })).toHaveAttribute("href", "/user/llm_gptnano")
+    expect(screen.getByRole("link", { name: "llm_gpt45nano" })).toHaveAttribute("href", "/user/llm_gpt45nano")
     expect(screen.getByRole("link", { name: "llm_haiku" })).toHaveAttribute("href", "/user/llm_haiku")
     expect(screen.getAllByText("Overall").length).toBeGreaterThan(0)
     expect(screen.getAllByText("vs. humans").length).toBeGreaterThan(0)
@@ -79,7 +79,7 @@ describe("BotsReportPage", () => {
       timezone: "",
       bots: [
         {
-          username: "llm_gptnano",
+          username: "llm_gpt45nano",
           rows: null,
         },
         {
@@ -96,7 +96,7 @@ describe("BotsReportPage", () => {
 
     render(<MemoryRouter><BotsReportPage /></MemoryRouter>)
 
-    expect(await screen.findByRole("link", { name: "llm_gptnano" })).toHaveAttribute("href", "/user/llm_gptnano")
+    expect(await screen.findByRole("link", { name: "llm_gpt45nano" })).toHaveAttribute("href", "/user/llm_gpt45nano")
     expect(screen.getByRole("link", { name: "llm_haiku" })).toHaveAttribute("href", "/user/llm_haiku")
     expect(screen.getAllByText(/America\/New_York/).length).toBeGreaterThan(0)
     expect(screen.getByText("2026-04-09")).toBeInTheDocument()

@@ -181,7 +181,7 @@ describe("ProfilePage", () => {
 
   it("shows_bot_note_with_external_blog_link", async () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
-      username: "llm_gptnano",
+      username: "llm_gpt45nano",
       role: "bot",
       llm_bot_tier: "tier4",
       owner_email: "bot-gpt-nano@kriegspiel.org",
@@ -217,9 +217,9 @@ describe("ProfilePage", () => {
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
     mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
 
-    renderProfile("/user/llm_gptnano")
+    renderProfile("/user/llm_gpt45nano")
 
-    await screen.findByRole("heading", { name: "llm_gptnano" })
+    await screen.findByRole("heading", { name: "llm_gpt45nano" })
     expect(screen.queryByRole("region", { name: "Player tier" })).not.toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "This user is bot" })).toBeInTheDocument()
     expect(screen.getByText(/On Kriegspiel\.org we allow bots\./i)).toBeInTheDocument()
