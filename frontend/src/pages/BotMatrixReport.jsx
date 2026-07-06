@@ -196,6 +196,7 @@ function botMatchupName(player) {
   return String(player?.name || player?.username || "Unknown bot")
     .replace(/^\s*LLM\s+/i, "")
     .replace(/\s*\(bot\)\s*$/i, "")
+    .replace(/\bGPT-4.5 Nano\b/g, "GPT 4.5 Nano")
     .replace(/\bGPT-Nano\b/g, "GPT Nano")
     .replace(/\bGPT-OSS\b/g, "GPT OSS")
     .trim() || "Unknown bot"
