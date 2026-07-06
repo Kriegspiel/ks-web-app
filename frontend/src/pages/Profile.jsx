@@ -269,8 +269,7 @@ function profileGamesFilterPath(username, key, value) {
 }
 
 function opponentFilterValue(row) {
-  const role = String(row?.role || "user").toLowerCase()
-  return `${role === "bot" ? "bot" : "human"}:${row.username}`
+  return row.username
 }
 
 function tierDetailsForProfile(profile) {

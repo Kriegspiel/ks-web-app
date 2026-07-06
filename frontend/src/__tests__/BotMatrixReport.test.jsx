@@ -178,11 +178,11 @@ describe("BotMatrixReportPage", () => {
     expect(screen.getAllByText("this bot — / —").length).toBeGreaterThan(0)
     expect(screen.getByRole("link", { name: "Haiku versus GPT 4.5 Nano games" })).toHaveAttribute(
       "href",
-      "/user/llm_haiku/games?opponent=bot%3Allm_gptnano",
+      "/user/llm_haiku/games?opponent=llm_gptnano",
     )
     expect(screen.getByRole("link", { name: "GPT 4.5 Nano versus Haiku games" })).toHaveAttribute(
       "href",
-      "/user/llm_gptnano/games?opponent=bot%3Allm_haiku",
+      "/user/llm_gptnano/games?opponent=llm_haiku",
     )
 
     nowSpy.mockRestore()

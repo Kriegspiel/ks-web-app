@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.103
+
+- **Profile Metrics Links**: use plain usernames for exact opponent links from
+  profile metric rows and bot matrix matchup cells.
+
 ## ks-web-app frontend v. 1.3.102
 
 - **Game History Controls**: write exact opponent filters as plain usernames in
