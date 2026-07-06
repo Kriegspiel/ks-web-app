@@ -23,7 +23,6 @@ const SORT_COLUMNS = [
   { key: "reason", label: "Reason", type: "text", value: (game) => formatReason(game?.reason) },
   { key: "turns", label: "Turns", type: "number", value: (game) => turnCount(game) },
   { key: "played_at", label: "Date and time", type: "date", value: (game) => game?.played_at },
-  { key: "review", label: "Review", type: "text", value: (game) => reviewRef(game) },
 ]
 
 const SORT_COLUMN_BY_KEY = new Map(SORT_COLUMNS.map((column) => [column.key, column]))
@@ -818,7 +817,6 @@ export default function GameHistoryPage() {
                           <td>{formatReason(game.reason)}</td>
                           <td>{turnCount(game)}</td>
                           <td>{formatDate(game.played_at)}</td>
-                          <td>{path ? <Link to={path}>Open</Link> : "—"}</td>
                         </tr>
                       )
                     }) : (
