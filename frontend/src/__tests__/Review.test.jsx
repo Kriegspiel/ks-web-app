@@ -199,7 +199,7 @@ describe("ReviewPage", () => {
       updated_at: "2026-06-02T14:45:16Z",
       result: { winner: null, reason: "too_many_reversible_moves" },
       white: { username: "simpleheuristics", connected: true, role: "bot" },
-      black: { username: "llm_gpt45nano", connected: true, role: "bot" },
+      black: { username: "llm_gptnano", connected: true, role: "bot" },
     })
 
     renderReviewPage()

@@ -88,7 +88,7 @@ beforeEach(() => {
     opponent_type: "bot",
     white: { username: "fil", role: "user", connected: true },
     black: {
-      username: "llm_gpt45nano",
+      username: "llm_gptnano",
       role: "bot",
       connected: true,
       elo: 1342,
@@ -1291,7 +1291,7 @@ describe("GamePage", () => {
       opponent_type: "bot",
       white: { username: "fil", role: "user", elo: 1400 },
       black: {
-        username: "llm_gpt45nano",
+        username: "llm_gptnano",
         role: "bot",
         elo: 1342,
         ratings: {
@@ -1308,8 +1308,8 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     expect(await screen.findByText("Berkeley + Any")).toBeInTheDocument()
-    const opponentLink = screen.getByRole("link", { name: "llm_gpt45nano (bot)" })
-    expect(opponentLink).toHaveAttribute("href", "/user/llm_gpt45nano")
+    const opponentLink = screen.getByRole("link", { name: "llm_gptnano (bot)" })
+    expect(opponentLink).toHaveAttribute("href", "/user/llm_gptnano")
     expect(screen.getByText("1342")).toBeInTheDocument()
     expect(screen.getByText("1301")).toBeInTheDocument()
     expect(screen.getByText("1333")).toBeInTheDocument()
@@ -2777,7 +2777,7 @@ describe("GamePage", () => {
       state: "active",
       opponent_type: "user",
       white: { username: "fil", role: "user", connected: true },
-      black: { username: "llm_gpt45nano", role: "bot", connected: true },
+      black: { username: "llm_gptnano", role: "bot", connected: true },
       turn: "black",
       move_number: 2,
       created_at: "2026-04-02T12:00:00Z",

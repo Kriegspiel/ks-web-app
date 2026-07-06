@@ -181,7 +181,7 @@ describe("ProfilePage", () => {
 
   it("shows_bot_note_with_external_blog_link", async () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
-      username: "llm_gpt45nano",
+      username: "llm_gptnano",
       role: "bot",
       llm_bot_tier: "tier4",
       owner_email: "bot-gpt-nano@kriegspiel.org",
@@ -217,9 +217,9 @@ describe("ProfilePage", () => {
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
     mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
 
-    renderProfile("/user/llm_gpt45nano")
+    renderProfile("/user/llm_gptnano")
 
-    await screen.findByRole("heading", { name: "llm_gpt45nano" })
+    await screen.findByRole("heading", { name: "llm_gptnano" })
     expect(screen.queryByRole("region", { name: "Player tier" })).not.toBeInTheDocument()
     expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Tier T2 LLM bot" })).toBeInTheDocument()
@@ -241,14 +241,14 @@ describe("ProfilePage", () => {
     expect(screen.getByText("18.5")).toBeInTheDocument()
     expect(screen.getByText("Average duration")).toBeInTheDocument()
     expect(screen.getByText("7m")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "White" })).toHaveAttribute("href", "/user/llm_gpt45nano/games?color=white")
-    expect(screen.getByRole("link", { name: "Black" })).toHaveAttribute("href", "/user/llm_gpt45nano/games?color=black")
+    expect(screen.getByRole("link", { name: "White" })).toHaveAttribute("href", "/user/llm_gptnano/games?color=white")
+    expect(screen.getByRole("link", { name: "Black" })).toHaveAttribute("href", "/user/llm_gptnano/games?color=black")
     expect(screen.getByText("2-0-1 · 66.7%")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "llm_haiku (bot)" })).toHaveAttribute("href", "/user/llm_gpt45nano/games?opponent=bot%3Allm_haiku")
-    expect(screen.getByRole("link", { name: "fil" })).toHaveAttribute("href", "/user/llm_gpt45nano/games?opponent=human%3Afil")
+    expect(screen.getByRole("link", { name: "llm_haiku (bot)" })).toHaveAttribute("href", "/user/llm_gptnano/games?opponent=bot%3Allm_haiku")
+    expect(screen.getByRole("link", { name: "fil" })).toHaveAttribute("href", "/user/llm_gptnano/games?opponent=human%3Afil")
     expect(screen.getByText("0-1-1 · 0.0%")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Wild 16" })).toHaveAttribute("href", "/user/llm_gpt45nano/games?rule_set=wild16")
-    expect(screen.getByRole("link", { name: "Berkeley + Any" })).toHaveAttribute("href", "/user/llm_gpt45nano/games?rule_set=berkeley_any")
+    expect(screen.getByRole("link", { name: "Wild 16" })).toHaveAttribute("href", "/user/llm_gptnano/games?rule_set=wild16")
+    expect(screen.getByRole("link", { name: "Berkeley + Any" })).toHaveAttribute("href", "/user/llm_gptnano/games?rule_set=berkeley_any")
     expect(screen.getByText("3 · 33.3%")).toBeInTheDocument()
   })
 

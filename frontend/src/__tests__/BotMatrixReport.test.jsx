@@ -17,7 +17,7 @@ vi.mock("../components/VersionStamp", () => ({
 
 const PLAYERS = [
   { username: "llm_haiku", name: "LLM Haiku (bot)" },
-  { username: "llm_gpt45nano", name: "LLM GPT-4.5 Nano (bot)" },
+  { username: "llm_gptnano", name: "LLM GPT-4.5 Nano (bot)" },
   { username: "randobotany", name: "Random Any Bot" },
 ]
 
@@ -163,7 +163,7 @@ describe("BotMatrixReportPage", () => {
 
     const haikuLinks = screen.getAllByRole("link", { name: "LLM Haiku (bot)" })
     expect(haikuLinks[0]).toHaveAttribute("href", "/user/llm_haiku")
-    expect(screen.getAllByRole("link", { name: "LLM GPT-4.5 Nano (bot)" })[0]).toHaveAttribute("href", "/user/llm_gpt45nano")
+    expect(screen.getAllByRole("link", { name: "LLM GPT-4.5 Nano (bot)" })[0]).toHaveAttribute("href", "/user/llm_gptnano")
 
     expect(screen.getByText("38-32-43")).toBeInTheDocument()
     expect(screen.getAllByText("751.5 avg plies").length).toBeGreaterThan(0)
@@ -178,11 +178,11 @@ describe("BotMatrixReportPage", () => {
     expect(screen.getAllByText("this bot — / —").length).toBeGreaterThan(0)
     expect(screen.getByRole("link", { name: "Haiku versus GPT 4.5 Nano games" })).toHaveAttribute(
       "href",
-      "/user/llm_haiku/games?opponent=bot%3Allm_gpt45nano",
+      "/user/llm_haiku/games?opponent=bot%3Allm_gptnano",
     )
     expect(screen.getByRole("link", { name: "GPT 4.5 Nano versus Haiku games" })).toHaveAttribute(
       "href",
-      "/user/llm_gpt45nano/games?opponent=bot%3Allm_haiku",
+      "/user/llm_gptnano/games?opponent=bot%3Allm_haiku",
     )
 
     nowSpy.mockRestore()
