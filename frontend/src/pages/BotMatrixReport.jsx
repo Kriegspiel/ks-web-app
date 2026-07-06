@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { Link } from "react-router-dom"
 import TechReportLoadTime from "../components/TechReportLoadTime"
 import VersionStamp from "../components/VersionStamp"
@@ -31,6 +32,8 @@ const TOTAL_SORT_FIELDS = [
 ]
 const DEFAULT_TOTALS_SORT = { key: "games", direction: "desc" }
 const DEFAULT_USAGE_START_DATE = "2026-07-04"
+const TOTAL_FILTER_MENU_VIEWPORT_MARGIN = 16
+const TOTAL_FILTER_MENU_MAX_WIDTH = 352
 
 function usageTooltip(startDate = DEFAULT_USAGE_START_DATE) {
   return `Average over games completed since ${startDate}, when usage collection started.`
@@ -148,6 +151,8 @@ function normalizeTotalRow(row, usageStartDate) {
 }
 
 function sortTotalRows(rows, sort) {
+  if (!sort) return [...rows]
+
   const field = TOTAL_SORT_FIELDS.some((item) => item.key === sort.key) ? sort.key : DEFAULT_TOTALS_SORT.key
   const direction = sort.direction === "asc" ? "asc" : "desc"
   const multiplier = direction === "asc" ? 1 : -1
@@ -170,11 +175,25 @@ function sortTotalRows(rows, sort) {
   })
 }
 
-function normalizeReport(payload, totalScope, totalSort) {
+function normalizeTotalPlayerOptions(rows) {
+  return [...rows]
+    .map((row) => ({ value: row.code, label: row.playerName }))
+    .sort((left, right) => left.label.localeCompare(right.label))
+}
+
+function filterTotalRows(rows, playerFilters) {
+  if (!playerFilters.length) return rows
+  const selectedPlayers = new Set(playerFilters)
+  return rows.filter((row) => selectedPlayers.has(row.code))
+}
+
+function normalizeReport(payload, totalScope, totalSort, totalPlayerFilters) {
   const players = Array.isArray(payload?.players) ? payload.players.map(normalizePlayer) : []
   const totalRowsByScope = payload?.total_rows ?? payload?.totalRows ?? {}
   const scopedRows = Array.isArray(totalRowsByScope[totalScope]) ? totalRowsByScope[totalScope] : []
   const usageStartDate = String(payload?.usage_start_date ?? payload?.usageStartDate ?? DEFAULT_USAGE_START_DATE)
+  const normalizedTotalRows = scopedRows.map((row) => normalizeTotalRow(row, usageStartDate))
+  const filteredTotalRows = filterTotalRows(normalizedTotalRows, totalPlayerFilters)
 
   return {
     players,
@@ -191,7 +210,8 @@ function normalizeReport(payload, totalScope, totalSort) {
       label: row.label ?? row.condition ?? "Unknown",
       games: Number(row.games ?? 0) || 0,
     })),
-    totalRows: sortTotalRows(scopedRows.map((row) => normalizeTotalRow(row, usageStartDate)), totalSort),
+    totalRows: sortTotalRows(filteredTotalRows, totalSort),
+    totalPlayerOptions: normalizeTotalPlayerOptions(normalizedTotalRows),
     uniqueGameCount: Number(payload?.unique_game_count ?? payload?.uniqueGameCount ?? 0) || 0,
     rowRecordCount: Number(payload?.row_record_count ?? payload?.rowRecordCount ?? 0) || 0,
     usageStartDate,
@@ -248,22 +268,158 @@ function MatrixCell({ rowPlayer, opponent, summary, average = false }) {
   )
 }
 
-function SortableHeader({ field, sort, onSort }) {
-  const active = sort.key === field.key
-  const nextDirection = active && sort.direction === "desc" ? "asc" : field.key === "player" ? "asc" : "desc"
+function useTotalFilterMenuStyle(open, anchorRef) {
+  const [style, setStyle] = useState(null)
+
+  useEffect(() => {
+    if (!open) {
+      setStyle(null)
+      return undefined
+    }
+
+    function updateStyle() {
+      const anchor = anchorRef.current
+      if (!anchor) return
+
+      const rect = anchor.getBoundingClientRect()
+      const maxMenuWidth = Math.min(
+        TOTAL_FILTER_MENU_MAX_WIDTH,
+        Math.max(0, window.innerWidth - (TOTAL_FILTER_MENU_VIEWPORT_MARGIN * 2)),
+      )
+      const maxLeft = Math.max(
+        TOTAL_FILTER_MENU_VIEWPORT_MARGIN,
+        window.innerWidth - maxMenuWidth - TOTAL_FILTER_MENU_VIEWPORT_MARGIN,
+      )
+      const left = Math.min(Math.max(TOTAL_FILTER_MENU_VIEWPORT_MARGIN, rect.left), maxLeft)
+
+      setStyle({
+        left: `${Math.round(left)}px`,
+        minWidth: `${Math.ceil(rect.width)}px`,
+        top: `${Math.round(rect.bottom + 6)}px`,
+      })
+    }
+
+    updateStyle()
+    window.addEventListener("resize", updateStyle)
+    window.addEventListener("scroll", updateStyle, true)
+    return () => {
+      window.removeEventListener("resize", updateStyle)
+      window.removeEventListener("scroll", updateStyle, true)
+    }
+  }, [anchorRef, open])
+
+  return style
+}
+
+function TotalPlayerFilterMenu({ options, selectedValues, onToggle, onClear, style }) {
+  const selected = new Set(selectedValues)
+
+  return (
+    <div className="bot-matrix-total-filter-menu__panel" role="menu" style={style}>
+      {options.length ? options.map((option) => (
+        <label className="bot-matrix-total-filter-menu__option" key={option.value}>
+          <input
+            type="checkbox"
+            checked={selected.has(option.value)}
+            onChange={() => onToggle(option.value)}
+          />
+          <span>{option.label}</span>
+        </label>
+      )) : <p className="bot-matrix-total-filter-menu__empty">No players</p>}
+      <button
+        className="bot-matrix-total-filter-menu__clear"
+        type="button"
+        onClick={onClear}
+        disabled={!selectedValues.length}
+      >
+        Clear Player
+      </button>
+    </div>
+  )
+}
+
+function TotalSortIcon({ direction }) {
+  const iconDirections = direction === "asc" || direction === "desc" ? [direction] : ["asc", "desc"]
+
+  return (
+    <span className="bot-matrix-sort-toggle__triangles" aria-hidden="true">
+      {iconDirections.map((iconDirection) => (
+        <span
+          className={`bot-matrix-sort-toggle__triangle bot-matrix-sort-toggle__triangle--${iconDirection}`}
+          key={iconDirection}
+        />
+      ))}
+    </span>
+  )
+}
+
+function TotalSortToggle({ field, sort, onSort }) {
+  const active = sort?.key === field.key
+  const direction = active ? sort.direction : "none"
+
+  return (
+    <button
+      type="button"
+      className={`bot-matrix-sort-toggle bot-matrix-sort-toggle--${direction}`}
+      aria-label={`Sort ${field.label}`}
+      title={`Sort ${field.label}`}
+      onClick={() => onSort(field.key)}
+    >
+      <TotalSortIcon direction={direction} />
+    </button>
+  )
+}
+
+function TotalColumnHeader({
+  field,
+  sort,
+  openFilterKey,
+  playerFilterOptions,
+  selectedPlayerValues,
+  onOpenFilter,
+  onSort,
+  onTogglePlayerFilter,
+  onClearPlayerFilter,
+}) {
+  const filterable = field.key === "player"
+  const open = filterable && openFilterKey === field.key
+  const menuAnchorRef = useRef(null)
+  const menuStyle = useTotalFilterMenuStyle(open, menuAnchorRef)
+  const active = sort?.key === field.key
   const ariaSort = active ? (sort.direction === "asc" ? "ascending" : "descending") : "none"
+  const selectedCount = filterable ? selectedPlayerValues.length : 0
 
   return (
     <th aria-sort={ariaSort}>
-      <button
-        type="button"
-        className={active ? "bot-matrix-sort-button bot-matrix-sort-button--active" : "bot-matrix-sort-button"}
-        onClick={() => onSort(field.key)}
-        aria-label={`Sort by ${field.label} ${nextDirection}`}
-      >
-        <span>{field.label}</span>
-        {active ? <span className="bot-matrix-sort-button__direction">{sort.direction.toUpperCase()}</span> : null}
-      </button>
+      <div className="bot-matrix-total-column-filter" ref={menuAnchorRef}>
+        <div className="bot-matrix-total-column-heading">
+          {filterable ? (
+            <button
+              type="button"
+              className="bot-matrix-total-column-title-button"
+              aria-haspopup="menu"
+              aria-expanded={open}
+              aria-label={`Filter ${field.label}`}
+              onClick={() => onOpenFilter(open ? "" : field.key)}
+            >
+              <span>{field.label}</span>
+              {selectedCount ? <span className="bot-matrix-total-column-title-count" aria-hidden="true">{selectedCount}</span> : null}
+            </button>
+          ) : (
+            <span className="bot-matrix-total-column-title">{field.label}</span>
+          )}
+          <TotalSortToggle field={field} sort={sort} onSort={onSort} />
+        </div>
+        {filterable && open && menuStyle ? createPortal((
+          <TotalPlayerFilterMenu
+            options={playerFilterOptions}
+            selectedValues={selectedPlayerValues}
+            onToggle={onTogglePlayerFilter}
+            onClear={onClearPlayerFilter}
+            style={menuStyle}
+          />
+        ), document.body) : null}
+      </div>
     </th>
   )
 }
@@ -287,11 +443,16 @@ export default function BotMatrixReportPage() {
   const [period, setPeriod] = useState("lifetime")
   const [totalScope, setTotalScope] = useState("all")
   const [totalSort, setTotalSort] = useState(DEFAULT_TOTALS_SORT)
+  const [totalPlayerFilters, setTotalPlayerFilters] = useState([])
+  const [openTotalFilterKey, setOpenTotalFilterKey] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [loadDurationMs, setLoadDurationMs] = useState(null)
   const [payload, setPayload] = useState(null)
-  const report = useMemo(() => normalizeReport(payload, totalScope, totalSort), [payload, totalScope, totalSort])
+  const report = useMemo(
+    () => normalizeReport(payload, totalScope, totalSort, totalPlayerFilters),
+    [payload, totalScope, totalSort, totalPlayerFilters],
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -321,11 +482,53 @@ export default function BotMatrixReportPage() {
     return () => { cancelled = true }
   }, [period])
 
+  useEffect(() => {
+    if (!openTotalFilterKey) {
+      return undefined
+    }
+
+    function closeOnPointerDown(event) {
+      if (
+        event.target instanceof Element
+        && event.target.closest(".bot-matrix-total-column-filter, .bot-matrix-total-filter-menu__panel")
+      ) {
+        return
+      }
+      setOpenTotalFilterKey("")
+    }
+
+    function closeOnEscape(event) {
+      if (event.key === "Escape") {
+        setOpenTotalFilterKey("")
+      }
+    }
+
+    document.addEventListener("pointerdown", closeOnPointerDown)
+    document.addEventListener("keydown", closeOnEscape)
+    return () => {
+      document.removeEventListener("pointerdown", closeOnPointerDown)
+      document.removeEventListener("keydown", closeOnEscape)
+    }
+  }, [openTotalFilterKey])
+
   function handleTotalSort(field) {
-    setTotalSort((current) => ({
-      key: field,
-      direction: current.key === field && current.direction === "desc" ? "asc" : field === "player" ? "asc" : "desc",
-    }))
+    setOpenTotalFilterKey("")
+    setTotalSort((current) => {
+      if (!current || current.key !== field) return { key: field, direction: "asc" }
+      if (current.direction === "asc") return { key: field, direction: "desc" }
+      return null
+    })
+  }
+
+  function toggleTotalPlayerFilter(value) {
+    setTotalPlayerFilters((current) => {
+      if (current.includes(value)) return current.filter((item) => item !== value)
+      return [...current, value].sort()
+    })
+  }
+
+  function clearTotalPlayerFilter() {
+    setTotalPlayerFilters([])
   }
 
   return (
@@ -418,40 +621,53 @@ export default function BotMatrixReportPage() {
                 </button>
               ))}
             </div>
-            <table className="leaderboard-table">
-              <thead>
-                <tr>
-                  {TOTAL_SORT_FIELDS.map((field) => (
-                    <SortableHeader key={field.key} field={field} sort={totalSort} onSort={handleTotalSort} />
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {report.totalRows.map((row) => (
-                  <tr key={row.code}>
-                    <td><PlayerLink player={row.player} /></td>
-                    <td>{row.games.toLocaleString("en-US")}</td>
-                    <td><TotalMetric value={row.avgPlies} kind="plies" /></td>
-                    <td><TotalMetric value={row.avgCalls} kind="calls" usageStartDate={row.usageStartDate} /></td>
-                    <td>
-                      <TotalMetric
-                        value={{
-                          input: row.avgInputTokens,
-                          cache: row.avgCacheTokens,
-                          output: row.avgOutputTokens,
-                        }}
-                        kind="tokenSplit"
-                        usageStartDate={row.usageStartDate}
+            <div className="bot-matrix-totals-scroll">
+              <table className="leaderboard-table bot-matrix-totals-table__table">
+                <thead>
+                  <tr>
+                    {TOTAL_SORT_FIELDS.map((field) => (
+                      <TotalColumnHeader
+                        key={field.key}
+                        field={field}
+                        sort={totalSort}
+                        openFilterKey={openTotalFilterKey}
+                        playerFilterOptions={report.totalPlayerOptions}
+                        selectedPlayerValues={totalPlayerFilters}
+                        onOpenFilter={setOpenTotalFilterKey}
+                        onSort={handleTotalSort}
+                        onTogglePlayerFilter={toggleTotalPlayerFilter}
+                        onClearPlayerFilter={clearTotalPlayerFilter}
                       />
-                    </td>
-                    <td><TotalMetric value={row.avgCost} kind="cost" usageStartDate={row.usageStartDate} /></td>
-                    <td><TotalMetric value={row.winShare} kind="share" /></td>
-                    <td><TotalMetric value={row.drawShare} kind="share" /></td>
-                    <td><TotalMetric value={row.lossShare} kind="share" /></td>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {report.totalRows.map((row) => (
+                    <tr key={row.code}>
+                      <th scope="row"><PlayerLink player={row.player} /></th>
+                      <td>{row.games.toLocaleString("en-US")}</td>
+                      <td><TotalMetric value={row.avgPlies} kind="plies" /></td>
+                      <td><TotalMetric value={row.avgCalls} kind="calls" usageStartDate={row.usageStartDate} /></td>
+                      <td>
+                        <TotalMetric
+                          value={{
+                            input: row.avgInputTokens,
+                            cache: row.avgCacheTokens,
+                            output: row.avgOutputTokens,
+                          }}
+                          kind="tokenSplit"
+                          usageStartDate={row.usageStartDate}
+                        />
+                      </td>
+                      <td><TotalMetric value={row.avgCost} kind="cost" usageStartDate={row.usageStartDate} /></td>
+                      <td><TotalMetric value={row.winShare} kind="share" /></td>
+                      <td><TotalMetric value={row.drawShare} kind="share" /></td>
+                      <td><TotalMetric value={row.lossShare} kind="share" /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
 
           <VersionStamp />
