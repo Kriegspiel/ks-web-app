@@ -240,7 +240,13 @@ describe("BotMatrixReportPage", () => {
     expect(screen.getByRole("row", { name: "Insufficient material 11,473" })).toBeInTheDocument()
 
     const totalsTable = screen.getAllByRole("table")[2]
-    expect(within(totalsTable).getByRole("columnheader", { name: /Total games DESC/ })).toHaveAttribute("aria-sort", "descending")
+    expect(document.querySelector(".bot-matrix-totals-scroll .bot-matrix-totals-table__table")).toBe(totalsTable)
+    expect(within(totalsTable).getByRole("columnheader", { name: /Total games/ })).toHaveAttribute("aria-sort", "descending")
+    expect(within(totalsTable).getByRole("button", { name: "Sort Total games" })).toHaveClass("bot-matrix-sort-toggle--desc")
+    expect(
+      within(totalsTable).getByRole("button", { name: "Sort Avg plies" })
+        .querySelectorAll(".bot-matrix-sort-toggle__triangle"),
+    ).toHaveLength(2)
     const randomTotal = within(totalsTable).getByRole("row", { name: /Random Any Bot 16,032 246\.1 — —\/—\/— — 56% 37% 6\.4%/ })
     expect(randomTotal).toBeInTheDocument()
     expect(within(totalsTable).getByText("130/20/30")).toHaveAttribute(
@@ -252,11 +258,33 @@ describe("BotMatrixReportPage", () => {
       "Average over games completed since 2026-07-04, when usage collection started.",
     )
 
-    fireEvent.click(within(totalsTable).getByRole("button", { name: "Sort by Win share desc" }))
+    fireEvent.click(within(totalsTable).getByRole("button", { name: "Sort Win share" }))
+    expect(within(totalsTable).getByRole("columnheader", { name: /Win share/ })).toHaveAttribute("aria-sort", "ascending")
 
-    expect(within(totalsTable).getByRole("columnheader", { name: /Win share DESC/ })).toHaveAttribute("aria-sort", "descending")
+    fireEvent.click(within(totalsTable).getByRole("button", { name: "Sort Win share" }))
+    expect(within(totalsTable).getByRole("columnheader", { name: /Win share/ })).toHaveAttribute("aria-sort", "descending")
     const sortedRows = within(totalsTable).getAllByRole("row")
     expect(sortedRows[1]).toHaveTextContent(/LLM Haiku \(bot\)/)
+  })
+
+  it("filters_bot_totals_by_player_from_the_sticky_header_menu", async () => {
+    render(<MemoryRouter><BotMatrixReportPage /></MemoryRouter>)
+
+    await screen.findByRole("heading", { name: "Bot totals" })
+
+    const totalsTable = screen.getAllByRole("table")[2]
+    fireEvent.click(within(totalsTable).getByRole("button", { name: "Filter Player" }))
+
+    const menu = await screen.findByRole("menu")
+    expect(within(menu).getByLabelText("LLM Haiku (bot)")).toBeInTheDocument()
+
+    fireEvent.click(within(menu).getByLabelText("LLM Haiku (bot)"))
+
+    expect(within(totalsTable).getByRole("row", { name: /LLM Haiku \(bot\) 113 751\.5 2 130\/20\/30 \$0\.005000 89% 5\.3% 5\.3%/ })).toBeInTheDocument()
+    expect(within(totalsTable).queryByRole("row", { name: /Random Any Bot/ })).not.toBeInTheDocument()
+
+    fireEvent.click(within(menu).getByRole("button", { name: "Clear Player" }))
+    expect(within(totalsTable).getByRole("row", { name: /Random Any Bot/ })).toBeInTheDocument()
   })
 
   it("filters_bot_totals_by_opponent_scope", async () => {
