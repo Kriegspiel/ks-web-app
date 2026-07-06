@@ -1,3 +1,4 @@
+import fs from "node:fs"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
@@ -47,6 +48,20 @@ function renderProfile(path = "/user/fil") {
 }
 
 describe("ProfilePage", () => {
+  it("keeps_profile_tier_badges_aligned_with_the_public_tier_palette", () => {
+    const css = fs.readFileSync("src/pages/Profile.css", "utf8")
+
+    expect(css).toContain("--profile-tier-corner: #8c725e")
+    expect(css).toContain(".profile-tier-card--tier1 {\n  --profile-tier-color: #4a3325;\n  --profile-tier-corner: #d38555;")
+    expect(css).toContain(".profile-tier-card--tier2 {\n  --profile-tier-color: #5a4a1f;\n  --profile-tier-corner: #d8bb45;")
+    expect(css).toContain(".profile-tier-card--tier3 {\n  --profile-tier-color: #31553f;\n  --profile-tier-corner: #7bd995;")
+    expect(css).toContain(".profile-tier-card--tier4 {\n  --profile-tier-color: #255660;\n  --profile-tier-corner: #67d9ec;")
+    expect(css).toContain(".profile-tier-card--tier5 {\n  --profile-tier-color: #2f4772;\n  --profile-tier-corner: #86a8ff;")
+    expect(css).toContain(".profile-tier-card--tier6 {\n  --profile-tier-color: #56345d;\n  --profile-tier-corner: #d88fe8;")
+    expect(css).toContain(".profile-tier-card__code::before")
+    expect(css).toContain("clip-path: polygon(100% 0, 0 0, 100% 100%)")
+  })
+
   it("renders_profile_stats_and_recent_games", async () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username: "fil",
@@ -181,10 +196,10 @@ describe("ProfilePage", () => {
 
   it("shows_bot_note_with_external_blog_link", async () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
-      username: "llm_gptnano",
+      username: "llm_gptoss120b",
       role: "bot",
       llm_bot_tier: "tier4",
-      owner_email: "bot-gpt-nano@kriegspiel.org",
+      owner_email: "bot-gpt-oss@kriegspiel.org",
       member_since: "2026-04-03T01:10:41Z",
       stats: {
         elo: 1200,
@@ -217,17 +232,17 @@ describe("ProfilePage", () => {
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
     mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
 
-    renderProfile("/user/llm_gptnano")
+    renderProfile("/user/llm_gptoss120b")
 
-    await screen.findByRole("heading", { name: "llm_gptnano" })
+    await screen.findByRole("heading", { name: "llm_gptoss120b" })
     expect(screen.queryByRole("region", { name: "Player tier" })).not.toBeInTheDocument()
     expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Tier T2 LLM bot" })).toBeInTheDocument()
-    expect(screen.getByText("GPT-5.4 Nano model bot for T2 Club.")).toBeInTheDocument()
+    expect(screen.getByText("GPT-OSS 120B model bot for T2 Club.")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "This user is bot" })).toBeInTheDocument()
     expect(screen.getByText(/On Kriegspiel\.org we allow bots\./i)).toBeInTheDocument()
     expect(screen.getByText(/You also can create your own bot – more bots, more fun\./i)).toBeInTheDocument()
-    expect(screen.getByText(/Email address of this bot owner is bot-gpt-nano@kriegspiel\.org\./i)).toBeInTheDocument()
+    expect(screen.getByText(/Email address of this bot owner is bot-gpt-oss@kriegspiel\.org\./i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("href", "https://kriegspiel.org/blog/bot-registration-flow")
     expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("target", "_blank")
     expect(screen.getByRole("heading", { name: "User metrics" })).toBeInTheDocument()
@@ -241,14 +256,14 @@ describe("ProfilePage", () => {
     expect(screen.getByText("18.5")).toBeInTheDocument()
     expect(screen.getByText("Average duration")).toBeInTheDocument()
     expect(screen.getByText("7m")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "White" })).toHaveAttribute("href", "/user/llm_gptnano/games?color=white")
-    expect(screen.getByRole("link", { name: "Black" })).toHaveAttribute("href", "/user/llm_gptnano/games?color=black")
+    expect(screen.getByRole("link", { name: "White" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?color=white")
+    expect(screen.getByRole("link", { name: "Black" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?color=black")
     expect(screen.getByText("2-0-1 · 66.7%")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "llm_haiku (bot)" })).toHaveAttribute("href", "/user/llm_gptnano/games?opponent=llm_haiku")
-    expect(screen.getByRole("link", { name: "fil" })).toHaveAttribute("href", "/user/llm_gptnano/games?opponent=fil")
+    expect(screen.getByRole("link", { name: "llm_haiku (bot)" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?opponent=llm_haiku")
+    expect(screen.getByRole("link", { name: "fil" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?opponent=fil")
     expect(screen.getByText("0-1-1 · 0.0%")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Wild 16" })).toHaveAttribute("href", "/user/llm_gptnano/games?rule_set=wild16")
-    expect(screen.getByRole("link", { name: "Berkeley + Any" })).toHaveAttribute("href", "/user/llm_gptnano/games?rule_set=berkeley_any")
+    expect(screen.getByRole("link", { name: "Wild 16" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?rule_set=wild16")
+    expect(screen.getByRole("link", { name: "Berkeley + Any" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?rule_set=berkeley_any")
     expect(screen.getByText("3 · 33.3%")).toBeInTheDocument()
   })
 
