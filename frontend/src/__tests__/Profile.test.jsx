@@ -246,7 +246,8 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("link", { name: "llm_haiku (bot)" })).toHaveAttribute("href", "/user/llm_haiku")
     expect(screen.getByRole("link", { name: "fil" })).toHaveAttribute("href", "/user/fil")
     expect(screen.getByText("0-1-1 · 0.0%")).toBeInTheDocument()
-    expect(screen.getByText("Wild 16")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Wild 16" })).toHaveAttribute("href", "/user/llm_gpt45nano/games?rule_set=wild16")
+    expect(screen.getByRole("link", { name: "Berkeley + Any" })).toHaveAttribute("href", "/user/llm_gpt45nano/games?rule_set=berkeley_any")
     expect(screen.getByText("3 · 33.3%")).toBeInTheDocument()
   })
 

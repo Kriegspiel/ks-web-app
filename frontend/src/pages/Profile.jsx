@@ -263,6 +263,11 @@ function profilePath(username) {
   return `/user/${encodeURIComponent(username)}`
 }
 
+function profileGamesFilterPath(username, key, value) {
+  const params = new URLSearchParams({ [key]: value })
+  return `${profilePath(username)}/games?${params.toString()}`
+}
+
 function tierDetailsForProfile(profile) {
   if (profile?.role === "bot" || profile?.is_bot) {
     const username = String(profile?.username || "").trim().toLowerCase()
@@ -364,6 +369,7 @@ export default function ProfilePage() {
   const botMetrics = useMemo(() => normalizeBotMetrics(profile?.bot_metrics), [profile])
   const botOpponentRows = useMemo(() => (botMetrics?.opponents ?? []).slice(0, 5), [botMetrics])
   const botRulesetRows = useMemo(() => (botMetrics?.rulesets ?? []).slice(0, 4), [botMetrics])
+  const profileUsername = profile?.username || username
   const isOwnGuestProfile = user?.is_guest === true && profile?.role === "guest" && user?.username === profile?.username
   const convertedUsername = regularNameFromGuest(profile?.username)
   const profileTier = tierDetailsForProfile(profile)
@@ -485,7 +491,7 @@ export default function ProfilePage() {
                     <ul className="profile-bot-row-list">
                       {botOpponentRows.map((row) => (
                         <li key={`${row.role}-${row.username}`}>
-                          <Link className="profile-bot-opponent-link" to={profilePath(row.username)}>
+                          <Link className="profile-bot-row-link profile-bot-opponent-link" to={profilePath(row.username)}>
                             {row.username}{row.role === "bot" ? " (bot)" : ""}
                           </Link>
                           <strong>{formatMetricRecord(row)} · {formatWinRate(row.winRate)}</strong>
@@ -500,7 +506,9 @@ export default function ProfilePage() {
                     <ul className="profile-bot-row-list">
                       {botRulesetRows.map((row) => (
                         <li key={row.ruleVariant}>
-                          <span>{formatRuleVariant(row.ruleVariant)}</span>
+                          <Link className="profile-bot-row-link profile-bot-ruleset-link" to={profileGamesFilterPath(profileUsername, "rule_set", row.ruleVariant)}>
+                            {formatRuleVariant(row.ruleVariant)}
+                          </Link>
                           <strong>{row.totalGames} · {formatWinRate(row.winRate)}</strong>
                         </li>
                       ))}
