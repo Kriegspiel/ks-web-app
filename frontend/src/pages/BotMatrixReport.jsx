@@ -61,6 +61,12 @@ function formatAveragePlies(value) {
   return Number.isInteger(number) ? number.toLocaleString("en-US") : number.toFixed(1)
 }
 
+function formatInteger(value) {
+  const number = numberOrNull(value)
+  if (number === null) return "—"
+  return Math.round(number).toLocaleString("en-US")
+}
+
 function formatTokens(value) {
   const number = numberOrNull(value)
   if (number === null) return "—"
@@ -336,14 +342,15 @@ function MatrixCell({ rowPlayer, opponent, summary, average = false }) {
 
   return (
     <div className={average ? "bot-matrix-cell bot-matrix-cell--average" : "bot-matrix-cell"}>
+      <span>Total games: {formatInteger(summary.games)}</span>
       <strong>{summary.record}</strong>
       <span>{formatAveragePlies(summary.averagePlies)} avg plies</span>
       <Link to={botMatchupGamesPath(rowPlayer, opponent)}>{gamesLabel}</Link>
       <span title={usageTooltip(summary.usageStartDate)}>
-        {usage.labelPrefix} tokens (in/cache/out): {formatTokenSplit(usage.inputTokens, usage.cacheTokens, usage.outputTokens)}
+        {usage.labelPrefix} tokens per game (in/cache/out): {formatTokenSplit(usage.inputTokens, usage.cacheTokens, usage.outputTokens)}
       </span>
       <span title={usageTooltip(summary.usageStartDate)}>
-        {usage.labelPrefix} spend: {formatSpend(usage.cost)}
+        {usage.labelPrefix} spend per game: {formatSpend(usage.cost)}
       </span>
     </div>
   )

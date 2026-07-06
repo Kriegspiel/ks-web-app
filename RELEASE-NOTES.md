@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.111
+
+- **Bot Matrix Report**: show total games in each outcome matrix cell and label
+  token and spend averages as per-game values.
+
 ## ks-web-app frontend v. 1.3.110
 
 - **Bot Matrix Report**: shorten matchup links from `versus` to `vs.`.
