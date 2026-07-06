@@ -92,7 +92,19 @@ const LIFETIME_REPORT = {
     {
       player: PLAYERS[1],
       cells: [
-        { opponent: PLAYERS[0], summary: summary("43-32-38", 113, 751.548) },
+        {
+          opponent: PLAYERS[0],
+          summary: summary("43-32-38", 113, 751.548, {
+            opponent_tokens: 180,
+            opponent_input_tokens: 130,
+            opponent_cache_tokens: 20,
+            opponent_output_tokens: 30,
+            opponent_cost: 0.005,
+            opponent_usage_eligible_games: 113,
+            opponent_usage_recorded_games: 1,
+            usage_start_date: "2026-07-04",
+          }),
+        },
         { opponent: PLAYERS[1], summary: null },
         { opponent: PLAYERS[2], summary: summary("8-2-0", 10, 128) },
       ],
@@ -193,6 +205,14 @@ describe("BotMatrixReportPage", () => {
       "Average over games completed since 2026-07-04, when usage collection started.",
     )
     expect(screen.getByText("Avg. spend: $0.005000")).toHaveAttribute(
+      "title",
+      "Average over games completed since 2026-07-04, when usage collection started.",
+    )
+    expect(screen.getByText("Opponent avg. tokens (in/cache/out): 130/20/30")).toHaveAttribute(
+      "title",
+      "Average over games completed since 2026-07-04, when usage collection started.",
+    )
+    expect(screen.getByText("Opponent avg. spend: $0.005000")).toHaveAttribute(
       "title",
       "Average over games completed since 2026-07-04, when usage collection started.",
     )

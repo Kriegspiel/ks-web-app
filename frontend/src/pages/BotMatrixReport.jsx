@@ -244,6 +244,52 @@ function botMatchupGamesPath(rowPlayer, opponent) {
   return `/user/${rowPlayer.username}/games?${params.toString()}`
 }
 
+function hasUsageValues(...values) {
+  return values.some((value) => numberOrNull(value) !== null)
+}
+
+function matrixUsageDisplay(summary) {
+  const hasPlayerUsage = hasUsageValues(
+    summary.playerInputTokens,
+    summary.playerCacheTokens,
+    summary.playerOutputTokens,
+    summary.playerCost,
+  )
+  if (hasPlayerUsage) {
+    return {
+      labelPrefix: "Avg.",
+      inputTokens: summary.playerInputTokens,
+      cacheTokens: summary.playerCacheTokens,
+      outputTokens: summary.playerOutputTokens,
+      cost: summary.playerCost,
+    }
+  }
+
+  const hasOpponentUsage = hasUsageValues(
+    summary.opponentInputTokens,
+    summary.opponentCacheTokens,
+    summary.opponentOutputTokens,
+    summary.opponentCost,
+  )
+  if (hasOpponentUsage) {
+    return {
+      labelPrefix: "Opponent avg.",
+      inputTokens: summary.opponentInputTokens,
+      cacheTokens: summary.opponentCacheTokens,
+      outputTokens: summary.opponentOutputTokens,
+      cost: summary.opponentCost,
+    }
+  }
+
+  return {
+    labelPrefix: "Avg.",
+    inputTokens: null,
+    cacheTokens: null,
+    outputTokens: null,
+    cost: null,
+  }
+}
+
 function MatrixCell({ rowPlayer, opponent, summary, average = false }) {
   if (!summary) {
     return <div className="bot-matrix-cell bot-matrix-cell--empty">Same player</div>
@@ -252,6 +298,7 @@ function MatrixCell({ rowPlayer, opponent, summary, average = false }) {
   const gamesLabel = opponent?.username
     ? `${botMatchupName(rowPlayer)} versus ${botMatchupName(opponent)} games`
     : `${rowPlayer.name} games`
+  const usage = matrixUsageDisplay(summary)
 
   return (
     <div className={average ? "bot-matrix-cell bot-matrix-cell--average" : "bot-matrix-cell"}>
@@ -259,10 +306,10 @@ function MatrixCell({ rowPlayer, opponent, summary, average = false }) {
       <span>{formatAveragePlies(summary.averagePlies)} avg plies</span>
       <Link to={botMatchupGamesPath(rowPlayer, opponent)}>{gamesLabel}</Link>
       <span title={usageTooltip(summary.usageStartDate)}>
-        Avg. tokens (in/cache/out): {formatTokenSplit(summary.playerInputTokens, summary.playerCacheTokens, summary.playerOutputTokens)}
+        {usage.labelPrefix} tokens (in/cache/out): {formatTokenSplit(usage.inputTokens, usage.cacheTokens, usage.outputTokens)}
       </span>
       <span title={usageTooltip(summary.usageStartDate)}>
-        Avg. spend: {formatSpend(summary.playerCost)}
+        {usage.labelPrefix} spend: {formatSpend(usage.cost)}
       </span>
     </div>
   )
