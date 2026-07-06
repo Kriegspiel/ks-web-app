@@ -186,6 +186,7 @@ describe("user helpers", () => {
 
     await userApi.getGameHistory("fil", 1, 100, {
       sort: { key: "turns", direction: "asc" },
+      includeFilterOptions: false,
       filters: {
         opponent: ["human:bob", "bot:randobot"],
         result: ["win"],
@@ -198,6 +199,7 @@ describe("user helpers", () => {
       params: {
         page: 1,
         per_page: 100,
+        include_filter_options: false,
         sort: "turns",
         dir: "asc",
         opponent: "human:bob,bot:randobot",
@@ -211,6 +213,14 @@ describe("user helpers", () => {
         sort: "none",
       },
     })
+  })
+  it("game_history_filter_options_uses_expected_endpoint", async () => {
+    const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: { filter_options: {} } })
+
+    const result = await userApi.getGameHistoryFilterOptions("fil/random")
+
+    expect(getSpy).toHaveBeenCalledWith("/api/user/fil%2Frandom/games/filter-options")
+    expect(result).toEqual({ filter_options: {} })
   })
   it("tech_reports_use_expected_endpoints", async () => { const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: {} }); await techApi.getBotsReport(10); await techApi.getBotMatrixReport("week"); await techApi.getGuestsReport(); await techApi.getUsersReport(); await techApi.getAcquisitionReport(7); expect(getSpy).toHaveBeenNthCalledWith(1, "/api/tech/bots-report", { params: { days: 10 } }); expect(getSpy).toHaveBeenNthCalledWith(2, "/api/tech/bot-matrix-report", { params: { period: "week" } }); expect(getSpy).toHaveBeenNthCalledWith(3, "/api/tech/guests-report"); expect(getSpy).toHaveBeenNthCalledWith(4, "/api/tech/users-report"); expect(getSpy).toHaveBeenNthCalledWith(5, "/api/tech/acquisition-report", { params: { days: 7 } }) })
   it("update_settings_patches_expected_endpoint", async () => { const patchSpy = vi.spyOn(api, "patch").mockResolvedValue({ data: { board_theme: "wood" } }); const payload = { board_theme: "wood" }; const result = await userApi.updateSettings(payload); expect(patchSpy).toHaveBeenCalledWith("/api/user/settings", payload); expect(result).toEqual({ board_theme: "wood" }) })

@@ -118,6 +118,9 @@ export const userApi = {
   async getProfile(username) { const response = await api.get(`/api/user/${encodeURIComponent(username)}`); return response.data },
   async getGameHistory(username, page = 1, perPage = 20, options = {}) {
     const params = { page, per_page: perPage }
+    if (typeof options.includeFilterOptions === "boolean") {
+      params.include_filter_options = options.includeFilterOptions
+    }
     if (options.sort === null) {
       params.sort = "none"
     } else if (options.sort?.key) {
@@ -132,6 +135,10 @@ export const userApi = {
       }
     })
     const response = await api.get(`/api/user/${encodeURIComponent(username)}/games`, { params })
+    return response.data
+  },
+  async getGameHistoryFilterOptions(username) {
+    const response = await api.get(`/api/user/${encodeURIComponent(username)}/games/filter-options`)
     return response.data
   },
   async getRatingHistory(username, track = "overall", limit = 100) { const response = await api.get(`/api/user/${encodeURIComponent(username)}/rating-history`, { params: { track, limit } }); return response.data },
