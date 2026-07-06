@@ -83,7 +83,7 @@ describe("GameHistoryPage", () => {
     expect(css).not.toContain("border-bottom: 1px solid #e5eaf2;")
   })
 
-  it("renders_rows_and_review_links", async () => {
+  it("renders_rows_without_a_dedicated_review_column", async () => {
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({
       games: [{ game_id: "g-20", game_code: "A7K2M9", rule_variant: "berkeley_any", opponent: "amy", opponent_role: "bot", play_as: "white", result: "win", reason: "checkmate", move_count: 22, turn_count: 10, played_at: "2026-01-02T00:00:00Z" }],
       pagination: { page: 1, pages: 2, total: 121 },
@@ -94,7 +94,8 @@ describe("GameHistoryPage", () => {
     expect(await screen.findByRole("link", { name: "Back to user" })).toHaveAttribute("href", "/user/fil")
     expect(await screen.findByRole("link", { name: "amy (bot)" })).toHaveAttribute("href", "/user/amy")
     expect(screen.getByText("Berkeley + Any")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Open" })).toHaveAttribute("href", "/game/A7K2M9/review")
+    expect(screen.queryByRole("columnheader", { name: /Review/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: "Open" })).not.toBeInTheDocument()
     expect(screen.getByText("10")).toBeInTheDocument()
     expect(screen.getByText(/Page 1 of 2/)).toBeInTheDocument()
     expect(screen.getByText("v. test-frontend / v. test-backend")).toBeInTheDocument()
@@ -133,9 +134,10 @@ describe("GameHistoryPage", () => {
 
     renderHistory()
 
-    for (const label of ["Rule set", "Color", "Opponent", "Result", "Reason", "Turns", "Date and time", "Review"]) {
+    for (const label of ["Rule set", "Color", "Opponent", "Result", "Reason", "Turns", "Date and time"]) {
       expect(await screen.findByRole("button", { name: `Sort ${label}` })).toBeInTheDocument()
     }
+    expect(screen.queryByRole("button", { name: "Sort Review" })).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Sort Turns" }))
     await waitFor(() => expect(mockApi.userApi.getGameHistory).toHaveBeenNthCalledWith(
@@ -621,7 +623,7 @@ describe("GameHistoryPage", () => {
     renderHistory()
 
     expect((await screen.findAllByText("—")).length).toBeGreaterThan(0)
-    expect(screen.getByRole("link", { name: "Open" })).toHaveAttribute("href", "/game/g-unknown/review")
+    expect(screen.queryByRole("link", { name: "Open" })).not.toBeInTheDocument()
     expect(screen.getByText(/Page 1 of 0/)).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Next" })).not.toBeDisabled()
   })
