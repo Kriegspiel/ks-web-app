@@ -42,6 +42,110 @@ const PROFILE_TIER_DETAILS = {
     className: "profile-tier-card--tier4",
   },
 }
+const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
+  llm_gpt45nano: {
+    code: "T2",
+    model: "GPT-5.4 Nano",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
+  },
+  llm_gptnano: {
+    code: "T2",
+    model: "GPT-5.4 Nano",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
+  },
+  llm_haiku: {
+    code: "T2",
+    model: "Claude Haiku 4.5",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
+  },
+  llm_deepseekv4_flash: {
+    code: "T2",
+    model: "DeepSeek V4 Flash",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
+  },
+  openrouter_deepseekv4_flash: {
+    code: "T2",
+    model: "DeepSeek V4 Flash",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
+  },
+  llm_gemini25_lite: {
+    code: "T2",
+    model: "Gemini 2.5 Flash-Lite",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
+  },
+  openrouter_gemini25_lite: {
+    code: "T2",
+    model: "Gemini 2.5 Flash-Lite",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
+  },
+  llm_gemini31_lite: {
+    code: "T2",
+    model: "Gemini 3.1 Flash-Lite",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
+  },
+  openrouter_gemini31_lite: {
+    code: "T2",
+    model: "Gemini 3.1 Flash-Lite",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
+  },
+  llm_gptoss120b: {
+    code: "T2",
+    model: "GPT-OSS 120B",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
+  },
+  openrouter_gptoss120b: {
+    code: "T2",
+    model: "GPT-OSS 120B",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
+  },
+  llm_llama31_8b: {
+    code: "T2",
+    model: "Llama 3.1 8B",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
+  },
+  openrouter_llama31_8b: {
+    code: "T2",
+    model: "Llama 3.1 8B",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
+  },
+  llm_qwen36_flash: {
+    code: "T3",
+    model: "Qwen3.6 Flash",
+    tierName: "Strong",
+    className: "profile-tier-card--tier3",
+  },
+  openrouter_qwen36_flash: {
+    code: "T3",
+    model: "Qwen3.6 Flash",
+    tierName: "Strong",
+    className: "profile-tier-card--tier3",
+  },
+  bot_deepseekv4_pro: {
+    code: "T4",
+    model: "DeepSeek V4 Pro",
+    tierName: "Expert",
+    className: "profile-tier-card--tier4",
+  },
+  openrouter_deepseekv4_pro: {
+    code: "T4",
+    model: "DeepSeek V4 Pro",
+    tierName: "Expert",
+    className: "profile-tier-card--tier4",
+  },
+}
 
 function formatDate(value) {
   return formatUtcDate(value) || "Unknown"
@@ -156,7 +260,18 @@ function regularNameFromGuest(username) {
 }
 
 function tierDetailsForProfile(profile) {
-  if (profile?.role === "bot" || profile?.is_bot) return null
+  if (profile?.role === "bot" || profile?.is_bot) {
+    const username = String(profile?.username || "").trim().toLowerCase()
+    const tier = BOT_LLM_TIER_DETAILS_BY_USERNAME[username]
+    if (!tier) return null
+    return {
+      code: tier.code,
+      name: "LLM bot",
+      limit: `${tier.model} model bot for ${tier.code} ${tier.tierName}.`,
+      className: `${tier.className} profile-tier-card--bot`,
+      ariaLabel: "Bot tier",
+    }
+  }
   return PROFILE_TIER_DETAILS[profile?.llm_bot_tier] ?? null
 }
 
@@ -281,7 +396,7 @@ export default function ProfilePage() {
       <h1>{profile?.username}</h1>
       <p>Member since {formatDate(profile?.member_since)}.</p>
       {profileTier ? (
-        <section className={`profile-card profile-tier-card ${profileTier.className}`} aria-label="Player tier">
+        <section className={`profile-card profile-tier-card ${profileTier.className}`} aria-label={profileTier.ariaLabel || "Player tier"}>
           <span className="profile-tier-card__code">{profileTier.code}</span>
           <div className="profile-tier-card__body">
             <h2>Tier {profileTier.code} {profileTier.name}</h2>

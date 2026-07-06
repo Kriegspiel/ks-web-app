@@ -221,6 +221,9 @@ describe("ProfilePage", () => {
 
     await screen.findByRole("heading", { name: "llm_gpt45nano" })
     expect(screen.queryByRole("region", { name: "Player tier" })).not.toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Tier T2 LLM bot" })).toBeInTheDocument()
+    expect(screen.getByText("GPT-5.4 Nano model bot for T2 Club.")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "This user is bot" })).toBeInTheDocument()
     expect(screen.getByText(/On Kriegspiel\.org we allow bots\./i)).toBeInTheDocument()
     expect(screen.getByText(/You also can create your own bot – more bots, more fun\./i)).toBeInTheDocument()
@@ -318,6 +321,24 @@ describe("ProfilePage", () => {
     })
   })
 
+  it("marks_qwen_flash_bot_as_tier_three", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "llm_qwen36_flash",
+      role: "bot",
+      member_since: "2026-07-04T00:00:00Z",
+      stats: {},
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile("/user/llm_qwen36_flash")
+
+    await screen.findByRole("heading", { name: "llm_qwen36_flash" })
+    expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Tier T3 LLM bot" })).toBeInTheDocument()
+    expect(screen.getByText("Qwen3.6 Flash model bot for T3 Strong.")).toBeInTheDocument()
+  })
+
   it("falls_back_to_unknown_bot_values_and_recent_game_labels", async () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username: "llm_haiku",
@@ -341,6 +362,8 @@ describe("ProfilePage", () => {
 
     await screen.findByRole("heading", { name: "llm_haiku" })
     expect(screen.getByText("Member since Unknown.")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Tier T2 LLM bot" })).toBeInTheDocument()
+    expect(screen.getByText("Claude Haiku 4.5 model bot for T2 Club.")).toBeInTheDocument()
     expect(screen.getByText(/Email address of this bot owner is unknown\./i)).toBeInTheDocument()
     expect(screen.getByText("No completed bot games yet.")).toBeInTheDocument()
     expect(screen.getByText(/draw vs unknown/i)).toBeInTheDocument()

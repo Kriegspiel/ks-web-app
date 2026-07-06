@@ -34,6 +34,18 @@
   --profile-tier-color: #255660;
 }
 
+.profile-tier-card--tier5 {
+  --profile-tier-color: #2f4772;
+}
+
+.profile-tier-card--bot {
+  align-items: start;
+}
+
+.profile-tier-card--bot .profile-tier-card__body p {
+  overflow-wrap: anywhere;
+}
+
 .profile-tier-card__code {
   display: inline-flex;
   align-items: center;
