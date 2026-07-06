@@ -56,7 +56,7 @@ describe("UsersReportPage", () => {
           game_code: "USER01",
           rule_variant: "crazykrieg",
           white: { username: "fil", role: "user" },
-          black: { username: "llm_gpt45nano", role: "bot" },
+          black: { username: "llm_gptnano", role: "bot" },
           result: { winner: "white", reason: "checkmate" },
           played_at: "2026-05-01T12:00:00+00:00",
           review_path: "/game/USER01/review",
@@ -66,7 +66,7 @@ describe("UsersReportPage", () => {
           game_code: "LIVE02",
           rule_variant: "wild16",
           white: { username: "fil", role: "user" },
-          black: { username: "llm_gpt45nano", role: "bot" },
+          black: { username: "llm_gptnano", role: "bot" },
           result: {},
           played_at: "2026-05-01T12:05:00+00:00",
           review_path: "/game/LIVE02/review",
@@ -91,7 +91,7 @@ describe("UsersReportPage", () => {
     expect(within(gamesSection).getByRole("link", { name: "LIVE02" })).toHaveAttribute("href", "/game/LIVE02/review")
     expect(within(gamesSection).getByText("CrazyKrieg")).toBeInTheDocument()
     expect(within(userRow).getByRole("link", { name: "fil" })).toHaveAttribute("href", "/user/fil")
-    expect(within(userRow).getByRole("link", { name: "llm_gpt45nano (bot)" })).toHaveAttribute("href", "/user/llm_gpt45nano")
+    expect(within(userRow).getByRole("link", { name: "llm_gptnano (bot)" })).toHaveAttribute("href", "/user/llm_gptnano")
     expect(within(userRow).getByText("white, checkmate")).toBeInTheDocument()
     expect(liveRow).toHaveTextContent("—")
     expect(within(gamesSection).getByText("2026-05-01 12:00:00 UTC")).toBeInTheDocument()

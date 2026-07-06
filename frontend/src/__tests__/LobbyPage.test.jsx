@@ -29,7 +29,7 @@ beforeEach(() => {
   mockApi.getLobbyStats.mockResolvedValue({ active_games_now: 123456789, completed_last_hour: 3, completed_last_24_hours: 42, completed_total: 314 })
   mockApi.getGame.mockResolvedValue({ state: "waiting" })
   mockApi.deleteWaitingGame.mockResolvedValue({})
-  mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-2", username: "llm_gpt45nano", display_name: "LLM GPT-4.5 Nano (bot)", description: "LLM GPT-4.5 Nano (bot) Kriegspiel model bot.", elo: 1342, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "128 ply limit" }, { bot_id: "bot-3", username: "randobotany", display_name: "Random Any Bot", description: "Asks any pawn captures first, then plays random legal-looking moves.", elo: 1200, supported_rule_variants: ["berkeley_any"] }] })
+  mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-2", username: "llm_gptnano", display_name: "LLM GPT-4.5 Nano (bot)", description: "LLM GPT-4.5 Nano (bot) Kriegspiel model bot.", elo: 1342, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "128 ply limit" }, { bot_id: "bot-3", username: "randobotany", display_name: "Random Any Bot", description: "Asks any pawn captures first, then plays random legal-looking moves.", elo: 1200, supported_rule_variants: ["berkeley_any"] }] })
 })
 afterEach(() => { cleanup(); window.localStorage.clear(); vi.useRealTimers() })
 
@@ -492,7 +492,7 @@ describe("LobbyPage", () => {
       bots: [
         {
           bot_id: "bot-legacy",
-          username: "llm_gpt45nano",
+          username: "llm_gptnano",
           display_name: "LLM GPT-4.5 Nano (bot)",
           description: "Legacy metadata.",
           elo: 1229,
