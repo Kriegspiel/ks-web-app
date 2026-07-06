@@ -330,7 +330,7 @@ function MatrixCell({ rowPlayer, opponent, summary, average = false }) {
   }
 
   const gamesLabel = opponent?.username
-    ? `${botMatchupName(rowPlayer)} versus ${botMatchupName(opponent)} games`
+    ? `${botMatchupName(rowPlayer)} vs. ${botMatchupName(opponent)} games`
     : `${rowPlayer.name} games`
   const usage = matrixUsageDisplay(summary)
 

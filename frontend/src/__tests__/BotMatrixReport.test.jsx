@@ -220,11 +220,11 @@ describe("BotMatrixReportPage", () => {
     )
     expect(screen.queryByText(/opponent 75/)).not.toBeInTheDocument()
     expect(screen.getAllByText("Avg. tokens (in/cache/out): —/—/—").length).toBeGreaterThan(0)
-    expect(screen.getByRole("link", { name: "Haiku versus GPT Nano games" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Haiku vs. GPT Nano games" })).toHaveAttribute(
       "href",
       "/user/llm_haiku/games?opponent=llm_gptnano",
     )
-    expect(screen.getByRole("link", { name: "GPT Nano versus Haiku games" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "GPT Nano vs. Haiku games" })).toHaveAttribute(
       "href",
       "/user/llm_gptnano/games?opponent=llm_haiku",
     )
