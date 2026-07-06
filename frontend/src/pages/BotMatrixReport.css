@@ -2,7 +2,7 @@
   max-width: min(100vw - 2rem, 112rem);
 }
 
-.bot-matrix-wrap {
+.leaderboard-table-wrap.bot-matrix-wrap {
   overflow: visible;
 }
 
@@ -109,7 +109,7 @@
   max-width: 44rem;
 }
 
-.bot-matrix-totals-table {
+.leaderboard-table-wrap.bot-matrix-totals-table {
   max-width: min(100%, 88rem);
   overflow: visible;
 }
@@ -124,6 +124,7 @@
   border-collapse: separate;
   border-spacing: 0;
   min-width: 76rem;
+  overflow: visible;
 }
 
 .bot-matrix-totals-table__table thead th {
