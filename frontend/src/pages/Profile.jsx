@@ -602,7 +602,7 @@ function tierDetailsForProfile(profile) {
     const reasoningLabel = formatReasoningLabel(tier.reasoningLevel)
     return {
       code: tier.code,
-      name: tier.name ?? "LLM bot",
+      name: tier.tierName ?? tier.name ?? "Bot",
       limit: tier.limit ?? `${tier.model} model bot for ${tier.code} ${tier.tierName}${reasoningLabel ? ` (reasoning: ${reasoningLabel})` : ""}.`,
       className: `${tier.className} profile-tier-card--bot`,
       ariaLabel: "Bot tier",
