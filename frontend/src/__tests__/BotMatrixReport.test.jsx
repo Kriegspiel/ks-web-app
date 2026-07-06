@@ -195,6 +195,8 @@ describe("BotMatrixReportPage", () => {
 
     expect(document.querySelector(".bot-matrix-scroll .bot-matrix-table")).toBeInTheDocument()
     expect(screen.queryByRole("columnheader", { name: "H" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Row bots 3/3" })).toHaveAttribute("aria-expanded", "false")
+    expect(screen.getByRole("button", { name: "Column bots 3/3" })).toHaveAttribute("aria-expanded", "false")
 
     const haikuLinks = screen.getAllByRole("link", { name: "LLM Haiku (bot)" })
     expect(haikuLinks[0]).toHaveAttribute("href", "/user/llm_haiku")
@@ -233,6 +235,45 @@ describe("BotMatrixReportPage", () => {
     nowSpy.mockRestore()
   })
 
+  it("filters_the_outcome_matrix_by_selected_row_and_column_bots", async () => {
+    render(<MemoryRouter><BotMatrixReportPage /></MemoryRouter>)
+
+    await screen.findByRole("heading", { name: "Outcome matrix" })
+    const matrixTable = screen.getAllByRole("table")[0]
+
+    expect(within(matrixTable).getByRole("rowheader", { name: "Random Any Bot" })).toBeInTheDocument()
+    expect(within(matrixTable).getByRole("columnheader", { name: "LLM GPT-Nano (bot)" })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Row bots 3/3" }))
+    const rowMenu = await screen.findByRole("menu", { name: "Row bots" })
+    expect(within(rowMenu).getByLabelText("LLM Haiku (bot)")).toBeChecked()
+    expect(within(rowMenu).getByLabelText("LLM GPT-Nano (bot)")).toBeChecked()
+    expect(within(rowMenu).getByLabelText("Random Any Bot")).toBeChecked()
+
+    fireEvent.click(within(rowMenu).getByLabelText("Random Any Bot"))
+
+    expect(screen.getByRole("button", { name: "Row bots 2/3" })).toHaveAttribute("aria-expanded", "true")
+    expect(within(matrixTable).queryByRole("rowheader", { name: "Random Any Bot" })).not.toBeInTheDocument()
+    expect(within(matrixTable).getByRole("columnheader", { name: "Random Any Bot" })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Column bots 3/3" }))
+    const columnMenu = await screen.findByRole("menu", { name: "Column bots" })
+    expect(screen.getByRole("button", { name: "Row bots 2/3" })).toHaveAttribute("aria-expanded", "false")
+    expect(within(columnMenu).getByLabelText("LLM GPT-Nano (bot)")).toBeChecked()
+
+    fireEvent.click(within(columnMenu).getByLabelText("LLM GPT-Nano (bot)"))
+
+    expect(screen.getByRole("button", { name: "Column bots 2/3" })).toHaveAttribute("aria-expanded", "true")
+    expect(within(matrixTable).queryByRole("columnheader", { name: "LLM GPT-Nano (bot)" })).not.toBeInTheDocument()
+    expect(within(matrixTable).getByRole("rowheader", { name: "LLM GPT-Nano (bot)" })).toBeInTheDocument()
+    expect(within(matrixTable).queryByRole("link", { name: "Haiku vs. GPT Nano games" })).not.toBeInTheDocument()
+
+    fireEvent.click(within(columnMenu).getByRole("button", { name: "Select all" }))
+
+    expect(screen.getByRole("button", { name: "Column bots 3/3" })).toHaveAttribute("aria-expanded", "true")
+    expect(within(matrixTable).getByRole("columnheader", { name: "LLM GPT-Nano (bot)" })).toBeInTheDocument()
+  })
+
   it("filters_the_report_by_selected_time_period_from_the_api", async () => {
     mockApi.techApi.getBotMatrixReport
       .mockResolvedValueOnce(LIFETIME_REPORT)
@@ -242,7 +283,7 @@ describe("BotMatrixReportPage", () => {
 
     const periodSelect = await screen.findByLabelText("Time period")
     expect(periodSelect).toHaveValue("week")
-    expect(screen.getByText("2026-06-29 — 2026-07-06")).toBeInTheDocument()
+    expect(await screen.findByText("2026-06-29 — 2026-07-06")).toBeInTheDocument()
 
     fireEvent.change(periodSelect, { target: { value: "today" } })
 

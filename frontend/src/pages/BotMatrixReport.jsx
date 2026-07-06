@@ -225,6 +225,33 @@ function filterTotalRows(rows, playerFilters) {
   return rows.filter((row) => selectedPlayers.has(row.code))
 }
 
+function optionListFromPlayers(players) {
+  return players.map((player) => ({ value: player.username, label: player.name }))
+}
+
+function resolveSelectedValues(selectedValues, allValues) {
+  if (selectedValues === null) return allValues
+  const available = new Set(allValues)
+  return selectedValues.filter((value) => available.has(value))
+}
+
+function sortValuesByReference(values, referenceValues) {
+  const order = new Map(referenceValues.map((value, index) => [value, index]))
+  return [...values].sort((left, right) => {
+    const leftIndex = order.get(left) ?? Number.MAX_SAFE_INTEGER
+    const rightIndex = order.get(right) ?? Number.MAX_SAFE_INTEGER
+    return leftIndex === rightIndex ? left.localeCompare(right) : leftIndex - rightIndex
+  })
+}
+
+function toggleSelectionValue(currentSelection, value, allValues) {
+  const current = resolveSelectedValues(currentSelection, allValues)
+  const next = current.includes(value)
+    ? current.filter((item) => item !== value)
+    : [...current, value]
+  return sortValuesByReference(next, allValues)
+}
+
 function normalizeReport(payload, totalScope, totalSort, totalPlayerFilters) {
   const players = Array.isArray(payload?.players) ? payload.players.map(normalizePlayer) : []
   const totalRowsByScope = payload?.total_rows ?? payload?.totalRows ?? {}
@@ -426,6 +453,71 @@ function TotalPlayerFilterMenu({ options, selectedValues, onToggle, onClear, sty
   )
 }
 
+function BotSelectionMenu({ label, options, selectedValues, onToggle, onSelectAll, onClearAll, style }) {
+  const selected = new Set(selectedValues)
+  const allSelected = options.length > 0 && selectedValues.length === options.length
+  const noneSelected = selectedValues.length === 0
+
+  return (
+    <div className="bot-matrix-filter-menu__panel" role="menu" aria-label={label} style={style}>
+      {options.length ? options.map((option) => (
+        <label className="bot-matrix-filter-menu__option" key={option.value}>
+          <input
+            type="checkbox"
+            checked={selected.has(option.value)}
+            onChange={() => onToggle(option.value)}
+          />
+          <span>{option.label}</span>
+        </label>
+      )) : <p className="bot-matrix-filter-menu__empty">No bots</p>}
+      <div className="bot-matrix-filter-menu__actions">
+        <button type="button" onClick={onSelectAll} disabled={allSelected}>Select all</button>
+        <button type="button" onClick={onClearAll} disabled={noneSelected}>Clear all</button>
+      </div>
+    </div>
+  )
+}
+
+function MatrixBotFilter({
+  label,
+  options,
+  selectedValues,
+  open,
+  onOpen,
+  onToggle,
+  onSelectAll,
+  onClearAll,
+}) {
+  const menuAnchorRef = useRef(null)
+  const menuStyle = useTotalFilterMenuStyle(open, menuAnchorRef)
+
+  return (
+    <div className="bot-matrix-bot-filter" ref={menuAnchorRef}>
+      <button
+        type="button"
+        className="bot-matrix-bot-filter__button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={onOpen}
+      >
+        <span>{label}</span>
+        <strong>{selectedValues.length}/{options.length}</strong>
+      </button>
+      {open && menuStyle ? createPortal((
+        <BotSelectionMenu
+          label={label}
+          options={options}
+          selectedValues={selectedValues}
+          onToggle={onToggle}
+          onSelectAll={onSelectAll}
+          onClearAll={onClearAll}
+          style={menuStyle}
+        />
+      ), document.body) : null}
+    </div>
+  )
+}
+
 function TotalSortIcon({ direction }) {
   const iconDirections = direction === "asc" || direction === "desc" ? [direction] : ["asc", "desc"]
 
@@ -532,6 +624,9 @@ export default function BotMatrixReportPage() {
   const [totalScope, setTotalScope] = useState("all")
   const [totalSort, setTotalSort] = useState(DEFAULT_TOTALS_SORT)
   const [totalPlayerFilters, setTotalPlayerFilters] = useState([])
+  const [rowBotSelection, setRowBotSelection] = useState(null)
+  const [columnBotSelection, setColumnBotSelection] = useState(null)
+  const [openMatrixFilterKey, setOpenMatrixFilterKey] = useState("")
   const [openTotalFilterKey, setOpenTotalFilterKey] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -541,6 +636,30 @@ export default function BotMatrixReportPage() {
     () => normalizeReport(payload, totalScope, totalSort, totalPlayerFilters),
     [payload, totalScope, totalSort, totalPlayerFilters],
   )
+  const matrixBotOptions = useMemo(() => optionListFromPlayers(report.players), [report.players])
+  const matrixBotValues = useMemo(() => matrixBotOptions.map((option) => option.value), [matrixBotOptions])
+  const selectedRowBotValues = useMemo(
+    () => resolveSelectedValues(rowBotSelection, matrixBotValues),
+    [rowBotSelection, matrixBotValues],
+  )
+  const selectedColumnBotValues = useMemo(
+    () => resolveSelectedValues(columnBotSelection, matrixBotValues),
+    [columnBotSelection, matrixBotValues],
+  )
+  const visibleColumnBots = useMemo(() => {
+    const selected = new Set(selectedColumnBotValues)
+    return report.players.filter((player) => selected.has(player.username))
+  }, [report.players, selectedColumnBotValues])
+  const visibleMatrixRows = useMemo(() => {
+    const selectedRows = new Set(selectedRowBotValues)
+    const selectedColumns = new Set(selectedColumnBotValues)
+    return report.matrixRows
+      .filter((row) => selectedRows.has(row.player.username))
+      .map((row) => ({
+        ...row,
+        cells: row.cells.filter((cell) => selectedColumns.has(cell.opponent.username)),
+      }))
+  }, [report.matrixRows, selectedRowBotValues, selectedColumnBotValues])
 
   useEffect(() => {
     let cancelled = false
@@ -599,6 +718,35 @@ export default function BotMatrixReportPage() {
     }
   }, [openTotalFilterKey])
 
+  useEffect(() => {
+    if (!openMatrixFilterKey) {
+      return undefined
+    }
+
+    function closeOnPointerDown(event) {
+      if (
+        event.target instanceof Element
+        && event.target.closest(".bot-matrix-bot-filter, .bot-matrix-filter-menu__panel")
+      ) {
+        return
+      }
+      setOpenMatrixFilterKey("")
+    }
+
+    function closeOnEscape(event) {
+      if (event.key === "Escape") {
+        setOpenMatrixFilterKey("")
+      }
+    }
+
+    document.addEventListener("pointerdown", closeOnPointerDown)
+    document.addEventListener("keydown", closeOnEscape)
+    return () => {
+      document.removeEventListener("pointerdown", closeOnPointerDown)
+      document.removeEventListener("keydown", closeOnEscape)
+    }
+  }, [openMatrixFilterKey])
+
   function handleTotalSort(field) {
     setOpenTotalFilterKey("")
     setTotalSort((current) => {
@@ -613,6 +761,24 @@ export default function BotMatrixReportPage() {
       if (current.includes(value)) return current.filter((item) => item !== value)
       return [...current, value].sort()
     })
+  }
+
+  function handleOpenMatrixFilter(key) {
+    setOpenTotalFilterKey("")
+    setOpenMatrixFilterKey((current) => (current === key ? "" : key))
+  }
+
+  function handleOpenTotalFilter(key) {
+    setOpenMatrixFilterKey("")
+    setOpenTotalFilterKey(key)
+  }
+
+  function toggleRowBotSelection(value) {
+    setRowBotSelection((current) => toggleSelectionValue(current, value, matrixBotValues))
+  }
+
+  function toggleColumnBotSelection(value) {
+    setColumnBotSelection((current) => toggleSelectionValue(current, value, matrixBotValues))
   }
 
   function clearTotalPlayerFilter() {
@@ -647,12 +813,34 @@ export default function BotMatrixReportPage() {
         <>
           <section className="leaderboard-table-wrap bot-matrix-wrap" aria-labelledby="bot-matrix-heading">
             <h2 id="bot-matrix-heading">Outcome matrix</h2>
+            <div className="bot-matrix-bot-filters" aria-label="Outcome matrix bot filters">
+              <MatrixBotFilter
+                label="Row bots"
+                options={matrixBotOptions}
+                selectedValues={selectedRowBotValues}
+                open={openMatrixFilterKey === "rows"}
+                onOpen={() => handleOpenMatrixFilter("rows")}
+                onToggle={toggleRowBotSelection}
+                onSelectAll={() => setRowBotSelection(null)}
+                onClearAll={() => setRowBotSelection([])}
+              />
+              <MatrixBotFilter
+                label="Column bots"
+                options={matrixBotOptions}
+                selectedValues={selectedColumnBotValues}
+                open={openMatrixFilterKey === "columns"}
+                onOpen={() => handleOpenMatrixFilter("columns")}
+                onToggle={toggleColumnBotSelection}
+                onSelectAll={() => setColumnBotSelection(null)}
+                onClearAll={() => setColumnBotSelection([])}
+              />
+            </div>
             <div className="bot-matrix-scroll">
               <table className="leaderboard-table bot-matrix-table">
                 <thead>
                   <tr>
                     <th>Player</th>
-                    {report.players.map((player) => (
+                    {visibleColumnBots.map((player) => (
                       <th key={player.username}>
                         <PlayerLink player={player} />
                       </th>
@@ -661,7 +849,7 @@ export default function BotMatrixReportPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {report.matrixRows.map((row) => (
+                  {visibleMatrixRows.length ? visibleMatrixRows.map((row) => (
                     <tr key={row.player.username}>
                       <th scope="row"><PlayerLink player={row.player} /></th>
                       {row.cells.map((cell) => (
@@ -673,7 +861,13 @@ export default function BotMatrixReportPage() {
                         <MatrixCell rowPlayer={row.player} summary={row.average} average />
                       </td>
                     </tr>
-                  ))}
+                  )) : (
+                    <tr>
+                      <td className="bot-matrix-empty-selection" colSpan={visibleColumnBots.length + 2}>
+                        No row bots selected.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -726,7 +920,7 @@ export default function BotMatrixReportPage() {
                         openFilterKey={openTotalFilterKey}
                         playerFilterOptions={report.totalPlayerOptions}
                         selectedPlayerValues={totalPlayerFilters}
-                        onOpenFilter={setOpenTotalFilterKey}
+                        onOpenFilter={handleOpenTotalFilter}
                         onSort={handleTotalSort}
                         onTogglePlayerFilter={toggleTotalPlayerFilter}
                         onClearPlayerFilter={clearTotalPlayerFilter}
