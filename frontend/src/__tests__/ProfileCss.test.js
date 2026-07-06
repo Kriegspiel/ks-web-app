@@ -36,11 +36,18 @@ describe("Profile bot metrics CSS", () => {
     expect(metricsCardRule).toMatch(/box-shadow:\s*inset 0 0\.18rem 0/)
 
     const metricsTileRule = blockFor(profileCss, ".profile-card--user-metrics .profile-stats-grid > div")
-    expect(metricsTileRule).toMatch(/--metric-accent/)
+    expect(metricsTileRule).toMatch(/display:\s*grid;/)
+    expect(metricsTileRule).toMatch(/grid-template-rows:\s*auto 1fr;/)
     expect(metricsTileRule).toMatch(/background:\s*[\s\S]*linear-gradient/)
+    expect(metricsTileRule).not.toMatch(/--metric-accent/)
 
     const metricsLabelRule = blockFor(profileCss, ".profile-card--user-metrics .profile-stats-grid dt")
     expect(metricsLabelRule).toMatch(/letter-spacing:\s*0;/)
+
+    const metricsValueRule = blockFor(profileCss, ".profile-card--user-metrics .profile-stats-grid dd")
+    expect(metricsValueRule).toMatch(/align-self:\s*end;/)
+    expect(profileCss).not.toMatch(/\.profile-metric-tile--/)
+    expect(profileCss).not.toMatch(/\.profile-card--user-metrics \.profile-stats-grid > div::before/)
 
     expect(profileCss).toMatch(
       /\n\.profile-bot-row-link\s*\{\s*font-weight:\s*400;\s*text-decoration-line:\s*underline;/,
