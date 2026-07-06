@@ -87,7 +87,7 @@
   border-color: color-mix(in srgb, var(--text) 22%, var(--border));
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--surface-alt) 72%, transparent), var(--surface));
-  box-shadow: inset 0 0.18rem 0 color-mix(in srgb, #255660 72%, var(--border));
+  box-shadow: inset 0 0.18rem 0 color-mix(in srgb, var(--text) 34%, var(--border));
 }
 
 .profile-card--user-metrics h2,
@@ -101,19 +101,13 @@
 }
 
 .profile-card--user-metrics .profile-stats-grid > div {
-  position: relative;
-  overflow: hidden;
-  border-color: color-mix(in srgb, var(--metric-accent, var(--text)) 28%, var(--border));
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  min-height: 6.25rem;
+  border-color: color-mix(in srgb, var(--text) 16%, var(--border));
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-alt) 88%, var(--metric-accent, var(--text)) 12%), var(--surface-alt));
-}
-
-.profile-card--user-metrics .profile-stats-grid > div::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 0.22rem;
-  background: var(--metric-accent, var(--text));
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-alt) 92%, var(--surface) 8%), var(--surface-alt));
 }
 
 .profile-card--user-metrics .profile-stats-grid dt {
@@ -121,27 +115,8 @@
 }
 
 .profile-card--user-metrics .profile-stats-grid dd {
+  align-self: end;
   letter-spacing: 0;
-}
-
-.profile-metric-tile--games {
-  --metric-accent: #255660;
-}
-
-.profile-metric-tile--bots {
-  --metric-accent: #5a4a1f;
-}
-
-.profile-metric-tile--humans {
-  --metric-accent: #31553f;
-}
-
-.profile-metric-tile--turns {
-  --metric-accent: #2f4772;
-}
-
-.profile-metric-tile--duration {
-  --metric-accent: #4a3325;
 }
 
 .profile-bot-metrics-panels {
