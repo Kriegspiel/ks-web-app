@@ -8,6 +8,7 @@ import GameHistoryPage from "../pages/GameHistory"
 const mockApi = vi.hoisted(() => ({
   userApi: {
     getGameHistory: vi.fn(),
+    getGameHistoryFilterOptions: vi.fn(),
   },
 }))
 
@@ -20,6 +21,8 @@ afterEach(() => cleanup())
 
 beforeEach(() => {
   mockApi.userApi.getGameHistory.mockReset()
+  mockApi.userApi.getGameHistoryFilterOptions.mockReset()
+  mockApi.userApi.getGameHistoryFilterOptions.mockResolvedValue({ filter_options: {} })
 })
 
 function LocationProbe() {
@@ -58,6 +61,7 @@ function expectedHistoryOptions({ sort = DEFAULT_SORT, filters = {} } = {}) {
   return {
     sort,
     filters: { ...DEFAULT_FILTERS, ...filters },
+    includeFilterOptions: false,
   }
 }
 
@@ -182,11 +186,12 @@ describe("GameHistoryPage", () => {
         { value: "bot:randobot", label: "randobot (bot)", group: "Bots" },
       ],
     }
+    mockApi.userApi.getGameHistoryFilterOptions.mockResolvedValueOnce({ filter_options: filterOptions })
     mockApi.userApi.getGameHistory
-      .mockResolvedValueOnce({ games: [bobGame, randobotGame, claireGame], pagination: { page: 1, pages: 1, total: 3 }, filter_options: filterOptions })
-      .mockResolvedValueOnce({ games: [bobGame], pagination: { page: 1, pages: 1, total: 1 }, filter_options: filterOptions })
-      .mockResolvedValueOnce({ games: [bobGame, randobotGame], pagination: { page: 1, pages: 1, total: 2 }, filter_options: filterOptions })
-      .mockResolvedValueOnce({ games: [bobGame, randobotGame, claireGame], pagination: { page: 1, pages: 1, total: 3 }, filter_options: filterOptions })
+      .mockResolvedValueOnce({ games: [bobGame, randobotGame, claireGame], pagination: { page: 1, pages: 1, total: 3 } })
+      .mockResolvedValueOnce({ games: [bobGame], pagination: { page: 1, pages: 1, total: 1 } })
+      .mockResolvedValueOnce({ games: [bobGame, randobotGame], pagination: { page: 1, pages: 1, total: 2 } })
+      .mockResolvedValueOnce({ games: [bobGame, randobotGame, claireGame], pagination: { page: 1, pages: 1, total: 3 } })
 
     renderHistory()
 
@@ -198,6 +203,7 @@ describe("GameHistoryPage", () => {
     const opponentMenu = await screen.findByRole("menu")
     expect(opponentMenu.parentElement).toBe(document.body)
     await within(opponentMenu).findByText("Humans")
+    expect(mockApi.userApi.getGameHistoryFilterOptions).toHaveBeenCalledWith("fil")
     expect(within(opponentMenu).getAllByText(/Humans|Bots/).map((node) => node.textContent)).toEqual(["Humans", "Bots"])
 
     fireEvent.click(filterCheckbox(opponentMenu, "bob"))
@@ -246,9 +252,10 @@ describe("GameHistoryPage", () => {
         { value: "bot:randobot", label: "randobot (bot)", group: "Bots" },
       ],
     }
+    mockApi.userApi.getGameHistoryFilterOptions.mockResolvedValueOnce({ filter_options: filterOptions })
     mockApi.userApi.getGameHistory
-      .mockResolvedValueOnce({ games: [lgyanfGame, randobotGame], pagination: { page: 1, pages: 2, total: 121 }, filter_options: filterOptions })
-      .mockResolvedValueOnce({ games: [lgyanfGame], pagination: { page: 1, pages: 1, total: 1 }, filter_options: filterOptions })
+      .mockResolvedValueOnce({ games: [lgyanfGame, randobotGame], pagination: { page: 1, pages: 2, total: 121 } })
+      .mockResolvedValueOnce({ games: [lgyanfGame], pagination: { page: 1, pages: 1, total: 1 } })
 
     renderHistory()
 
@@ -272,11 +279,7 @@ describe("GameHistoryPage", () => {
   })
 
   it("keeps_full_filter_options_available_when_a_filter_returns_one_game", async () => {
-    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
-      games: [
-        { game_id: "g-bot", game_code: "BOT001", rule_variant: "berkeley_any", opponent: "bot_gemini31_lite", opponent_role: "bot", play_as: "black", result: "win", reason: "timeout", turn_count: 8, played_at: "2026-01-03T00:00:00Z" },
-      ],
-      pagination: { page: 1, pages: 1, total: 1 },
+    mockApi.userApi.getGameHistoryFilterOptions.mockResolvedValueOnce({
       filter_options: {
         opponent: [
           { value: "human:lgyanf", label: "lgyanf", group: "Humans" },
@@ -284,6 +287,12 @@ describe("GameHistoryPage", () => {
           { value: "bot:randobot", label: "randobot (bot)", group: "Bots" },
         ],
       },
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
+      games: [
+        { game_id: "g-bot", game_code: "BOT001", rule_variant: "berkeley_any", opponent: "bot_gemini31_lite", opponent_role: "bot", play_as: "black", result: "win", reason: "timeout", turn_count: 8, played_at: "2026-01-03T00:00:00Z" },
+      ],
+      pagination: { page: 1, pages: 1, total: 1 },
     })
 
     renderHistory("/user/randobotany/games?opponent=bot%3Abot_gemini31_lite")
@@ -323,15 +332,17 @@ describe("GameHistoryPage", () => {
   })
 
   it("loads_sort_filters_page_and_page_size_from_the_url", async () => {
+    mockApi.userApi.getGameHistoryFilterOptions.mockResolvedValueOnce({
+      filter_options: {
+        opponent: [{ value: "human:bob", label: "bob", group: "Humans" }],
+        result: [{ value: "win", label: "win" }],
+      },
+    })
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({
       games: [
         { game_id: "g-bob", game_code: "BOB001", rule_variant: "berkeley", opponent: "bob", opponent_role: "user", play_as: "white", result: "win", reason: "checkmate", turn_count: 8, played_at: "2026-01-04T00:00:00Z" },
       ],
       pagination: { page: 2, pages: 4, total: 2000 },
-      filter_options: {
-        opponent: [{ value: "human:bob", label: "bob", group: "Humans" }],
-        result: [{ value: "win", label: "win" }],
-      },
     })
 
     renderHistory("/user/fil/games?page=2&per_page=500&sort=turns&dir=asc&result=win&opponent=human%3Abob")

@@ -325,12 +325,14 @@ function useFilterMenuStyle(open, anchorRef) {
   return style
 }
 
-function HistoryFilterMenu({ config, options, selectedValues, onToggle, onClear, style }) {
+function HistoryFilterMenu({ config, options, selectedValues, loading, error, onToggle, onClear, style }) {
   const selected = new Set(selectedValues)
   const groups = filterMenuGroups(options)
 
   return (
     <div className="history-filter-menu__panel" role="menu" style={style}>
+      {loading ? <p className="history-filter-menu__status">Loading values...</p> : null}
+      {error ? <p className="history-filter-menu__status history-filter-menu__status--error" role="alert">{error}</p> : null}
       {groups.length ? groups.map((group) => (
         <div className="history-filter-menu__group" key={group.label || "values"}>
           {group.label ? <p className="history-filter-menu__group-title">{group.label}</p> : null}
@@ -345,7 +347,7 @@ function HistoryFilterMenu({ config, options, selectedValues, onToggle, onClear,
             </label>
           ))}
         </div>
-      )) : <p className="history-filter-menu__empty">No values</p>}
+      )) : !loading ? <p className="history-filter-menu__empty">No values</p> : null}
       <button className="history-filter-menu__clear" type="button" onClick={onClear} disabled={!selectedValues.length}>Clear {config.label}</button>
     </div>
   )
@@ -383,7 +385,20 @@ function SortToggle({ column, sort, onSort }) {
   )
 }
 
-function ColumnHeader({ column, sort, filterConfig, filterOptions, selectedValues, open, onOpen, onSort, onToggleFilter, onClearFilter }) {
+function ColumnHeader({
+  column,
+  sort,
+  filterConfig,
+  filterOptions,
+  filterOptionsLoading,
+  filterOptionsError,
+  selectedValues,
+  open,
+  onOpen,
+  onSort,
+  onToggleFilter,
+  onClearFilter,
+}) {
   const menuAnchorRef = useRef(null)
   const menuStyle = useFilterMenuStyle(open, menuAnchorRef)
   const active = sort?.key === column.key
@@ -415,6 +430,8 @@ function ColumnHeader({ column, sort, filterConfig, filterOptions, selectedValue
             config={filterConfig}
             options={filterOptions}
             selectedValues={selectedValues}
+            loading={filterOptionsLoading}
+            error={filterOptionsError}
             onToggle={(value) => onToggleFilter(filterConfig.key, value)}
             onClear={() => onClearFilter(filterConfig.key)}
             style={menuStyle}
@@ -431,13 +448,25 @@ export default function GameHistoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [history, setHistory] = useState({ games: [], pagination: { page: 1, pages: 0, total: 0 }, filter_options: {} })
+  const [history, setHistory] = useState({ games: [], pagination: { page: 1, pages: 0, total: 0 } })
+  const [filterOptionsState, setFilterOptionsState] = useState({
+    options: {},
+    loaded: false,
+    loading: false,
+    error: "",
+  })
   const [openFilterKey, setOpenFilterKey] = useState("")
+  const filterOptionsUsernameRef = useRef(username)
 
   const page = parsePage(searchParams.get("page"))
   const pageSize = parsePageSize(searchParams.get("per_page"))
   const sort = useMemo(() => parseSort(searchParams), [searchParams])
   const filters = useMemo(() => parseFilters(searchParams), [searchParams])
+
+  useEffect(() => {
+    filterOptionsUsernameRef.current = username
+    setFilterOptionsState({ options: {}, loaded: false, loading: false, error: "" })
+  }, [username])
 
   useEffect(() => {
     if (!openFilterKey) {
@@ -471,18 +500,31 @@ export default function GameHistoryPage() {
       setLoading(true)
       setError("")
       try {
-        const payload = await userApi.getGameHistory(username, page, pageSize, { sort, filters })
+        const payload = await userApi.getGameHistory(username, page, pageSize, {
+          sort,
+          filters,
+          includeFilterOptions: false,
+        })
         if (!cancelled) {
+          const payloadFilterOptions = payload?.filter_options
           setHistory({
             games: Array.isArray(payload?.games) ? payload.games : [],
             pagination: payload?.pagination ?? { page, pages: 0, total: 0 },
-            filter_options: payload?.filter_options ?? {},
           })
+          if (
+            payloadFilterOptions
+            && typeof payloadFilterOptions === "object"
+            && Object.keys(payloadFilterOptions).length > 0
+          ) {
+            setFilterOptionsState((previous) => previous.loaded
+              ? previous
+              : { options: payloadFilterOptions, loaded: true, loading: false, error: "" })
+          }
         }
       } catch (apiError) {
         if (!cancelled) {
           setError(apiError?.status === 404 ? "User not found." : (apiError?.message ?? "Unable to load game history."))
-          setHistory({ games: [], pagination: { page, pages: 0, total: 0 }, filter_options: {} })
+          setHistory({ games: [], pagination: { page, pages: 0, total: 0 } })
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -492,13 +534,45 @@ export default function GameHistoryPage() {
     return () => { cancelled = true }
   }, [username, page, pageSize, sort, filters])
 
+  useEffect(() => {
+    if (!openFilterKey || filterOptionsState.loaded || filterOptionsState.loading) {
+      return undefined
+    }
+
+    const requestUsername = username
+    setFilterOptionsState((previous) => ({ ...previous, loading: true, error: "" }))
+    userApi.getGameHistoryFilterOptions(username)
+      .then((payload) => {
+        if (filterOptionsUsernameRef.current !== requestUsername) {
+          return
+        }
+        setFilterOptionsState({
+          options: payload?.filter_options ?? {},
+          loaded: true,
+          loading: false,
+          error: "",
+        })
+      })
+      .catch((apiError) => {
+        if (filterOptionsUsernameRef.current !== requestUsername) {
+          return
+        }
+        setFilterOptionsState((previous) => ({
+          ...previous,
+          loading: false,
+          error: apiError?.message ?? "Unable to load filter values.",
+        }))
+      })
+    return undefined
+  }, [filterOptionsState.loaded, filterOptionsState.loading, openFilterKey, username])
+
   const pagination = history.pagination ?? { page, pages: 0, total: 0 }
   const filterOptions = useMemo(() => Object.fromEntries(
     FILTER_CONFIGS.map((config) => [
       config.key,
-      buildFilterOptions(history.filter_options?.[config.key], config, filters[config.key] ?? [], history.games),
+      buildFilterOptions(filterOptionsState.options?.[config.key], config, filters[config.key] ?? [], history.games),
     ]),
-  ), [filters, history.filter_options, history.games])
+  ), [filterOptionsState.options, filters, history.games])
   const visibleGames = history.games
   const activeFilterCount = selectedFilterCount(filters)
   const displayPagination = {
@@ -636,6 +710,8 @@ export default function GameHistoryPage() {
                           sort={sort}
                           filterConfig={FILTER_CONFIG_BY_KEY.get(column.key)}
                           filterOptions={filterOptions[column.key] ?? []}
+                          filterOptionsLoading={filterOptionsState.loading}
+                          filterOptionsError={filterOptionsState.error}
                           selectedValues={filters[column.key] ?? []}
                           open={openFilterKey === column.key}
                           onOpen={setOpenFilterKey}
