@@ -4,7 +4,6 @@
 
 .profile-tier-card {
   --profile-tier-color: #2a231d;
-  --profile-tier-corner: #8c725e;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0.85rem;
@@ -17,37 +16,30 @@
 
 .profile-tier-card--guest {
   --profile-tier-color: #2a231d;
-  --profile-tier-corner: #8c725e;
 }
 
 .profile-tier-card--tier1 {
   --profile-tier-color: #4a3325;
-  --profile-tier-corner: #d38555;
 }
 
 .profile-tier-card--tier2 {
   --profile-tier-color: #5a4a1f;
-  --profile-tier-corner: #d8bb45;
 }
 
 .profile-tier-card--tier3 {
   --profile-tier-color: #31553f;
-  --profile-tier-corner: #7bd995;
 }
 
 .profile-tier-card--tier4 {
   --profile-tier-color: #255660;
-  --profile-tier-corner: #67d9ec;
 }
 
 .profile-tier-card--tier5 {
   --profile-tier-color: #2f4772;
-  --profile-tier-corner: #86a8ff;
 }
 
 .profile-tier-card--tier6 {
   --profile-tier-color: #56345d;
-  --profile-tier-corner: #d88fe8;
 }
 
 .profile-tier-card--bot {
@@ -59,32 +51,9 @@
 }
 
 .profile-tier-card__code {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.35rem;
-  height: 2.35rem;
-  border-radius: 0;
-  overflow: hidden;
-  background: var(--profile-tier-color);
-  color: #f4ede4;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  font-size: 0.82rem;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.profile-tier-card__code::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 1.02rem;
-  height: 1.02rem;
-  background: var(--profile-tier-corner);
-  clip-path: polygon(100% 0, 0 0, 100% 100%);
-  pointer-events: none;
+  --tier-badge-size: 2.35rem;
+  --tier-badge-corner-size: 1.02rem;
+  --tier-badge-font-size: 0.82rem;
 }
 
 .profile-tier-card__body {

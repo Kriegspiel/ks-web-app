@@ -1,6 +1,6 @@
 import fs from "node:fs"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import ProfilePage from "../pages/Profile"
 
@@ -49,17 +49,19 @@ function renderProfile(path = "/user/fil") {
 
 describe("ProfilePage", () => {
   it("keeps_profile_tier_badges_aligned_with_the_public_tier_palette", () => {
-    const css = fs.readFileSync("src/pages/Profile.css", "utf8")
+    const badgeCss = fs.readFileSync("src/components/TierBadge.css", "utf8")
+    const profileCss = fs.readFileSync("src/pages/Profile.css", "utf8")
 
-    expect(css).toContain("--profile-tier-corner: #8c725e")
-    expect(css).toContain(".profile-tier-card--tier1 {\n  --profile-tier-color: #4a3325;\n  --profile-tier-corner: #d38555;")
-    expect(css).toContain(".profile-tier-card--tier2 {\n  --profile-tier-color: #5a4a1f;\n  --profile-tier-corner: #d8bb45;")
-    expect(css).toContain(".profile-tier-card--tier3 {\n  --profile-tier-color: #31553f;\n  --profile-tier-corner: #7bd995;")
-    expect(css).toContain(".profile-tier-card--tier4 {\n  --profile-tier-color: #255660;\n  --profile-tier-corner: #67d9ec;")
-    expect(css).toContain(".profile-tier-card--tier5 {\n  --profile-tier-color: #2f4772;\n  --profile-tier-corner: #86a8ff;")
-    expect(css).toContain(".profile-tier-card--tier6 {\n  --profile-tier-color: #56345d;\n  --profile-tier-corner: #d88fe8;")
-    expect(css).toContain(".profile-tier-card__code::before")
-    expect(css).toContain("clip-path: polygon(100% 0, 0 0, 100% 100%)")
+    expect(badgeCss).toContain("--tier-badge-corner: #8c725e")
+    expect(badgeCss).toContain(".tier-badge--t1 {\n  --tier-badge-color: #4a3325;\n  --tier-badge-corner: #d38555;")
+    expect(badgeCss).toContain(".tier-badge--t2 {\n  --tier-badge-color: #5a4a1f;\n  --tier-badge-corner: #d8bb45;")
+    expect(badgeCss).toContain(".tier-badge--t3 {\n  --tier-badge-color: #31553f;\n  --tier-badge-corner: #7bd995;")
+    expect(badgeCss).toContain(".tier-badge--t4 {\n  --tier-badge-color: #255660;\n  --tier-badge-corner: #67d9ec;")
+    expect(badgeCss).toContain(".tier-badge--t5 {\n  --tier-badge-color: #2f4772;\n  --tier-badge-corner: #86a8ff;")
+    expect(badgeCss).toContain(".tier-badge--t6 {\n  --tier-badge-color: #56345d;\n  --tier-badge-corner: #d88fe8;")
+    expect(badgeCss).toContain(".tier-badge::before")
+    expect(badgeCss).toContain("clip-path: polygon(100% 0, 0 0, 100% 100%)")
+    expect(profileCss).toContain("--tier-badge-size: 2.35rem")
   })
 
   it("renders_profile_stats_and_recent_games", async () => {
@@ -150,6 +152,7 @@ describe("ProfilePage", () => {
     expect(screen.getByText("Member since 2026-01-01.")).toBeInTheDocument()
     expect(screen.getByRole("region", { name: "Player tier" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "Player tier" })).getByText("T2")).toHaveClass("tier-badge", "tier-badge--t2", "profile-tier-card__code")
     expect(screen.getByText("256-ply language-model bot games")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Overall rating." })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Overall results." })).toBeInTheDocument()
@@ -238,6 +241,7 @@ describe("ProfilePage", () => {
     expect(screen.queryByRole("region", { name: "Player tier" })).not.toBeInTheDocument()
     expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Tier T2 LLM bot" })).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T2")).toHaveClass("tier-badge", "tier-badge--t2", "profile-tier-card__code")
     expect(screen.getByText("GPT-OSS 120B model bot for T2 Club.")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "This user is bot" })).toBeInTheDocument()
     expect(screen.getByText(/On Kriegspiel\.org we allow bots\./i)).toBeInTheDocument()
@@ -304,6 +308,25 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("link", { name: "White" })).toHaveAttribute("href", "/user/fil/games?color=white")
     expect(screen.getByRole("link", { name: "randobot (bot)" })).toHaveAttribute("href", "/user/fil/games?opponent=randobot")
     expect(screen.getByRole("link", { name: "English" })).toHaveAttribute("href", "/user/fil/games?rule_set=english")
+  })
+
+  it("renders_higher_player_tiers_with_the_shared_tier_badge", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "master_player",
+      role: "user",
+      llm_bot_tier: "tier5",
+      member_since: "2026-01-01T00:00:00Z",
+      stats: {},
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile("/user/master_player")
+
+    await screen.findByRole("heading", { name: "master_player" })
+    const playerTier = screen.getByRole("region", { name: "Player tier" })
+    expect(within(playerTier).getByRole("heading", { name: "Tier T5 Master" })).toBeInTheDocument()
+    expect(within(playerTier).getByText("T5")).toHaveClass("tier-badge", "tier-badge--t5", "profile-tier-card__code")
   })
 
   it("shows_guest_conversion_section_for_own_guest_profile", async () => {
@@ -393,7 +416,30 @@ describe("ProfilePage", () => {
     await screen.findByRole("heading", { name: "llm_qwen36_flash" })
     expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Tier T3 LLM bot" })).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T3")).toHaveClass("tier-badge", "tier-badge--t3", "profile-tier-card__code")
     expect(screen.getByText("Qwen3.6 Flash model bot for T3 Strong.")).toBeInTheDocument()
+  })
+
+  it("renders_gptnano_bot_profile_with_the_shared_tier_badge", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "llm_gptnano",
+      role: "bot",
+      llm_bot_tier: null,
+      owner_email: "bot-gpt-nano@kriegspiel.org",
+      member_since: "2026-04-03T01:10:41Z",
+      stats: {},
+      user_metrics: { completed_games: 0 },
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile("/user/llm_gptnano")
+
+    await screen.findByRole("heading", { name: "llm_gptnano" })
+    const botTier = screen.getByRole("region", { name: "Bot tier" })
+    expect(within(botTier).getByRole("heading", { name: "Tier T2 LLM bot" })).toBeInTheDocument()
+    expect(within(botTier).getByText("T2")).toHaveClass("tier-badge", "tier-badge--t2", "profile-tier-card__code")
+    expect(screen.getByText("GPT-5.4 Nano model bot for T2 Club.")).toBeInTheDocument()
   })
 
   it("falls_back_to_unknown_bot_values_and_recent_game_labels", async () => {
