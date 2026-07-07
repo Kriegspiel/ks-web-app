@@ -41,6 +41,18 @@ function renderPage() {
   )
 }
 
+async function openBotPicker() {
+  const picker = await screen.findByRole("combobox", { name: "Bot opponent" })
+  fireEvent.click(picker)
+  return picker
+}
+
+function botOptionLabels() {
+  return within(screen.getByRole("listbox", { name: "Bot opponent" }))
+    .getAllByRole("option")
+    .map((option) => option.getAttribute("aria-label"))
+}
+
 describe("LobbyPage", () => {
   it("uses_theme_surface_tokens_for_lobby_list_cards", () => {
     const css = readFileSync(resolve(process.cwd(), "src/pages/Lobby.css"), "utf8")
@@ -371,18 +383,24 @@ describe("LobbyPage", () => {
     mockApi.createGame.mockResolvedValue({ game_id: "g-bot-1", game_code: "BOT123", state: "active", opponent_type: "bot", bot: { bot_id: "bot-1", username: "randobot" } })
     renderPage()
     fireEvent.click(await screen.findByLabelText("Bot"))
-    expect(await screen.findByLabelText("Bot opponent")).toBeInTheDocument()
+    const picker = await screen.findByRole("combobox", { name: "Bot opponent" })
     expect(screen.getByText("Plays random legal-looking moves.")).toBeInTheDocument()
-    expect(screen.getByLabelText("Bot opponent")).toHaveValue("bot-1")
+    expect(picker).toHaveTextContent("1201")
+    expect(picker).toHaveTextContent("Random Bot")
+
+    fireEvent.click(picker)
+    const listbox = screen.getByRole("listbox", { name: "Bot opponent" })
+    expect(within(listbox).getByText("Simple bots")).toBeInTheDocument()
+    expect(within(listbox).getByText("Club bots")).toBeInTheDocument()
+    expect(within(listbox).getAllByText("T0")[0]).toHaveClass("tier-badge", "tier-badge--t0")
+    expect(within(listbox).getAllByText("T2")[0]).toHaveClass("tier-badge", "tier-badge--t2")
     expect(screen.getByRole("option", { name: "1201 - Random Bot" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1342 - LLM GPT-Nano (bot) (128 ply limit)" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1200 - Random Any Bot" })).toBeInTheDocument()
-    const botOptions = within(screen.getByLabelText("Bot opponent")).getAllByRole("option").map((option) => option.textContent)
-    expect(botOptions).toEqual([
-      "Select a bot",
-      "1342 - LLM GPT-Nano (bot) (128 ply limit)",
+    expect(botOptionLabels()).toEqual([
       "1201 - Random Bot",
       "1200 - Random Any Bot",
+      "1342 - LLM GPT-Nano (bot) (128 ply limit)",
     ])
     fireEvent.click(screen.getByRole("button", { name: "Create bot game" }))
     await waitFor(() => expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({ opponent_type: "bot", bot_id: "bot-1" })))
@@ -431,10 +449,11 @@ describe("LobbyPage", () => {
     expect(within(rulesetSelect).getByRole("option", { name: "CrazyKrieg" })).toBeInTheDocument()
 
     fireEvent.click(await screen.findByLabelText("Bot"))
-    expect(await screen.findByLabelText("Bot opponent")).toHaveValue("")
+    expect(await screen.findByRole("combobox", { name: "Bot opponent" })).toBeDisabled()
     expect(screen.getByText("No bots support this ruleset.")).toBeInTheDocument()
 
     fireEvent.change(rulesetSelect, { target: { value: "cincinnati" } })
+    fireEvent.click(screen.getByRole("combobox", { name: "Bot opponent" }))
     expect(screen.getByRole("option", { name: "1420 - Cincinnati Bot" })).toBeInTheDocument()
     expect(screen.queryByRole("option", { name: "1510 - Wild 16 Bot" })).not.toBeInTheDocument()
 
@@ -451,8 +470,8 @@ describe("LobbyPage", () => {
     renderPage()
 
     fireEvent.click(await screen.findByLabelText("Bot"))
-    const botSelect = await screen.findByLabelText("Bot opponent")
-    fireEvent.change(botSelect, { target: { value: "bot-2" } })
+    await openBotPicker()
+    fireEvent.click(screen.getByRole("option", { name: "1342 - LLM GPT-Nano (bot) (128 ply limit)" }))
 
     expect(screen.getByText("LLM GPT-Nano (bot) Kriegspiel model bot.")).toBeInTheDocument()
   })
@@ -461,7 +480,7 @@ describe("LobbyPage", () => {
     renderPage()
     fireEvent.change(await screen.findByLabelText("Ruleset"), { target: { value: "berkeley" } })
     fireEvent.click(await screen.findByLabelText("Bot"))
-    expect(await screen.findByLabelText("Bot opponent")).toBeInTheDocument()
+    await openBotPicker()
     expect(screen.queryByRole("option", { name: "1200 - Random Any Bot" })).not.toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1201 - Random Bot" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1342 - LLM GPT-Nano (bot) (128 ply limit)" })).toBeInTheDocument()
@@ -482,8 +501,10 @@ describe("LobbyPage", () => {
     renderPage()
 
     fireEvent.click(await screen.findByLabelText("Bot"))
-    expect(await screen.findByLabelText("Bot opponent")).toHaveValue("bot-custom")
+    expect(await screen.findByRole("combobox", { name: "Bot opponent" })).toHaveTextContent("1200")
+    expect(screen.getByRole("combobox", { name: "Bot opponent" })).toHaveTextContent("Custom Bot")
     expect(screen.getByText("Prefers puzzles.")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("combobox", { name: "Bot opponent" }))
     expect(screen.getByRole("option", { name: "1200 - Custom Bot" })).toBeInTheDocument()
   })
 
@@ -504,7 +525,8 @@ describe("LobbyPage", () => {
 
     const rulesetSelect = await screen.findByLabelText("Ruleset")
     fireEvent.click(await screen.findByLabelText("Bot"))
-    expect(await screen.findByLabelText("Bot opponent")).toHaveValue("bot-legacy")
+    expect(await screen.findByRole("combobox", { name: "Bot opponent" })).toHaveTextContent("1229")
+    fireEvent.click(screen.getByRole("combobox", { name: "Bot opponent" }))
     expect(screen.getByRole("option", { name: "1229 - LLM GPT-Nano (bot)" })).toBeInTheDocument()
 
     fireEvent.change(rulesetSelect, { target: { value: "crazykrieg" } })
@@ -533,7 +555,7 @@ describe("LobbyPage", () => {
     renderPage()
 
     fireEvent.click(await screen.findByLabelText("Bot"))
-    expect(await screen.findByLabelText("Bot opponent")).toHaveValue("")
+    expect(await screen.findByRole("combobox", { name: "Bot opponent" })).toBeDisabled()
     expect(screen.getByText("No bots support this ruleset.")).toBeInTheDocument()
     expect(screen.queryAllByRole("listitem")).toHaveLength(0)
   })
@@ -585,9 +607,9 @@ describe("LobbyPage", () => {
     renderPage()
 
     fireEvent.click(await screen.findByLabelText("Bot"))
-    await screen.findByLabelText("Bot opponent")
+    await screen.findByRole("combobox", { name: "Bot opponent" })
     fireEvent.change(screen.getByLabelText("Ruleset"), { target: { value: "berkeley" } })
-    fireEvent.change(screen.getByLabelText("Bot opponent"), { target: { value: "" } })
+    expect(screen.getByRole("combobox", { name: "Bot opponent" })).toBeDisabled()
     fireEvent.click(screen.getByRole("button", { name: "Create bot game" }))
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Pick a bot before creating the game.")

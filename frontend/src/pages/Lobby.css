@@ -60,7 +60,125 @@
   line-height: 1.35;
 }
 .lobby-bot-picker { display: grid; gap: 0.45rem; padding-top: 0.15rem; }
-.lobby-bot-picker select { max-width: 22rem; }
+.lobby-bot-tier-picker {
+  position: relative;
+  display: grid;
+  gap: 0.45rem;
+  width: min(100%, 32rem);
+}
+.lobby-bot-tier-picker__button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 2.85rem;
+  padding: 0.58rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.lobby-bot-tier-picker__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+.lobby-bot-tier-picker__button:not(:disabled):hover,
+.lobby-bot-tier-picker__button:not(:disabled):focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.lobby-bot-tier-picker__value,
+.lobby-bot-tier-picker__option {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.lobby-bot-tier-picker__value {
+  grid-template-columns: auto auto auto minmax(0, 1fr) auto;
+}
+.lobby-bot-tier-picker__placeholder {
+  color: var(--muted-soft);
+}
+.lobby-bot-tier-picker__badge {
+  --tier-badge-size: 1.55rem;
+  --tier-badge-corner-size: 0.7rem;
+  --tier-badge-font-size: 0.62rem;
+}
+.lobby-bot-tier-picker__rating {
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+}
+.lobby-bot-tier-picker__separator,
+.lobby-bot-tier-picker__limit {
+  color: var(--muted-soft);
+}
+.lobby-bot-tier-picker__name,
+.lobby-bot-tier-picker__limit {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.lobby-bot-tier-picker__chevron {
+  width: 0;
+  height: 0;
+  border-left: 0.34rem solid transparent;
+  border-right: 0.34rem solid transparent;
+  border-top: 0.42rem solid currentColor;
+  opacity: 0.72;
+}
+.lobby-bot-tier-picker__listbox {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  width: min(38rem, calc(100vw - 2rem));
+  max-height: min(24rem, 64vh);
+  overflow-y: auto;
+  padding: 0.45rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow);
+}
+.lobby-bot-tier-picker__group + .lobby-bot-tier-picker__group {
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--border);
+}
+.lobby-bot-tier-picker__group-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.25rem 0.35rem 0.38rem;
+}
+.lobby-bot-tier-picker__group-badge {
+  --tier-badge-size: 1.45rem;
+  --tier-badge-corner-size: 0.64rem;
+  --tier-badge-font-size: 0.58rem;
+}
+.lobby-bot-tier-picker__group-label {
+  color: var(--muted-soft);
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+.lobby-bot-tier-picker__option {
+  min-height: 2.35rem;
+  padding: 0.48rem 0.55rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.lobby-bot-tier-picker__option.is-active,
+.lobby-bot-tier-picker__option:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.lobby-bot-tier-picker__option.is-selected {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent);
+}
 .lobby-stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; margin-top: 1rem; }
 .lobby-stats-tile { display: grid; gap: 0.3rem; padding: 0.9rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-strong); }
 .lobby-stats-tile strong { font-size: 1.35rem; line-height: 1; }
@@ -77,5 +195,15 @@
   .lobby-list li { align-items: flex-start; flex-direction: column; }
   .lobby-list__actions { justify-content: flex-start; }
   .lobby-opponent-options { grid-template-columns: 1fr; }
-  .lobby-bot-picker select { max-width: 100%; }
+  .lobby-bot-tier-picker { width: 100%; }
+  .lobby-bot-tier-picker__listbox {
+    width: 100%;
+    max-height: 20rem;
+  }
+  .lobby-bot-tier-picker__value {
+    grid-template-columns: auto auto auto minmax(0, 1fr);
+  }
+  .lobby-bot-tier-picker__limit {
+    grid-column: 4;
+  }
 }

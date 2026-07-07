@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import TierBadge from "../components/TierBadge"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import { createGame, deleteWaitingGame, getBots, getGame, getLobbyStats, getMyActiveGames, getOpenGames, joinGame } from "../services/api"
@@ -16,6 +17,62 @@ const RULES_URL = "https://kriegspiel.org/rules"
 const DEFAULT_RULE_VARIANT = "berkeley_any"
 const LAST_RULE_VARIANT_STORAGE_KEY = "kriegspiel.lastRuleVariant"
 const RULESET_VALUES = new Set(RULESET_OPTIONS.map((option) => option.value))
+const BOT_TIER_ORDER = ["T0", "T2", "T3", "T4", "T5"]
+const BOT_TIER_LABELS = {
+  T0: "Simple bots",
+  T2: "Club bots",
+  T3: "Strong bots",
+  T4: "Expert bots",
+  T5: "Master bots",
+}
+const BOT_TIER_BY_USERNAME = {
+  llm_gpt45nano: "T2",
+  llm_gptnano: "T2",
+  llm_haiku: "T2",
+  openrouter_gemini25_lite: "T2",
+  openrouter_deepseekv4_flash: "T2",
+  openrouter_gptoss120b: "T2",
+  openrouter_gemini31_lite: "T2",
+  openrouter_llama31_8b: "T2",
+  llm_gemini25_lite: "T2",
+  llm_deepseekv4_flash: "T2",
+  llm_gptoss120b: "T2",
+  llm_gemini31_lite: "T2",
+  llm_llama31_8b: "T2",
+  llm_llama4_scout: "T2",
+  llm_llama4_maverick: "T2",
+  llm_mistral_nemo: "T2",
+  llm_mistral_small32: "T2",
+  llm_mistral_large3: "T2",
+  llm_gemma3_4b: "T2",
+  llm_gemma3_27b: "T2",
+  llm_gemma4_31b: "T2",
+  llm_glm47_flash: "T2",
+  llm_glm45_air: "T2",
+  llm_nemotron_nano: "T2",
+  llm_nemotron_super: "T2",
+  llm_nemotron_ultra: "T2",
+  llm_kimi_k25: "T2",
+  llm_hermes4_70b: "T2",
+  llm_phi4: "T2",
+  openrouter_qwen36_flash: "T3",
+  llm_qwen36_flash: "T3",
+  llm_gpt55: "T3",
+  llm_sonnet5: "T3",
+  llm_gemini25_flash: "T3",
+  llm_qwen_plus: "T3",
+  llm_kimi_k2_thinking: "T3",
+  llm_hermes3_70b: "T3",
+  openrouter_deepseekv4_pro: "T4",
+  bot_deepseekv4_pro: "T4",
+  llm_opus48: "T4",
+  llm_gemini31_pro_preview: "T4",
+  llm_glm52: "T4",
+  llm_kimi_k27_code: "T4",
+  llm_hermes4_405b: "T4",
+  llm_gpt55_pro: "T5",
+  llm_qwen37_max: "T5",
+}
 
 function normalizeRuleVariant(value) {
   const normalized = typeof value === "string" ? value.trim() : ""
@@ -88,14 +145,240 @@ function botRating(bot) {
   return Number.isFinite(elo) ? elo : 1200
 }
 
+function botTierCode(bot) {
+  const username = String(bot?.username || "").trim().toLowerCase()
+  return BOT_TIER_BY_USERNAME[username] ?? "T0"
+}
+
+function botTierIndex(bot) {
+  const index = BOT_TIER_ORDER.indexOf(botTierCode(bot))
+  return index === -1 ? BOT_TIER_ORDER.length : index
+}
+
 function formatBotPickerLabel(bot) {
   const limitLabel = bot?.llm_backed && typeof bot?.llm_bot_limit_label === "string" ? bot.llm_bot_limit_label.trim() : ""
   return `${botRating(bot)} - ${bot?.display_name ?? "Unknown bot"}${limitLabel ? ` (${limitLabel})` : ""}`
 }
 
+function compareBotPickerBots(left, right) {
+  const tierDelta = botTierIndex(left) - botTierIndex(right)
+  if (tierDelta !== 0) {
+    return tierDelta
+  }
+
+  const ratingDelta = botRating(right) - botRating(left)
+  if (ratingDelta !== 0) {
+    return ratingDelta
+  }
+
+  return String(left?.display_name ?? left?.username ?? "").localeCompare(String(right?.display_name ?? right?.username ?? ""))
+}
+
+function groupBotsByTier(bots) {
+  const groups = new Map(BOT_TIER_ORDER.map((code) => [code, []]))
+  bots.forEach((bot) => {
+    const code = botTierCode(bot)
+    if (!groups.has(code)) {
+      groups.set(code, [])
+    }
+    groups.get(code).push(bot)
+  })
+
+  return Array.from(groups.entries())
+    .filter(([, tierBots]) => tierBots.length > 0)
+    .map(([code, tierBots]) => ({ code, label: BOT_TIER_LABELS[code] ?? `${code} bots`, bots: tierBots }))
+}
+
+function safeDomId(value) {
+  return String(value || "bot").replace(/[^a-zA-Z0-9_-]/g, "_")
+}
+
 function botSupportsRuleVariant(bot, ruleVariant) {
   const supported = Array.isArray(bot?.supported_rule_variants) ? bot.supported_rule_variants : DEFAULT_BOT_RULE_VARIANTS
   return supported.includes(ruleVariant)
+}
+
+function BotPickerOptionContent({ bot }) {
+  const limitLabel = bot?.llm_backed && typeof bot?.llm_bot_limit_label === "string" ? bot.llm_bot_limit_label.trim() : ""
+  return (
+    <>
+      <span className="lobby-bot-tier-picker__rating">{botRating(bot)}</span>
+      <span className="lobby-bot-tier-picker__separator">-</span>
+      <span className="lobby-bot-tier-picker__name">{bot?.display_name ?? "Unknown bot"}</span>
+      {limitLabel ? <span className="lobby-bot-tier-picker__limit">({limitLabel})</span> : null}
+    </>
+  )
+}
+
+function BotTierPicker({ bots, selectedBotId, onChange }) {
+  const labelId = useId()
+  const buttonId = useId()
+  const listboxId = useId()
+  const rootRef = useRef(null)
+  const [open, setOpen] = useState(false)
+  const [activeBotId, setActiveBotId] = useState("")
+  const selectedBot = bots.find((bot) => bot.bot_id === selectedBotId) ?? null
+  const groupedBots = useMemo(() => groupBotsByTier(bots), [bots])
+  const optionIds = useMemo(
+    () => new Map(bots.map((bot) => [bot.bot_id, `${listboxId}-${safeDomId(bot.bot_id)}`])),
+    [bots, listboxId],
+  )
+
+  useEffect(() => {
+    setActiveBotId(selectedBot?.bot_id ?? bots[0]?.bot_id ?? "")
+  }, [bots, selectedBot?.bot_id])
+
+  useEffect(() => {
+    if (!open) {
+      return undefined
+    }
+
+    function handlePointerDown(event) {
+      if (rootRef.current && !rootRef.current.contains(event.target)) {
+        setOpen(false)
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown)
+    return () => document.removeEventListener("pointerdown", handlePointerDown)
+  }, [open])
+
+  const activeIndex = bots.findIndex((bot) => bot.bot_id === activeBotId)
+
+  function moveActive(delta) {
+    if (!bots.length) {
+      return
+    }
+
+    const startIndex = activeIndex === -1 ? 0 : activeIndex
+    const nextIndex = (startIndex + delta + bots.length) % bots.length
+    setActiveBotId(bots[nextIndex].bot_id)
+  }
+
+  function selectBot(botId) {
+    if (!botId) {
+      return
+    }
+    onChange(botId)
+    setOpen(false)
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === "ArrowDown") {
+      event.preventDefault()
+      if (!open) {
+        setOpen(true)
+        setActiveBotId(selectedBot?.bot_id ?? bots[0]?.bot_id ?? "")
+        return
+      }
+      moveActive(1)
+      return
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault()
+      if (!open) {
+        setOpen(true)
+        setActiveBotId(selectedBot?.bot_id ?? bots[0]?.bot_id ?? "")
+        return
+      }
+      moveActive(-1)
+      return
+    }
+
+    if (event.key === "Home") {
+      event.preventDefault()
+      setOpen(true)
+      setActiveBotId(bots[0]?.bot_id ?? "")
+      return
+    }
+
+    if (event.key === "End") {
+      event.preventDefault()
+      setOpen(true)
+      setActiveBotId(bots[bots.length - 1]?.bot_id ?? "")
+      return
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault()
+      if (open) {
+        selectBot(activeBotId || selectedBot?.bot_id || bots[0]?.bot_id)
+      } else {
+        setOpen(true)
+      }
+      return
+    }
+
+    if (event.key === "Escape") {
+      setOpen(false)
+    }
+  }
+
+  return (
+    <div className="lobby-bot-tier-picker" ref={rootRef}>
+      <label id={labelId} htmlFor={buttonId}>Bot opponent</label>
+      <button
+        id={buttonId}
+        type="button"
+        role="combobox"
+        className="lobby-bot-tier-picker__button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={listboxId}
+        aria-labelledby={labelId}
+        aria-activedescendant={open && activeBotId ? optionIds.get(activeBotId) : undefined}
+        disabled={!bots.length}
+        onClick={() => setOpen((current) => !current)}
+        onKeyDown={handleKeyDown}
+      >
+        <span className="lobby-bot-tier-picker__value">
+          {selectedBot ? (
+            <>
+              <TierBadge code={botTierCode(selectedBot)} className="lobby-bot-tier-picker__badge" aria-hidden="true" />
+              <BotPickerOptionContent bot={selectedBot} />
+            </>
+          ) : (
+            <span className="lobby-bot-tier-picker__placeholder">Select a bot</span>
+          )}
+        </span>
+        <span className="lobby-bot-tier-picker__chevron" aria-hidden="true" />
+      </button>
+      {open && bots.length ? (
+        <div id={listboxId} className="lobby-bot-tier-picker__listbox" role="listbox" aria-labelledby={labelId}>
+          {groupedBots.map((group) => {
+            return (
+              <div key={group.code} className="lobby-bot-tier-picker__group" role="group" aria-label={`${group.code} ${group.label}`}>
+                <div className="lobby-bot-tier-picker__group-heading">
+                  <TierBadge code={group.code} className="lobby-bot-tier-picker__group-badge" aria-hidden="true" />
+                  <span className="lobby-bot-tier-picker__group-label">{group.label}</span>
+                </div>
+                {group.bots.map((bot) => {
+                  const selected = bot.bot_id === selectedBotId
+                  const active = bot.bot_id === activeBotId
+                  return (
+                    <div
+                      key={bot.bot_id}
+                      id={optionIds.get(bot.bot_id)}
+                      className={`lobby-bot-tier-picker__option${selected ? " is-selected" : ""}${active ? " is-active" : ""}`}
+                      role="option"
+                      aria-label={formatBotPickerLabel(bot)}
+                      aria-selected={selected}
+                      onMouseEnter={() => setActiveBotId(bot.bot_id)}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => selectBot(bot.bot_id)}
+                    >
+                      <BotPickerOptionContent bot={bot} />
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })}
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 function renderCreatorLink(game, botUsernames) {
@@ -161,13 +444,7 @@ export default function LobbyPage() {
     () =>
       bots
         .filter((bot) => botSupportsRuleVariant(bot, ruleVariant))
-        .sort((left, right) => {
-          const ratingDelta = botRating(right) - botRating(left)
-          if (ratingDelta !== 0) {
-            return ratingDelta
-          }
-          return String(left?.display_name ?? left?.username ?? "").localeCompare(String(right?.display_name ?? right?.username ?? ""))
-        }),
+        .sort(compareBotPickerBots),
     [bots, ruleVariant],
   )
   const selectedBot = supportedBots.find((bot) => bot.bot_id === selectedBotId) ?? null
@@ -515,13 +792,7 @@ export default function LobbyPage() {
 
                 {opponentType === "bot" ? (
                   <div className="lobby-bot-picker">
-                    <label htmlFor="bot-picker">Bot opponent</label>
-                    <select id="bot-picker" value={selectedBotId} onChange={(event) => setSelectedBotId(event.target.value)}>
-                      <option value="">Select a bot</option>
-                      {supportedBots.map((bot) => (
-                        <option key={bot.bot_id} value={bot.bot_id}>{formatBotPickerLabel(bot)}</option>
-                      ))}
-                    </select>
+                    <BotTierPicker bots={supportedBots} selectedBotId={selectedBotId} onChange={setSelectedBotId} />
                     {!supportedBots.length ? <p className="lobby-meta">No bots support this ruleset.</p> : null}
                     {selectedBot ? <p className="lobby-meta">{normalizeBotDescription(selectedBot)}</p> : null}
                     {botsError ? <p className="auth-error" role="alert">{botsError}</p> : null}

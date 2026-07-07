@@ -420,6 +420,25 @@ describe("ProfilePage", () => {
     expect(screen.getByText("Qwen3.6 Flash model bot for T3 Strong.")).toBeInTheDocument()
   })
 
+  it("marks_qwen_max_bot_as_tier_five", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "llm_qwen37_max",
+      role: "bot",
+      member_since: "2026-07-06T00:00:00Z",
+      stats: {},
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile("/user/llm_qwen37_max")
+
+    await screen.findByRole("heading", { name: "llm_qwen37_max" })
+    expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Tier T5 LLM bot" })).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T5")).toHaveClass("tier-badge", "tier-badge--t5", "profile-tier-card__code")
+    expect(screen.getByText("Qwen 3.7 Max model bot for T5 Master.")).toBeInTheDocument()
+  })
+
   it("renders_gptnano_bot_profile_with_the_shared_tier_badge", async () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username: "llm_gptnano",
