@@ -155,9 +155,22 @@ function botTierIndex(bot) {
   return index === -1 ? BOT_TIER_ORDER.length : index
 }
 
+function botPickerName(bot) {
+  return String(bot?.display_name ?? "Unknown bot").replace(/\s*\(bot\)\s*$/i, "").trim() || "Unknown bot"
+}
+
+function botPickerLimitLabel(bot) {
+  if (!bot?.llm_backed || typeof bot?.llm_bot_limit_label !== "string") {
+    return ""
+  }
+
+  const limitLabel = bot.llm_bot_limit_label.trim()
+  return /^no\s+ply\s+limit$/i.test(limitLabel) ? "" : limitLabel
+}
+
 function formatBotPickerLabel(bot) {
-  const limitLabel = bot?.llm_backed && typeof bot?.llm_bot_limit_label === "string" ? bot.llm_bot_limit_label.trim() : ""
-  return `${botRating(bot)} - ${bot?.display_name ?? "Unknown bot"}${limitLabel ? ` (${limitLabel})` : ""}`
+  const limitLabel = botPickerLimitLabel(bot)
+  return `${botRating(bot)} - ${botPickerName(bot)}${limitLabel ? ` (${limitLabel})` : ""}`
 }
 
 function compareBotPickerBots(left, right) {
@@ -199,12 +212,12 @@ function botSupportsRuleVariant(bot, ruleVariant) {
 }
 
 function BotPickerOptionContent({ bot }) {
-  const limitLabel = bot?.llm_backed && typeof bot?.llm_bot_limit_label === "string" ? bot.llm_bot_limit_label.trim() : ""
+  const limitLabel = botPickerLimitLabel(bot)
   return (
     <>
       <span className="lobby-bot-tier-picker__rating">{botRating(bot)}</span>
       <span className="lobby-bot-tier-picker__separator">-</span>
-      <span className="lobby-bot-tier-picker__name">{bot?.display_name ?? "Unknown bot"}</span>
+      <span className="lobby-bot-tier-picker__name">{botPickerName(bot)}</span>
       {limitLabel ? <span className="lobby-bot-tier-picker__limit">({limitLabel})</span> : null}
     </>
   )
