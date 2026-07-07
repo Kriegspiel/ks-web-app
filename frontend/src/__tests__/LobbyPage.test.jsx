@@ -29,7 +29,7 @@ beforeEach(() => {
   mockApi.getLobbyStats.mockResolvedValue({ active_games_now: 123456789, completed_last_hour: 3, completed_last_24_hours: 42, completed_total: 314 })
   mockApi.getGame.mockResolvedValue({ state: "waiting" })
   mockApi.deleteWaitingGame.mockResolvedValue({})
-  mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-2", username: "llm_gptnano", display_name: "LLM GPT-Nano (bot)", description: "LLM GPT-Nano (bot) Kriegspiel model bot.", elo: 1342, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "128 ply limit" }, { bot_id: "bot-3", username: "randobotany", display_name: "Random Any Bot", description: "Asks any pawn captures first, then plays random legal-looking moves.", elo: 1200, supported_rule_variants: ["berkeley_any"] }, { bot_id: "bot-4", username: "llm_haiku", display_name: "LLM Haiku (bot)", description: "Anthropic model bot.", elo: 1300, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" }, { bot_id: "bot-5", username: "simpleheuristics", display_name: "Simple Heuristics Bot", description: "Uses simple tactical heuristics.", elo: 1250, supported_rule_variants: ["berkeley", "berkeley_any"] }] })
+  mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-2", username: "llm_gptnano", display_name: "LLM GPT-Nano (bot)", description: "LLM GPT-Nano (bot) Kriegspiel model bot.", elo: 1342, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" }, { bot_id: "bot-3", username: "randobotany", display_name: "Random Any Bot", description: "Asks any pawn captures first, then plays random legal-looking moves.", elo: 1200, supported_rule_variants: ["berkeley_any"] }, { bot_id: "bot-4", username: "llm_haiku", display_name: "LLM Haiku (bot)", description: "Anthropic model bot.", elo: 1300, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" }, { bot_id: "bot-5", username: "simpleheuristics", display_name: "Simple Heuristics Bot", description: "Uses simple tactical heuristics.", elo: 1250, supported_rule_variants: ["berkeley", "berkeley_any"] }] })
 })
 afterEach(() => { cleanup(); window.localStorage.clear(); vi.useRealTimers() })
 
@@ -398,7 +398,7 @@ describe("LobbyPage", () => {
     expect(within(listbox).getAllByText("T2")[0]).toHaveClass("tier-badge", "tier-badge--t2")
     expect(screen.getByRole("option", { name: "1201 - Random Bot" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1250 - Simple Heuristics Bot" })).toBeInTheDocument()
-    expect(screen.getByRole("option", { name: "1342 - LLM GPT-Nano (128 ply limit)" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1300 - LLM Haiku" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1200 - Random Any Bot" })).toBeInTheDocument()
     expect(botOptionLabels()).toEqual([
@@ -406,7 +406,7 @@ describe("LobbyPage", () => {
       "1201 - Random Bot",
       "1250 - Simple Heuristics Bot",
       "1300 - LLM Haiku",
-      "1342 - LLM GPT-Nano (128 ply limit)",
+      "1342 - LLM GPT-Nano",
     ])
     expect(screen.queryByText("(No ply limit)")).not.toBeInTheDocument()
     expect(screen.queryByText("LLM Haiku (bot)")).not.toBeInTheDocument()
@@ -479,7 +479,7 @@ describe("LobbyPage", () => {
 
     fireEvent.click(await screen.findByLabelText("Bot"))
     await openBotPicker()
-    fireEvent.click(screen.getByRole("option", { name: "1342 - LLM GPT-Nano (128 ply limit)" }))
+    fireEvent.click(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" }))
 
     expect(screen.getByText("LLM GPT-Nano (bot) Kriegspiel model bot.")).toBeInTheDocument()
   })
@@ -491,7 +491,7 @@ describe("LobbyPage", () => {
     await openBotPicker()
     expect(screen.queryByRole("option", { name: "1200 - Random Any Bot" })).not.toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1201 - Random Bot" })).toBeInTheDocument()
-    expect(screen.getByRole("option", { name: "1342 - LLM GPT-Nano (128 ply limit)" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).toBeInTheDocument()
   })
 
   it("falls_back_to_the_first_supported_bot_and_its_raw_description", async () => {
