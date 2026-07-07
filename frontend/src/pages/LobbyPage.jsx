@@ -17,15 +17,17 @@ const RULES_URL = "https://kriegspiel.org/rules"
 const DEFAULT_RULE_VARIANT = "berkeley_any"
 const LAST_RULE_VARIANT_STORAGE_KEY = "kriegspiel.lastRuleVariant"
 const RULESET_VALUES = new Set(RULESET_OPTIONS.map((option) => option.value))
-const BOT_TIER_ORDER = ["T0", "T2", "T3", "T4", "T5"]
+const BOT_TIER_ORDER = ["T0", "T1", "T2", "T3", "T4", "T5"]
 const BOT_TIER_LABELS = {
   T0: "Simple bots",
+  T1: "Casual bots",
   T2: "Club bots",
   T3: "Strong bots",
   T4: "Expert bots",
   T5: "Master bots",
 }
 const BOT_TIER_BY_USERNAME = {
+  simpleheuristics: "T1",
   llm_gpt45nano: "T2",
   llm_gptnano: "T2",
   llm_haiku: "T2",
@@ -179,7 +181,7 @@ function compareBotPickerBots(left, right) {
     return tierDelta
   }
 
-  const ratingDelta = botRating(right) - botRating(left)
+  const ratingDelta = botRating(left) - botRating(right)
   if (ratingDelta !== 0) {
     return ratingDelta
   }
