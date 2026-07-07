@@ -222,6 +222,40 @@ describe("user helpers", () => {
     expect(getSpy).toHaveBeenCalledWith("/api/user/fil%2Frandom/games/filter-options")
     expect(result).toEqual({ filter_options: {} })
   })
+  it("leaderboard_serializes_sort_and_filter_options", async () => {
+    const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: {} })
+
+    await userApi.getLeaderboard(1, 50, {
+      sort: { key: "games", direction: "asc" },
+      includeFilterOptions: false,
+      filters: {
+        username: ["randobot", "llm_haiku"],
+        type: ["bot"],
+      },
+    })
+    await userApi.getLeaderboard(1, 20, { sort: null, filters: {} })
+    await userApi.getLeaderboardFilterOptions()
+
+    expect(getSpy).toHaveBeenNthCalledWith(1, "/api/leaderboard", {
+      params: {
+        page: 1,
+        per_page: 50,
+        include_filter_options: false,
+        sort: "games",
+        dir: "asc",
+        username: "randobot,llm_haiku",
+        type: "bot",
+      },
+    })
+    expect(getSpy).toHaveBeenNthCalledWith(2, "/api/leaderboard", {
+      params: {
+        page: 1,
+        per_page: 20,
+        sort: "none",
+      },
+    })
+    expect(getSpy).toHaveBeenNthCalledWith(3, "/api/leaderboard/filter-options")
+  })
   it("game_history_serializes_opponent_group_tokens", async () => {
     const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: {} })
 

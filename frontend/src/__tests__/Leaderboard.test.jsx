@@ -6,6 +6,7 @@ import LeaderboardPage from "../pages/Leaderboard"
 const mockApi = vi.hoisted(() => ({
   userApi: {
     getLeaderboard: vi.fn(),
+    getLeaderboardFilterOptions: vi.fn(),
   },
 }))
 
@@ -15,6 +16,7 @@ afterEach(() => cleanup())
 
 beforeEach(() => {
   mockApi.userApi.getLeaderboard.mockReset()
+  mockApi.userApi.getLeaderboardFilterOptions.mockReset()
 })
 
 describe("LeaderboardPage", () => {
@@ -36,6 +38,11 @@ describe("LeaderboardPage", () => {
     render(<MemoryRouter><LeaderboardPage /></MemoryRouter>)
 
     await screen.findByText("amy")
+    expect(mockApi.userApi.getLeaderboard).toHaveBeenCalledWith(1, 20, {
+      sort: { key: "rank", direction: "asc" },
+      filters: { username: [], type: [] },
+      includeFilterOptions: false,
+    })
     expect(screen.getByRole("link", { name: "amy" })).toHaveAttribute("href", "/user/amy")
     expect(screen.getByText("Human")).toBeInTheDocument()
     expect(screen.getByText("1520")).toBeInTheDocument()
@@ -81,7 +88,11 @@ describe("LeaderboardPage", () => {
     await screen.findByText("amy")
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
     await screen.findByText("bob")
-    await waitFor(() => expect(mockApi.userApi.getLeaderboard).toHaveBeenNthCalledWith(2, 2, 20))
+    await waitFor(() => expect(mockApi.userApi.getLeaderboard).toHaveBeenNthCalledWith(2, 2, 20, {
+      sort: { key: "rank", direction: "asc" },
+      filters: { username: [], type: [] },
+      includeFilterOptions: false,
+    }))
   })
 
   it("falls_back_to_empty_results_when_payload_fields_are_missing", async () => {
@@ -116,6 +127,75 @@ describe("LeaderboardPage", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("Unable to load leaderboard.")
+    })
+  })
+
+  it("sorts_from_column_headers", async () => {
+    mockApi.userApi.getLeaderboard
+      .mockResolvedValueOnce({ players: [{ rank: 1, username: "amy" }], pagination: { page: 1, pages: 1, total: 1 } })
+      .mockResolvedValueOnce({ players: [{ rank: 2, username: "bob" }], pagination: { page: 1, pages: 1, total: 1 } })
+
+    render(<MemoryRouter><LeaderboardPage /></MemoryRouter>)
+
+    await screen.findByText("amy")
+    fireEvent.click(screen.getByRole("button", { name: "Sort Games" }))
+    await screen.findByText("bob")
+
+    expect(mockApi.userApi.getLeaderboard).toHaveBeenNthCalledWith(2, 1, 20, {
+      sort: { key: "games", direction: "asc" },
+      filters: { username: [], type: [] },
+      includeFilterOptions: false,
+    })
+    expect(screen.getByRole("columnheader", { name: /Games/ })).toHaveAttribute("aria-sort", "ascending")
+  })
+
+  it("filters_by_type_from_the_column_menu", async () => {
+    mockApi.userApi.getLeaderboard
+      .mockResolvedValueOnce({ players: [{ rank: 1, username: "amy" }], pagination: { page: 1, pages: 1, total: 2 } })
+      .mockResolvedValueOnce({ players: [{ rank: 2, username: "randobot", role: "bot", is_bot: true }], pagination: { page: 1, pages: 1, total: 1 } })
+    mockApi.userApi.getLeaderboardFilterOptions.mockResolvedValueOnce({
+      filter_options: {
+        username: [
+          { value: "amy", label: "amy", group: "Humans", count: 1 },
+          { value: "randobot", label: "randobot", group: "Bots", count: 1 },
+        ],
+        type: [
+          { value: "human", label: "Human", group: "", count: 1 },
+          { value: "bot", label: "Bot", group: "", count: 1 },
+        ],
+      },
+    })
+
+    render(<MemoryRouter><LeaderboardPage /></MemoryRouter>)
+
+    await screen.findByText("amy")
+    fireEvent.click(screen.getByRole("button", { name: "Type" }))
+    fireEvent.click(await screen.findByRole("checkbox", { name: "Bot" }))
+    await screen.findByText("randobot")
+
+    expect(mockApi.userApi.getLeaderboardFilterOptions).toHaveBeenCalledTimes(1)
+    expect(mockApi.userApi.getLeaderboard).toHaveBeenNthCalledWith(2, 1, 20, {
+      sort: { key: "rank", direction: "asc" },
+      filters: { username: [], type: ["bot"] },
+      includeFilterOptions: false,
+    })
+    expect(screen.getByRole("button", { name: "Type 1" })).toHaveTextContent("1")
+  })
+
+  it("shows_filter_empty_state_when_active_filters_match_no_players", async () => {
+    mockApi.userApi.getLeaderboard.mockResolvedValueOnce({
+      players: [],
+      pagination: { page: 1, pages: 0, total: 0 },
+    })
+
+    render(<MemoryRouter initialEntries={["/leaderboard?type=bot"]}><LeaderboardPage /></MemoryRouter>)
+
+    await screen.findByText("No players match these filters.")
+    expect(screen.getByRole("button", { name: "Clear filters" })).not.toBeDisabled()
+    expect(mockApi.userApi.getLeaderboard).toHaveBeenCalledWith(1, 20, {
+      sort: { key: "rank", direction: "asc" },
+      filters: { username: [], type: ["bot"] },
+      includeFilterOptions: false,
     })
   })
 })
