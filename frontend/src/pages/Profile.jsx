@@ -15,43 +15,36 @@ const PROFILE_TIER_DETAILS = {
   guest: {
     code: "T0",
     name: "Guest",
-    limit: "No language-model bots",
     className: "profile-tier-card--guest",
   },
   tier1: {
     code: "T1",
     name: "Casual",
-    limit: "128-ply language-model bot games",
     className: "profile-tier-card--tier1",
   },
   tier2: {
     code: "T2",
     name: "Club",
-    limit: "256-ply language-model bot games",
     className: "profile-tier-card--tier2",
   },
   tier3: {
     code: "T3",
     name: "Strong",
-    limit: "1024-ply language-model bot games",
     className: "profile-tier-card--tier3",
   },
   tier4: {
     code: "T4",
     name: "Expert",
-    limit: "Unlimited language-model bot games",
     className: "profile-tier-card--tier4",
   },
   tier5: {
     code: "T5",
     name: "Master",
-    limit: "Not available yet",
     className: "profile-tier-card--tier5",
   },
   tier6: {
     code: "T6",
     name: "Elite",
-    limit: "Not available yet",
     className: "profile-tier-card--tier6",
   },
 }
@@ -601,7 +594,7 @@ export default function ProfilePage() {
           <TierBadge code={profileTier.code} className="profile-tier-card__code" />
           <div className="profile-tier-card__body">
             <h2>Tier {profileTier.code} {profileTier.name}</h2>
-            <p>{profileTier.limit}</p>
+            {profileTier.limit ? <p>{profileTier.limit}</p> : null}
           </div>
         </section>
       ) : null}

@@ -153,7 +153,7 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("region", { name: "Player tier" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Player tier" })).getByText("T2")).toHaveClass("tier-badge", "tier-badge--t2", "profile-tier-card__code")
-    expect(screen.getByText("256-ply language-model bot games")).toBeInTheDocument()
+    expect(screen.queryByText(/language-model bot games/i)).not.toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Overall rating." })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Overall results." })).toBeInTheDocument()
     expect(screen.getByText(/games played/i)).toBeInTheDocument()
