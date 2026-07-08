@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.120
+
+- **Completed Game Links**: redirect access-denied live game links to the game
+  review when the backend marks the game completed.
+
 ## ks-web-app frontend v. 1.3.114
 
 - **Bot Matrix Report**: move row/column bot menu bulk actions to the top and

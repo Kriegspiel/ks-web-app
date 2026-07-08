@@ -8,6 +8,7 @@ const mockParams = vi.hoisted(() => ({ gameId: "g-123" }))
 
 const mockApi = vi.hoisted(() => ({
   getGame: vi.fn(),
+  getGamePublicStatus: vi.fn(),
   getGameState: vi.fn(),
   createGameEventsSource: vi.fn(),
   deleteWaitingGame: vi.fn(),
@@ -103,6 +104,7 @@ beforeEach(() => {
     created_at: "2026-04-02T12:00:00Z",
   })
   mockApi.getGameState.mockResolvedValue(activeState)
+  mockApi.getGamePublicStatus.mockResolvedValue({ game_code: "ABC123", state: "active" })
   mockApi.createGameEventsSource.mockReturnValue(null)
   mockApi.deleteWaitingGame.mockResolvedValue({})
   mockApi.submitMove.mockResolvedValue({ move_done: true })
@@ -119,6 +121,37 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     expect(await screen.findByText(/signed in as notifil\./i)).toBeInTheDocument()
+  })
+
+  it("redirects_access_denied_completed_games_to_review", async () => {
+    mockParams.gameId = "XSM35R"
+    mockApi.getGameState.mockRejectedValueOnce({
+      status: 403,
+      message: "Only participants can access this game.",
+    })
+    mockApi.getGamePublicStatus.mockResolvedValueOnce({ game_code: "XSM35R", state: "completed" })
+
+    render(<GamePage />)
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/game/XSM35R/review", { replace: true })
+    })
+    expect(mockApi.getGamePublicStatus).toHaveBeenCalledWith("XSM35R")
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
+  it("keeps_access_error_when_private_game_is_not_completed", async () => {
+    mockApi.getGameState.mockRejectedValueOnce({
+      status: 403,
+      message: "Only participants can access this game.",
+    })
+    mockApi.getGamePublicStatus.mockResolvedValueOnce({ game_code: "ABC123", state: "active" })
+
+    render(<GamePage />)
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Only participants can access this game.")
+    expect(mockApi.getGamePublicStatus).toHaveBeenCalledWith("g-123")
+    expect(mockNavigate).not.toHaveBeenCalled()
   })
 
   it("shows_current_message_above_the_referee_log", async () => {

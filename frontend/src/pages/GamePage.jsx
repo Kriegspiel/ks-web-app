@@ -6,7 +6,7 @@ import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
 import usePhantoms, { occupiedSquaresFromFen } from "../hooks/usePhantoms"
 import { announcementSoundCategories, createGameSoundPlayer } from "../gameSounds"
-import { askAny, createGameEventsSource, deleteWaitingGame, getGame, getGameState, resignGame, submitMove } from "../services/api"
+import { askAny, createGameEventsSource, deleteWaitingGame, getGame, getGamePublicStatus, getGameState, resignGame, submitMove } from "../services/api"
 import { FILES, getAllowedMoveTargets, PIECE_ASSETS, RANKS } from "../components/chessboard"
 import { formatRuleVariant } from "../utils/rules"
 import { formatClock, projectClock, reconcileClockSnapshot } from "./gameClock"
@@ -33,6 +33,10 @@ const PHANTOM_LABELS = {
   n: "Knight",
   p: "Pawn",
   k: "King",
+}
+
+function isGameAccessDeniedError(error) {
+  return error?.status === 401 || error?.status === 403
 }
 const PHANTOM_MENU_WIDTH = 164
 const PHANTOM_MENU_GAP = 6
@@ -2081,8 +2085,8 @@ export default function GamePage() {
       setLoading(true)
     }
 
+    const requestedGameRef = gameRef
     try {
-      const requestedGameRef = gameRef
       const state = await getGameState(requestedGameRef)
       if (requestId !== stateRequestIdRef.current || requestedGameRef !== previousGameRefRef.current) {
         return
@@ -2109,8 +2113,23 @@ export default function GamePage() {
       setError("")
       setLoading(false)
     } catch (requestError) {
-      if (requestId !== stateRequestIdRef.current || gameRef !== previousGameRefRef.current) {
+      if (requestId !== stateRequestIdRef.current || requestedGameRef !== previousGameRefRef.current) {
         return
+      }
+      if (isGameAccessDeniedError(requestError)) {
+        try {
+          const publicStatus = await getGamePublicStatus(requestedGameRef)
+          if (requestId !== stateRequestIdRef.current || requestedGameRef !== previousGameRefRef.current) {
+            return
+          }
+          if (publicStatus?.state === "completed") {
+            navigate(`/game/${publicStatus?.game_code ?? requestedGameRef}/review`, { replace: true })
+            setError("")
+            return
+          }
+        } catch {
+          // Keep the original access error when public status cannot be loaded.
+        }
       }
       setError(requestError?.message ?? "Unable to load this game right now.")
     } finally {
@@ -2121,7 +2140,7 @@ export default function GamePage() {
         setLoading(false)
       }
     }
-  }, [captureViewport, gameRef])
+  }, [captureViewport, gameRef, navigate])
 
   const pollMetadata = useCallback(async () => {
     if (!gameRef) {

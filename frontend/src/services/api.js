@@ -102,6 +102,7 @@ export async function getMyArchivedGames() { try { const response = await api.ge
 export async function getGame(gameId) { try { const response = await api.get(`/api/game/${encodeURIComponent(gameId)}`); return response.data } catch (error) { throw normalizeError(error, 'Unable to load game details right now.') } }
 export async function getGameTranscript(gameId) { try { const response = await api.get(`/api/game/${encodeURIComponent(gameId)}/moves`); return response.data } catch (error) { throw normalizeError(error, 'Unable to load game transcript right now.') } }
 export async function getGameReview(gameId) { try { const response = await api.get(`/api/game/${encodeURIComponent(gameId)}/review`); return response.data } catch (error) { throw normalizeError(error, 'Unable to load game review right now.') } }
+export async function getGamePublicStatus(gameId) { try { const response = await api.get(`/api/game/${encodeURIComponent(gameId)}/public-status`); return response.data } catch (error) { throw normalizeError(error, 'Unable to load game status right now.') } }
 export async function getGameState(gameId) { try { const response = await api.get(`/api/game/${encodeURIComponent(gameId)}/state`); return response.data } catch (error) { throw normalizeError(error, 'Unable to load game state right now.') } }
 export function gameEventsUrl(gameId) { return `/api/game/${encodeURIComponent(gameId)}/events` }
 export function createGameEventsSource(gameId) {
