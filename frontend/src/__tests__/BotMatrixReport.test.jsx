@@ -191,6 +191,7 @@ describe("BotMatrixReportPage", () => {
     expect(screen.getByText("Loaded in 42 ms.")).toBeInTheDocument()
     expect(screen.getByText("Built from 27,350 completed bot-vs-bot games and 54,700 row-perspective records.")).toBeInTheDocument()
     expect(screen.getByLabelText("Time period")).toHaveValue("week")
+    expect(screen.getByLabelText("Review outcome")).toHaveValue("all")
     expect(screen.getByText("2026-06-29 — 2026-07-06")).toBeInTheDocument()
 
     expect(document.querySelector(".bot-matrix-scroll .bot-matrix-table")).toBeInTheDocument()
@@ -233,6 +234,30 @@ describe("BotMatrixReportPage", () => {
     )
 
     nowSpy.mockRestore()
+  })
+
+  it("adds_the_selected_review_outcome_to_matrix_game_history_links", async () => {
+    render(<MemoryRouter><BotMatrixReportPage /></MemoryRouter>)
+
+    const reviewOutcomeSelect = await screen.findByLabelText("Review outcome")
+    const matchupLink = screen.getByRole("link", { name: "Haiku vs. GPT Nano games" })
+    expect(matchupLink).toHaveAttribute("href", "/user/llm_haiku/games?opponent=llm_gptnano")
+
+    fireEvent.change(reviewOutcomeSelect, { target: { value: "no_resignations_timeouts" } })
+
+    let params = new URLSearchParams(matchupLink.getAttribute("href").split("?")[1])
+    expect(params.get("opponent")).toBe("llm_gptnano")
+    expect(params.get("reason")).toBe("checkmate,stalemate,insufficient,too_many_reversible_moves,draw,unknown")
+
+    const averageLink = screen.getByRole("link", { name: "LLM Haiku (bot) games" })
+    params = new URLSearchParams(averageLink.getAttribute("href").split("?")[1])
+    expect(params.get("reason")).toBe("checkmate,stalemate,insufficient,too_many_reversible_moves,draw,unknown")
+
+    fireEvent.change(reviewOutcomeSelect, { target: { value: "timeout" } })
+
+    params = new URLSearchParams(matchupLink.getAttribute("href").split("?")[1])
+    expect(params.get("opponent")).toBe("llm_gptnano")
+    expect(params.get("reason")).toBe("timeout")
   })
 
   it("filters_the_outcome_matrix_by_selected_row_and_column_bots", async () => {

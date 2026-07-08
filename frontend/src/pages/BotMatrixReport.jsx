@@ -38,6 +38,32 @@ const PERIOD_DAY_WINDOWS = {
   month: 30,
   year: 365,
 }
+const REVIEW_OUTCOME_ALL = "all"
+const REVIEW_OUTCOME_NO_RESIGNATIONS_TIMEOUTS = "no_resignations_timeouts"
+const REVIEW_OUTCOME_LABELS = new Map([
+  ["checkmate", "Checkmate"],
+  ["draw", "Draw"],
+  ["insufficient", "Insufficient material"],
+  ["resignation", "Resignation"],
+  ["stalemate", "Stalemate"],
+  ["timeout", "Timeout"],
+  ["too_many_reversible_moves", "Too many reversible moves"],
+  ["unknown", "Unknown"],
+])
+const REVIEW_OUTCOME_BASE_OPTIONS = [
+  { value: REVIEW_OUTCOME_ALL, label: "All outcomes" },
+  { value: REVIEW_OUTCOME_NO_RESIGNATIONS_TIMEOUTS, label: "No resignations/timeouts" },
+  ...[...REVIEW_OUTCOME_LABELS].map(([value, label]) => ({ value, label })),
+]
+const REVIEW_EXCLUDED_OUTCOMES = new Set(["resignation", "time", "timeout"])
+const REVIEW_DEFAULT_INCLUDED_OUTCOMES = [
+  "checkmate",
+  "stalemate",
+  "insufficient",
+  "too_many_reversible_moves",
+  "draw",
+  "unknown",
+]
 const TOTAL_FILTER_MENU_VIEWPORT_MARGIN = 16
 const TOTAL_FILTER_MENU_MAX_WIDTH = 352
 
@@ -103,6 +129,46 @@ function formatShare(value) {
   if (number === null || number <= 0) return "0%"
   const percent = number * 100
   return `${stripTrailingZeros(percent.toFixed(percent < 10 ? 1 : 0))}%`
+}
+
+function normalizeOutcomeValue(value) {
+  return String(value ?? "").trim().toLowerCase()
+}
+
+function reviewOutcomeLabel(value, fallback = "") {
+  const normalized = normalizeOutcomeValue(value)
+  if (fallback) return fallback
+  return REVIEW_OUTCOME_LABELS.get(normalized) ?? normalized.replace(/[_-]+/g, " ")
+}
+
+function reviewOutcomeOptions(endConditionRows) {
+  const seen = new Set()
+  const options = REVIEW_OUTCOME_BASE_OPTIONS.map((option) => {
+    seen.add(option.value)
+    return option
+  })
+
+  endConditionRows.forEach((row) => {
+    const value = normalizeOutcomeValue(row.condition)
+    if (!value || seen.has(value)) return
+    seen.add(value)
+    options.push({ value, label: reviewOutcomeLabel(value, row.label) })
+  })
+
+  return options
+}
+
+function reviewReasonValuesForOutcome(outcome, endConditionRows) {
+  const normalizedOutcome = normalizeOutcomeValue(outcome)
+  if (!normalizedOutcome || normalizedOutcome === REVIEW_OUTCOME_ALL) return []
+  if (normalizedOutcome !== REVIEW_OUTCOME_NO_RESIGNATIONS_TIMEOUTS) return [normalizedOutcome]
+
+  const values = new Set(REVIEW_DEFAULT_INCLUDED_OUTCOMES)
+  endConditionRows.forEach((row) => {
+    const value = normalizeOutcomeValue(row.condition)
+    if (value) values.add(value)
+  })
+  return [...values].filter((value) => !REVIEW_EXCLUDED_OUTCOMES.has(value))
 }
 
 function parseUtcDate(value) {
@@ -303,12 +369,16 @@ function botMatchupName(player) {
     .trim() || "Unknown bot"
 }
 
-function botMatchupGamesPath(rowPlayer, opponent) {
-  if (!opponent?.username) {
-    return `/user/${rowPlayer.username}/games`
+function botMatchupGamesPath(rowPlayer, opponent, reviewReasonValues = []) {
+  const params = new URLSearchParams()
+  if (opponent?.username) {
+    params.set("opponent", opponent.username)
   }
-  const params = new URLSearchParams({ opponent: opponent.username })
-  return `/user/${rowPlayer.username}/games?${params.toString()}`
+  if (reviewReasonValues.length) {
+    params.set("reason", reviewReasonValues.join(","))
+  }
+  const query = params.toString()
+  return `/user/${rowPlayer.username}/games${query ? `?${query}` : ""}`
 }
 
 function hasUsageValues(...values) {
@@ -357,7 +427,7 @@ function matrixUsageDisplay(summary) {
   }
 }
 
-function MatrixCell({ rowPlayer, opponent, summary, average = false }) {
+function MatrixCell({ rowPlayer, opponent, summary, average = false, reviewReasonValues = [] }) {
   if (!summary) {
     return <div className="bot-matrix-cell bot-matrix-cell--empty">Same player</div>
   }
@@ -372,7 +442,7 @@ function MatrixCell({ rowPlayer, opponent, summary, average = false }) {
       <span>Total games: {formatInteger(summary.games)}</span>
       <strong>{summary.record}</strong>
       <span>{formatAveragePlies(summary.averagePlies)} avg plies</span>
-      <Link to={botMatchupGamesPath(rowPlayer, opponent)}>{gamesLabel}</Link>
+      <Link to={botMatchupGamesPath(rowPlayer, opponent, reviewReasonValues)}>{gamesLabel}</Link>
       <span title={usageTooltip(summary.usageStartDate)}>
         {usage.labelPrefix} tokens per game (in/cache/out): {formatTokenSplit(usage.inputTokens, usage.cacheTokens, usage.outputTokens)}
       </span>
@@ -626,6 +696,7 @@ export default function BotMatrixReportPage() {
   const [totalPlayerFilters, setTotalPlayerFilters] = useState([])
   const [rowBotSelection, setRowBotSelection] = useState(null)
   const [columnBotSelection, setColumnBotSelection] = useState(null)
+  const [reviewOutcome, setReviewOutcome] = useState(REVIEW_OUTCOME_ALL)
   const [openMatrixFilterKey, setOpenMatrixFilterKey] = useState("")
   const [openTotalFilterKey, setOpenTotalFilterKey] = useState("")
   const [loading, setLoading] = useState(true)
@@ -660,6 +731,17 @@ export default function BotMatrixReportPage() {
         cells: row.cells.filter((cell) => selectedColumns.has(cell.opponent.username)),
       }))
   }, [report.matrixRows, selectedRowBotValues, selectedColumnBotValues])
+  const reviewOutcomeSelectOptions = useMemo(() => reviewOutcomeOptions(report.endConditionRows), [report.endConditionRows])
+  const reviewReasonValues = useMemo(
+    () => reviewReasonValuesForOutcome(reviewOutcome, report.endConditionRows),
+    [reviewOutcome, report.endConditionRows],
+  )
+
+  useEffect(() => {
+    if (!reviewOutcomeSelectOptions.some((option) => option.value === reviewOutcome)) {
+      setReviewOutcome(REVIEW_OUTCOME_ALL)
+    }
+  }, [reviewOutcome, reviewOutcomeSelectOptions])
 
   useEffect(() => {
     let cancelled = false
@@ -802,6 +884,14 @@ export default function BotMatrixReportPage() {
             ))}
           </select>
         </label>
+        <label className="bot-matrix-review-outcome-field" htmlFor="bot-matrix-review-outcome">
+          <span>Review outcome</span>
+          <select id="bot-matrix-review-outcome" value={reviewOutcome} onChange={(event) => setReviewOutcome(event.target.value)}>
+            {reviewOutcomeSelectOptions.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </label>
         {selectedPeriodRange ? (
           <span className="bot-matrix-period-range" aria-live="polite">{selectedPeriodRange}</span>
         ) : null}
@@ -854,11 +944,11 @@ export default function BotMatrixReportPage() {
                       <th scope="row"><PlayerLink player={row.player} /></th>
                       {row.cells.map((cell) => (
                         <td key={`${row.player.username}-${cell.opponent.username}`}>
-                          <MatrixCell rowPlayer={row.player} opponent={cell.opponent} summary={cell.summary} />
+                          <MatrixCell rowPlayer={row.player} opponent={cell.opponent} summary={cell.summary} reviewReasonValues={reviewReasonValues} />
                         </td>
                       ))}
                       <td>
-                        <MatrixCell rowPlayer={row.player} summary={row.average} average />
+                        <MatrixCell rowPlayer={row.player} summary={row.average} average reviewReasonValues={reviewReasonValues} />
                       </td>
                     </tr>
                   )) : (

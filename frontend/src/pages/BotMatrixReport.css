@@ -20,7 +20,8 @@
   margin: 1rem 0;
 }
 
-.bot-matrix-period-field {
+.bot-matrix-period-field,
+.bot-matrix-review-outcome-field {
   align-items: center;
   color: var(--muted);
   display: inline-flex;
@@ -28,7 +29,8 @@
   font-weight: 700;
 }
 
-.bot-matrix-period-field select {
+.bot-matrix-period-field select,
+.bot-matrix-review-outcome-field select {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -36,6 +38,10 @@
   font: inherit;
   min-width: 9rem;
   padding: 0.45rem 0.75rem;
+}
+
+.bot-matrix-review-outcome-field select {
+  min-width: 14rem;
 }
 
 .bot-matrix-period-range {
