@@ -38,8 +38,7 @@ const PERIOD_DAY_WINDOWS = {
   month: 30,
   year: 365,
 }
-const REVIEW_OUTCOME_ALL = "all"
-const REVIEW_OUTCOME_NO_RESIGNATIONS_TIMEOUTS = "no_resignations_timeouts"
+const REVIEW_OUTCOME_NONE = "__none__"
 const REVIEW_OUTCOME_LABELS = new Map([
   ["checkmate", "Checkmate"],
   ["draw", "Draw"],
@@ -50,20 +49,17 @@ const REVIEW_OUTCOME_LABELS = new Map([
   ["too_many_reversible_moves", "Too many reversible moves"],
   ["unknown", "Unknown"],
 ])
-const REVIEW_OUTCOME_BASE_OPTIONS = [
-  { value: REVIEW_OUTCOME_ALL, label: "All outcomes" },
-  { value: REVIEW_OUTCOME_NO_RESIGNATIONS_TIMEOUTS, label: "No resignations/timeouts" },
-  ...[...REVIEW_OUTCOME_LABELS].map(([value, label]) => ({ value, label })),
-]
-const REVIEW_EXCLUDED_OUTCOMES = new Set(["resignation", "time", "timeout"])
-const REVIEW_DEFAULT_INCLUDED_OUTCOMES = [
+const REVIEW_OUTCOME_BASE_VALUES = [
   "checkmate",
   "stalemate",
   "insufficient",
   "too_many_reversible_moves",
+  "resignation",
+  "timeout",
   "draw",
   "unknown",
 ]
+const REVIEW_EXCLUDED_OUTCOMES = new Set(["resignation", "time", "timeout"])
 const TOTAL_FILTER_MENU_VIEWPORT_MARGIN = 16
 const TOTAL_FILTER_MENU_MAX_WIDTH = 352
 
@@ -143,9 +139,9 @@ function reviewOutcomeLabel(value, fallback = "") {
 
 function reviewOutcomeOptions(endConditionRows) {
   const seen = new Set()
-  const options = REVIEW_OUTCOME_BASE_OPTIONS.map((option) => {
-    seen.add(option.value)
-    return option
+  const options = REVIEW_OUTCOME_BASE_VALUES.map((value) => {
+    seen.add(value)
+    return { value, label: reviewOutcomeLabel(value) }
   })
 
   endConditionRows.forEach((row) => {
@@ -158,17 +154,16 @@ function reviewOutcomeOptions(endConditionRows) {
   return options
 }
 
-function reviewReasonValuesForOutcome(outcome, endConditionRows) {
-  const normalizedOutcome = normalizeOutcomeValue(outcome)
-  if (!normalizedOutcome || normalizedOutcome === REVIEW_OUTCOME_ALL) return []
-  if (normalizedOutcome !== REVIEW_OUTCOME_NO_RESIGNATIONS_TIMEOUTS) return [normalizedOutcome]
+function outcomeValuesWithoutResignationsOrTimeouts(options) {
+  return options
+    .map((option) => option.value)
+    .filter((value) => !REVIEW_EXCLUDED_OUTCOMES.has(value))
+}
 
-  const values = new Set(REVIEW_DEFAULT_INCLUDED_OUTCOMES)
-  endConditionRows.forEach((row) => {
-    const value = normalizeOutcomeValue(row.condition)
-    if (value) values.add(value)
-  })
-  return [...values].filter((value) => !REVIEW_EXCLUDED_OUTCOMES.has(value))
+function outcomeRequestValues(selectedValues, allValues) {
+  if (selectedValues.length === allValues.length) return []
+  if (selectedValues.length === 0) return [REVIEW_OUTCOME_NONE]
+  return selectedValues
 }
 
 function parseUtcDate(value) {
@@ -523,7 +518,17 @@ function TotalPlayerFilterMenu({ options, selectedValues, onToggle, onClear, sty
   )
 }
 
-function BotSelectionMenu({ label, options, selectedValues, onToggle, onSelectAll, onClearAll, style }) {
+function BotSelectionMenu({
+  label,
+  options,
+  selectedValues,
+  onToggle,
+  onSelectAll,
+  onClearAll,
+  style,
+  emptyLabel = "No bots",
+  extraActions = [],
+}) {
   const selected = new Set(selectedValues)
   const allSelected = options.length > 0 && selectedValues.length === options.length
   const noneSelected = selectedValues.length === 0
@@ -533,6 +538,9 @@ function BotSelectionMenu({ label, options, selectedValues, onToggle, onSelectAl
       <div className="bot-matrix-filter-menu__actions">
         <button type="button" onClick={onClearAll} disabled={noneSelected}>Clear all</button>
         <button type="button" onClick={onSelectAll} disabled={allSelected}>Select all</button>
+        {extraActions.map((action) => (
+          <button type="button" key={action.label} onClick={action.onClick}>{action.label}</button>
+        ))}
       </div>
       {options.length ? options.map((option) => (
         <label className="bot-matrix-filter-menu__option" key={option.value}>
@@ -543,7 +551,7 @@ function BotSelectionMenu({ label, options, selectedValues, onToggle, onSelectAl
           />
           <span>{option.label}</span>
         </label>
-      )) : <p className="bot-matrix-filter-menu__empty">No bots</p>}
+      )) : <p className="bot-matrix-filter-menu__empty">{emptyLabel}</p>}
     </div>
   )
 }
@@ -557,6 +565,8 @@ function MatrixBotFilter({
   onToggle,
   onSelectAll,
   onClearAll,
+  emptyLabel,
+  extraActions,
 }) {
   const menuAnchorRef = useRef(null)
   const menuStyle = useTotalFilterMenuStyle(open, menuAnchorRef)
@@ -581,6 +591,8 @@ function MatrixBotFilter({
           onToggle={onToggle}
           onSelectAll={onSelectAll}
           onClearAll={onClearAll}
+          emptyLabel={emptyLabel}
+          extraActions={extraActions}
           style={menuStyle}
         />
       ), document.body) : null}
@@ -696,7 +708,7 @@ export default function BotMatrixReportPage() {
   const [totalPlayerFilters, setTotalPlayerFilters] = useState([])
   const [rowBotSelection, setRowBotSelection] = useState(null)
   const [columnBotSelection, setColumnBotSelection] = useState(null)
-  const [reviewOutcome, setReviewOutcome] = useState(REVIEW_OUTCOME_ALL)
+  const [reviewOutcomeSelection, setReviewOutcomeSelection] = useState(null)
   const [openMatrixFilterKey, setOpenMatrixFilterKey] = useState("")
   const [openTotalFilterKey, setOpenTotalFilterKey] = useState("")
   const [loading, setLoading] = useState(true)
@@ -731,28 +743,46 @@ export default function BotMatrixReportPage() {
         cells: row.cells.filter((cell) => selectedColumns.has(cell.opponent.username)),
       }))
   }, [report.matrixRows, selectedRowBotValues, selectedColumnBotValues])
-  const reviewOutcomeSelectOptions = useMemo(() => reviewOutcomeOptions(report.endConditionRows), [report.endConditionRows])
-  const reviewReasonValues = useMemo(
-    () => reviewReasonValuesForOutcome(reviewOutcome, report.endConditionRows),
-    [reviewOutcome, report.endConditionRows],
+  const reviewOutcomeOptionsList = useMemo(() => reviewOutcomeOptions(report.endConditionRows), [report.endConditionRows])
+  const reviewOutcomeValues = useMemo(
+    () => reviewOutcomeOptionsList.map((option) => option.value),
+    [reviewOutcomeOptionsList],
+  )
+  const selectedReviewOutcomeValues = useMemo(
+    () => resolveSelectedValues(reviewOutcomeSelection, reviewOutcomeValues),
+    [reviewOutcomeSelection, reviewOutcomeValues],
+  )
+  const reviewOutcomeRequestValues = useMemo(
+    () => outcomeRequestValues(selectedReviewOutcomeValues, reviewOutcomeValues),
+    [selectedReviewOutcomeValues, reviewOutcomeValues],
+  )
+  const reviewOutcomeRequestKey = reviewOutcomeRequestValues.join(",")
+  const reviewReasonValues = reviewOutcomeRequestValues
+
+  const matrixTableStyle = useMemo(
+    () => ({ "--bot-matrix-visible-columns": visibleColumnBots.length }),
+    [visibleColumnBots.length],
   )
 
   useEffect(() => {
-    if (!reviewOutcomeSelectOptions.some((option) => option.value === reviewOutcome)) {
-      setReviewOutcome(REVIEW_OUTCOME_ALL)
+    if (reviewOutcomeSelection === null) return
+    const resolved = resolveSelectedValues(reviewOutcomeSelection, reviewOutcomeValues)
+    if (resolved.length !== reviewOutcomeSelection.length) {
+      setReviewOutcomeSelection(resolved)
     }
-  }, [reviewOutcome, reviewOutcomeSelectOptions])
+  }, [reviewOutcomeSelection, reviewOutcomeValues])
 
   useEffect(() => {
     let cancelled = false
 
     async function loadReport() {
       const startedAt = Date.now()
+      const requestOutcomes = reviewOutcomeRequestKey ? reviewOutcomeRequestKey.split(",") : []
       setLoading(true)
       setError("")
       setLoadDurationMs(null)
       try {
-        const data = await techApi.getBotMatrixReport(period)
+        const data = await techApi.getBotMatrixReport(period, requestOutcomes)
         if (!cancelled) setPayload(data)
       } catch (apiError) {
         if (!cancelled) {
@@ -769,7 +799,7 @@ export default function BotMatrixReportPage() {
 
     loadReport()
     return () => { cancelled = true }
-  }, [period])
+  }, [period, reviewOutcomeRequestKey])
 
   useEffect(() => {
     if (!openTotalFilterKey) {
@@ -863,6 +893,15 @@ export default function BotMatrixReportPage() {
     setColumnBotSelection((current) => toggleSelectionValue(current, value, matrixBotValues))
   }
 
+  function toggleReviewOutcomeSelection(value) {
+    setReviewOutcomeSelection((current) => toggleSelectionValue(current, value, reviewOutcomeValues))
+  }
+
+  function selectNoResignationsOrTimeouts() {
+    const values = outcomeValuesWithoutResignationsOrTimeouts(reviewOutcomeOptionsList)
+    setReviewOutcomeSelection(sortValuesByReference(values, reviewOutcomeValues))
+  }
+
   function clearTotalPlayerFilter() {
     setTotalPlayerFilters([])
   }
@@ -884,14 +923,18 @@ export default function BotMatrixReportPage() {
             ))}
           </select>
         </label>
-        <label className="bot-matrix-review-outcome-field" htmlFor="bot-matrix-review-outcome">
-          <span>Review outcome</span>
-          <select id="bot-matrix-review-outcome" value={reviewOutcome} onChange={(event) => setReviewOutcome(event.target.value)}>
-            {reviewOutcomeSelectOptions.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </label>
+        <MatrixBotFilter
+          label="Review outcomes"
+          options={reviewOutcomeOptionsList}
+          selectedValues={selectedReviewOutcomeValues}
+          open={openMatrixFilterKey === "outcomes"}
+          onOpen={() => handleOpenMatrixFilter("outcomes")}
+          onToggle={toggleReviewOutcomeSelection}
+          onSelectAll={() => setReviewOutcomeSelection(null)}
+          onClearAll={() => setReviewOutcomeSelection([])}
+          emptyLabel="No outcomes"
+          extraActions={[{ label: "No resign/timeouts", onClick: selectNoResignationsOrTimeouts }]}
+        />
         {selectedPeriodRange ? (
           <span className="bot-matrix-period-range" aria-live="polite">{selectedPeriodRange}</span>
         ) : null}
@@ -926,7 +969,7 @@ export default function BotMatrixReportPage() {
               />
             </div>
             <div className="bot-matrix-scroll">
-              <table className="leaderboard-table bot-matrix-table">
+              <table className="leaderboard-table bot-matrix-table" style={matrixTableStyle}>
                 <thead>
                   <tr>
                     <th>Player</th>

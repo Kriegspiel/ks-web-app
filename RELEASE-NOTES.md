@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.122
+
+- **Bot Matrix Report**: make review outcome filtering a multiselect that
+  refreshes the report data, and keep the matrix compact when only a few
+  column bots are selected.
+
 ## ks-web-app frontend v. 1.3.121
 
 - **Bot Matrix Report**: add a review outcome selector that carries
