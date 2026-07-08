@@ -187,11 +187,11 @@ describe("BotMatrixReportPage", () => {
     render(<MemoryRouter><BotMatrixReportPage /></MemoryRouter>)
 
     expect(await screen.findByRole("heading", { name: "Bots' matrix" })).toBeInTheDocument()
-    expect(mockApi.techApi.getBotMatrixReport).toHaveBeenCalledWith("week")
+    expect(mockApi.techApi.getBotMatrixReport).toHaveBeenCalledWith("week", [])
     expect(screen.getByText("Loaded in 42 ms.")).toBeInTheDocument()
     expect(screen.getByText("Built from 27,350 completed bot-vs-bot games and 54,700 row-perspective records.")).toBeInTheDocument()
     expect(screen.getByLabelText("Time period")).toHaveValue("week")
-    expect(screen.getByLabelText("Review outcome")).toHaveValue("all")
+    expect(screen.getByRole("button", { name: "Review outcomes 8/8" })).toHaveAttribute("aria-expanded", "false")
     expect(screen.getByText("2026-06-29 — 2026-07-06")).toBeInTheDocument()
 
     expect(document.querySelector(".bot-matrix-scroll .bot-matrix-table")).toBeInTheDocument()
@@ -236,14 +236,40 @@ describe("BotMatrixReportPage", () => {
     nowSpy.mockRestore()
   })
 
-  it("adds_the_selected_review_outcome_to_matrix_game_history_links", async () => {
+  it("filters_the_report_and_game_history_links_by_selected_review_outcomes", async () => {
+    mockApi.techApi.getBotMatrixReport
+      .mockResolvedValueOnce(LIFETIME_REPORT)
+      .mockResolvedValueOnce({
+        ...LIFETIME_REPORT,
+        unique_game_count: 7157,
+        row_record_count: 14314,
+        end_condition_rows: [
+          { condition: "checkmate", label: "Checkmate", games: 5684 },
+          { condition: "insufficient", label: "Insufficient material", games: 1473 },
+        ],
+      })
+
     render(<MemoryRouter><BotMatrixReportPage /></MemoryRouter>)
 
-    const reviewOutcomeSelect = await screen.findByLabelText("Review outcome")
+    await screen.findByRole("button", { name: "Review outcomes 8/8" })
     const matchupLink = screen.getByRole("link", { name: "Haiku vs. GPT Nano games" })
     expect(matchupLink).toHaveAttribute("href", "/user/llm_haiku/games?opponent=llm_gptnano")
 
-    fireEvent.change(reviewOutcomeSelect, { target: { value: "no_resignations_timeouts" } })
+    fireEvent.click(screen.getByRole("button", { name: "Review outcomes 8/8" }))
+    const outcomeMenu = await screen.findByRole("menu", { name: "Review outcomes" })
+    expect(within(outcomeMenu).getByLabelText("Resignation")).toBeChecked()
+    expect(within(outcomeMenu).getByLabelText("Timeout")).toBeChecked()
+
+    fireEvent.click(within(outcomeMenu).getByRole("button", { name: "No resign/timeouts" }))
+
+    await waitFor(() => expect(mockApi.techApi.getBotMatrixReport).toHaveBeenLastCalledWith(
+      "week",
+      ["checkmate", "stalemate", "insufficient", "too_many_reversible_moves", "draw", "unknown"],
+    ))
+    expect(await screen.findByText("Built from 7,157 completed bot-vs-bot games and 14,314 row-perspective records.")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Review outcomes 6/8" })).toHaveAttribute("aria-expanded", "true")
+    expect(within(outcomeMenu).getByLabelText("Resignation")).not.toBeChecked()
+    expect(within(outcomeMenu).getByLabelText("Timeout")).not.toBeChecked()
 
     let params = new URLSearchParams(matchupLink.getAttribute("href").split("?")[1])
     expect(params.get("opponent")).toBe("llm_gptnano")
@@ -253,11 +279,23 @@ describe("BotMatrixReportPage", () => {
     params = new URLSearchParams(averageLink.getAttribute("href").split("?")[1])
     expect(params.get("reason")).toBe("checkmate,stalemate,insufficient,too_many_reversible_moves,draw,unknown")
 
-    fireEvent.change(reviewOutcomeSelect, { target: { value: "timeout" } })
+    mockApi.techApi.getBotMatrixReport.mockResolvedValueOnce({
+      ...LIFETIME_REPORT,
+      unique_game_count: 5684,
+      row_record_count: 11368,
+      end_condition_rows: [{ condition: "checkmate", label: "Checkmate", games: 5684 }],
+    })
+    fireEvent.click(within(outcomeMenu).getByLabelText("Stalemate"))
 
-    params = new URLSearchParams(matchupLink.getAttribute("href").split("?")[1])
+    await waitFor(() => expect(mockApi.techApi.getBotMatrixReport).toHaveBeenLastCalledWith(
+      "week",
+      ["checkmate", "insufficient", "too_many_reversible_moves", "draw", "unknown"],
+    ))
+
+    const updatedMatchupLink = screen.getByRole("link", { name: "Haiku vs. GPT Nano games" })
+    params = new URLSearchParams(updatedMatchupLink.getAttribute("href").split("?")[1])
     expect(params.get("opponent")).toBe("llm_gptnano")
-    expect(params.get("reason")).toBe("timeout")
+    expect(params.get("reason")).toBe("checkmate,insufficient,too_many_reversible_moves,draw,unknown")
   })
 
   it("filters_the_outcome_matrix_by_selected_row_and_column_bots", async () => {
@@ -290,6 +328,7 @@ describe("BotMatrixReportPage", () => {
     fireEvent.click(within(columnMenu).getByLabelText("LLM GPT-Nano (bot)"))
 
     expect(screen.getByRole("button", { name: "Column bots 2/3" })).toHaveAttribute("aria-expanded", "true")
+    expect(matrixTable.style.getPropertyValue("--bot-matrix-visible-columns")).toBe("2")
     expect(within(matrixTable).queryByRole("columnheader", { name: "LLM GPT-Nano (bot)" })).not.toBeInTheDocument()
     expect(within(matrixTable).getByRole("rowheader", { name: "LLM GPT-Nano (bot)" })).toBeInTheDocument()
     expect(within(matrixTable).queryByRole("link", { name: "Haiku vs. GPT Nano games" })).not.toBeInTheDocument()
@@ -313,7 +352,7 @@ describe("BotMatrixReportPage", () => {
 
     fireEvent.change(periodSelect, { target: { value: "today" } })
 
-    await waitFor(() => expect(mockApi.techApi.getBotMatrixReport).toHaveBeenLastCalledWith("today"))
+    await waitFor(() => expect(mockApi.techApi.getBotMatrixReport).toHaveBeenLastCalledWith("today", []))
     expect(periodSelect).toHaveValue("today")
     expect(screen.getByText("2026-07-06 — 2026-07-06")).toBeInTheDocument()
     expect(await screen.findByText("Built from 12 completed bot-vs-bot games and 24 row-perspective records.")).toBeInTheDocument()

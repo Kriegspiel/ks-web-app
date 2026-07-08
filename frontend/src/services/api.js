@@ -172,7 +172,14 @@ export const userApi = {
 }
 export const techApi = {
   async getBotsReport(days = 10) { const response = await api.get("/api/tech/bots-report", { params: { days } }); return response.data },
-  async getBotMatrixReport(period = "lifetime") { const response = await api.get("/api/tech/bot-matrix-report", { params: { period } }); return response.data },
+  async getBotMatrixReport(period = "lifetime", outcomes = []) {
+    const params = { period }
+    if (Array.isArray(outcomes) && outcomes.length > 0) {
+      params.outcomes = outcomes.join(",")
+    }
+    const response = await api.get("/api/tech/bot-matrix-report", { params })
+    return response.data
+  },
   async getGuestsReport() { const response = await api.get("/api/tech/guests-report"); return response.data },
   async getUsersReport() { const response = await api.get("/api/tech/users-report"); return response.data },
   async getAcquisitionReport(days = 30) { const response = await api.get("/api/tech/acquisition-report", { params: { days } }); return response.data },
