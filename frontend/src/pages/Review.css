@@ -20,20 +20,6 @@
   margin: 0;
 }
 
-.review-page__t3-link {
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--link-color);
-  font-weight: 800;
-  padding: 0.38rem 0.65rem;
-  text-decoration: none;
-}
-
-.review-page__t3-link:hover,
-.review-page__t3-link:focus-visible {
-  background: var(--surface-soft);
-}
-
 .review-page__signed-in {
   margin: 0;
   color: var(--muted-soft);

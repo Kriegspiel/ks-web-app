@@ -1305,7 +1305,6 @@ export default function ReviewPage() {
       <div className="review-page__header">
         <div className="review-page__header-main">
           <h1>Game review</h1>
-          <Link className="review-page__t3-link" to={`/game/${game?.game_code ?? gameRef}/review/t3`}>T3 review</Link>
         </div>
         <p className="review-page__signed-in">Signed in as {signedInAs}.</p>
       </div>
