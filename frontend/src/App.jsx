@@ -11,6 +11,7 @@ import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
 import GamePage from "./pages/GamePage"
 import ReviewPage from "./pages/Review"
+import ReviewT3Page from "./pages/ReviewT3"
 import ProfilePage from "./pages/Profile"
 import GameHistoryPage from "./pages/GameHistory"
 import LeaderboardPage from "./pages/Leaderboard"
@@ -185,6 +186,14 @@ export function AppRoutes() {
             element={(
               <RequireAuth>
                 <ReviewPage />
+              </RequireAuth>
+            )}
+          />
+          <Route
+            path="/game/:gameCode/review/t3"
+            element={(
+              <RequireAuth>
+                <ReviewT3Page />
               </RequireAuth>
             )}
           />
