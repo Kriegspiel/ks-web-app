@@ -490,7 +490,7 @@ export default function ProfilePage() {
       try {
         const [profileResponse, historyResponse] = await Promise.all([
           userApi.getProfile(username),
-          userApi.getGameHistory(username, 1, 20),
+          userApi.getGameHistory(username, 1, 20, { includeFilterOptions: false }),
         ])
         if (cancelled) return
 

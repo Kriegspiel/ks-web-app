@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.126
+
+- **Profile**: stop requesting game-history filter options for the recent-games
+  preview so profile loads avoid unnecessary archive-history work.
+
 ## ks-web-app frontend v. 1.3.125
 
 - **Game Review**: keep the experimental T3 review available by direct URL
