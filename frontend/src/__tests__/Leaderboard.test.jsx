@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
 import { MemoryRouter } from "react-router-dom"
 import LeaderboardPage from "../pages/Leaderboard"
 
@@ -20,6 +22,16 @@ beforeEach(() => {
 })
 
 describe("LeaderboardPage", () => {
+  it("lets_long_leaderboards_use_page_scroll_with_a_sticky_header", () => {
+    const css = readFileSync(resolve(process.cwd(), "src/pages/Leaderboard.css"), "utf8")
+
+    expect(css).toContain(".leaderboard-table-wrap--interactive {\n  overflow-y: visible;\n  max-height: none;\n}")
+    expect(css).toContain(".leaderboard-table--interactive thead th {\n  position: sticky;\n  top: 4.1rem;")
+    expect(css).toContain("@media (max-width: 720px) {\n  .leaderboard-table--interactive thead th {\n    top: 7.2rem;")
+    expect(css).not.toContain(".leaderboard-table-wrap--interactive {\n  overflow-y: auto;")
+    expect(css).not.toContain("max-height: min(72vh, 46rem);")
+  })
+
   it("renders_ranked_rows_and_profile_links", async () => {
     mockApi.userApi.getLeaderboard.mockResolvedValueOnce({
       players: [{
