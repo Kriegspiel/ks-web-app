@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import GuestsReportPage from "../pages/GuestsReport"
 
@@ -61,8 +61,8 @@ describe("GuestsReportPage", () => {
     expect(screen.getByRole("link", { name: "guest_judit_polgar" })).toHaveAttribute("href", "/user/guest_judit_polgar")
     expect(screen.getByText("2026-04-01")).toBeInTheDocument()
     expect(screen.getByText("2026-04-04 13:00:00 UTC")).toBeInTheDocument()
-    expect(screen.getByRole("columnheader", { name: "Non-timeout endings" })).toBeInTheDocument()
-    expect(screen.getByRole("columnheader", { name: "Total time played" })).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: /Non-timeout endings/ })).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: /Total time played/ })).toBeInTheDocument()
     expect(within(screen.getByRole("row", { name: /guest_mikhail_tal/ })).getByText("1")).toBeInTheDocument()
     expect(within(screen.getByRole("row", { name: /guest_judit_polgar/ })).getAllByText("0")).toHaveLength(2)
     expect(screen.getByText("1h 30m")).toBeInTheDocument()
@@ -71,6 +71,90 @@ describe("GuestsReportPage", () => {
     expect(screen.getByText(/39,998 guest accounts still available/)).toBeInTheDocument()
 
     nowSpy.mockRestore()
+  })
+
+  it("filters_categorical_guest_columns_from_the_header_menu", async () => {
+    techApi.getGuestsReport.mockResolvedValue({
+      total: 2,
+      available_guest_accounts: 39998,
+      guests: [
+        {
+          name: "guest_mikhail_tal",
+          username: "guest_mikhail_tal",
+          day_started: "2026-04-01",
+          number_of_games: 2,
+          non_timeout_games: 1,
+          total_time_played_seconds: 5_400,
+        },
+        {
+          name: "guest_judit_polgar",
+          username: "guest_judit_polgar",
+          day_started: "2026-04-02",
+          number_of_games: 0,
+          non_timeout_games: 0,
+          total_time_played_seconds: 0,
+        },
+      ],
+    })
+
+    render(<MemoryRouter><GuestsReportPage /></MemoryRouter>)
+
+    expect(await screen.findByRole("link", { name: "guest_mikhail_tal" })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "Day started" }))
+    fireEvent.click(await screen.findByRole("checkbox", { name: "2026-04-02" }))
+
+    expect(screen.queryByRole("link", { name: "guest_mikhail_tal" })).not.toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "guest_judit_polgar" })).toBeInTheDocument()
+    expect(screen.getByText(/1 of 2 guests listed/)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Day started 1" })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }))
+
+    expect(screen.getByRole("link", { name: "guest_mikhail_tal" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "guest_judit_polgar" })).toBeInTheDocument()
+  })
+
+  it("sorts_numerical_guest_columns_from_the_header_triangles", async () => {
+    techApi.getGuestsReport.mockResolvedValue({
+      total: 2,
+      available_guest_accounts: 39998,
+      guests: [
+        {
+          name: "guest_mikhail_tal",
+          username: "guest_mikhail_tal",
+          day_started: "2026-04-01",
+          number_of_games: 2,
+          non_timeout_games: 1,
+          total_time_played_seconds: 5_400,
+        },
+        {
+          name: "guest_judit_polgar",
+          username: "guest_judit_polgar",
+          day_started: "2026-04-02",
+          number_of_games: 0,
+          non_timeout_games: 0,
+          total_time_played_seconds: 0,
+        },
+      ],
+    })
+
+    render(<MemoryRouter><GuestsReportPage /></MemoryRouter>)
+
+    await screen.findByRole("link", { name: "guest_mikhail_tal" })
+
+    fireEvent.click(screen.getByRole("button", { name: "Sort Number of games" }))
+
+    let rows = within(screen.getByRole("table").querySelector("tbody")).getAllByRole("row")
+    expect(rows[0]).toHaveTextContent("guest_judit_polgar")
+    expect(rows[1]).toHaveTextContent("guest_mikhail_tal")
+    expect(screen.getByRole("columnheader", { name: /Number of games/ })).toHaveAttribute("aria-sort", "ascending")
+
+    fireEvent.click(screen.getByRole("button", { name: "Sort Number of games" }))
+
+    rows = within(screen.getByRole("table").querySelector("tbody")).getAllByRole("row")
+    expect(rows[0]).toHaveTextContent("guest_mikhail_tal")
+    expect(rows[1]).toHaveTextContent("guest_judit_polgar")
+    expect(screen.getByRole("columnheader", { name: /Number of games/ })).toHaveAttribute("aria-sort", "descending")
   })
 
   it("renders_empty_state_for_missing_guest_array", async () => {
