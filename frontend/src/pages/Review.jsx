@@ -1303,7 +1303,10 @@ export default function ReviewPage() {
   return (
     <main className="page-shell review-page" aria-live="polite">
       <div className="review-page__header">
-        <h1>Game review</h1>
+        <div className="review-page__header-main">
+          <h1>Game review</h1>
+          <Link className="review-page__t3-link" to={`/game/${game?.game_code ?? gameRef}/review/t3`}>T3 review</Link>
+        </div>
         <p className="review-page__signed-in">Signed in as {signedInAs}.</p>
       </div>
 

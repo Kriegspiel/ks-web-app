@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import api, { askAny, convertGuest, createGame, createGameEventsSource, deleteWaitingGame, gameEventsUrl, getBots, getGame, getGamePublicStatus, getGameReview, getGameState, getGameTranscript, getLobbyStats, getMyActiveGames, getMyArchivedGames, getOpenGames, joinGame, login, logout, me, playAsGuest, recordCampaignVisit, register, resignGame, submitMove, techApi, userApi } from "../services/api"
+import api, { askAny, convertGuest, createGame, createGameEventsSource, deleteWaitingGame, gameEventsUrl, getBots, getGame, getGamePublicStatus, getGameReview, getGameState, getGameT3Review, getGameTranscript, getLobbyStats, getMyActiveGames, getMyArchivedGames, getOpenGames, joinGame, login, logout, me, playAsGuest, recordCampaignVisit, register, resignGame, submitMove, techApi, userApi } from "../services/api"
 
 describe("api client", () => {
   it("api_client_uses_relative_base_url", () => { expect(api.defaults.baseURL ?? "").toBe("") })
@@ -147,11 +147,13 @@ describe("game helpers", () => {
     await getLobbyStats()
     await getGameTranscript("g/123")
     await getGameReview("g/123")
+    await getGameT3Review("g/123")
 
     expect(postSpy).toHaveBeenCalledWith("/api/game/join/ABC%20123%2F%3F!")
     expect(getSpy).toHaveBeenNthCalledWith(1, "/api/game/stats")
     expect(getSpy).toHaveBeenNthCalledWith(2, "/api/game/g%2F123/moves")
     expect(getSpy).toHaveBeenNthCalledWith(3, "/api/game/g%2F123/review")
+    expect(getSpy).toHaveBeenNthCalledWith(4, "/api/game/g%2F123/review/t3")
   })
   it("move_ask_any_resign_use_expected_endpoints", async () => { const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { ok: true } }); await submitMove("g-123", "e2e4"); await askAny("g-123"); await resignGame("g-123"); expect(postSpy).toHaveBeenNthCalledWith(1, "/api/game/g-123/move", { uci: "e2e4" }); expect(postSpy).toHaveBeenNthCalledWith(2, "/api/game/g-123/ask-any"); expect(postSpy).toHaveBeenNthCalledWith(3, "/api/game/g-123/resign") })
   it("delete_waiting_game_uses_expected_endpoint", async () => { const deleteSpy = vi.spyOn(api, "delete").mockResolvedValue({ data: {} }); await deleteWaitingGame("g-123"); expect(deleteSpy).toHaveBeenCalledWith("/api/game/g-123") })
@@ -167,6 +169,7 @@ describe("game helpers", () => {
     ["getGame", "get", () => getGame("g-123"), "Unable to load game details right now."],
     ["getGameTranscript", "get", () => getGameTranscript("g-123"), "Unable to load game transcript right now."],
     ["getGameReview", "get", () => getGameReview("g-123"), "Unable to load game review right now."],
+    ["getGameT3Review", "get", () => getGameT3Review("g-123"), "Unable to load T3 review right now."],
     ["getGamePublicStatus", "get", () => getGamePublicStatus("g-123"), "Unable to load game status right now."],
     ["getGameState", "get", () => getGameState("g-123"), "Unable to load game state right now."],
     ["deleteWaitingGame", "delete", () => deleteWaitingGame("g-123"), "Unable to close this waiting game right now."],
