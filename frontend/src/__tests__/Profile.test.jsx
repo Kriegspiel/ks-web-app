@@ -149,6 +149,7 @@ describe("ProfilePage", () => {
     renderProfile()
 
     await screen.findByRole("heading", { name: "fil" })
+    expect(mockApi.userApi.getGameHistory).toHaveBeenCalledWith("fil", 1, 20, { includeFilterOptions: false })
     expect(screen.getByText("Member since 2026-01-01.")).toBeInTheDocument()
     expect(screen.getByRole("region", { name: "Player tier" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
