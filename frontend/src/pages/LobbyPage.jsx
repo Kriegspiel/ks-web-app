@@ -28,6 +28,7 @@ const BOT_TIER_LABELS = {
 }
 const BOT_TIER_BY_USERNAME = {
   simpleheuristics: "T1",
+  stockfishwild: "T1",
   llm_gpt45nano: "T2",
   llm_gptnano: "T2",
   llm_haiku: "T2",
