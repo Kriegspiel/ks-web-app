@@ -80,7 +80,7 @@ describe("ProfilePage", () => {
         elo: 1345,
         elo_peak: 1401,
         results: {
-          overall: { games_played: 10, games_won: 6, games_lost: 3, games_drawn: 1 },
+          overall: { games_played: 22237, games_won: 632, games_lost: 5538, games_drawn: 16067 },
           vs_humans: { games_played: 1, games_won: 1, games_lost: 0, games_drawn: 0 },
           vs_bots: { games_played: 9, games_won: 5, games_lost: 3, games_drawn: 1 },
         },
@@ -166,10 +166,13 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("heading", { name: "Overall rating." })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Overall results." })).toBeInTheDocument()
     expect(screen.getByText(/games played/i)).toBeInTheDocument()
-    expect(screen.getByText("10")).toBeInTheDocument()
-    expect(screen.getByText("6 (60.0%)")).toBeInTheDocument()
-    expect(screen.getByText("3 (30.0%)")).toBeInTheDocument()
-    expect(screen.getByText("1 (10.0%)")).toBeInTheDocument()
+    expect(screen.getByText("22,237")).toBeInTheDocument()
+    expect(screen.getByText("632 (2.8%)")).toBeInTheDocument()
+    expect(screen.getByText("5,538 (24.9%)")).toBeInTheDocument()
+    expect(screen.getByText("16,067 (72.3%)")).toBeInTheDocument()
+    expect(screen.queryByText("22237")).not.toBeInTheDocument()
+    expect(screen.queryByText("5538 (24.9%)")).not.toBeInTheDocument()
+    expect(screen.queryByText("16067 (72.3%)")).not.toBeInTheDocument()
     expect(screen.queryByText(/win rate/i)).not.toBeInTheDocument()
     expect(screen.getByRole("img", { name: "Overall Elo rating over time" })).toBeInTheDocument()
     expect(screen.getByText("Start 1290")).toBeInTheDocument()
@@ -229,14 +232,14 @@ describe("ProfilePage", () => {
         overall: { total_games: 4, wins: 2, losses: 1, draws: 1, win_rate: 0.5 },
         vs_humans: { total_games: 2, wins: 2, losses: 0, draws: 0, win_rate: 1.0 },
         vs_bots: { total_games: 2, wins: 0, losses: 1, draws: 1, win_rate: 0.0 },
-        as_white: { total_games: 3, wins: 2, losses: 0, draws: 1, win_rate: 0.6667 },
-        as_black: { total_games: 1, wins: 0, losses: 1, draws: 0, win_rate: 0.0 },
+        as_white: { total_games: 11213, wins: 305, losses: 2829, draws: 8079, win_rate: 0.027 },
+        as_black: { total_games: 11027, wins: 327, losses: 2709, draws: 7991, win_rate: 0.03 },
         opponents: [
-          { username: "llm_haiku", role: "bot", total_games: 2, wins: 0, losses: 1, draws: 1, win_rate: 0.0 },
-          { username: "fil", role: "user", total_games: 2, wins: 2, losses: 0, draws: 0, win_rate: 1.0 },
+          { username: "llm_haiku", role: "bot", total_games: 16190, wins: 228, losses: 3766, draws: 12196, win_rate: 0.014 },
+          { username: "fil", role: "user", total_games: 4342, wins: 67, losses: 1409, draws: 2866, win_rate: 0.015 },
         ],
         rulesets: [
-          { rule_variant: "wild16", total_games: 3, wins: 1, losses: 1, draws: 1, win_rate: 0.3333 },
+          { rule_variant: "wild16", total_games: 1211, wins: 55, losses: 200, draws: 956, win_rate: 0.045 },
           { rule_variant: "berkeley_any", total_games: 1, wins: 1, losses: 0, draws: 0, win_rate: 1.0 },
         ],
       },
@@ -273,13 +276,16 @@ describe("ProfilePage", () => {
     expect(screen.getByText("7m")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "White" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?color=white")
     expect(screen.getByRole("link", { name: "Black" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?color=black")
-    expect(screen.getByText("2-0-1 · 66.7%")).toBeInTheDocument()
+    expect(screen.getByText("305-2,829-8,079 · 2.7%")).toBeInTheDocument()
+    expect(screen.getByText("327-2,709-7,991 · 3.0%")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "llm_haiku (bot)" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?opponent=llm_haiku")
     expect(screen.getByRole("link", { name: "fil" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?opponent=fil")
-    expect(screen.getByText("0-1-1 · 0.0%")).toBeInTheDocument()
+    expect(screen.getByText("228-3,766-12,196 · 1.4%")).toBeInTheDocument()
+    expect(screen.getByText("67-1,409-2,866 · 1.5%")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Wild 16" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?rule_set=wild16")
     expect(screen.getByRole("link", { name: "Berkeley + Any" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?rule_set=berkeley_any")
-    expect(screen.getByText("3 · 33.3%")).toBeInTheDocument()
+    expect(screen.getByText("1,211 · 4.5%")).toBeInTheDocument()
+    expect(screen.queryByText("1211 · 4.5%")).not.toBeInTheDocument()
   })
 
   it("lets_available_bots_be_challenged_from_the_profile", async () => {

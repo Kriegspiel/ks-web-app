@@ -383,10 +383,10 @@ function formatResultSummary(resultTrack) {
   const gamesDrawn = statOrZero(resultTrack?.gamesDrawn)
   const formatRate = (value) => `${gamesPlayed > 0 ? ((value / gamesPlayed) * 100).toFixed(1) : "0.0"}%`
   return {
-    gamesPlayed,
-    winsLabel: `${gamesWon} (${formatRate(gamesWon)})`,
-    lossesLabel: `${gamesLost} (${formatRate(gamesLost)})`,
-    drawsLabel: `${gamesDrawn} (${formatRate(gamesDrawn)})`,
+    gamesPlayed: formatCount(gamesPlayed),
+    winsLabel: `${formatCount(gamesWon)} (${formatRate(gamesWon)})`,
+    lossesLabel: `${formatCount(gamesLost)} (${formatRate(gamesLost)})`,
+    drawsLabel: `${formatCount(gamesDrawn)} (${formatRate(gamesDrawn)})`,
   }
 }
 
@@ -432,7 +432,7 @@ function formatCount(value) {
 }
 
 function formatMetricRecord(bucket) {
-  return `${bucket.wins}-${bucket.losses}-${bucket.draws}`
+  return `${formatCount(bucket.wins)}-${formatCount(bucket.losses)}-${formatCount(bucket.draws)}`
 }
 
 function formatDuration(seconds) {
@@ -840,7 +840,7 @@ export default function ProfilePage() {
                           <Link className="profile-bot-row-link profile-bot-ruleset-link" to={profileGamesFilterPath(profileUsername, "rule_set", row.ruleVariant)}>
                             {formatRuleVariant(row.ruleVariant)}
                           </Link>
-                          <strong>{row.totalGames} · {formatWinRate(row.winRate)}</strong>
+                          <strong>{formatCount(row.totalGames)} · {formatWinRate(row.winRate)}</strong>
                         </li>
                       ))}
                     </ul>
