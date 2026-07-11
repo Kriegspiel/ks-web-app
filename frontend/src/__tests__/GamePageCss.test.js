@@ -13,14 +13,25 @@ describe("GamePage CSS", () => {
     expect(css).toContain("margin: 0;")
   })
 
-  it("keeps the board card constrained to the chessboard width", () => {
+  it("keeps the board card balanced with the referee panel", () => {
     const css = readFileSync(resolve(process.cwd(), "src/pages/GamePage.css"), "utf8")
 
     expect(css).toContain("--game-board-card-max-width: calc(38rem + 2.7rem);")
-    expect(css).toContain("grid-template-columns: fit-content(var(--game-board-card-max-width)) minmax(16rem, 1fr);")
-    expect(css).toContain("width: min(100%, var(--game-board-card-max-width));")
+    expect(css).toContain("--game-board-column-width: min(50%, var(--game-board-card-max-width));")
+    expect(css).toContain("grid-template-columns: minmax(0, var(--game-board-column-width)) minmax(0, 1fr);")
+    expect(css).toContain("max-width: var(--game-board-card-max-width);")
     expect(css).toContain("min-width: 0;")
     expect(css).toContain("@media (max-width: 900px)")
     expect(css).toContain("justify-self: stretch;")
+  })
+
+  it("allows the current referee message timeline to wrap without forcing panel width", () => {
+    const css = readFileSync(resolve(process.cwd(), "src/pages/GamePage.css"), "utf8")
+
+    expect(css).toContain(".game-referee-latest__value--timeline")
+    expect(css).toContain("flex-wrap: wrap;")
+    expect(css).toContain("flex: 1 1 11rem;")
+    expect(css).toContain("min-width: min(100%, 9.75rem);")
+    expect(css).toContain("overflow-wrap: anywhere;")
   })
 })
