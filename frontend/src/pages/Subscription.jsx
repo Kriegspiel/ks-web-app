@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import { loadStripe } from "@stripe/stripe-js"
 import TierBadge from "../components/TierBadge"
+import VersionStamp from "../components/VersionStamp"
 import { billingApi } from "../services/api"
 import { useAuth } from "../hooks/useAuth"
 import "./Subscription.css"
@@ -363,6 +364,8 @@ export default function SubscriptionPage() {
           </table>
         </div>
       </section>
+
+      <VersionStamp />
     </main>
   )
 }

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import SubscriptionPage from "../pages/Subscription"
+import { TEST_VERSION_STAMP } from "../version"
 
 const mockAuth = vi.hoisted(() => ({
   user: { username: "playerone", is_guest: false },
@@ -81,6 +82,7 @@ describe("SubscriptionPage", () => {
     await screen.findByRole("heading", { name: "Subscription" })
     expect(screen.getByRole("rowheader", { name: "Play T2 bots" })).toBeInTheDocument()
     expect(screen.getAllByRole("link", { name: "GPTNano" })[0]).toHaveAttribute("href", "/user/llm_gptnano")
+    expect(screen.getByText(TEST_VERSION_STAMP)).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Choose Tier T3 Strong" }))
     fireEvent.click(screen.getByRole("button", { name: "Yearly" }))
