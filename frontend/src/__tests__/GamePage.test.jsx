@@ -30,6 +30,7 @@ const mockGameSounds = vi.hoisted(() => ({
   createGameSoundPlayer: vi.fn(() => mockSoundPlayer),
   announcementSoundCategories: vi.fn((messages = []) => messages),
 }))
+const mockClipboardWriteText = vi.fn()
 
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom")
@@ -68,6 +69,12 @@ function sleep(ms) {
 beforeEach(() => {
   window.localStorage.clear()
   window.scrollTo = vi.fn()
+  Object.defineProperty(window.navigator, "clipboard", {
+    configurable: true,
+    value: { writeText: mockClipboardWriteText },
+  })
+  mockClipboardWriteText.mockReset()
+  mockClipboardWriteText.mockResolvedValue(undefined)
   mockNavigate.mockReset()
   mockParams.gameId = "g-123"
   delete mockParams.gameCode
@@ -161,6 +168,17 @@ describe("GamePage", () => {
     expect(within(currentMessage).getByText("White")).toBeInTheDocument()
     expect(within(currentMessage).getByText("your move")).toBeInTheDocument()
     expect(within(currentMessage).queryByText("White to move")).not.toBeInTheDocument()
+  })
+
+  it("copies_the_game_code_from_the_status_card", async () => {
+    render(<GamePage />)
+
+    fireEvent.click(await screen.findByRole("button", { name: "Copy game code ABC123" }))
+
+    await waitFor(() => {
+      expect(mockClipboardWriteText).toHaveBeenCalledWith("ABC123")
+    })
+    expect(await screen.findByRole("status")).toHaveTextContent("Game code ABC123 copied.")
   })
 
   it("shows_waiting_message_in_the_current_message_box", async () => {

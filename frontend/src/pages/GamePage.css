@@ -1145,6 +1145,60 @@
   font-weight: 700;
 }
 
+.game-status-card__copy-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+button.game-status-card__code-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+}
+
+button.game-status-card__code-button:hover,
+button.game-status-card__code-button:focus-visible {
+  background: transparent;
+  box-shadow: none;
+}
+
+.game-status-card__code {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.35rem;
+  padding: 0.08rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-strong) 82%, var(--accent-soft) 18%);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.86rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+button.game-status-card__code-button:hover .game-status-card__code,
+button.game-status-card__code-button:focus-visible .game-status-card__code {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: color-mix(in srgb, var(--surface-strong) 72%, var(--accent-soft) 28%);
+}
+
+.game-status-card__copy-status {
+  color: var(--success) !important;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
 .game-status-card__link {
   color: inherit;
   text-decoration: underline;
