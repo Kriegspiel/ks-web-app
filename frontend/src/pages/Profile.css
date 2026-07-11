@@ -14,14 +14,13 @@
   border-color: color-mix(in srgb, var(--profile-tier-color) 38%, var(--border));
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--surface) 90%, var(--profile-tier-color) 10%), var(--surface));
-  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .profile-tier-card:hover,
 .profile-tier-card:focus-within {
   border-color: color-mix(in srgb, var(--profile-tier-color) 58%, var(--border));
   box-shadow: var(--shadow-soft);
-  transform: translateY(-1px);
 }
 
 .profile-tier-card__link {
