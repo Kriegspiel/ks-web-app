@@ -17,52 +17,66 @@ const TIERS = [
   { key: "tier6", apiTier: null, code: "T6", name: "Elite", price: "Not available yet", selectable: false, future: true },
 ]
 
+const T0_BOTS = [
+  ["T0-level bots", [["Random Bot", "/user/randobot"], ["Random Any Bot", "/user/randobotany"], ["Darkboard MCTS", "/user/darkboardmcts"]]],
+]
+
+const T1_BOTS = [
+  ["T1-level bots", [["Simple Heuristics Bot", "/user/simpleheuristics"], ["Stockfish Wild 16", "/user/stockfishwild"]]],
+]
+
 const T2_BOTS = [
-  ["OpenAI", [["GPTNano", "/user/llm_gptnano"], ["GPT-OSS", "/user/llm_gptoss120b"]]],
-  ["Anthropic", [["Claude Haiku 4.5", "/user/llm_haiku"]]],
-  ["DeepSeek", [["V4 Flash", "/user/llm_deepseekv4_flash"]]],
-  ["Gemini", [["2.5 Flash-Lite", "/user/llm_gemini25_lite"], ["3.1 Flash-Lite", "/user/llm_gemini31_lite"]]],
-  ["Llama", [["3.1 8B", "/user/llm_llama31_8b"], ["4 Scout", "/user/llm_llama4_scout"], ["4 Maverick", "/user/llm_llama4_maverick"]]],
-  ["Mistral", [["Nemo", "/user/llm_mistral_nemo"], ["Small 3.2", "/user/llm_mistral_small32"], ["Large 3", "/user/llm_mistral_large3"]]],
-  ["Gemma", [["3 4B", "/user/llm_gemma3_4b"], ["3 27B", "/user/llm_gemma3_27b"], ["4 31B", "/user/llm_gemma4_31b"]]],
-  ["GLM", [["4.7 Flash", "/user/llm_glm47_flash"], ["4.5 Air", "/user/llm_glm45_air"]]],
-  ["Nemotron", [["Nano", "/user/llm_nemotron_nano"], ["Super", "/user/llm_nemotron_super"], ["Ultra", "/user/llm_nemotron_ultra"]]],
-  ["Kimi", [["K2.5", "/user/llm_kimi_k25"]]],
-  ["Hermes", [["4 70B", "/user/llm_hermes4_70b"]]],
-  ["Phi", [["4", "/user/llm_phi4"]]],
+  ["T2 OpenAI", [["GPTNano", "/user/llm_gptnano"], ["GPT-OSS", "/user/llm_gptoss120b"]]],
+  ["T2 Anthropic", [["Claude Haiku 4.5", "/user/llm_haiku"]]],
+  ["T2 DeepSeek", [["V4 Flash", "/user/llm_deepseekv4_flash"]]],
+  ["T2 Gemini", [["2.5 Flash-Lite", "/user/llm_gemini25_lite"], ["3.1 Flash-Lite", "/user/llm_gemini31_lite"]]],
+  ["T2 Llama", [["3.1 8B", "/user/llm_llama31_8b"], ["4 Scout", "/user/llm_llama4_scout"], ["4 Maverick", "/user/llm_llama4_maverick"]]],
+  ["T2 Mistral", [["Nemo", "/user/llm_mistral_nemo"], ["Small 3.2", "/user/llm_mistral_small32"], ["Large 3", "/user/llm_mistral_large3"]]],
+  ["T2 Gemma", [["3 4B", "/user/llm_gemma3_4b"], ["3 27B", "/user/llm_gemma3_27b"], ["4 31B", "/user/llm_gemma4_31b"]]],
+  ["T2 GLM", [["4.7 Flash", "/user/llm_glm47_flash"], ["4.5 Air", "/user/llm_glm45_air"]]],
+  ["T2 Nemotron", [["Nano", "/user/llm_nemotron_nano"], ["Super", "/user/llm_nemotron_super"], ["Ultra", "/user/llm_nemotron_ultra"]]],
+  ["T2 Kimi", [["K2.5", "/user/llm_kimi_k25"]]],
+  ["T2 Hermes", [["4 70B", "/user/llm_hermes4_70b"]]],
+  ["T2 Phi", [["4", "/user/llm_phi4"]]],
 ]
 
 const T3_BOTS = [
-  ["OpenAI", ["GPT-5.5"]],
-  ["Anthropic", ["Claude Sonnet 5"]],
-  ["Gemini", ["2.5 Flash"]],
-  ["Qwen", [["3.6 Flash", "/user/llm_qwen36_flash"], "Plus"]],
-  ["Kimi", ["K2 Thinking"]],
-  ["Hermes", ["3 70B"]],
+  ["T3 OpenAI", ["GPT-5.5"]],
+  ["T3 Anthropic", ["Claude Sonnet 5"]],
+  ["T3 Gemini", ["2.5 Flash"]],
+  ["T3 Qwen", [["3.6 Flash", "/user/llm_qwen36_flash"], "Plus"]],
+  ["T3 Kimi", ["K2 Thinking"]],
+  ["T3 Hermes", ["3 70B"]],
 ]
 
 const T4_BOTS = [
-  ["Anthropic", ["Claude Opus 4.8"]],
-  ["DeepSeek", [["V4 Pro", "/user/bot_deepseekv4_pro"]]],
-  ["Gemini", ["3.1 Pro Preview"]],
-  ["GLM", ["5.2"]],
-  ["Kimi", ["K2.7 Code"]],
-  ["Hermes", ["4 405B"]],
+  ["T4 Anthropic", ["Claude Opus 4.8"]],
+  ["T4 DeepSeek", [["V4 Pro", "/user/bot_deepseekv4_pro"]]],
+  ["T4 Gemini", ["3.1 Pro Preview"]],
+  ["T4 GLM", ["5.2"]],
+  ["T4 Kimi", ["K2.7 Code"]],
+  ["T4 Hermes", ["4 405B"]],
 ]
 
 const T5_BOTS = [
-  ["OpenAI", ["GPT-5.5 Pro"]],
-  ["Qwen", ["3.7 Max"]],
+  ["T5 OpenAI", ["GPT-5.5 Pro"]],
+  ["T5 Qwen", ["3.7 Max"]],
+]
+
+const PLAY_BOTS_BY_TIER = [
+  T0_BOTS,
+  [...T0_BOTS, ...T1_BOTS],
+  [...T0_BOTS, ...T1_BOTS, ...T2_BOTS],
+  [...T0_BOTS, ...T1_BOTS, ...T2_BOTS, ...T3_BOTS],
+  [...T0_BOTS, ...T1_BOTS, ...T2_BOTS, ...T3_BOTS, ...T4_BOTS],
+  [...T0_BOTS, ...T1_BOTS, ...T2_BOTS, ...T3_BOTS, ...T4_BOTS, ...T5_BOTS],
+  [...T0_BOTS, ...T1_BOTS, ...T2_BOTS, ...T3_BOTS, ...T4_BOTS, ...T5_BOTS],
 ]
 
 const FEATURES = [
   { name: "Play human games", values: ["Yes", "Yes", "Yes", "Yes", "Yes", null, null] },
-  { name: "Play simple bots", values: ["Yes", "Yes", "Yes", "Yes", "Yes", null, null] },
+  { name: "Play bots", values: PLAY_BOTS_BY_TIER },
   { name: "Completed-game review", values: ["Yes", "Yes", "Yes", "Yes", "Yes", null, null] },
-  { name: "Play T2 bots", values: ["No", "No", T2_BOTS, T2_BOTS, T2_BOTS, T2_BOTS, T2_BOTS] },
-  { name: "Play T3 bots", values: ["No", "No", "No", T3_BOTS, T3_BOTS, T3_BOTS, T3_BOTS] },
-  { name: "Play T4 bots", values: ["No", "No", "No", "No", T4_BOTS, T4_BOTS, T4_BOTS] },
-  { name: "Play T5 bots", values: ["No", "No", "No", "No", "No", T5_BOTS, T5_BOTS] },
   { name: "Persistent player name", values: ["No", "Yes", "Yes", "Yes", "Yes", null, null] },
 ]
 
