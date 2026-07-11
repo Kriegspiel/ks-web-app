@@ -50,6 +50,18 @@ describe("Subscription CSS", () => {
     expect(warningLinkRule).toMatch(/font-weight:\s*850;/)
   })
 
+  it("makes the public subscription invite a prominent yellow callout", () => {
+    const inviteRule = blockFor(subscriptionCss, ".subscription-public-invite")
+    expect(inviteRule).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\) auto;/)
+    expect(inviteRule).toMatch(/border:\s*2px solid color-mix\(in srgb, #d97706/)
+    expect(inviteRule).toMatch(/background:\s*linear-gradient/)
+    expect(inviteRule).toMatch(/#facc15/)
+
+    const actionsRule = blockFor(subscriptionCss, ".subscription-public-invite__actions")
+    expect(actionsRule).toMatch(/display:\s*flex;/)
+    expect(actionsRule).toMatch(/justify-content:\s*flex-end;/)
+  })
+
   it("uses a compact tier table and stacked bot list items", () => {
     const tableRule = blockFor(subscriptionCss, ".subscription-tier-table {")
     expect(tableRule).toMatch(/min-width:\s*64rem;/)

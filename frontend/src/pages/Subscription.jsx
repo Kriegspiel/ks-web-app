@@ -189,7 +189,7 @@ function createEmbeddedCheckout(stripe, options) {
 }
 
 export default function SubscriptionPage() {
-  const { user } = useAuth()
+  const { user, isAuthenticated, bootstrapping } = useAuth()
   const [status, setStatus] = useState(null)
   const [selectedTier, setSelectedTier] = useState("tier2")
   const [interval, setInterval] = useState("monthly")
@@ -200,9 +200,31 @@ export default function SubscriptionPage() {
   const [checkoutMounted, setCheckoutMounted] = useState(false)
   const checkoutContainerRef = useRef(null)
   const embeddedCheckoutRef = useRef(null)
+  const hasSignedInUser = isAuthenticated && user !== null
 
   useEffect(() => {
     let active = true
+
+    if (bootstrapping) {
+      return () => {
+        active = false
+      }
+    }
+
+    if (!hasSignedInUser) {
+      setLoading(false)
+      setBillingError("")
+      setStatus(null)
+      setSelectedTier("tier2")
+      setInterval("monthly")
+      embeddedCheckoutRef.current?.destroy?.()
+      embeddedCheckoutRef.current = null
+      setCheckoutMounted(false)
+      return () => {
+        active = false
+      }
+    }
+
     async function loadBilling() {
       setLoading(true)
       setBillingError("")
@@ -225,7 +247,7 @@ export default function SubscriptionPage() {
       embeddedCheckoutRef.current?.destroy?.()
       embeddedCheckoutRef.current = null
     }
-  }, [])
+  }, [bootstrapping, hasSignedInUser])
 
   const stripePromise = useMemo(() => {
     if (!status?.publishable_key) return null
@@ -235,8 +257,8 @@ export default function SubscriptionPage() {
   const selectedTierDetails = tierByApiTier(selectedTier)
   const selectedAvailable = isPlanAvailable(status, selectedTier, interval)
   const activeSubscription = ["active", "trialing"].includes(status?.billing?.subscription_status)
-  const canSubscribe = status?.enabled === true && selectedAvailable && user?.is_guest !== true && !activeSubscription
-  const currentTier = currentTierKey(status, user)
+  const canSubscribe = hasSignedInUser && status?.enabled === true && selectedAvailable && user?.is_guest !== true && !activeSubscription
+  const currentTier = hasSignedInUser ? currentTierKey(status, user) : null
 
   function clearCheckoutForm() {
     embeddedCheckoutRef.current?.destroy?.()
@@ -300,26 +322,50 @@ export default function SubscriptionPage() {
       <header className="subscription-page__header">
         <div>
           <h1>Subscription</h1>
-          <p>Choose your Kriegspiel level and manage billing for this account.</p>
+          <p>
+            {hasSignedInUser
+              ? "Choose your Kriegspiel level and manage billing for this account."
+              : "Start free, play the core game, and graduate to stronger bot tiers whenever you want more challenge."}
+          </p>
         </div>
-        <button
-          type="button"
-          className="button-link--secondary subscription-manage-billing-button"
-          onClick={openPortal}
-          disabled={portalLoading || user?.is_guest === true}
-          aria-label={portalLoading ? "Opening billing management" : "Manage billing (opens external website)"}
-        >
-          {portalLoading ? "Opening..." : (
-            <>
-              <span>Manage billing</span>
-              <span aria-hidden="true" className="subscription-manage-billing-button__external">↗</span>
-            </>
-          )}
-        </button>
+        {hasSignedInUser ? (
+          <button
+            type="button"
+            className="button-link--secondary subscription-manage-billing-button"
+            onClick={openPortal}
+            disabled={portalLoading || user?.is_guest === true}
+            aria-label={portalLoading ? "Opening billing management" : "Manage billing (opens external website)"}
+          >
+            {portalLoading ? "Opening..." : (
+              <>
+                <span>Manage billing</span>
+                <span aria-hidden="true" className="subscription-manage-billing-button__external">↗</span>
+              </>
+            )}
+          </button>
+        ) : null}
       </header>
 
-      {loading ? <p>Loading subscription...</p> : null}
-      {billingError ? <p className="auth-error" role="alert">{billingError}</p> : null}
+      {(bootstrapping || loading) ? <p>Loading subscription...</p> : null}
+      {hasSignedInUser && billingError ? <p className="auth-error" role="alert">{billingError}</p> : null}
+
+      {!bootstrapping && !hasSignedInUser ? (
+        <section className="subscription-public-invite" aria-label="Start free">
+          <div>
+            <h2>Create a profile and start playing.</h2>
+            <p>
+              The free Casual level already includes human games,
+              completed-game review, rating history, and simple bots. Paid
+              tiers are optional upgrades for stronger bots and project
+              support.
+            </p>
+          </div>
+          <div className="subscription-public-invite__actions">
+            <Link className="button-link button-link--primary" to="/auth/register">Create free profile</Link>
+            <Link className="button-link button-link--secondary" to="/">Start playing</Link>
+          </div>
+        </section>
+      ) : null}
 
       {user?.is_guest === true ? (
         <section className="subscription-notice subscription-notice--warning" aria-label="Guest subscription notice">
@@ -330,43 +376,47 @@ export default function SubscriptionPage() {
         </section>
       ) : null}
 
-      <section className="subscription-controls" aria-label="Subscription controls">
-        <div className="subscription-controls__plan">
-          <TierBadge code={selectedTierDetails.code} />
-          <div>
-            <h2>Tier {selectedTierDetails.code} {selectedTierDetails.name}</h2>
-            <p><TierPrice price={selectedTierDetails.price} className="subscription-controls__price" /></p>
+      {hasSignedInUser ? (
+        <section className="subscription-controls" aria-label="Subscription controls">
+          <div className="subscription-controls__plan">
+            <TierBadge code={selectedTierDetails.code} />
+            <div>
+              <h2>Tier {selectedTierDetails.code} {selectedTierDetails.name}</h2>
+              <p><TierPrice price={selectedTierDetails.price} className="subscription-controls__price" /></p>
+            </div>
           </div>
-        </div>
-        <div className="subscription-interval-toggle" aria-label="Billing interval">
-          {["monthly", "yearly"].map((option) => (
-            <button
-              key={option}
-              type="button"
-              className={interval === option ? "is-active" : ""}
-              onClick={() => chooseInterval(option)}
-              disabled={!isPlanAvailable(status, selectedTier, option)}
-            >
-              {option === "monthly" ? "Monthly" : "Yearly"}
-            </button>
-          ))}
-        </div>
-        <button type="button" onClick={startCheckout} disabled={!canSubscribe || checkoutLoading}>
-          {activeSubscription
-            ? "Use billing management"
-            : checkoutLoading
-              ? "Opening payment form..."
-              : checkoutMounted ? "Refresh payment form" : "Open payment form"}
-        </button>
-      </section>
+          <div className="subscription-interval-toggle" aria-label="Billing interval">
+            {["monthly", "yearly"].map((option) => (
+              <button
+                key={option}
+                type="button"
+                className={interval === option ? "is-active" : ""}
+                onClick={() => chooseInterval(option)}
+                disabled={!isPlanAvailable(status, selectedTier, option)}
+              >
+                {option === "monthly" ? "Monthly" : "Yearly"}
+              </button>
+            ))}
+          </div>
+          <button type="button" onClick={startCheckout} disabled={!canSubscribe || checkoutLoading}>
+            {activeSubscription
+              ? "Use billing management"
+              : checkoutLoading
+                ? "Opening payment form..."
+                : checkoutMounted ? "Refresh payment form" : "Open payment form"}
+          </button>
+        </section>
+      ) : null}
 
-      {status?.enabled === false ? (
+      {hasSignedInUser && status?.enabled === false ? (
         <section className="subscription-notice" aria-label="Billing unavailable">
           <p>Payments are not available yet.</p>
         </section>
       ) : null}
 
-      <div ref={checkoutContainerRef} className="subscription-checkout" aria-label="Stripe payment form" />
+      {hasSignedInUser ? (
+        <div ref={checkoutContainerRef} className="subscription-checkout" aria-label="Stripe payment form" />
+      ) : null}
 
       <section className="subscription-table-section" aria-label="Feature availability by tier">
         <div className="subscription-tier-table-wrap">
@@ -400,7 +450,7 @@ export default function SubscriptionPage() {
                         <span className="subscription-tier-table__name">{tier.name}</span>
                         <TierPrice price={tier.price} className="subscription-tier-table__price" />
                         {current ? <span className="subscription-tier-table__current-label">Current level</span> : null}
-                        {tier.selectable ? (
+                        {hasSignedInUser && tier.selectable ? (
                           <button
                             type="button"
                             className={selected ? "is-selected" : ""}

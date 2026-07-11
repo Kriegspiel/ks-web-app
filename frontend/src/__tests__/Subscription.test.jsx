@@ -6,6 +6,8 @@ import { TEST_VERSION_STAMP } from "../version"
 
 const mockAuth = vi.hoisted(() => ({
   user: { username: "playerone", is_guest: false },
+  isAuthenticated: true,
+  bootstrapping: false,
 }))
 
 const mockBillingApi = vi.hoisted(() => ({
@@ -56,6 +58,8 @@ function renderPage() {
 beforeEach(() => {
   cleanup()
   mockAuth.user = { username: "playerone", is_guest: false }
+  mockAuth.isAuthenticated = true
+  mockAuth.bootstrapping = false
   mockBillingApi.getSubscription.mockReset()
   mockBillingApi.createCheckoutSession.mockReset()
   mockBillingApi.createPortalSession.mockReset()
@@ -76,6 +80,29 @@ afterEach(() => {
 })
 
 describe("SubscriptionPage", () => {
+  it("renders_a_public_signup_invite_without_billing_state_for_unauthenticated_visitors", async () => {
+    mockAuth.user = null
+    mockAuth.isAuthenticated = false
+
+    renderPage()
+
+    await screen.findByRole("heading", { name: "Subscription" })
+    const invite = await screen.findByRole("region", { name: "Start free" })
+    expect(within(invite).getByRole("heading", { name: "Create a profile and start playing." })).toBeInTheDocument()
+    expect(within(invite).getByText(/The free Casual level already includes human games/i)).toBeInTheDocument()
+    expect(within(invite).getByRole("link", { name: "Create free profile" })).toHaveAttribute("href", "/auth/register")
+    expect(within(invite).getByRole("link", { name: "Start playing" })).toHaveAttribute("href", "/")
+    expect(screen.getByRole("rowheader", { name: "Play human games" })).toBeInTheDocument()
+    expect(screen.getByRole("rowheader", { name: "Play bots" })).toBeInTheDocument()
+    expect(screen.queryByText("Current level")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Manage billing (opens external website)" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("region", { name: "Subscription controls" })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText("Stripe payment form")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Open payment form" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Choose Tier T2 Club" })).not.toBeInTheDocument()
+    expect(mockBillingApi.getSubscription).not.toHaveBeenCalled()
+  })
+
   it("renders_the_tier_table_and_mounts_embedded_checkout_for_the_selected_plan", async () => {
     renderPage()
 
@@ -182,9 +209,19 @@ describe("SubscriptionPage", () => {
     expect(screen.queryByRole("rowheader", { name: "Public player profile" })).not.toBeInTheDocument()
     expect(screen.queryByRole("rowheader", { name: "Leaderboard eligibility" })).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole("button", { name: "Choose Tier T3 Strong" }))
+    const chooseStrongButton = screen.getByRole("button", { name: "Choose Tier T3 Strong" })
+    await waitFor(() => {
+      expect(chooseStrongButton).toBeEnabled()
+    })
+    fireEvent.click(chooseStrongButton)
     expect(screen.getByText("Current level").closest("th")).toHaveTextContent("Casual")
+    await waitFor(() => {
+      expect(within(controls).getByRole("heading", { name: "Tier T3 Strong" })).toBeInTheDocument()
+    })
     fireEvent.click(screen.getByRole("button", { name: "Yearly" }))
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Yearly" })).toHaveClass("is-active")
+    })
     fireEvent.click(screen.getByRole("button", { name: "Open payment form" }))
 
     await waitFor(() => {

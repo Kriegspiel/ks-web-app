@@ -235,6 +235,18 @@ describe("App routes", () => {
     expect(await screen.findByText("Payments are not available yet.")).toBeInTheDocument()
   })
 
+  it("renders_the_subscription_route_for_unauthenticated_visitors", async () => {
+    mockApi.me.mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
+
+    renderRoute("/subscription")
+
+    await screen.findByRole("heading", { name: "Subscription" })
+    expect(screen.getByRole("heading", { name: "Create a profile and start playing." })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Create free profile" })).toHaveAttribute("href", "/auth/register")
+    expect(screen.queryByRole("heading", { name: "Login" })).not.toBeInTheDocument()
+    expect(mockApi.billingApi.getSubscription).not.toHaveBeenCalled()
+  })
+
   it("shows_inline_validation_message_for_empty_register_form", async () => {
     mockApi.me.mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
 
