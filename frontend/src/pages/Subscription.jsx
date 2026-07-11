@@ -427,6 +427,21 @@ export default function SubscriptionPage() {
         </div>
       </section>
 
+      <section className="subscription-support-note" aria-labelledby="subscription-support-heading">
+        <h2 id="subscription-support-heading">Why subscriptions help</h2>
+        <p>
+          Kriegspiel.org is built so everyone can enjoy the full experience and
+          pleasure of the game without needing a paid plan. The free T1 level
+          covers almost everything most players need to play, review, and keep
+          improving.
+        </p>
+        <p>
+          Paid tiers exist because stronger bots use paid AI tokens. A
+          subscription helps cover those costs, and it is also a generous way to
+          support the project and keep Kriegspiel welcoming for everyone.
+        </p>
+      </section>
+
       <VersionStamp />
     </main>
   )
