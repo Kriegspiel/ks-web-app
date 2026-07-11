@@ -75,6 +75,9 @@ describe("LobbyPage", () => {
     expect(css).toContain(".lobby-open-games-list li.is-joinable")
     expect(css).toContain(".lobby-open-game__opponent")
     expect(css).toContain(".lobby-open-game__meta")
+    expect(css).toContain(".lobby-open-game__meta-separator")
+    expect(css).toContain(".lobby-open-game__code")
+    expect(css).toContain("font-family: ui-monospace")
     expect(css).toContain(".lobby-bot-tier-picker__option.is-unavailable")
     expect(css).not.toContain("background: rgba(248, 250, 252, 0.72);")
   })
@@ -255,11 +258,13 @@ describe("LobbyPage", () => {
     expect(await screen.findByText(/2026-04-03 23:59:59 UTC/)).toBeInTheDocument()
 
     const openGame = (await screen.findAllByRole("listitem"))[0]
+    expect(within(openGame).getByText("ABCD23")).toHaveClass("lobby-open-game__code")
+
     const text = openGame.textContent
     expect(text.indexOf("randobotany (bot)")).toBeLessThan(text.indexOf("Rules: Wild 16"))
     expect(text.indexOf("Rules: Wild 16")).toBeLessThan(text.indexOf("Color: black"))
-    expect(text.indexOf("Color: black")).toBeLessThan(text.indexOf("ABCD23"))
-    expect(text.indexOf("ABCD23")).toBeLessThan(text.indexOf("2026-04-03 23:59:59 UTC"))
+    expect(text.indexOf("Color: black")).toBeLessThan(text.indexOf("2026-04-03 23:59:59 UTC"))
+    expect(text.indexOf("2026-04-03 23:59:59 UTC")).toBeLessThan(text.indexOf("ABCD23"))
   })
 
   it("shows_unknown_creator_when_an_open_game_has_no_owner", async () => {

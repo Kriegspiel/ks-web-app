@@ -969,8 +969,9 @@ export default function LobbyPage() {
                       {game.available_color ? <span>Color: {game.available_color}</span> : null}
                     </div>
                     <div className="lobby-open-game__meta">
-                      <span>{game.game_code ?? game.game_id ?? "Unknown code"}</span>
-                      <span>{formatUtcDateTime(game.created_at)}</span>
+                      <span className="lobby-open-game__time">{formatUtcDateTime(game.created_at)}</span>
+                      <span className="lobby-open-game__meta-separator" aria-hidden="true" />
+                      <code className="lobby-open-game__code">{game.game_code ?? game.game_id ?? "Unknown code"}</code>
                     </div>
                   </div>
                   <div className="lobby-list__actions">
