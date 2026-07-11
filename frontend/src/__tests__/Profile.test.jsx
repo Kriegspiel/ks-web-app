@@ -313,7 +313,7 @@ describe("ProfilePage", () => {
 
     expect(challengeCard.compareDocumentPosition(recentGames) & documentPositionFollowing).toBeTruthy()
     expect(within(challengeCard).getByRole("heading", { name: "Challenge this bot" })).toBeInTheDocument()
-    expect(within(challengeCard).getByRole("option", { name: "Berkeley + Any" })).toHaveValue("berkeley_any")
+    expect(await within(challengeCard).findByRole("option", { name: "Berkeley + Any" })).toHaveValue("berkeley_any")
     expect(within(challengeCard).getByRole("option", { name: "Wild 16" })).toHaveValue("wild16")
 
     fireEvent.change(within(challengeCard).getByLabelText("Ruleset"), { target: { value: "wild16" } })
@@ -349,7 +349,7 @@ describe("ProfilePage", () => {
     await screen.findByRole("heading", { name: "llm_gpt55" })
     const challengeCard = await screen.findByRole("region", { name: "Challenge this bot" })
 
-    expect(within(challengeCard).getByText("llm_gpt55 is available from Tier T3 Strong. Upgrade your tier to challenge this bot.")).toBeInTheDocument()
+    expect(await within(challengeCard).findByText("llm_gpt55 is available from Tier T3 Strong. Upgrade your tier to challenge this bot.")).toBeInTheDocument()
     expect(within(challengeCard).getByRole("link", { name: "View tiers" })).toHaveAttribute("href", "/subscription")
     expect(within(challengeCard).queryByRole("button", { name: "Play game" })).not.toBeInTheDocument()
   })
