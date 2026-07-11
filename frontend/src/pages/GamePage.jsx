@@ -38,6 +38,16 @@ const PHANTOM_LABELS = {
 function isGameAccessDeniedError(error) {
   return error?.status === 401 || error?.status === 403
 }
+
+async function writeClipboardText(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text)
+    return
+  }
+
+  throw new Error("Clipboard API is not available.")
+}
+
 const PHANTOM_MENU_WIDTH = 164
 const PHANTOM_MENU_GAP = 6
 const GAME_SOUND_MUTE_STORAGE_KEY = "game_page_sounds_muted"
@@ -2000,6 +2010,7 @@ export default function GamePage() {
   const [isMobileRefereeLog, setIsMobileRefereeLog] = useState(() => isMobileGameViewport())
   const [refereeLogDrawerOpen, setRefereeLogDrawerOpen] = useState(false)
   const [openRefereeLogTurnKey, setOpenRefereeLogTurnKey] = useState("")
+  const [gameCodeCopyStatus, setGameCodeCopyStatus] = useState("")
   const [soundsMuted, setSoundsMuted] = useState(() => {
     if (typeof window === "undefined") {
       return false
@@ -2194,6 +2205,7 @@ export default function GamePage() {
     suppressContextMenuRef.current = false
     refereeLogSticksToBottomRef.current = true
     lastScrollEntryKeysRef.current = []
+    setGameCodeCopyStatus("")
 
     const nowMs = Date.now()
     clockSnapshotAtMsRef.current = nowMs
@@ -3616,6 +3628,20 @@ export default function GamePage() {
     }
   }
 
+  async function handleCopyGameCode() {
+    const code = String(gameMeta?.game_code ?? gameRef).trim().toUpperCase()
+    if (!code) {
+      return
+    }
+
+    try {
+      await writeClipboardText(code)
+      setGameCodeCopyStatus(`Game code ${code} copied.`)
+    } catch {
+      setGameCodeCopyStatus("Unable to copy game code.")
+    }
+  }
+
   function handleMenuChoosePiece(piece) {
     if (!phantomsEnabled || !phantomMenu?.square) {
       return
@@ -3943,7 +3969,18 @@ export default function GamePage() {
               <article className="game-card game-status-card">
                 <h2 className="game-status-card__title">Game</h2>
                 <ul className="game-status-card__list">
-                  <li><strong>Game code:</strong> <code>{gameMeta?.game_code ?? gameRef}</code></li>
+                  <li className="game-status-card__copy-row">
+                    <strong>Game code:</strong>
+                    <button
+                      type="button"
+                      className="game-status-card__code-button"
+                      onClick={handleCopyGameCode}
+                      aria-label={`Copy game code ${gameMeta?.game_code ?? gameRef}`}
+                    >
+                      <code className="game-status-card__code">{gameMeta?.game_code ?? gameRef}</code>
+                    </button>
+                  </li>
+                  {gameCodeCopyStatus ? <li className="game-status-card__copy-status" role="status">{gameCodeCopyStatus}</li> : null}
                   <li><strong>State:</strong> {gameState.state}</li>
                   <li><strong>Rules:</strong> {formatRuleVariant(gameMeta?.rule_variant)}</li>
                 </ul>

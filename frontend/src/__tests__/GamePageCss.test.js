@@ -33,4 +33,13 @@ describe("GamePage CSS", () => {
     expect(css).toContain("min-width: min(100%, 9.75rem);")
     expect(css).toContain("overflow-wrap: anywhere;")
   })
+
+  it("styles the game status code as an explicit copy control", () => {
+    const css = readFileSync(resolve(process.cwd(), "src/pages/GamePage.css"), "utf8")
+
+    expect(css).toContain(".game-status-card__copy-row")
+    expect(css).toContain("button.game-status-card__code-button")
+    expect(css).toContain(".game-status-card__code")
+    expect(css).toContain(".game-status-card__copy-status")
+  })
 })
