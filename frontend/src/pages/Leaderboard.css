@@ -27,8 +27,8 @@
 }
 
 .leaderboard-table-wrap--interactive {
-  overflow-y: auto;
-  max-height: min(72vh, 46rem);
+  overflow-y: visible;
+  max-height: none;
 }
 
 .leaderboard-table--interactive {
@@ -37,9 +37,9 @@
   border-spacing: 0;
 }
 
-.leaderboard-table--interactive thead {
+.leaderboard-table--interactive thead th {
   position: sticky;
-  top: 0;
+  top: 4.1rem;
   z-index: 3;
 }
 
@@ -283,6 +283,10 @@
 }
 
 @media (max-width: 720px) {
+  .leaderboard-table--interactive thead th {
+    top: 7.2rem;
+  }
+
   .leaderboard-controls {
     align-items: flex-start;
     flex-direction: column;
