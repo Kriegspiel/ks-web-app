@@ -65,7 +65,7 @@ export default function LoginPage() {
   const inlineValidationError = submitted ? getValidationError(formState) : ""
 
   return (
-    <main className="page-shell">
+    <main className="page-shell auth-page">
       <h1>Login</h1>
       <form className="auth-form" onSubmit={onSubmit} noValidate aria-busy={actionLoading}>
         <label htmlFor="username">Username</label>

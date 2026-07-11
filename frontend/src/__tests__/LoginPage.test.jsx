@@ -48,6 +48,8 @@ describe("LoginPage", () => {
   it("shows_username_validation_before_submit", async () => {
     renderPage()
 
+    expect(screen.getByRole("heading", { name: "Login" }).closest("main")).toHaveClass("page-shell", "auth-page")
+
     fireEvent.click(screen.getByRole("button", { name: "Login" }))
 
     expect(await screen.findByText("Username is required.")).toBeInTheDocument()
