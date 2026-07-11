@@ -51,12 +51,12 @@ const T3_BOTS = [
 ]
 
 const T4_BOTS = [
-  ["T4 Anthropic", ["Claude Opus 4.8"]],
+  ["T4 Anthropic", [["Claude Opus 4.8", "/user/llm_opus48"]]],
   ["T4 DeepSeek", [["V4 Pro", "/user/bot_deepseekv4_pro"]]],
-  ["T4 Gemini", ["3.1 Pro Preview"]],
-  ["T4 GLM", ["5.2"]],
-  ["T4 Kimi", ["K2.7 Code"]],
-  ["T4 Hermes", ["4 405B"]],
+  ["T4 Gemini", [["3.1 Pro Preview", "/user/llm_gemini31_pro_preview"]]],
+  ["T4 GLM", [["5.2", "/user/llm_glm52"]]],
+  ["T4 Kimi", [["K2.7 Code", "/user/llm_kimi_k27_code"]]],
+  ["T4 Hermes", [["4 405B", "/user/llm_hermes4_405b"]]],
 ]
 
 const T5_BOTS = [

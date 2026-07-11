@@ -46,6 +46,7 @@ beforeEach(() => {
       { bot_id: "bot-6", username: "stockfishwild", display_name: "Stockfish Wild 16", description: "Experimental Stockfish-backed Wild 16 bot using public-state board hypotheses.", elo: 1260, supported_rule_variants: ["wild16"] },
       { bot_id: "bot-7", username: "darkboardmcts", display_name: "Darkboard MCTS", description: "Darkboard-inspired Wild 16 bot runtime.", elo: 1331, supported_rule_variants: ["wild16"] },
       { bot_id: "bot-8", username: "llm_nemotron_ultra", display_name: "LLM Nemotron Ultra (bot)", description: "Nemotron Ultra model bot.", elo: 1460, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-9", username: "llm_gemini31_pro_preview", display_name: "LLM Gemini 3.1 Pro Preview (bot)", description: "Gemini 3.1 Pro Preview model bot.", elo: 1600, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier4", llm_bot_limit_label: "No ply limit" },
     ],
   })
 })
@@ -469,20 +470,25 @@ describe("LobbyPage", () => {
     expect(within(listbox).getByText("Casual bots")).toBeInTheDocument()
     expect(within(listbox).getByText("Club bots")).toBeInTheDocument()
     expect(within(listbox).getByText("Strong bots")).toBeInTheDocument()
+    expect(within(listbox).getByText("Expert bots")).toBeInTheDocument()
     expect(within(listbox).getAllByText("T0")[0]).toHaveClass("tier-badge", "tier-badge--t0")
     expect(within(listbox).getAllByText("T1")[0]).toHaveClass("tier-badge", "tier-badge--t1")
     expect(within(listbox).getAllByText("T2")[0]).toHaveClass("tier-badge", "tier-badge--t2")
     expect(within(listbox).getAllByText("T3")[0]).toHaveClass("tier-badge", "tier-badge--t3")
+    expect(within(listbox).getAllByText("T4")[0]).toHaveClass("tier-badge", "tier-badge--t4")
     expect(screen.getByRole("option", { name: "1201 - Random Bot" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1250 - Simple Heuristics Bot" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1300 - LLM Haiku" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1460 - LLM Nemotron Ultra" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1200 - Random Any Bot" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1250 - Simple Heuristics Bot" })).not.toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1300 - LLM Haiku" })).toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).toHaveAttribute("aria-disabled", "true")
     expect(within(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).getByText("Requires T2")).toBeInTheDocument()
+    expect(within(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).getByText("Requires T4")).toBeInTheDocument()
     expect(botOptionLabels()).toEqual([
       "1200 - Random Any Bot",
       "1201 - Random Bot",
@@ -490,6 +496,7 @@ describe("LobbyPage", () => {
       "1300 - LLM Haiku",
       "1342 - LLM GPT-Nano",
       "1460 - LLM Nemotron Ultra",
+      "1600 - LLM Gemini 3.1 Pro Preview",
     ])
     expect(screen.queryByText("(No ply limit)")).not.toBeInTheDocument()
     expect(screen.queryByText("LLM Haiku (bot)")).not.toBeInTheDocument()
