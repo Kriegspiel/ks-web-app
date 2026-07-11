@@ -71,6 +71,18 @@ describe("ProfilePage", () => {
     expect(profileCss).toContain("--tier-badge-size: 2.35rem")
   })
 
+  it("keeps_profile_challenge_controls_balanced", () => {
+    const profileCss = fs.readFileSync("src/pages/Profile.css", "utf8")
+
+    expect(profileCss).toContain("--profile-challenge-control-height: 3.45rem")
+    expect(profileCss).toContain(".profile-challenge-form select")
+    expect(profileCss).toContain("font-weight: 500")
+    expect(profileCss).toContain(".profile-challenge-form option")
+    expect(profileCss).toContain("font-weight: 400")
+    expect(profileCss).toContain(".profile-challenge-form button")
+    expect(profileCss).toContain("height: var(--profile-challenge-control-height)")
+  })
+
   it("renders_profile_stats_and_recent_games", async () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username: "fil",
