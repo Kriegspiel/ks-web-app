@@ -322,7 +322,7 @@ export default function SubscriptionPage() {
       {billingError ? <p className="auth-error" role="alert">{billingError}</p> : null}
 
       {user?.is_guest === true ? (
-        <section className="subscription-notice" aria-label="Guest subscription notice">
+        <section className="subscription-notice subscription-notice--warning" aria-label="Guest subscription notice">
           <p>
             Guest accounts need to become regular accounts before subscribing. Convert this guest from your{" "}
             <Link to={`/user/${encodeURIComponent(user.username)}`}>profile</Link>.
