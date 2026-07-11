@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import api, { askAny, convertGuest, createGame, createGameEventsSource, deleteWaitingGame, gameEventsUrl, getBots, getGame, getGamePublicStatus, getGameReview, getGameState, getGameT3Review, getGameTranscript, getLobbyStats, getMyActiveGames, getMyArchivedGames, getOpenGames, joinGame, login, logout, me, playAsGuest, recordCampaignVisit, register, resignGame, submitMove, techApi, userApi } from "../services/api"
+import api, { askAny, billingApi, convertGuest, createGame, createGameEventsSource, deleteWaitingGame, gameEventsUrl, getBots, getGame, getGamePublicStatus, getGameReview, getGameState, getGameT3Review, getGameTranscript, getLobbyStats, getMyActiveGames, getMyArchivedGames, getOpenGames, joinGame, login, logout, me, playAsGuest, recordCampaignVisit, register, resignGame, submitMove, techApi, userApi } from "../services/api"
 
 describe("api client", () => {
   it("api_client_uses_relative_base_url", () => { expect(api.defaults.baseURL ?? "").toBe("") })
@@ -279,4 +279,18 @@ describe("user helpers", () => {
   })
   it("tech_reports_use_expected_endpoints", async () => { const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: {} }); await techApi.getBotsReport(10); await techApi.getBotMatrixReport("week", ["checkmate", "insufficient"]); await techApi.getGuestsReport(); await techApi.getUsersReport(); await techApi.getAcquisitionReport(7); expect(getSpy).toHaveBeenNthCalledWith(1, "/api/tech/bots-report", { params: { days: 10 } }); expect(getSpy).toHaveBeenNthCalledWith(2, "/api/tech/bot-matrix-report", { params: { period: "week", outcomes: "checkmate,insufficient" } }); expect(getSpy).toHaveBeenNthCalledWith(3, "/api/tech/guests-report"); expect(getSpy).toHaveBeenNthCalledWith(4, "/api/tech/users-report"); expect(getSpy).toHaveBeenNthCalledWith(5, "/api/tech/acquisition-report", { params: { days: 7 } }) })
   it("update_settings_patches_expected_endpoint", async () => { const patchSpy = vi.spyOn(api, "patch").mockResolvedValue({ data: { board_theme: "wood" } }); const payload = { board_theme: "wood" }; const result = await userApi.updateSettings(payload); expect(patchSpy).toHaveBeenCalledWith("/api/user/settings", payload); expect(result).toEqual({ board_theme: "wood" }) })
+  it("billing_helpers_use_expected_endpoints", async () => {
+    const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: { enabled: true } })
+    const postSpy = vi.spyOn(api, "post")
+      .mockResolvedValueOnce({ data: { client_secret: "cs_test" } })
+      .mockResolvedValueOnce({ data: { url: "https://billing.example/session" } })
+
+    await billingApi.getSubscription()
+    await billingApi.createCheckoutSession({ tier: "tier2", interval: "monthly" })
+    await billingApi.createPortalSession()
+
+    expect(getSpy).toHaveBeenCalledWith("/api/billing/subscription")
+    expect(postSpy).toHaveBeenNthCalledWith(1, "/api/billing/checkout-session", { tier: "tier2", interval: "monthly" })
+    expect(postSpy).toHaveBeenNthCalledWith(2, "/api/billing/portal-session")
+  })
 })

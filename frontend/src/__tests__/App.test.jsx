@@ -24,6 +24,11 @@ const mockApi = vi.hoisted(() => ({
   resignGame: vi.fn(),
   createGameEventsSource: vi.fn(() => null),
   recordCampaignVisit: vi.fn(),
+  billingApi: {
+    getSubscription: vi.fn(),
+    createCheckoutSession: vi.fn(),
+    createPortalSession: vi.fn(),
+  },
   userApi: {
     getGameHistory: vi.fn(),
   },
@@ -49,6 +54,16 @@ beforeEach(() => {
   mockApi.getMyActiveGames.mockResolvedValue({ games: [] })
   mockApi.getMyArchivedGames.mockResolvedValue({ games: [] })
   mockApi.recordCampaignVisit.mockResolvedValue({ attribution_id: "attr" })
+  mockApi.billingApi.getSubscription.mockReset()
+  mockApi.billingApi.getSubscription.mockResolvedValue({
+    enabled: false,
+    publishable_key: null,
+    current_tier: "tier1",
+    available_prices: {},
+    billing: { has_customer: false },
+  })
+  mockApi.billingApi.createCheckoutSession.mockReset()
+  mockApi.billingApi.createPortalSession.mockReset()
   window.sessionStorage.clear()
   mockApi.getGame.mockResolvedValue({ state: "waiting" })
   mockApi.userApi.getGameHistory.mockReset()
@@ -188,6 +203,15 @@ describe("App routes", () => {
     await screen.findByRole("heading", { name: "Lobby" })
     expect(screen.getByRole("link", { name: "Lobby" })).toHaveAttribute("aria-current", "page")
     expect(screen.queryByRole("heading", { name: "Home" })).not.toBeInTheDocument()
+  })
+
+  it("renders_subscription_route_and_subcription_alias_for_authenticated_users", async () => {
+    mockApi.me.mockResolvedValueOnce({ username: "fil" })
+
+    renderRoute("/subcription")
+
+    await screen.findByRole("heading", { name: "Subscription" })
+    expect(await screen.findByText("Payments are not available yet.")).toBeInTheDocument()
   })
 
   it("shows_inline_validation_message_for_empty_register_form", async () => {

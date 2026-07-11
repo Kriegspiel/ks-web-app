@@ -1,0 +1,358 @@
+import { useEffect, useMemo, useRef, useState } from "react"
+import { Link } from "react-router-dom"
+import { loadStripe } from "@stripe/stripe-js"
+import TierBadge from "../components/TierBadge"
+import { billingApi } from "../services/api"
+import { useAuth } from "../hooks/useAuth"
+import "./Subscription.css"
+
+const TIERS = [
+  { key: "tier0", apiTier: null, code: "T0", name: "Guest", price: "Free", selectable: false },
+  { key: "tier1", apiTier: null, code: "T1", name: "Casual", price: "Free", selectable: false },
+  { key: "tier2", apiTier: "tier2", code: "T2", name: "Club", price: "$10/mo / $100/yr", selectable: true },
+  { key: "tier3", apiTier: "tier3", code: "T3", name: "Strong", price: "$20/mo / $200/yr", selectable: true },
+  { key: "tier4", apiTier: "tier4", code: "T4", name: "Expert", price: "$50/mo / $500/yr", selectable: true },
+  { key: "tier5", apiTier: null, code: "T5", name: "Master", price: "Not available yet", selectable: false, future: true },
+  { key: "tier6", apiTier: null, code: "T6", name: "Elite", price: "Not available yet", selectable: false, future: true },
+]
+
+const T2_BOTS = [
+  ["OpenAI", [["GPTNano", "/user/llm_gptnano"], ["GPT-OSS", "/user/llm_gptoss120b"]]],
+  ["Anthropic", [["Claude Haiku 4.5", "/user/llm_haiku"]]],
+  ["DeepSeek", [["V4 Flash", "/user/llm_deepseekv4_flash"]]],
+  ["Gemini", [["2.5 Flash-Lite", "/user/llm_gemini25_lite"], ["3.1 Flash-Lite", "/user/llm_gemini31_lite"]]],
+  ["Llama", [["3.1 8B", "/user/llm_llama31_8b"], ["4 Scout", "/user/llm_llama4_scout"], ["4 Maverick", "/user/llm_llama4_maverick"]]],
+  ["Mistral", [["Nemo", "/user/llm_mistral_nemo"], ["Small 3.2", "/user/llm_mistral_small32"], ["Large 3", "/user/llm_mistral_large3"]]],
+  ["Gemma", [["3 4B", "/user/llm_gemma3_4b"], ["3 27B", "/user/llm_gemma3_27b"], ["4 31B", "/user/llm_gemma4_31b"]]],
+  ["GLM", [["4.7 Flash", "/user/llm_glm47_flash"], ["4.5 Air", "/user/llm_glm45_air"]]],
+  ["Nemotron", [["Nano", "/user/llm_nemotron_nano"], ["Super", "/user/llm_nemotron_super"], ["Ultra", "/user/llm_nemotron_ultra"]]],
+  ["Kimi", [["K2.5", "/user/llm_kimi_k25"]]],
+  ["Hermes", [["4 70B", "/user/llm_hermes4_70b"]]],
+  ["Phi", [["4", "/user/llm_phi4"]]],
+]
+
+const T3_BOTS = [
+  ["OpenAI", ["GPT-5.5"]],
+  ["Anthropic", ["Claude Sonnet 5"]],
+  ["Gemini", ["2.5 Flash"]],
+  ["Qwen", [["3.6 Flash", "/user/llm_qwen36_flash"], "Plus"]],
+  ["Kimi", ["K2 Thinking"]],
+  ["Hermes", ["3 70B"]],
+]
+
+const T4_BOTS = [
+  ["Anthropic", ["Claude Opus 4.8"]],
+  ["DeepSeek", [["V4 Pro", "/user/bot_deepseekv4_pro"]]],
+  ["Gemini", ["3.1 Pro Preview"]],
+  ["GLM", ["5.2"]],
+  ["Kimi", ["K2.7 Code"]],
+  ["Hermes", ["4 405B"]],
+]
+
+const T5_BOTS = [
+  ["OpenAI", ["GPT-5.5 Pro"]],
+  ["Qwen", ["3.7 Max"]],
+]
+
+const FEATURES = [
+  { name: "Play human games", values: ["Yes", "Yes", "Yes", "Yes", "Yes", null, null] },
+  { name: "Play simple bots", values: ["Yes", "Yes", "Yes", "Yes", "Yes", null, null] },
+  { name: "Completed-game review", values: ["Yes", "Yes", "Yes", "Yes", "Yes", null, null] },
+  { name: "Play T2 bots", values: ["No", "No", T2_BOTS, T2_BOTS, T2_BOTS, T2_BOTS, T2_BOTS] },
+  { name: "Play T3 bots", values: ["No", "No", "No", T3_BOTS, T3_BOTS, T3_BOTS, T3_BOTS] },
+  { name: "Play T4 bots", values: ["No", "No", "No", "No", T4_BOTS, T4_BOTS, T4_BOTS] },
+  { name: "Play T5 bots", values: ["No", "No", "No", "No", "No", T5_BOTS, T5_BOTS] },
+  { name: "Persistent player name", values: ["No", "Yes", "Yes", "Yes", "Yes", null, null] },
+  { name: "Public player profile", values: ["No", "Yes", "Yes", "Yes", "Yes", null, null] },
+  { name: "Leaderboard eligibility", values: ["No", "Yes", "Yes", "Yes", "Yes", null, null] },
+  { name: "Rating history", values: ["No", "Yes", "Yes", "Yes", "Yes", null, null] },
+]
+
+function BotList({ groups }) {
+  return (
+    <div className="subscription-bot-list">
+      {groups.map(([label, items]) => (
+        <div key={label}>
+          <strong>{label}:</strong>{" "}
+          {items.map((item, index) => {
+            const text = Array.isArray(item) ? item[0] : item
+            const path = Array.isArray(item) ? item[1] : null
+            return (
+              <span key={`${label}-${text}`}>
+                {index > 0 ? "; " : ""}
+                {path ? <Link to={path}>{text}</Link> : text}
+              </span>
+            )
+          })}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function FeatureValue({ value }) {
+  if (value === null) {
+    return <span className="subscription-tier-table__future">Not available</span>
+  }
+  if (Array.isArray(value)) {
+    return <BotList groups={value} />
+  }
+  const markClass = value === "Yes" ? "subscription-tier-table__mark--yes" : "subscription-tier-table__mark--no"
+  return <span className={`subscription-tier-table__mark ${markClass}`}>{value}</span>
+}
+
+function isPlanAvailable(status, tier, interval) {
+  if (!tier) return false
+  return status?.available_prices?.[tier]?.[interval] === true
+}
+
+function firstAvailableInterval(status, tier) {
+  return ["monthly", "yearly"].find((option) => isPlanAvailable(status, tier, option)) ?? null
+}
+
+function isTierAvailable(status, tier) {
+  return firstAvailableInterval(status, tier) !== null
+}
+
+function firstAvailablePlan(status) {
+  const currentTier = ["tier2", "tier3", "tier4"].includes(status?.current_tier) ? status.current_tier : null
+  const preferredTiers = currentTier ? [currentTier, ...["tier2", "tier3", "tier4"].filter((tier) => tier !== currentTier)] : ["tier2", "tier3", "tier4"]
+  for (const tier of preferredTiers) {
+    const interval = firstAvailableInterval(status, tier)
+    if (interval) return { tier, interval }
+  }
+  return { tier: "tier2", interval: "monthly" }
+}
+
+function tierByApiTier(apiTier) {
+  return TIERS.find((tier) => tier.apiTier === apiTier) ?? TIERS[2]
+}
+
+export default function SubscriptionPage() {
+  const { user } = useAuth()
+  const [status, setStatus] = useState(null)
+  const [selectedTier, setSelectedTier] = useState("tier2")
+  const [interval, setInterval] = useState("monthly")
+  const [loading, setLoading] = useState(true)
+  const [billingError, setBillingError] = useState("")
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [portalLoading, setPortalLoading] = useState(false)
+  const [checkoutMounted, setCheckoutMounted] = useState(false)
+  const checkoutContainerRef = useRef(null)
+  const embeddedCheckoutRef = useRef(null)
+
+  useEffect(() => {
+    let active = true
+    async function loadBilling() {
+      setLoading(true)
+      setBillingError("")
+      try {
+        const payload = await billingApi.getSubscription()
+        if (!active) return
+        const firstPlan = firstAvailablePlan(payload)
+        setStatus(payload)
+        setSelectedTier(firstPlan.tier)
+        setInterval(firstPlan.interval)
+      } catch (error) {
+        if (active) setBillingError(error?.message ?? "Unable to load billing details right now.")
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+    loadBilling()
+    return () => {
+      active = false
+      embeddedCheckoutRef.current?.destroy?.()
+      embeddedCheckoutRef.current = null
+    }
+  }, [])
+
+  const stripePromise = useMemo(() => {
+    if (!status?.publishable_key) return null
+    return loadStripe(status.publishable_key)
+  }, [status?.publishable_key])
+
+  const selectedTierDetails = tierByApiTier(selectedTier)
+  const selectedAvailable = isPlanAvailable(status, selectedTier, interval)
+  const activeSubscription = ["active", "trialing"].includes(status?.billing?.subscription_status)
+  const canSubscribe = status?.enabled === true && selectedAvailable && user?.is_guest !== true && !activeSubscription
+
+  function clearCheckoutForm() {
+    embeddedCheckoutRef.current?.destroy?.()
+    embeddedCheckoutRef.current = null
+    setCheckoutMounted(false)
+  }
+
+  function chooseTier(tier) {
+    clearCheckoutForm()
+    setSelectedTier(tier)
+    if (!isPlanAvailable(status, tier, interval)) {
+      const nextInterval = firstAvailableInterval(status, tier)
+      if (nextInterval) setInterval(nextInterval)
+    }
+  }
+
+  function chooseInterval(nextInterval) {
+    clearCheckoutForm()
+    setInterval(nextInterval)
+  }
+
+  async function startCheckout() {
+    if (!canSubscribe || !stripePromise || !checkoutContainerRef.current) return
+    setCheckoutLoading(true)
+    setBillingError("")
+    clearCheckoutForm()
+    try {
+      const stripe = await stripePromise
+      if (!stripe) throw new Error("Stripe is not ready.")
+      const checkout = await stripe.initEmbeddedCheckout({
+        fetchClientSecret: async () => {
+          const response = await billingApi.createCheckoutSession({ tier: selectedTier, interval })
+          return response.client_secret
+        },
+      })
+      embeddedCheckoutRef.current = checkout
+      checkout.mount(checkoutContainerRef.current)
+      setCheckoutMounted(true)
+    } catch (error) {
+      setBillingError(error?.message ?? "Unable to start checkout right now.")
+    } finally {
+      setCheckoutLoading(false)
+    }
+  }
+
+  async function openPortal() {
+    setPortalLoading(true)
+    setBillingError("")
+    try {
+      const response = await billingApi.createPortalSession()
+      window.location.assign(response.url)
+    } catch (error) {
+      setBillingError(error?.message ?? "Unable to open billing management right now.")
+    } finally {
+      setPortalLoading(false)
+    }
+  }
+
+  return (
+    <main className="page-shell subscription-page">
+      <header className="subscription-page__header">
+        <div>
+          <h1>Subscription</h1>
+          <p>Choose your Kriegspiel level and manage billing for this account.</p>
+        </div>
+        <button type="button" className="button-link--secondary" onClick={openPortal} disabled={portalLoading || user?.is_guest === true}>
+          {portalLoading ? "Opening..." : "Manage billing"}
+        </button>
+      </header>
+
+      {loading ? <p>Loading subscription...</p> : null}
+      {billingError ? <p className="auth-error" role="alert">{billingError}</p> : null}
+
+      {user?.is_guest === true ? (
+        <section className="subscription-notice" aria-label="Guest subscription notice">
+          <p>
+            Guest accounts need to become regular accounts before subscribing. Convert this guest from your{" "}
+            <Link to={`/user/${encodeURIComponent(user.username)}`}>profile</Link>.
+          </p>
+        </section>
+      ) : null}
+
+      <section className="subscription-controls" aria-label="Subscription controls">
+        <div className="subscription-controls__plan">
+          <TierBadge code={selectedTierDetails.code} />
+          <div>
+            <h2>Tier {selectedTierDetails.code} {selectedTierDetails.name}</h2>
+            <p>{selectedTierDetails.price}</p>
+          </div>
+        </div>
+        <div className="subscription-interval-toggle" aria-label="Billing interval">
+          {["monthly", "yearly"].map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={interval === option ? "is-active" : ""}
+              onClick={() => chooseInterval(option)}
+              disabled={!isPlanAvailable(status, selectedTier, option)}
+            >
+              {option === "monthly" ? "Monthly" : "Yearly"}
+            </button>
+          ))}
+        </div>
+        <button type="button" onClick={startCheckout} disabled={!canSubscribe || checkoutLoading}>
+          {activeSubscription
+            ? "Use billing management"
+            : checkoutLoading
+              ? "Opening payment form..."
+              : checkoutMounted ? "Refresh payment form" : "Open payment form"}
+        </button>
+      </section>
+
+      {status?.enabled === false ? (
+        <section className="subscription-notice" aria-label="Billing unavailable">
+          <p>Payments are not available yet.</p>
+        </section>
+      ) : null}
+
+      <div ref={checkoutContainerRef} className="subscription-checkout" aria-label="Stripe payment form" />
+
+      <section className="subscription-table-section" aria-label="Feature availability by tier">
+        <div className="subscription-tier-table-wrap">
+          <table className="subscription-tier-table">
+            <colgroup>
+              <col className="subscription-tier-table__feature-col" />
+              {TIERS.map((tier) => <col key={tier.key} className="subscription-tier-table__tier-col" />)}
+            </colgroup>
+            <thead>
+              <tr>
+                <th scope="col">Feature</th>
+                {TIERS.map((tier) => {
+                  const available = tier.selectable && isTierAvailable(status, tier.apiTier)
+                  const selected = tier.apiTier === selectedTier
+                  return (
+                    <th key={tier.key} scope="col" className={tier.future ? "subscription-tier-table__unavailable-column" : ""}>
+                      <span className="subscription-tier-table__heading">
+                        <span className="subscription-tier-table__tier-label">
+                          <span>Tier</span>
+                          <TierBadge code={tier.code} />
+                        </span>
+                        <span className="subscription-tier-table__name">{tier.name}</span>
+                        <span className="subscription-tier-table__price">{tier.price}</span>
+                        {tier.selectable ? (
+                          <button
+                            type="button"
+                            className={selected ? "is-selected" : ""}
+                            onClick={() => chooseTier(tier.apiTier)}
+                            disabled={!available}
+                            aria-label={`Choose Tier ${tier.code} ${tier.name}`}
+                          >
+                            {selected ? "Selected" : "Choose"}
+                          </button>
+                        ) : null}
+                      </span>
+                    </th>
+                  )
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {FEATURES.map((feature) => (
+                <tr key={feature.name}>
+                  <th scope="row">{feature.name}</th>
+                  {feature.values.map((value, index) => (
+                    <td
+                      key={`${feature.name}-${TIERS[index].key}`}
+                      className={TIERS[index].future ? "subscription-tier-table__unavailable-column" : ""}
+                    >
+                      <FeatureValue value={value} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  )
+}

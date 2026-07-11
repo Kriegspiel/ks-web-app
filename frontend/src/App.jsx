@@ -22,6 +22,7 @@ import GuestsReportPage from "./pages/GuestsReport"
 import TechIndexPage from "./pages/TechIndex"
 import UsersReportPage from "./pages/UsersReport"
 import SettingsPage from "./pages/Settings"
+import SubscriptionPage from "./pages/Subscription"
 import "./App.css"
 
 function LoadingPage() {
@@ -253,6 +254,22 @@ export function AppRoutes() {
             element={(
               <RequireAuth>
                 <SettingsPage />
+              </RequireAuth>
+            )}
+          />
+          <Route
+            path="/subscription"
+            element={(
+              <RequireAuth>
+                <SubscriptionPage />
+              </RequireAuth>
+            )}
+          />
+          <Route
+            path="/subcription"
+            element={(
+              <RequireAuth>
+                <SubscriptionPage />
               </RequireAuth>
             )}
           />
