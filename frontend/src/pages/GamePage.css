@@ -180,9 +180,10 @@
 
 .game-layout {
   --game-board-card-max-width: calc(38rem + 2.7rem);
+  --game-board-column-width: min(50%, var(--game-board-card-max-width));
   display: grid;
   gap: 0.85rem;
-  grid-template-columns: fit-content(var(--game-board-card-max-width)) minmax(16rem, 1fr);
+  grid-template-columns: minmax(0, var(--game-board-column-width)) minmax(0, 1fr);
   grid-template-areas:
     "board referee"
     "status status";
@@ -197,7 +198,8 @@
   gap: 0.8rem;
   padding: 1rem 1.05rem;
   justify-self: start;
-  width: min(100%, var(--game-board-card-max-width));
+  width: 100%;
+  max-width: var(--game-board-card-max-width);
 }
 
 .game-card--referee {
@@ -700,6 +702,7 @@
 .game-referee-latest {
   display: grid;
   gap: 0.22rem;
+  min-width: 0;
   padding: 0.72rem 0.8rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -719,30 +722,39 @@
   color: var(--text);
   font-size: 0.94rem;
   line-height: 1.35;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .game-referee-latest__value--timeline {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.45rem 0.3rem;
+  align-items: flex-start;
+  gap: 0.45rem 0.35rem;
+  max-width: 100%;
 }
 
 .game-referee-latest__timeline-piece {
   display: inline-flex;
-  align-items: center;
+  flex: 1 1 11rem;
+  align-items: flex-start;
   gap: 0.3rem;
+  min-width: min(100%, 9.75rem);
+  max-width: 100%;
 }
 
 .game-referee-latest__segment {
   display: inline-flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.22rem 0.45rem;
   min-width: 0;
 }
 
 .game-referee-latest__actor {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   padding: 0.16rem 0.5rem;
@@ -765,11 +777,15 @@
 
 .game-referee-latest__segment-text {
   font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .game-referee-latest__separator {
+  flex: 0 0 auto;
   color: var(--muted-soft);
   font-weight: 700;
+  line-height: 1.7;
 }
 
 .game-referee-log {
