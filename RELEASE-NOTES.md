@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.178
+
+- **Bot Catalog**: promote Gemini 3.1 Flash-Lite to the visible T3 Gemini slot
+  and hide Gemini 2.5 variants from the subscription matrix and lobby picker
+  while preserving direct profile access.
+
 ## ks-web-app frontend v. 1.3.177
 
 - **Bot Catalog**: keep only Llama 4 Maverick and Gemma 4 31B visible in the

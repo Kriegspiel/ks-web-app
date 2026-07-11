@@ -118,16 +118,16 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     className: "profile-tier-card--tier2",
   },
   llm_gemini31_lite: {
-    code: "T2",
+    code: "T3",
     model: "Gemini 3.1 Flash-Lite",
-    tierName: "Club",
-    className: "profile-tier-card--tier2",
+    tierName: "Strong",
+    className: "profile-tier-card--tier3",
   },
   openrouter_gemini31_lite: {
-    code: "T2",
+    code: "T3",
     model: "Gemini 3.1 Flash-Lite",
-    tierName: "Club",
-    className: "profile-tier-card--tier2",
+    tierName: "Strong",
+    className: "profile-tier-card--tier3",
   },
   llm_gptoss120b: {
     code: "T2",

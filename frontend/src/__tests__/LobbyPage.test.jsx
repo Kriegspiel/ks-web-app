@@ -57,6 +57,11 @@ beforeEach(() => {
       { bot_id: "bot-17", username: "llm_gemma3_27b", display_name: "LLM Gemma 3 27B (bot)", description: "Gemma 3 27B model bot.", elo: 1315, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-18", username: "llm_gemma4_31b", display_name: "LLM Gemma 4 31B (bot)", description: "Gemma 4 31B model bot.", elo: 1316, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-19", username: "openrouter_llama31_8b", display_name: "OpenRouter Llama 3.1 8B (bot)", description: "Legacy Llama 3.1 8B model bot.", elo: 1317, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-20", username: "llm_gemini31_lite", display_name: "LLM Gemini 3.1 Flash-Lite (bot)", description: "Gemini 3.1 Flash-Lite model bot.", elo: 1468, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier3", llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-21", username: "llm_gemini25_lite", display_name: "LLM Gemini 2.5 Flash-Lite (bot)", description: "Gemini 2.5 Flash-Lite model bot.", elo: 1318, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier2", llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-22", username: "llm_gemini25_flash", display_name: "LLM Gemini 2.5 Flash (bot)", description: "Gemini 2.5 Flash model bot.", elo: 1469, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier3", llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-23", username: "openrouter_gemini25_lite", display_name: "OpenRouter Gemini 2.5 Flash-Lite (bot)", description: "Legacy Gemini 2.5 Flash-Lite model bot.", elo: 1319, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier2", llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-24", username: "openrouter_gemini31_lite", display_name: "OpenRouter Gemini 3.1 Flash-Lite (bot)", description: "Legacy Gemini 3.1 Flash-Lite model bot.", elo: 1467, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier3", llm_bot_limit_label: "No ply limit" },
     ],
   })
 })
@@ -495,6 +500,7 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("option", { name: "1475 - LLM Mistral Large 3" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1460 - LLM Nemotron Ultra" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1468 - LLM Gemini 3.1 Flash-Lite" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1200 - Random Any Bot" })).toBeInTheDocument()
     expect(screen.queryByRole("option", { name: "1180 - LLM Mistral Nemo" })).not.toBeInTheDocument()
@@ -503,6 +509,10 @@ describe("LobbyPage", () => {
     expect(screen.queryByRole("option", { name: "1314 - LLM Gemma 3 4B" })).not.toBeInTheDocument()
     expect(screen.queryByRole("option", { name: "1315 - LLM Gemma 3 27B" })).not.toBeInTheDocument()
     expect(screen.queryByRole("option", { name: "1317 - OpenRouter Llama 3.1 8B" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "1318 - LLM Gemini 2.5 Flash-Lite" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "1319 - OpenRouter Gemini 2.5 Flash-Lite" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "1467 - OpenRouter Gemini 3.1 Flash-Lite" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "1469 - LLM Gemini 2.5 Flash" })).not.toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1250 - Simple Heuristics Bot" })).not.toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1300 - LLM Haiku" })).toHaveAttribute("aria-disabled", "true")
@@ -510,12 +520,14 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("option", { name: "1316 - LLM Gemma 4 31B" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1475 - LLM Mistral Large 3" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByRole("option", { name: "1468 - LLM Gemini 3.1 Flash-Lite" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).toHaveAttribute("aria-disabled", "true")
     expect(within(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).getByText("Requires T2")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1313 - LLM Llama 4 Maverick" })).getByText("Requires T2")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1316 - LLM Gemma 4 31B" })).getByText("Requires T2")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1475 - LLM Mistral Large 3" })).getByText("Requires T3")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).getByText("Requires T3")).toBeInTheDocument()
+    expect(within(screen.getByRole("option", { name: "1468 - LLM Gemini 3.1 Flash-Lite" })).getByText("Requires T3")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).getByText("Requires T4")).toBeInTheDocument()
     expect(botOptionLabels()).toEqual([
       "1200 - Random Any Bot",
@@ -526,6 +538,7 @@ describe("LobbyPage", () => {
       "1316 - LLM Gemma 4 31B",
       "1342 - LLM GPT-Nano",
       "1460 - LLM Nemotron Ultra",
+      "1468 - LLM Gemini 3.1 Flash-Lite",
       "1475 - LLM Mistral Large 3",
       "1505 - LLM GPT-5.5",
       "1600 - LLM Gemini 3.1 Pro Preview",
