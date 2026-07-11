@@ -195,7 +195,7 @@ describe("ReviewT3Page", () => {
 
     await screen.findByRole("heading", { name: "T3 replay" })
 
-    fireEvent.click(screen.getByRole("button", { name: "Next" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Next" }))
     expect(screen.getByLabelText("Replay position counter")).toHaveTextContent("1W/1B")
     expect(screen.getByText("White e2e4")).toBeInTheDocument()
     expect(screen.getByText("position looks unclear")).toBeInTheDocument()

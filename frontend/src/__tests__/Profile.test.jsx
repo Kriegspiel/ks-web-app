@@ -313,7 +313,7 @@ describe("ProfilePage", () => {
 
     expect(challengeCard.compareDocumentPosition(recentGames) & documentPositionFollowing).toBeTruthy()
     expect(within(challengeCard).getByRole("heading", { name: "Challenge this bot" })).toBeInTheDocument()
-    expect(within(challengeCard).getByRole("option", { name: "Berkeley + Any" })).toHaveValue("berkeley_any")
+    expect(await within(challengeCard).findByRole("option", { name: "Berkeley + Any" })).toHaveValue("berkeley_any")
     expect(within(challengeCard).getByRole("option", { name: "Wild 16" })).toHaveValue("wild16")
 
     fireEvent.change(within(challengeCard).getByLabelText("Ruleset"), { target: { value: "wild16" } })
