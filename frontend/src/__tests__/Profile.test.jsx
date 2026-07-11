@@ -421,6 +421,25 @@ describe("ProfilePage", () => {
     expect(screen.getByText("Qwen3.6 Flash model bot for T3 Strong.")).toBeInTheDocument()
   })
 
+  it("marks_darkboard_mcts_as_a_tier_one_bot", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "darkboardmcts",
+      role: "bot",
+      member_since: "2026-05-18T00:00:00Z",
+      stats: {},
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile("/user/darkboardmcts")
+
+    await screen.findByRole("heading", { name: "darkboardmcts" })
+    expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Tier T1 MCTS bot" })).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T1")).toHaveClass("tier-badge", "tier-badge--t1", "profile-tier-card__code")
+    expect(screen.getByText("Darkboard MCTS bot for T1 Casual.")).toBeInTheDocument()
+  })
+
   it("marks_qwen_max_bot_as_tier_five", async () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username: "llm_qwen37_max",

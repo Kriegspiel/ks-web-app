@@ -18,11 +18,11 @@ const TIERS = [
 ]
 
 const T0_BOTS = [
-  ["T0-level bots", [["Random Bot", "/user/randobot"], ["Random Any Bot", "/user/randobotany"], ["Darkboard MCTS", "/user/darkboardmcts"]]],
+  ["T0-level bots", [["Random Bot", "/user/randobot"], ["Random Any Bot", "/user/randobotany"]]],
 ]
 
 const T1_BOTS = [
-  ["T1-level bots", [["Simple Heuristics Bot", "/user/simpleheuristics"], ["Stockfish Wild 16", "/user/stockfishwild"]]],
+  ["T1-level bots", [["Darkboard MCTS", "/user/darkboardmcts"], ["Simple Heuristics Bot", "/user/simpleheuristics"], ["Stockfish Wild 16", "/user/stockfishwild"]]],
 ]
 
 const T2_BOTS = [
