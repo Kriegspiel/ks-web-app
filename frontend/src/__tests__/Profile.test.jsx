@@ -529,6 +529,31 @@ describe("ProfilePage", () => {
     expect(screen.getByText("Nemotron Ultra model bot for T3 Strong.")).toBeInTheDocument()
   })
 
+  it.each([
+    ["randobot", "Tier T0 Random Bot", "T0", "tier-badge--t0", "Random Bot for T0 Guest."],
+    ["randobotany", "Tier T0 Random Any Bot", "T0", "tier-badge--t0", "Random Any Bot for T0 Guest."],
+    ["simpleheuristics", "Tier T1 Simple Heuristics Bot", "T1", "tier-badge--t1", "Simple Heuristics Bot for T1 Casual."],
+  ])("marks_%s_with_the_non_llm_bot_tier", async (username, heading, code, tierClass, copy) => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username,
+      role: "bot",
+      llm_bot_tier: null,
+      member_since: "2026-04-11T00:00:00Z",
+      stats: {},
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile(`/user/${username}`)
+
+    await screen.findByRole("heading", { name: username })
+    const botTier = screen.getByRole("region", { name: "Bot tier" })
+    expect(within(botTier).getByRole("link", { name: `Bot tier: ${heading}. View subscription options` })).toHaveAttribute("href", "/subscription")
+    expect(within(botTier).getByRole("heading", { name: heading })).toBeInTheDocument()
+    expect(within(botTier).getByText(code)).toHaveClass("tier-badge", tierClass, "profile-tier-card__code")
+    expect(within(botTier).getByText(copy)).toBeInTheDocument()
+  })
+
   it("marks_darkboard_mcts_as_a_tier_one_bot", async () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username: "darkboardmcts",
