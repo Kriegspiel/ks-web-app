@@ -14,10 +14,9 @@
 }
 
 .history-table-wrap {
-  overflow-x: auto;
-  overflow-y: auto;
+  overflow: visible;
   margin-top: 1rem;
-  max-height: min(72vh, 46rem);
+  max-height: none;
   border-radius: var(--radius);
 }
 
@@ -26,6 +25,7 @@
   min-width: 62rem;
   border-collapse: separate;
   border-spacing: 0;
+  overflow: visible;
 }
 
 .history-table th,
@@ -35,9 +35,9 @@
   border-bottom: 1px solid var(--border);
 }
 
-.history-table thead {
+.history-table thead th {
   position: sticky;
-  top: 0;
+  top: 4.1rem;
   z-index: 3;
 }
 
@@ -287,6 +287,10 @@
 }
 
 @media (max-width: 720px) {
+  .history-table thead th {
+    top: 7.2rem;
+  }
+
   .history-controls {
     align-items: flex-start;
     flex-direction: column;
