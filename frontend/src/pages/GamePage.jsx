@@ -43,6 +43,7 @@ const PHANTOM_MENU_GAP = 6
 const GAME_SOUND_MUTE_STORAGE_KEY = "game_page_sounds_muted"
 const CLOCK_TICK_INTERVAL_MS = 250
 const MOBILE_GAME_BREAKPOINT_PX = 760
+const REFEREE_LOG_STICKY_SCROLL_THRESHOLD_PX = 48
 const ASK_ANY_RULE_VARIANTS = new Set(["berkeley_any", "english", "crazykrieg"])
 const OPPONENT_STARTING_PHANTOMS = {
   white: {
@@ -485,11 +486,6 @@ function flattenGroupedRefereeEntries(turns) {
   })
 
   return entries
-}
-
-function refereeEntryCompletesTurn(entry) {
-  const messages = Array.isArray(entry?.messages) ? entry.messages : []
-  return messages.some((message) => typeof message === "string" && /\bmove complete\b/i.test(message))
 }
 
 function getGameScoresheet(gameState, color) {
@@ -986,6 +982,15 @@ function refereeLogTurnKey(turnEntry, index) {
   return `turn-${turnEntry?.turn ?? index + 1}-${index}`
 }
 
+function isRefereeLogNearBottom(logNode) {
+  if (!logNode) {
+    return true
+  }
+
+  const remainingScroll = logNode.scrollHeight - logNode.scrollTop - logNode.clientHeight
+  return remainingScroll <= REFEREE_LOG_STICKY_SCROLL_THRESHOLD_PX
+}
+
 function RefereeLogDrawerTurn({ onToggle, open, turnEntry }) {
   return (
     <section className={`game-referee-turn game-referee-turn--drawer${open ? " game-referee-turn--open" : ""}`}>
@@ -1002,11 +1007,11 @@ function RefereeLogDrawerTurn({ onToggle, open, turnEntry }) {
   )
 }
 
-function RefereeLogList({ onToggleTurn, openTurnKey, turns, variant = "inline", scrollRef }) {
+function RefereeLogList({ onScroll, onToggleTurn, openTurnKey, turns, variant = "inline", scrollRef }) {
   const logProps = variant === "drawer" ? {} : { role: "log", "aria-label": "Referee log by turn" }
 
   return (
-    <div className={`game-referee-log__scroll game-referee-log__scroll--${variant}`} ref={variant === "drawer" ? undefined : scrollRef} {...logProps}>
+    <div className={`game-referee-log__scroll game-referee-log__scroll--${variant}`} ref={variant === "drawer" ? undefined : scrollRef} onScroll={onScroll} {...logProps}>
       {turns.map((turnEntry, index) => {
         const key = refereeLogTurnKey(turnEntry, index)
         return variant === "drawer" ? (
@@ -2024,6 +2029,7 @@ export default function GamePage() {
   const suppressContextMenuRef = useRef(false)
   const logScrollRef = useRef(null)
   const refereeLogCloseButtonRef = useRef(null)
+  const refereeLogSticksToBottomRef = useRef(true)
   const lastScrollEntryKeysRef = useRef([])
   const viewportRestoreRef = useRef(null)
   const stateRequestIdRef = useRef(0)
@@ -2186,6 +2192,8 @@ export default function GamePage() {
     boardRectRef.current = null
     suppressClickRef.current = false
     suppressContextMenuRef.current = false
+    refereeLogSticksToBottomRef.current = true
+    lastScrollEntryKeysRef.current = []
 
     const nowMs = Date.now()
     clockSnapshotAtMsRef.current = nowMs
@@ -2648,6 +2656,10 @@ export default function GamePage() {
     }
 
     logNode.scrollTop = logNode.scrollHeight
+    refereeLogSticksToBottomRef.current = true
+  }, [])
+  const handleRefereeLogScroll = useCallback(() => {
+    refereeLogSticksToBottomRef.current = isRefereeLogNearBottom(logScrollRef.current)
   }, [])
   const handleToggleRefereeLogTurn = useCallback((turnKey) => {
     setOpenRefereeLogTurnKey((currentTurnKey) => (currentTurnKey === turnKey ? "" : turnKey))
@@ -2766,12 +2778,23 @@ export default function GamePage() {
       return
     }
 
-    if (!hasPreviousEntries || !isAppendOnly || !appendedEntries.some(refereeEntryCompletesTurn)) {
+    const shouldFollowNewEntries =
+      hasPreviousEntries &&
+      isAppendOnly &&
+      appendedEntries.length > 0 &&
+      refereeLogSticksToBottomRef.current
+
+    if (!shouldFollowNewEntries) {
       return
     }
 
     const frameId = window.requestAnimationFrame(() => {
+      if (!refereeLogSticksToBottomRef.current) {
+        return
+      }
+
       logNode.scrollTop = logNode.scrollHeight
+      refereeLogSticksToBottomRef.current = true
     })
 
     return () => {
@@ -3909,7 +3932,7 @@ export default function GamePage() {
                 </div>
 
                 {groupedRefereeLog.length && !isMobileRefereeLog ? (
-                  <RefereeLogList turns={groupedRefereeLog} scrollRef={logScrollRef} />
+                  <RefereeLogList turns={groupedRefereeLog} scrollRef={logScrollRef} onScroll={handleRefereeLogScroll} />
                 ) : !groupedRefereeLog.length && !isMobileRefereeLog ? (
                   <p className="game-referee-column__empty">No referee responses yet.</p>
                 ) : null}
@@ -4013,7 +4036,7 @@ export default function GamePage() {
                   </div>
                 </div>
                 {groupedRefereeLog.length ? (
-                  <div className="game-referee-log-drawer__body" role="log" aria-label="Referee log by turn" ref={logScrollRef}>
+                  <div className="game-referee-log-drawer__body" role="log" aria-label="Referee log by turn" ref={logScrollRef} onScroll={handleRefereeLogScroll}>
                     <RefereeLogList
                       turns={groupedRefereeLog}
                       variant="drawer"

@@ -1201,7 +1201,7 @@ describe("GamePage", () => {
     expect(clocks.querySelector(".game-clock--active")).toBeNull()
   })
 
-  it("only_scrolls_referee_log_after_completed_turn_entries", async () => {
+  it("keeps_referee_log_stuck_to_new_entries_until_user_scrolls_away", async () => {
     const firstState = {
       ...activeState,
       referee_log: [{ turn: 1, color: "white", announcement: "White to move" }],
@@ -1218,7 +1218,7 @@ describe("GamePage", () => {
       referee_log: [
         { turn: 1, color: "white", announcement: "White to move" },
         { turn: 1, color: "white", announcement: "Illegal move" },
-        { turn: 1, color: "white", announcement: "Move complete" },
+        { turn: 1, color: "white", announcement: "Illegal move" },
       ],
     }
 
@@ -1238,13 +1238,19 @@ describe("GamePage", () => {
     const log = await screen.findByRole("log", { name: "Referee log by turn" })
     Object.defineProperty(log, "scrollHeight", { value: 500, configurable: true })
     Object.defineProperty(log, "clientHeight", { value: 120, configurable: true })
-    Object.defineProperty(log, "scrollTop", { value: 100, writable: true, configurable: true })
+    Object.defineProperty(log, "scrollTop", { value: 350, writable: true, configurable: true })
+    fireEvent.scroll(log)
 
     await waitFor(() => {
       expect(mockApi.getGameState).toHaveBeenCalledTimes(2)
     }, { timeout: 3000 })
 
-    expect(log.scrollTop).toBe(100)
+    await waitFor(() => {
+      expect(log.scrollTop).toBe(500)
+    })
+
+    log.scrollTop = 100
+    fireEvent.scroll(log)
 
     await waitFor(() => {
       expect(mockApi.getGameState).toHaveBeenCalledTimes(3)
@@ -1253,7 +1259,7 @@ describe("GamePage", () => {
     resolveThirdState()
 
     await waitFor(() => {
-      expect(log.scrollTop).toBe(500)
+      expect(log.scrollTop).toBe(100)
     })
   })
 
