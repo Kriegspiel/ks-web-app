@@ -18,6 +18,25 @@ const DEFAULT_RULE_VARIANT = "berkeley_any"
 const LAST_RULE_VARIANT_STORAGE_KEY = "kriegspiel.lastRuleVariant"
 const RULESET_VALUES = new Set(RULESET_OPTIONS.map((option) => option.value))
 const BOT_TIER_ORDER = ["T0", "T1", "T2", "T3", "T4", "T5"]
+const BOT_ACCESS_TIER_ORDER = ["guest", "tier1", "tier2", "tier3", "tier4", "tier5", "tier6"]
+const BOT_ACCESS_TIER_BY_CODE = {
+  T0: "guest",
+  T1: "tier1",
+  T2: "tier2",
+  T3: "tier3",
+  T4: "tier4",
+  T5: "tier5",
+  T6: "tier6",
+}
+const BOT_ACCESS_TIER_CODE = {
+  guest: "T0",
+  tier1: "T1",
+  tier2: "T2",
+  tier3: "T3",
+  tier4: "T4",
+  tier5: "T5",
+  tier6: "T6",
+}
 const BOT_TIER_LABELS = {
   T0: "Simple bots",
   T1: "Casual bots",
@@ -159,6 +178,51 @@ function botTierIndex(bot) {
   return index === -1 ? BOT_TIER_ORDER.length : index
 }
 
+function normalizeBotAccessTier(value) {
+  const normalized = typeof value === "string" ? value.trim().toLowerCase().replace(/[-_]/g, "") : ""
+  if (normalized === "guest" || normalized === "none") return "guest"
+  if (/^tier[1-6]$/.test(normalized)) return normalized
+  if (/^[1-6]$/.test(normalized)) return `tier${normalized}`
+  return ""
+}
+
+function viewerBotAccessTier(user) {
+  if (user?.is_guest === true || String(user?.role || "").trim().toLowerCase() === "guest") {
+    return "guest"
+  }
+
+  return normalizeBotAccessTier(user?.llm_bot_tier)
+    || normalizeBotAccessTier(user?.current_tier)
+    || normalizeBotAccessTier(user?.billing?.tier)
+    || "tier1"
+}
+
+function botRequiredAccessTier(bot) {
+  return normalizeBotAccessTier(bot?.required_tier)
+    || BOT_ACCESS_TIER_BY_CODE[botTierCode(bot)]
+    || "guest"
+}
+
+function tierAllowsBot(viewerTier, requiredTier) {
+  const viewerIndex = BOT_ACCESS_TIER_ORDER.indexOf(viewerTier)
+  const requiredIndex = BOT_ACCESS_TIER_ORDER.indexOf(requiredTier)
+  if (viewerIndex === -1 || requiredIndex === -1) {
+    return false
+  }
+  return viewerIndex >= requiredIndex
+}
+
+function botAvailableForViewer(bot, viewerTier) {
+  if (typeof bot?.available_for_viewer === "boolean") {
+    return bot.available_for_viewer
+  }
+  return tierAllowsBot(viewerTier, botRequiredAccessTier(bot))
+}
+
+function botRequiredTierCode(bot) {
+  return BOT_ACCESS_TIER_CODE[botRequiredAccessTier(bot)] ?? botTierCode(bot)
+}
+
 function botPickerName(bot) {
   return String(bot?.display_name ?? "Unknown bot").replace(/\s*\(bot\)\s*$/i, "").trim() || "Unknown bot"
 }
@@ -215,19 +279,20 @@ function botSupportsRuleVariant(bot, ruleVariant) {
   return supported.includes(ruleVariant)
 }
 
-function BotPickerOptionContent({ bot }) {
-  const limitLabel = botPickerLimitLabel(bot)
+function BotPickerOptionContent({ bot, unavailable = false }) {
+  const limitLabel = unavailable ? "" : botPickerLimitLabel(bot)
   return (
     <>
       <span className="lobby-bot-tier-picker__rating">{botRating(bot)}</span>
       <span className="lobby-bot-tier-picker__separator">-</span>
       <span className="lobby-bot-tier-picker__name">{botPickerName(bot)}</span>
+      {unavailable ? <span className="lobby-bot-tier-picker__limit">Requires {botRequiredTierCode(bot)}</span> : null}
       {limitLabel ? <span className="lobby-bot-tier-picker__limit">({limitLabel})</span> : null}
     </>
   )
 }
 
-function BotTierPicker({ bots, selectedBotId, onChange }) {
+function BotTierPicker({ bots, selectedBotId, isBotAvailable, onChange, onUnavailable }) {
   const labelId = useId()
   const buttonId = useId()
   const listboxId = useId()
@@ -274,6 +339,12 @@ function BotTierPicker({ bots, selectedBotId, onChange }) {
 
   function selectBot(botId) {
     if (!botId) {
+      return
+    }
+    const bot = bots.find((item) => item.bot_id === botId)
+    if (bot && !isBotAvailable(bot)) {
+      setOpen(false)
+      onUnavailable?.(bot)
       return
     }
     onChange(botId)
@@ -373,19 +444,21 @@ function BotTierPicker({ bots, selectedBotId, onChange }) {
                 {group.bots.map((bot) => {
                   const selected = bot.bot_id === selectedBotId
                   const active = bot.bot_id === activeBotId
+                  const unavailable = !isBotAvailable(bot)
                   return (
                     <div
                       key={bot.bot_id}
                       id={optionIds.get(bot.bot_id)}
-                      className={`lobby-bot-tier-picker__option${selected ? " is-selected" : ""}${active ? " is-active" : ""}`}
+                      className={`lobby-bot-tier-picker__option${selected ? " is-selected" : ""}${active ? " is-active" : ""}${unavailable ? " is-unavailable" : ""}`}
                       role="option"
                       aria-label={formatBotPickerLabel(bot)}
+                      aria-disabled={unavailable}
                       aria-selected={selected}
                       onMouseEnter={() => setActiveBotId(bot.bot_id)}
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => selectBot(bot.bot_id)}
                     >
-                      <BotPickerOptionContent bot={bot} />
+                      <BotPickerOptionContent bot={bot} unavailable={unavailable} />
                     </div>
                   )
                 })}
@@ -457,6 +530,7 @@ export default function LobbyPage() {
   const [lobbyStatsError, setLobbyStatsError] = useState("")
   const [lobbyStatsLoading, setLobbyStatsLoading] = useState(true)
   const signedInAs = user?.username ?? user?.email ?? "player"
+  const viewerBotTier = useMemo(() => viewerBotAccessTier(user), [user])
   const supportedBots = useMemo(
     () =>
       bots
@@ -464,7 +538,11 @@ export default function LobbyPage() {
         .sort(compareBotPickerBots),
     [bots, ruleVariant],
   )
-  const selectedBot = supportedBots.find((bot) => bot.bot_id === selectedBotId) ?? null
+  const availableSupportedBots = useMemo(
+    () => supportedBots.filter((bot) => botAvailableForViewer(bot, viewerBotTier)),
+    [supportedBots, viewerBotTier],
+  )
+  const selectedBot = availableSupportedBots.find((bot) => bot.bot_id === selectedBotId) ?? null
   const botUsernames = useMemo(
     () =>
       new Set(
@@ -543,14 +621,11 @@ export default function LobbyPage() {
       const available = Array.isArray(response?.bots) ? response.bots : []
       setBots(available)
       setBotsError("")
-      if (!selectedBotId) {
-        setSelectedBotId(preferredBotId(available))
-      }
     } catch (error) {
       setBots([])
       setBotsError(error?.message ?? "Unable to load bots right now.")
     }
-  }, [selectedBotId])
+  }, [])
 
   useEffect(() => {
     refreshOpenGames({ markLoading: true })
@@ -578,11 +653,11 @@ export default function LobbyPage() {
     if (opponentType !== "bot") {
       return
     }
-    if (selectedBotId && supportedBots.some((bot) => bot.bot_id === selectedBotId)) {
+    if (selectedBotId && availableSupportedBots.some((bot) => bot.bot_id === selectedBotId)) {
       return
     }
-    setSelectedBotId(preferredBotId(supportedBots))
-  }, [opponentType, selectedBotId, supportedBots])
+    setSelectedBotId(preferredBotId(availableSupportedBots))
+  }, [availableSupportedBots, opponentType, selectedBotId])
 
   useEffect(() => {
     if (!waitingGameId) {
@@ -636,9 +711,9 @@ export default function LobbyPage() {
     setCreatingGame(true)
     setCreateError("")
 
-    if (opponentType === "bot" && !selectedBotId) {
+    if (opponentType === "bot" && !selectedBot?.bot_id) {
       setCreatingGame(false)
-      setCreateError("Pick a bot before creating the game.")
+      setCreateError("Pick an available bot before creating the game.")
       return
     }
 
@@ -648,7 +723,7 @@ export default function LobbyPage() {
         play_as: "random",
         time_control: "rapid",
         opponent_type: opponentType,
-        bot_id: opponentType === "bot" ? selectedBotId : undefined,
+        bot_id: opponentType === "bot" ? selectedBot.bot_id : undefined,
       })
       setCreateResult(created)
 
@@ -809,8 +884,17 @@ export default function LobbyPage() {
 
                 {opponentType === "bot" ? (
                   <div className="lobby-bot-picker">
-                    <BotTierPicker bots={supportedBots} selectedBotId={selectedBotId} onChange={setSelectedBotId} />
+                    <BotTierPicker
+                      bots={supportedBots}
+                      selectedBotId={selectedBotId}
+                      isBotAvailable={(bot) => botAvailableForViewer(bot, viewerBotTier)}
+                      onChange={setSelectedBotId}
+                      onUnavailable={() => navigate("/subscription")}
+                    />
                     {!supportedBots.length ? <p className="lobby-meta">No bots support this ruleset.</p> : null}
+                    {supportedBots.length > 0 && !availableSupportedBots.length ? (
+                      <p className="lobby-meta">Upgrade your tier to play bots for this ruleset.</p>
+                    ) : null}
                     {selectedBot ? <p className="lobby-meta">{normalizeBotDescription(selectedBot)}</p> : null}
                     {botsError ? <p className="auth-error" role="alert">{botsError}</p> : null}
                   </div>

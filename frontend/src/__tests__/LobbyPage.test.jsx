@@ -74,6 +74,7 @@ describe("LobbyPage", () => {
     expect(css).toContain("overflow-y: auto;")
     expect(css).toContain(".lobby-open-game__opponent")
     expect(css).toContain(".lobby-open-game__meta")
+    expect(css).toContain(".lobby-bot-tier-picker__option.is-unavailable")
     expect(css).not.toContain("background: rgba(248, 250, 252, 0.72);")
   })
 
@@ -428,6 +429,10 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("option", { name: "1300 - LLM Haiku" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1460 - LLM Nemotron Ultra" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1200 - Random Any Bot" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1250 - Simple Heuristics Bot" })).not.toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByRole("option", { name: "1300 - LLM Haiku" })).toHaveAttribute("aria-disabled", "true")
+    expect(within(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).getByText("Requires T2")).toBeInTheDocument()
     expect(botOptionLabels()).toEqual([
       "1200 - Random Any Bot",
       "1201 - Random Bot",
@@ -441,6 +446,29 @@ describe("LobbyPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create bot game" }))
     await waitFor(() => expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({ opponent_type: "bot", bot_id: "bot-1" })))
     expect(mockNavigate).toHaveBeenCalledWith("/game/BOT123")
+  })
+
+  it("keeps_higher_tier_bots_visible_and_routes_unavailable_choices_to_subscription", async () => {
+    mockAuth.user = { username: "guest_jan_fine", is_guest: true, llm_bot_tier: "guest" }
+
+    renderPage()
+
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    await openBotPicker()
+
+    const randomBot = screen.getByRole("option", { name: "1201 - Random Bot" })
+    const simpleBot = screen.getByRole("option", { name: "1250 - Simple Heuristics Bot" })
+    const gptBot = screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })
+    expect(randomBot).not.toHaveAttribute("aria-disabled", "true")
+    expect(simpleBot).toHaveAttribute("aria-disabled", "true")
+    expect(gptBot).toHaveAttribute("aria-disabled", "true")
+    expect(within(simpleBot).getByText("Requires T1")).toBeInTheDocument()
+    expect(within(gptBot).getByText("Requires T2")).toBeInTheDocument()
+
+    fireEvent.click(simpleBot)
+
+    expect(mockNavigate).toHaveBeenCalledWith("/subscription")
+    expect(mockApi.createGame).not.toHaveBeenCalled()
   })
 
   it("shows_wild16_bots_as_t1_bots", async () => {
@@ -522,6 +550,7 @@ describe("LobbyPage", () => {
   })
 
   it("updates_the_bot_description_when_selecting_gpt_nano", async () => {
+    mockAuth.user = { username: "club_player", llm_bot_tier: "tier2" }
     renderPage()
 
     fireEvent.click(await screen.findByLabelText("Bot"))
@@ -564,6 +593,7 @@ describe("LobbyPage", () => {
   })
 
   it("does_not_treat_missing_bot_rulesets_as_support_for_new_variants", async () => {
+    mockAuth.user = { username: "club_player", llm_bot_tier: "tier2" }
     mockApi.getBots.mockResolvedValue({
       bots: [
         {
@@ -667,7 +697,7 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("combobox", { name: "Bot opponent" })).toBeDisabled()
     fireEvent.click(screen.getByRole("button", { name: "Create bot game" }))
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Pick a bot before creating the game.")
+    expect(await screen.findByRole("alert")).toHaveTextContent("Pick an available bot before creating the game.")
   })
 
   it("surfaces_create_errors_when_game_creation_fails", async () => {
