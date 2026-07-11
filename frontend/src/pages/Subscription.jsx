@@ -141,6 +141,16 @@ function tierByApiTier(apiTier) {
   return TIERS.find((tier) => tier.apiTier === apiTier) ?? TIERS[2]
 }
 
+function currentTierKey(status, user) {
+  if (user?.is_guest === true) return "tier0"
+  const tier = typeof status?.current_tier === "string" ? status.current_tier : status?.billing?.tier
+  return TIERS.some((option) => option.key === tier) ? tier : "tier1"
+}
+
+function classNames(...classes) {
+  return classes.filter(Boolean).join(" ")
+}
+
 function createEmbeddedCheckout(stripe, options) {
   if (typeof stripe?.createEmbeddedCheckoutPage === "function") {
     return stripe.createEmbeddedCheckoutPage(options)
@@ -199,6 +209,7 @@ export default function SubscriptionPage() {
   const selectedAvailable = isPlanAvailable(status, selectedTier, interval)
   const activeSubscription = ["active", "trialing"].includes(status?.billing?.subscription_status)
   const canSubscribe = status?.enabled === true && selectedAvailable && user?.is_guest !== true && !activeSubscription
+  const currentTier = currentTierKey(status, user)
 
   function clearCheckoutForm() {
     embeddedCheckoutRef.current?.destroy?.()
@@ -343,14 +354,24 @@ export default function SubscriptionPage() {
                 {TIERS.map((tier) => {
                   const available = tier.selectable && isTierAvailable(status, tier.apiTier)
                   const selected = tier.apiTier === selectedTier
+                  const current = tier.key === currentTier
                   return (
-                    <th key={tier.key} scope="col" className={tier.future ? "subscription-tier-table__unavailable-column" : ""}>
+                    <th
+                      key={tier.key}
+                      scope="col"
+                      aria-current={current ? "true" : undefined}
+                      className={classNames(
+                        tier.future && "subscription-tier-table__unavailable-column",
+                        current && "subscription-tier-table__current-column",
+                      )}
+                    >
                       <span className="subscription-tier-table__heading">
                         <span className="subscription-tier-table__tier-label">
                           <span>Tier</span>
                           <TierBadge code={tier.code} />
                         </span>
                         <span className="subscription-tier-table__name">{tier.name}</span>
+                        {current ? <span className="subscription-tier-table__current-label">Current tier</span> : null}
                         <span className="subscription-tier-table__price">{tier.price}</span>
                         {tier.selectable ? (
                           <button
@@ -376,7 +397,10 @@ export default function SubscriptionPage() {
                   {feature.values.map((value, index) => (
                     <td
                       key={`${feature.name}-${TIERS[index].key}`}
-                      className={TIERS[index].future ? "subscription-tier-table__unavailable-column" : ""}
+                      className={classNames(
+                        TIERS[index].future && "subscription-tier-table__unavailable-column",
+                        TIERS[index].key === currentTier && "subscription-tier-table__current-column",
+                      )}
                     >
                       <FeatureValue value={value} />
                     </td>
