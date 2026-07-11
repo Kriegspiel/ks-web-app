@@ -63,14 +63,20 @@ const T5_BOTS = [
   ["T5 Qwen", ["3.7 Max"]],
 ]
 
+const LOWER_TIER_BOTS_INCLUDED = { type: "note", text: "Lower-tier bots included." }
+
+function withLowerTierBots(groups) {
+  return [LOWER_TIER_BOTS_INCLUDED, ...groups]
+}
+
 const PLAY_BOTS_BY_TIER = [
   T0_BOTS,
-  [...T0_BOTS, ...T1_BOTS],
-  [...T0_BOTS, ...T1_BOTS, ...T2_BOTS],
-  [...T0_BOTS, ...T1_BOTS, ...T2_BOTS, ...T3_BOTS],
-  [...T0_BOTS, ...T1_BOTS, ...T2_BOTS, ...T3_BOTS, ...T4_BOTS],
-  [...T0_BOTS, ...T1_BOTS, ...T2_BOTS, ...T3_BOTS, ...T4_BOTS, ...T5_BOTS],
-  [...T0_BOTS, ...T1_BOTS, ...T2_BOTS, ...T3_BOTS, ...T4_BOTS, ...T5_BOTS],
+  withLowerTierBots(T1_BOTS),
+  withLowerTierBots(T2_BOTS),
+  withLowerTierBots(T3_BOTS),
+  withLowerTierBots(T4_BOTS),
+  withLowerTierBots(T5_BOTS),
+  withLowerTierBots([]),
 ]
 
 const FEATURES = [
@@ -84,21 +90,27 @@ const FEATURES = [
 function BotList({ groups }) {
   return (
     <div className="subscription-bot-list">
-      {groups.map(([label, items]) => (
-        <div key={label}>
-          <strong>{label}:</strong>{" "}
-          {items.map((item, index) => {
-            const text = Array.isArray(item) ? item[0] : item
-            const path = Array.isArray(item) ? item[1] : null
-            return (
-              <span key={`${label}-${text}`}>
-                {index > 0 ? "; " : ""}
-                {path ? <Link to={path}>{text}</Link> : text}
-              </span>
-            )
-          })}
-        </div>
-      ))}
+      {groups.map((group) => {
+        if (group?.type === "note") {
+          return <div key={group.text} className="subscription-bot-list__note">{group.text}</div>
+        }
+        const [label, items] = group
+        return (
+          <div key={label}>
+            <strong>{label}:</strong>{" "}
+            {items.map((item, index) => {
+              const text = Array.isArray(item) ? item[0] : item
+              const path = Array.isArray(item) ? item[1] : null
+              return (
+                <span key={`${label}-${text}`}>
+                  {index > 0 ? "; " : ""}
+                  {path ? <Link to={path}>{text}</Link> : text}
+                </span>
+              )
+            })}
+          </div>
+        )
+      })}
     </div>
   )
 }
