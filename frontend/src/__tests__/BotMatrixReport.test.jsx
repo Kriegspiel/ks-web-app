@@ -252,7 +252,7 @@ describe("BotMatrixReportPage", () => {
     render(<MemoryRouter><BotMatrixReportPage /></MemoryRouter>)
 
     await screen.findByRole("button", { name: "Review outcomes 8/8" })
-    const matchupLink = screen.getByRole("link", { name: "Haiku vs. GPT Nano games" })
+    const matchupLink = await screen.findByRole("link", { name: "Haiku vs. GPT Nano games" })
     expect(matchupLink).toHaveAttribute("href", "/user/llm_haiku/games?opponent=llm_gptnano")
 
     fireEvent.click(screen.getByRole("button", { name: "Review outcomes 8/8" }))
