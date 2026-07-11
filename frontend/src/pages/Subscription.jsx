@@ -128,6 +128,16 @@ function tierByApiTier(apiTier) {
   return TIERS.find((tier) => tier.apiTier === apiTier) ?? TIERS[2]
 }
 
+function createEmbeddedCheckout(stripe, options) {
+  if (typeof stripe?.createEmbeddedCheckoutPage === "function") {
+    return stripe.createEmbeddedCheckoutPage(options)
+  }
+  if (typeof stripe?.initEmbeddedCheckout === "function") {
+    return stripe.initEmbeddedCheckout(options)
+  }
+  throw new Error("Stripe embedded checkout is not available.")
+}
+
 export default function SubscriptionPage() {
   const { user } = useAuth()
   const [status, setStatus] = useState(null)
@@ -205,7 +215,7 @@ export default function SubscriptionPage() {
     try {
       const stripe = await stripePromise
       if (!stripe) throw new Error("Stripe is not ready.")
-      const checkout = await stripe.initEmbeddedCheckout({
+      const checkout = await createEmbeddedCheckout(stripe, {
         fetchClientSecret: async () => {
           const response = await billingApi.createCheckoutSession({ tier: selectedTier, interval })
           return response.client_secret
