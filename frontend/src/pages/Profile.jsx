@@ -427,6 +427,10 @@ function formatWinRate(value) {
   return `${(Number(value || 0) * 100).toFixed(1)}%`
 }
 
+function formatCount(value) {
+  return statOrZero(value).toLocaleString("en-US")
+}
+
 function formatMetricRecord(bucket) {
   return `${bucket.wins}-${bucket.losses}-${bucket.draws}`
 }
@@ -792,7 +796,7 @@ export default function ProfilePage() {
           {userMetrics.completedGames ? (
             <>
               <dl className="profile-stats-grid profile-bot-metrics-summary">
-                <div className="profile-metric-tile profile-metric-tile--games"><dt>Completed games</dt><dd>{userMetrics.completedGames}</dd></div>
+                <div className="profile-metric-tile profile-metric-tile--games"><dt>Completed games</dt><dd>{formatCount(userMetrics.completedGames)}</dd></div>
                 <div className="profile-metric-tile profile-metric-tile--bots"><dt>vs Bots win rate</dt><dd>{formatWinRate(userMetrics.vsBots.winRate)}</dd></div>
                 <div className="profile-metric-tile profile-metric-tile--humans"><dt>vs Humans win rate</dt><dd>{formatWinRate(userMetrics.vsHumans.winRate)}</dd></div>
                 <div className="profile-metric-tile profile-metric-tile--turns"><dt>Average turns count</dt><dd>{userMetrics.averageTurnCount.toFixed(1)}</dd></div>

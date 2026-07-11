@@ -223,7 +223,7 @@ describe("ProfilePage", () => {
         },
       },
       user_metrics: {
-        completed_games: 4,
+        completed_games: 22240,
         average_duration_seconds: 420,
         average_turn_count: 18.5,
         overall: { total_games: 4, wins: 2, losses: 1, draws: 1, win_rate: 0.5 },
@@ -261,7 +261,8 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("link", { name: "blog post about bots ↗" })).toHaveAttribute("target", "_blank")
     expect(screen.getByRole("heading", { name: "User metrics" })).toBeInTheDocument()
     expect(screen.getByText("Completed games")).toBeInTheDocument()
-    expect(screen.getByText("4")).toBeInTheDocument()
+    expect(screen.getByText("22,240")).toBeInTheDocument()
+    expect(screen.queryByText("22240")).not.toBeInTheDocument()
     expect(screen.getByText("vs Bots win rate")).toBeInTheDocument()
     expect(screen.getAllByText("0.0%").length).toBeGreaterThan(0)
     expect(screen.getByText("vs Humans win rate")).toBeInTheDocument()
