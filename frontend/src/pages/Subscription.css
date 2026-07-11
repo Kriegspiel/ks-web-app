@@ -379,6 +379,35 @@
   color: var(--muted);
 }
 
+.subscription-availability-note {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.85rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, var(--accent) 18%);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface-strong) 92%, var(--accent) 8%);
+}
+
+.subscription-availability-note h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: 0;
+}
+
+.subscription-availability-note p {
+  max-width: 58rem;
+  margin: 0;
+  color: var(--muted);
+}
+
+.subscription-availability-note a {
+  color: var(--text);
+  font-weight: 800;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.12em;
+}
+
 @media (max-width: 900px) {
   .subscription-page__header {
     display: grid;
