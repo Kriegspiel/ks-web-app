@@ -29,7 +29,6 @@ const T2_BOTS = [
   ["T2 OpenAI", [["GPTNano", "/user/llm_gptnano"], ["GPT-OSS", "/user/llm_gptoss120b"]]],
   ["T2 Anthropic", [["Claude Haiku", "/user/llm_haiku"]]],
   ["T2 DeepSeek", [["V4 Flash", "/user/llm_deepseekv4_flash"]]],
-  ["T2 Gemini", [["2.5 Flash-Lite", "/user/llm_gemini25_lite"], ["3.1 Flash-Lite", "/user/llm_gemini31_lite"]]],
   ["T2 Llama", [["4 Maverick", "/user/llm_llama4_maverick"]]],
   ["T2 Mistral", [["Small 3.2", "/user/llm_mistral_small32"]]],
   ["T2 Gemma", [["4 31B", "/user/llm_gemma4_31b"]]],
@@ -43,7 +42,7 @@ const T2_BOTS = [
 const T3_BOTS = [
   ["T3 OpenAI", [["GPT-5.5", "/user/llm_gpt55"]]],
   ["T3 Anthropic", [["Claude Sonnet 5", "/user/llm_sonnet5"]]],
-  ["T3 Gemini", [["2.5 Flash", "/user/llm_gemini25_flash"]]],
+  ["T3 Gemini", [["3.1 Flash-Lite", "/user/llm_gemini31_lite"]]],
   ["T3 Mistral", [["Large 3", "/user/llm_mistral_large3"]]],
   ["T3 Nemotron", [["Ultra", "/user/llm_nemotron_ultra"]]],
   ["T3 Qwen", [["3.6 Flash", "/user/llm_qwen36_flash"], ["Plus", "/user/llm_qwen_plus"]]],
