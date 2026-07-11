@@ -67,7 +67,7 @@ export default function RegisterPage() {
   const visibleActionError = submissionErrors.username || submissionErrors.email || submissionErrors.form ? "" : actionError
 
   return (
-    <main className="page-shell">
+    <main className="page-shell auth-page">
       <h1>Register</h1>
       <form className="auth-form" onSubmit={onSubmit} noValidate aria-busy={actionLoading}>
         <label htmlFor="username">Username</label>

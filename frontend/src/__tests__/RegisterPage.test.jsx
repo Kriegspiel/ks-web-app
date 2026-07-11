@@ -36,6 +36,8 @@ describe("RegisterPage", () => {
   it("shows_username_pattern_validation_before_submit", async () => {
     render(<MemoryRouter><RegisterPage /></MemoryRouter>)
 
+    expect(screen.getByRole("heading", { name: "Register" }).closest("main")).toHaveClass("page-shell", "auth-page")
+
     fireEvent.change(screen.getByLabelText("Username"), { target: { value: "new-user" } })
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "new@example.com" } })
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: "x" } })
