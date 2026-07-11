@@ -49,6 +49,7 @@ describe("LoginPage", () => {
     renderPage()
 
     expect(screen.getByRole("heading", { name: "Login" }).closest("main")).toHaveClass("page-shell", "auth-page")
+    expect(screen.getByText(/Need an account/i)).toHaveClass("auth-switch-prompt")
 
     fireEvent.click(screen.getByRole("button", { name: "Login" }))
 

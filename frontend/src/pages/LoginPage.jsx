@@ -87,7 +87,7 @@ export default function LoginPage() {
           {actionLoading ? "Starting…" : "Play as guest"}
         </button>
       </section>
-      <p>
+      <p className="auth-switch-prompt">
         Need an account? <Link to="/auth/register">Register</Link>
       </p>
       <AuthLegalNotice />

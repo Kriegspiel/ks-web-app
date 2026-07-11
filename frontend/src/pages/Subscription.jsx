@@ -18,7 +18,7 @@ const TIERS = [
 ]
 
 const T0_BOTS = [
-  ["T0-level bots", [["Random Bot", "/user/randobot"], ["Random Any Bot", "/user/randobotany"]]],
+  ["T0-level bots", [["Random Bot", "/user/randobot"], ["Random Any", "/user/randobotany"]]],
 ]
 
 const T1_BOTS = [
@@ -27,7 +27,7 @@ const T1_BOTS = [
 
 const T2_BOTS = [
   ["T2 OpenAI", [["GPTNano", "/user/llm_gptnano"], ["GPT-OSS", "/user/llm_gptoss120b"]]],
-  ["T2 Anthropic", [["Claude Haiku 4.5", "/user/llm_haiku"]]],
+  ["T2 Anthropic", [["Claude Haiku", "/user/llm_haiku"]]],
   ["T2 DeepSeek", [["V4 Flash", "/user/llm_deepseekv4_flash"]]],
   ["T2 Gemini", [["2.5 Flash-Lite", "/user/llm_gemini25_lite"], ["3.1 Flash-Lite", "/user/llm_gemini31_lite"]]],
   ["T2 Llama", [["3.1 8B", "/user/llm_llama31_8b"], ["4 Scout", "/user/llm_llama4_scout"], ["4 Maverick", "/user/llm_llama4_maverick"]]],
@@ -81,11 +81,11 @@ const PLAY_BOTS_BY_TIER = [
 ]
 
 const FEATURES = [
-  { name: "Play human games", values: ["Yes", "Yes", "Yes", "Yes", "Yes", null, null] },
-  { name: "Completed-game review", values: ["Yes", "Yes", "Yes", "Yes", "Yes", null, null] },
+  { name: "Play human games", values: ["Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"] },
+  { name: "Completed-game review", values: ["Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"] },
   { name: "Rating history", values: ["Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"] },
   { name: "Play bots", values: PLAY_BOTS_BY_TIER },
-  { name: "Persistent player name", values: ["No", "Yes", "Yes", "Yes", "Yes", null, null] },
+  { name: "Persistent player name", values: ["No", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"] },
 ]
 
 function BotList({ groups }) {
@@ -97,18 +97,20 @@ function BotList({ groups }) {
         }
         const [label, items] = group
         return (
-          <div key={label}>
-            <strong>{label}:</strong>{" "}
-            {items.map((item, index) => {
-              const text = Array.isArray(item) ? item[0] : item
-              const path = Array.isArray(item) ? item[1] : null
-              return (
-                <span key={`${label}-${text}`}>
-                  {index > 0 ? "; " : ""}
-                  {path ? <Link to={path}>{text}</Link> : text}
-                </span>
-              )
-            })}
+          <div key={label} className="subscription-bot-list__group">
+            <strong className="subscription-bot-list__label">{label}:</strong>
+            <ul className="subscription-bot-list__items">
+              {items.map((item, index) => {
+                const text = Array.isArray(item) ? item[0] : item
+                const path = Array.isArray(item) ? item[1] : null
+                return (
+                  <li key={`${label}-${text}`}>
+                    {path ? <Link to={path}>{text}</Link> : text}
+                    {index < items.length - 1 ? ";" : ""}
+                  </li>
+                )
+              })}
+            </ul>
           </div>
         )
       })}
