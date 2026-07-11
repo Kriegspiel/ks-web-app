@@ -264,8 +264,19 @@ export default function SubscriptionPage() {
           <h1>Subscription</h1>
           <p>Choose your Kriegspiel level and manage billing for this account.</p>
         </div>
-        <button type="button" className="button-link--secondary" onClick={openPortal} disabled={portalLoading || user?.is_guest === true}>
-          {portalLoading ? "Opening..." : "Manage billing"}
+        <button
+          type="button"
+          className="button-link--secondary subscription-manage-billing-button"
+          onClick={openPortal}
+          disabled={portalLoading || user?.is_guest === true}
+          aria-label={portalLoading ? "Opening billing management" : "Manage billing (opens external website)"}
+        >
+          {portalLoading ? "Opening..." : (
+            <>
+              <span>Manage billing</span>
+              <span aria-hidden="true" className="subscription-manage-billing-button__external">↗</span>
+            </>
+          )}
         </button>
       </header>
 

@@ -80,6 +80,7 @@ describe("SubscriptionPage", () => {
     renderPage()
 
     await screen.findByRole("heading", { name: "Subscription" })
+    expect(screen.getByRole("button", { name: "Manage billing (opens external website)" })).toHaveTextContent(/Manage billing\s*↗/)
     const rowHeaders = screen.getAllByRole("rowheader").map((cell) => cell.textContent)
     expect(rowHeaders.slice(0, 3)).toEqual(["Play human games", "Rating history", "Play bots"])
     const ratingHistoryRow = screen.getByRole("rowheader", { name: "Rating history" }).closest("tr")

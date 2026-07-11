@@ -14,6 +14,18 @@
   max-width: 42rem;
 }
 
+.subscription-manage-billing-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.subscription-manage-billing-button__external {
+  font-size: 0.9em;
+  line-height: 1;
+}
+
 .subscription-controls {
   display: grid;
   grid-template-columns: minmax(16rem, 1fr) auto auto;
