@@ -17,8 +17,7 @@ describe("GamePage CSS", () => {
     const css = readFileSync(resolve(process.cwd(), "src/pages/GamePage.css"), "utf8")
 
     expect(css).toContain("--game-board-card-max-width: calc(38rem + 2.7rem);")
-    expect(css).toContain("--game-board-column-width: min(50%, var(--game-board-card-max-width));")
-    expect(css).toContain("grid-template-columns: minmax(0, var(--game-board-column-width)) minmax(0, 1fr);")
+    expect(css).toContain("grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);")
     expect(css).toContain("max-width: var(--game-board-card-max-width);")
     expect(css).toContain("min-width: 0;")
     expect(css).toContain("@media (max-width: 900px)")
