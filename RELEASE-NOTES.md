@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.172
+
+- **Lobby**: show copy confirmations and join failures as fixed top toasts,
+  including a subscription action when the selected bot requires a higher tier.
+
 ## ks-web-app frontend v. 1.3.171
 
 - **Game page**: make the game status code copyable with clear in-card
