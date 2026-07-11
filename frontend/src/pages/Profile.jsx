@@ -49,6 +49,24 @@ const PROFILE_TIER_DETAILS = {
   },
 }
 const BOT_TIER_DETAILS_BY_USERNAME = {
+  randobot: {
+    code: "T0",
+    name: "Random Bot",
+    limit: "Random Bot for T0 Guest.",
+    className: "profile-tier-card--guest",
+  },
+  randobotany: {
+    code: "T0",
+    name: "Random Any Bot",
+    limit: "Random Any Bot for T0 Guest.",
+    className: "profile-tier-card--guest",
+  },
+  simpleheuristics: {
+    code: "T1",
+    name: "Simple Heuristics Bot",
+    limit: "Simple Heuristics Bot for T1 Casual.",
+    className: "profile-tier-card--tier1",
+  },
   darkboardmcts: {
     code: "T1",
     name: "MCTS bot",
