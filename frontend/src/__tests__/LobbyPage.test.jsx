@@ -70,8 +70,9 @@ describe("LobbyPage", () => {
 
     expect(css).toContain("background: color-mix(in srgb, var(--surface-strong) 92%, var(--surface) 8%);")
     expect(css).toContain(".lobby-open-games-list")
-    expect(css).toContain("max-height: calc((var(--lobby-open-game-row-min-height) * 4) + (0.75rem * 3));")
+    expect(css).toContain("max-height: calc((var(--lobby-open-game-row-min-height) * 5) + (0.75rem * 4));")
     expect(css).toContain("overflow-y: auto;")
+    expect(css).toContain(".lobby-open-games-list li.is-joinable")
     expect(css).toContain(".lobby-open-game__opponent")
     expect(css).toContain(".lobby-open-game__meta")
     expect(css).toContain(".lobby-bot-tier-picker__option.is-unavailable")
@@ -782,6 +783,35 @@ describe("LobbyPage", () => {
     renderPage()
 
     fireEvent.click(await screen.findByRole("button", { name: "Join" }))
+
+    await waitFor(() => {
+      expect(mockApi.joinGame).toHaveBeenCalledWith("ZZZ999")
+      expect(mockNavigate).toHaveBeenCalledWith("/game/ZZZ999")
+    })
+  })
+
+  it("joins_an_open_game_when_clicking_the_game_row", async () => {
+    mockApi.getOpenGames.mockResolvedValueOnce({
+      games: [
+        {
+          game_code: "ZZZ999",
+          created_by: "randobot",
+          available_color: "black",
+          created_at: "2026-04-03T23:59:58Z",
+        },
+      ],
+    })
+    mockApi.joinGame.mockResolvedValueOnce({ game_code: "ZZZ999" })
+
+    renderPage()
+
+    const openGamesSection = (await screen.findByRole("heading", { name: "Open games" })).closest("section")
+    const openGame = within(openGamesSection).getByRole("listitem")
+
+    fireEvent.click(within(openGame).getByRole("link", { name: "randobot (bot)" }))
+    expect(mockApi.joinGame).not.toHaveBeenCalled()
+
+    fireEvent.click(openGame)
 
     await waitFor(() => {
       expect(mockApi.joinGame).toHaveBeenCalledWith("ZZZ999")

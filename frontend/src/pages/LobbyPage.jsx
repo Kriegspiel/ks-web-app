@@ -491,6 +491,14 @@ function isOwnOpenGame(game, username) {
   return String(game?.created_by || "").trim().toLowerCase() === String(username || "").trim().toLowerCase()
 }
 
+function isInteractiveRowTarget(target) {
+  return Boolean(
+    target &&
+    typeof target.closest === "function" &&
+    target.closest("a, button, input, select, textarea, [role='button'], [role='link']"),
+  )
+}
+
 function getActiveGame(games) {
   return games.find((game) => ACTIVE_STATES.has(String(game?.state ?? "").toLowerCase())) ?? null
 }
@@ -798,6 +806,14 @@ export default function LobbyPage() {
     }
   }
 
+  function handleOpenGameRowClick(event, game) {
+    if (isOwnOpenGame(game, user?.username) || isInteractiveRowTarget(event.target)) {
+      return
+    }
+
+    handleJoinOpenGame(game.game_code)
+  }
+
   async function handleCloseWaitingGame(gameRef) {
     const targetCode = String(gameRef?.game_code || "").trim().toUpperCase()
     const targetId = String(gameRef?.game_id || "").trim()
@@ -936,40 +952,47 @@ export default function LobbyPage() {
         ) : null}
         {sortedOpenGames.length > 0 ? (
           <ul className="lobby-list lobby-open-games-list">
-            {sortedOpenGames.map((game, index) => (
-              <li key={game.game_code ?? game.game_id ?? `open-game-${index}`}>
-                <div className="lobby-open-game">
-                  <div className="lobby-open-game__opponent">
-                    {renderCreatorLink(game, botUsernames)}
+            {sortedOpenGames.map((game, index) => {
+              const ownOpenGame = isOwnOpenGame(game, user?.username)
+              return (
+                <li
+                  key={game.game_code ?? game.game_id ?? `open-game-${index}`}
+                  className={ownOpenGame ? undefined : "is-joinable"}
+                  onClick={ownOpenGame ? undefined : (event) => handleOpenGameRowClick(event, game)}
+                >
+                  <div className="lobby-open-game">
+                    <div className="lobby-open-game__opponent">
+                      {renderCreatorLink(game, botUsernames)}
+                    </div>
+                    <div className="lobby-open-game__match">
+                      <span>Rules: {formatRuleVariant(game.rule_variant)}</span>
+                      {game.available_color ? <span>Color: {game.available_color}</span> : null}
+                    </div>
+                    <div className="lobby-open-game__meta">
+                      <span>{game.game_code ?? game.game_id ?? "Unknown code"}</span>
+                      <span>{formatUtcDateTime(game.created_at)}</span>
+                    </div>
                   </div>
-                  <div className="lobby-open-game__match">
-                    <span>Rules: {formatRuleVariant(game.rule_variant)}</span>
-                    {game.available_color ? <span>Color: {game.available_color}</span> : null}
+                  <div className="lobby-list__actions">
+                    {ownOpenGame ? (
+                      <>
+                        <button type="button" onClick={() => navigate(gamePagePath(game))}>Open</button>
+                        <button
+                          type="button"
+                          className="game-danger-button"
+                          onClick={() => handleCloseWaitingGame({ game_id: game.game_id, game_code: game.game_code })}
+                          disabled={closingWaitingGame}
+                        >
+                          {closingWaitingGame ? "Closing…" : "Close"}
+                        </button>
+                      </>
+                    ) : (
+                      <button type="button" onClick={() => handleJoinOpenGame(game.game_code)}>Join</button>
+                    )}
                   </div>
-                  <div className="lobby-open-game__meta">
-                    <span>{game.game_code ?? game.game_id ?? "Unknown code"}</span>
-                    <span>{formatUtcDateTime(game.created_at)}</span>
-                  </div>
-                </div>
-                <div className="lobby-list__actions">
-                  {isOwnOpenGame(game, user?.username) ? (
-                    <>
-                      <button type="button" onClick={() => navigate(gamePagePath(game))}>Open</button>
-                      <button
-                        type="button"
-                        className="game-danger-button"
-                        onClick={() => handleCloseWaitingGame({ game_id: game.game_id, game_code: game.game_code })}
-                        disabled={closingWaitingGame}
-                      >
-                        {closingWaitingGame ? "Closing…" : "Close"}
-                      </button>
-                    </>
-                  ) : (
-                    <button type="button" onClick={() => handleJoinOpenGame(game.game_code)}>Join</button>
-                  )}
-                </div>
-              </li>
-            ))}
+                </li>
+              )
+            })}
           </ul>
         ) : null}
       </section>
