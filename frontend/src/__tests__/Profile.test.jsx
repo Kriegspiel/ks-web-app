@@ -69,6 +69,9 @@ describe("ProfilePage", () => {
     expect(badgeCss).toContain(".tier-badge::before")
     expect(badgeCss).toContain("clip-path: polygon(100% 0, 0 0, 100% 100%)")
     expect(profileCss).toContain("--tier-badge-size: 2.35rem")
+    expect(profileCss).toContain("transition: border-color 0.16s ease, box-shadow 0.16s ease;")
+    expect(profileCss).not.toContain("transform 0.16s ease")
+    expect(profileCss).not.toContain("transform: translateY")
   })
 
   it("keeps_profile_challenge_controls_balanced", () => {
