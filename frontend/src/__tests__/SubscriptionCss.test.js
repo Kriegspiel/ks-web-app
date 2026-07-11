@@ -99,5 +99,14 @@ describe("Subscription CSS", () => {
     const supportParagraphRule = blockFor(subscriptionCss, ".subscription-support-note p")
     expect(supportParagraphRule).toMatch(/max-width:\s*58rem;/)
     expect(supportParagraphRule).toMatch(/margin:\s*0;/)
+
+    const availabilityNoteRule = blockFor(subscriptionCss, ".subscription-availability-note")
+    expect(availabilityNoteRule).toMatch(/display:\s*grid;/)
+    expect(availabilityNoteRule).toMatch(/margin-top:\s*0\.85rem;/)
+    expect(availabilityNoteRule).toMatch(/background:\s*color-mix/)
+
+    const availabilityLinkRule = blockFor(subscriptionCss, ".subscription-availability-note a")
+    expect(availabilityLinkRule).toMatch(/color:\s*var\(--text\);/)
+    expect(availabilityLinkRule).toMatch(/font-weight:\s*800;/)
   })
 })

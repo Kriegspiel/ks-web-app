@@ -136,6 +136,13 @@ describe("SubscriptionPage", () => {
     expect(screen.getByRole("heading", { name: "Why subscriptions help" })).toBeInTheDocument()
     expect(screen.getByText(/The free T1 level covers almost everything most players need/i)).toBeInTheDocument()
     expect(screen.getByText(/bring more challenge, variety, and joy/i)).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Bot availability" })).toBeInTheDocument()
+    expect(screen.getByText(/provider downtime, API limits, or temporary service issues/i)).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "any@kriegspiel.org" })).toHaveAttribute(
+      "href",
+      "mailto:any@kriegspiel.org",
+    )
+    expect(screen.getByRole("link", { name: "X.com" })).toHaveAttribute("href", "https://x.com/kriegspiel")
     expect(screen.getByText(TEST_VERSION_STAMP)).toBeInTheDocument()
     expect(screen.queryByRole("rowheader", { name: "Public player profile" })).not.toBeInTheDocument()
     expect(screen.queryByRole("rowheader", { name: "Leaderboard eligibility" })).not.toBeInTheDocument()

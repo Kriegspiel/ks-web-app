@@ -455,6 +455,25 @@ export default function SubscriptionPage() {
         </p>
       </section>
 
+      <section className="subscription-availability-note" aria-labelledby="subscription-availability-heading">
+        <h2 id="subscription-availability-heading">Bot availability</h2>
+        <p>
+          Bots depend on outside APIs and model providers, so individual bots
+          may occasionally be unavailable because of provider downtime, API
+          limits, or temporary service issues. We watch for those problems and
+          try to bring affected bots back as quickly as possible.
+        </p>
+        <p>
+          If something looks inconsistent, broken, or unexpectedly unavailable,
+          please tell us right away at{" "}
+          <a href="mailto:any@kriegspiel.org">any@kriegspiel.org</a> or on{" "}
+          <a href="https://x.com/kriegspiel" target="_blank" rel="noreferrer">
+            X.com
+          </a>
+          .
+        </p>
+      </section>
+
       <VersionStamp />
     </main>
   )
