@@ -84,6 +84,9 @@ describe("ProfilePage", () => {
     expect(profileCss).toContain("font-weight: 400")
     expect(profileCss).toContain(".profile-challenge-form button")
     expect(profileCss).toContain("height: var(--profile-challenge-control-height)")
+    expect(profileCss).toContain(".profile-challenge-upgrade__bot-name")
+    expect(profileCss).toContain(".profile-challenge-upgrade__tier-link")
+    expect(profileCss).toContain(".profile-challenge-upgrade__tier-code")
   })
 
   it("renders_profile_stats_and_recent_games", async () => {
@@ -371,7 +374,13 @@ describe("ProfilePage", () => {
     await screen.findByRole("heading", { name: "llm_gpt55" })
     const challengeCard = await screen.findByRole("region", { name: "Challenge this bot" })
 
-    expect(await within(challengeCard).findByText("llm_gpt55 is available from Tier T3 Strong. Upgrade your tier to challenge this bot.")).toBeInTheDocument()
+    await within(challengeCard).findByText("llm_gpt55")
+    expect(challengeCard).toHaveTextContent(/llm_gpt55 is available from T3Strong\. Upgrade your tier to challenge this bot\./)
+    expect(within(challengeCard).getByText("llm_gpt55")).toHaveClass("profile-challenge-upgrade__bot-name")
+    const tierLink = within(challengeCard).getByRole("link", { name: "View Tier T3 Strong subscription tier" })
+    expect(tierLink).toHaveAttribute("href", "/subscription")
+    expect(within(tierLink).getByText("T3")).toHaveClass("tier-badge", "tier-badge--t3", "profile-challenge-upgrade__tier-code")
+    expect(within(tierLink).getByText("Strong")).toHaveClass("profile-challenge-upgrade__tier-name")
     expect(within(challengeCard).getByRole("link", { name: "View tiers" })).toHaveAttribute("href", "/subscription")
     expect(within(challengeCard).queryByRole("button", { name: "Play game" })).not.toBeInTheDocument()
   })

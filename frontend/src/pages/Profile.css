@@ -351,6 +351,44 @@
   margin-top: 0;
 }
 
+.profile-challenge-upgrade__bot-name {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  padding: 0.08rem 0.42rem;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--surface-strong) 92%, var(--accent-soft) 8%);
+  color: var(--text);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.profile-challenge-upgrade__tier-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0.08rem;
+  color: var(--text);
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  vertical-align: middle;
+}
+
+.profile-challenge-upgrade__tier-link:hover .profile-challenge-upgrade__tier-name,
+.profile-challenge-upgrade__tier-link:focus-visible .profile-challenge-upgrade__tier-name {
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.14em;
+}
+
+.profile-challenge-upgrade__tier-code {
+  --tier-badge-size: 1.6rem;
+  --tier-badge-corner-size: 0.7rem;
+  --tier-badge-font-size: 0.62rem;
+}
+
 .profile-challenge-upgrade .button-link {
   flex: 0 0 auto;
 }
