@@ -12,4 +12,15 @@ describe("GamePage CSS", () => {
     expect(css).toContain(".game-page__title-block h1")
     expect(css).toContain("margin: 0;")
   })
+
+  it("keeps the board card constrained to the chessboard width", () => {
+    const css = readFileSync(resolve(process.cwd(), "src/pages/GamePage.css"), "utf8")
+
+    expect(css).toContain("--game-board-card-max-width: calc(38rem + 2.7rem);")
+    expect(css).toContain("grid-template-columns: fit-content(var(--game-board-card-max-width)) minmax(16rem, 1fr);")
+    expect(css).toContain("width: min(100%, var(--game-board-card-max-width));")
+    expect(css).toContain("min-width: 0;")
+    expect(css).toContain("@media (max-width: 900px)")
+    expect(css).toContain("justify-self: stretch;")
+  })
 })
