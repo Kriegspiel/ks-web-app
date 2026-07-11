@@ -5,6 +5,8 @@ import { MemoryRouter, Route, Routes } from "react-router-dom"
 import ProfilePage from "../pages/Profile"
 
 const mockApi = vi.hoisted(() => ({
+  createGame: vi.fn(),
+  getBots: vi.fn(),
   userApi: {
     getProfile: vi.fn(),
     getGameHistory: vi.fn(),
@@ -27,6 +29,9 @@ vi.mock("../hooks/useAuth", () => ({
 afterEach(() => cleanup())
 
 beforeEach(() => {
+  mockApi.createGame.mockReset()
+  mockApi.getBots.mockReset()
+  mockApi.getBots.mockResolvedValue({ bots: [] })
   mockApi.userApi.getProfile.mockReset()
   mockApi.userApi.getGameHistory.mockReset()
   mockApi.userApi.getRatingHistory.mockReset()
@@ -42,6 +47,8 @@ function renderProfile(path = "/user/fil") {
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/user/:username" element={<ProfilePage />} />
+        <Route path="/game/:gameRef" element={<main><h1>Game route</h1></main>} />
+        <Route path="/subscription" element={<main><h1>Subscription route</h1></main>} />
       </Routes>
     </MemoryRouter>,
   )
@@ -152,6 +159,7 @@ describe("ProfilePage", () => {
     expect(mockApi.userApi.getGameHistory).toHaveBeenCalledWith("fil", 1, 20, { includeFilterOptions: false })
     expect(screen.getByText("Member since 2026-01-01.")).toBeInTheDocument()
     expect(screen.getByRole("region", { name: "Player tier" })).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "Player tier" })).getByRole("link", { name: "Player tier: Tier T2 Club. View subscription options" })).toHaveAttribute("href", "/subscription")
     expect(screen.getByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Player tier" })).getByText("T2")).toHaveClass("tier-badge", "tier-badge--t2", "profile-tier-card__code")
     expect(screen.queryByText(/language-model bot games/i)).not.toBeInTheDocument()
@@ -241,6 +249,7 @@ describe("ProfilePage", () => {
     await screen.findByRole("heading", { name: "llm_gptoss120b" })
     expect(screen.queryByRole("region", { name: "Player tier" })).not.toBeInTheDocument()
     expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "Bot tier" })).getByRole("link", { name: "Bot tier: Tier T2 LLM bot. View subscription options" })).toHaveAttribute("href", "/subscription")
     expect(screen.getByRole("heading", { name: "Tier T2 LLM bot" })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T2")).toHaveClass("tier-badge", "tier-badge--t2", "profile-tier-card__code")
     expect(screen.getByText("GPT-OSS 120B model bot for T2 Club.")).toBeInTheDocument()
@@ -270,6 +279,79 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("link", { name: "Wild 16" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?rule_set=wild16")
     expect(screen.getByRole("link", { name: "Berkeley + Any" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?rule_set=berkeley_any")
     expect(screen.getByText("3 · 33.3%")).toBeInTheDocument()
+  })
+
+  it("lets_available_bots_be_challenged_from_the_profile", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "randobotany",
+      role: "bot",
+      owner_email: "bot-random-any@kriegspiel.org",
+      member_since: "2026-04-03T01:10:41Z",
+      stats: {},
+      user_metrics: { completed_games: 0 },
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+    mockApi.getBots.mockResolvedValueOnce({
+      bots: [
+        {
+          bot_id: "bot-random-any",
+          username: "randobotany",
+          display_name: "Random Any Bot (bot)",
+          supported_rule_variants: ["berkeley_any", "wild16"],
+        },
+      ],
+    })
+    mockApi.createGame.mockResolvedValueOnce({ game_code: "ABCD12", state: "active" })
+
+    renderProfile("/user/randobotany")
+
+    await screen.findByRole("heading", { name: "randobotany" })
+    const challengeCard = await screen.findByRole("region", { name: "Challenge this bot" })
+    const recentGames = screen.getByRole("region", { name: "Recent games" })
+    const documentPositionFollowing = 4
+
+    expect(challengeCard.compareDocumentPosition(recentGames) & documentPositionFollowing).toBeTruthy()
+    expect(within(challengeCard).getByRole("heading", { name: "Challenge this bot" })).toBeInTheDocument()
+    expect(within(challengeCard).getByRole("option", { name: "Berkeley + Any" })).toHaveValue("berkeley_any")
+    expect(within(challengeCard).getByRole("option", { name: "Wild 16" })).toHaveValue("wild16")
+
+    fireEvent.change(within(challengeCard).getByLabelText("Ruleset"), { target: { value: "wild16" } })
+    fireEvent.click(within(challengeCard).getByRole("button", { name: "Play game" }))
+
+    await waitFor(() => {
+      expect(mockApi.createGame).toHaveBeenCalledWith({
+        rule_variant: "wild16",
+        play_as: "random",
+        time_control: "rapid",
+        opponent_type: "bot",
+        bot_id: "bot-random-any",
+      })
+    })
+    expect(await screen.findByRole("heading", { name: "Game route" })).toBeInTheDocument()
+  })
+
+  it("points_to_subscription_when_a_bot_is_above_the_current_tier", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "llm_gpt55",
+      role: "bot",
+      owner_email: "bot-gpt55@kriegspiel.org",
+      member_since: "2026-04-03T01:10:41Z",
+      stats: {},
+      user_metrics: { completed_games: 0 },
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+    mockApi.getBots.mockResolvedValueOnce({ bots: [] })
+
+    renderProfile("/user/llm_gpt55")
+
+    await screen.findByRole("heading", { name: "llm_gpt55" })
+    const challengeCard = await screen.findByRole("region", { name: "Challenge this bot" })
+
+    expect(within(challengeCard).getByText("llm_gpt55 is available from Tier T3 Strong. Upgrade your tier to challenge this bot.")).toBeInTheDocument()
+    expect(within(challengeCard).getByRole("link", { name: "View tiers" })).toHaveAttribute("href", "/subscription")
+    expect(within(challengeCard).queryByRole("button", { name: "Play game" })).not.toBeInTheDocument()
   })
 
   it("shows_user_metrics_for_human_profiles", async () => {

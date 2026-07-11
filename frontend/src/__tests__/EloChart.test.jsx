@@ -76,6 +76,29 @@ describe("EloChart", () => {
     boundsSpy.mockRestore()
   })
 
+  it("lets_the_rating_line_reach_the_right_edge_of_the_plot", () => {
+    const { container } = render(
+      <EloChart
+        seriesByMode={SERIES_BY_MODE}
+        emptyText="No Elo history yet."
+        ratingTrack="overall"
+        showTrackToggle={false}
+      />,
+    )
+
+    const svg = screen.getByRole("img", { name: "Overall Elo rating over time" })
+    const gridLine = container.querySelector(".elo-chart__grid")
+    const polyline = svg.querySelector(".elo-chart__line")
+    const points = polyline.getAttribute("points").trim().split(" ")
+    const firstX = points.at(0).split(",").at(0)
+    const lastX = points.at(-1).split(",").at(0)
+
+    expect(firstX).toBe("28")
+    expect(lastX).toBe("332")
+    expect(gridLine).toHaveAttribute("x1", "28")
+    expect(gridLine).toHaveAttribute("x2", "332")
+  })
+
   it("supports_single_point_series_without_the_track_toggle", () => {
     const singlePointSeries = {
       date: [{ label: "Only game", elo: 1600, delta: -4 }],
