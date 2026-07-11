@@ -16,10 +16,17 @@ vi.mock("react-router-dom", async () => ({ ...(await vi.importActual("react-rout
 vi.mock("../hooks/useAuth", () => ({ useAuth: () => mockAuth }))
 vi.mock("../services/api", () => mockApi)
 
+const mockClipboardWriteText = vi.fn()
 const LAST_RULE_VARIANT_STORAGE_KEY = "kriegspiel.lastRuleVariant"
 
 beforeEach(() => {
   window.localStorage.clear()
+  Object.defineProperty(window.navigator, "clipboard", {
+    configurable: true,
+    value: { writeText: mockClipboardWriteText },
+  })
+  mockClipboardWriteText.mockReset()
+  mockClipboardWriteText.mockResolvedValue(undefined)
   mockNavigate.mockReset()
   mockAuth.user = { username: "fil" }
   mockAuth.actionError = ""
@@ -74,9 +81,13 @@ describe("LobbyPage", () => {
     expect(css).toContain("overflow-y: auto;")
     expect(css).toContain(".lobby-open-games-list li.is-joinable")
     expect(css).toContain(".lobby-open-game__opponent")
+    expect(css).toContain(".lobby-open-game__rules")
+    expect(css).toContain(".lobby-open-game__color")
     expect(css).toContain(".lobby-open-game__meta")
     expect(css).toContain(".lobby-open-game__meta-separator")
+    expect(css).toContain("button.lobby-open-game__code-button")
     expect(css).toContain(".lobby-open-game__code")
+    expect(css).toContain(".lobby-copy-status")
     expect(css).toContain("font-family: ui-monospace")
     expect(css).toContain(".lobby-bot-tier-picker__option.is-unavailable")
     expect(css).not.toContain("background: rgba(248, 250, 252, 0.72);")
@@ -253,12 +264,13 @@ describe("LobbyPage", () => {
     renderPage()
 
     expect(await screen.findByRole("link", { name: "randobotany (bot)" })).toHaveAttribute("href", "/user/randobotany")
-    expect(screen.getByText("Rules: Wild 16")).toBeInTheDocument()
-    expect(screen.getByText("Color: black")).toBeInTheDocument()
+    expect(screen.getByText("Rules: Wild 16")).toHaveClass("lobby-open-game__rules")
+    expect(screen.getByText("Color: black")).toHaveClass("lobby-open-game__color")
     expect(await screen.findByText(/2026-04-03 23:59:59 UTC/)).toBeInTheDocument()
 
     const openGame = (await screen.findAllByRole("listitem"))[0]
     expect(within(openGame).getByText("ABCD23")).toHaveClass("lobby-open-game__code")
+    expect(within(openGame).getByRole("button", { name: "Copy game code ABCD23" })).toBeInTheDocument()
 
     const text = openGame.textContent
     expect(text.indexOf("randobotany (bot)")).toBeLessThan(text.indexOf("Rules: Wild 16"))
@@ -814,6 +826,40 @@ describe("LobbyPage", () => {
     const openGame = within(openGamesSection).getByRole("listitem")
 
     fireEvent.click(within(openGame).getByRole("link", { name: "randobot (bot)" }))
+    expect(mockApi.joinGame).not.toHaveBeenCalled()
+
+    fireEvent.click(openGame)
+
+    await waitFor(() => {
+      expect(mockApi.joinGame).toHaveBeenCalledWith("ZZZ999")
+      expect(mockNavigate).toHaveBeenCalledWith("/game/ZZZ999")
+    })
+  })
+
+  it("copies_an_open_game_code_without_joining_the_game", async () => {
+    mockApi.getOpenGames.mockResolvedValueOnce({
+      games: [
+        {
+          game_code: "ZZZ999",
+          created_by: "randobot",
+          available_color: "black",
+          created_at: "2026-04-03T23:59:58Z",
+        },
+      ],
+    })
+    mockApi.joinGame.mockResolvedValueOnce({ game_code: "ZZZ999" })
+
+    renderPage()
+
+    const openGamesSection = (await screen.findByRole("heading", { name: "Open games" })).closest("section")
+    const openGame = within(openGamesSection).getByRole("listitem")
+
+    fireEvent.click(within(openGame).getByRole("button", { name: "Copy game code ZZZ999" }))
+
+    await waitFor(() => {
+      expect(mockClipboardWriteText).toHaveBeenCalledWith("ZZZ999")
+    })
+    expect(await screen.findByRole("status")).toHaveTextContent("Game code ZZZ999 copied.")
     expect(mockApi.joinGame).not.toHaveBeenCalled()
 
     fireEvent.click(openGame)
