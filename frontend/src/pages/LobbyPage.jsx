@@ -499,6 +499,15 @@ function isInteractiveRowTarget(target) {
   )
 }
 
+async function writeClipboardText(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text)
+    return
+  }
+
+  throw new Error("Clipboard API is not available.")
+}
+
 function getActiveGame(games) {
   return games.find((game) => ACTIVE_STATES.has(String(game?.state ?? "").toLowerCase())) ?? null
 }
@@ -533,6 +542,7 @@ export default function LobbyPage() {
   const [openGames, setOpenGames] = useState([])
   const [openGamesError, setOpenGamesError] = useState("")
   const [openGamesLoading, setOpenGamesLoading] = useState(true)
+  const [openGameCopyStatus, setOpenGameCopyStatus] = useState("")
   const [myGames, setMyGames] = useState([])
   const [lobbyStats, setLobbyStats] = useState(null)
   const [lobbyStatsError, setLobbyStatsError] = useState("")
@@ -814,6 +824,21 @@ export default function LobbyPage() {
     handleJoinOpenGame(game.game_code)
   }
 
+  async function handleCopyOpenGameCode(event, gameCode) {
+    event.stopPropagation()
+    const code = String(gameCode || "").trim().toUpperCase()
+    if (!code) {
+      return
+    }
+
+    try {
+      await writeClipboardText(code)
+      setOpenGameCopyStatus(`Game code ${code} copied.`)
+    } catch {
+      setOpenGameCopyStatus("Unable to copy game code.")
+    }
+  }
+
   async function handleCloseWaitingGame(gameRef) {
     const targetCode = String(gameRef?.game_code || "").trim().toUpperCase()
     const targetId = String(gameRef?.game_id || "").trim()
@@ -945,6 +970,7 @@ export default function LobbyPage() {
 
       <section className="lobby-card" aria-labelledby="open-games-heading">
         <h2 id="open-games-heading">Open games</h2>
+        {openGameCopyStatus ? <p className="lobby-copy-status" role="status">{openGameCopyStatus}</p> : null}
         {openGamesError ? <p role="alert">{openGamesError}</p> : null}
         {openGamesLoading ? <p>Loading…</p> : null}
         {!openGamesLoading && !openGamesError && sortedOpenGames.length === 0 ? (
@@ -954,6 +980,7 @@ export default function LobbyPage() {
           <ul className="lobby-list lobby-open-games-list">
             {sortedOpenGames.map((game, index) => {
               const ownOpenGame = isOwnOpenGame(game, user?.username)
+              const gameCode = game.game_code ?? game.game_id ?? "Unknown code"
               return (
                 <li
                   key={game.game_code ?? game.game_id ?? `open-game-${index}`}
@@ -964,14 +991,21 @@ export default function LobbyPage() {
                     <div className="lobby-open-game__opponent">
                       {renderCreatorLink(game, botUsernames)}
                     </div>
-                    <div className="lobby-open-game__match">
-                      <span>Rules: {formatRuleVariant(game.rule_variant)}</span>
-                      {game.available_color ? <span>Color: {game.available_color}</span> : null}
+                    <div className="lobby-open-game__rules">
+                      Rules: {formatRuleVariant(game.rule_variant)}
                     </div>
+                    {game.available_color ? <div className="lobby-open-game__color">Color: {game.available_color}</div> : null}
                     <div className="lobby-open-game__meta">
                       <span className="lobby-open-game__time">{formatUtcDateTime(game.created_at)}</span>
                       <span className="lobby-open-game__meta-separator" aria-hidden="true" />
-                      <code className="lobby-open-game__code">{game.game_code ?? game.game_id ?? "Unknown code"}</code>
+                      <button
+                        type="button"
+                        className="lobby-open-game__code-button"
+                        onClick={(event) => handleCopyOpenGameCode(event, gameCode)}
+                        aria-label={`Copy game code ${gameCode}`}
+                      >
+                        <code className="lobby-open-game__code">{gameCode}</code>
+                      </button>
                     </div>
                   </div>
                   <div className="lobby-list__actions">
