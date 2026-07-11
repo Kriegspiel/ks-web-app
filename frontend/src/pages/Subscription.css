@@ -101,6 +101,10 @@
   background: var(--surface-alt);
 }
 
+.subscription-notice p {
+  margin: 0;
+}
+
 .subscription-table-section {
   margin-top: 1.25rem;
 }
