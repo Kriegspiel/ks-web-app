@@ -50,8 +50,9 @@ describe("Subscription CSS", () => {
 
   it("makes the current tier badge high contrast", () => {
     const currentLabelRule = blockFor(subscriptionCss, ".subscription-tier-table__current-label")
-    expect(currentLabelRule).toMatch(/background:\s*var\(--accent\);/)
-    expect(currentLabelRule).toMatch(/color:\s*var\(--bg\);/)
+    expect(currentLabelRule).toMatch(/border:\s*1px solid color-mix\(in srgb, var\(--success\)/)
+    expect(currentLabelRule).toMatch(/background:\s*color-mix\(in srgb, var\(--success\)/)
+    expect(currentLabelRule).toMatch(/color:\s*var\(--success\);/)
     expect(currentLabelRule).toMatch(/box-shadow:/)
     expect(currentLabelRule).toMatch(/font-weight:\s*800;/)
   })
