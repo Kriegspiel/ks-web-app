@@ -119,18 +119,18 @@
 
 .subscription-tier-table {
   width: 100%;
-  min-width: 86rem;
+  min-width: 64rem;
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
 }
 
 .subscription-tier-table__feature-col {
-  width: 14rem;
+  width: 12rem;
 }
 
 .subscription-tier-table__tier-col {
-  width: calc((100% - 14rem) / 7);
+  width: calc((100% - 12rem) / 7);
 }
 
 .subscription-tier-table th,
@@ -250,14 +250,28 @@
 
 .subscription-bot-list {
   display: grid;
-  gap: 0.3rem;
-  font-size: 0.82rem;
-  line-height: 1.35;
+  gap: 0.55rem;
+  font-size: 0.8rem;
+  line-height: 1.28;
   text-align: left;
 }
 
-.subscription-bot-list strong {
-  font-size: 0.82rem;
+.subscription-bot-list__group {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.subscription-bot-list__label {
+  display: block;
+  font-size: 0.8rem;
+}
+
+.subscription-bot-list__items {
+  display: grid;
+  gap: 0.08rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .subscription-bot-list__note {
@@ -295,15 +309,15 @@
   }
 
   .subscription-tier-table {
-    min-width: 74rem;
+    min-width: 64rem;
   }
 
   .subscription-tier-table__feature-col {
-    width: 11rem;
+    width: 10.5rem;
   }
 
   .subscription-tier-table__tier-col {
-    width: calc((100% - 11rem) / 7);
+    width: calc((100% - 10.5rem) / 7);
   }
 
   .subscription-tier-table th,

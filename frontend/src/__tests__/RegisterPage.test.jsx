@@ -37,6 +37,7 @@ describe("RegisterPage", () => {
     render(<MemoryRouter><RegisterPage /></MemoryRouter>)
 
     expect(screen.getByRole("heading", { name: "Register" }).closest("main")).toHaveClass("page-shell", "auth-page")
+    expect(screen.getByText(/Already have an account/i)).toHaveClass("auth-switch-prompt")
 
     fireEvent.change(screen.getByLabelText("Username"), { target: { value: "new-user" } })
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "new@example.com" } })

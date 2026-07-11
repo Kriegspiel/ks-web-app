@@ -34,4 +34,17 @@ describe("Subscription CSS", () => {
     const noticeParagraphRule = blockFor(subscriptionCss, ".subscription-notice p")
     expect(noticeParagraphRule).toMatch(/margin:\s*0;/)
   })
+
+  it("uses a compact tier table and stacked bot list items", () => {
+    const tableRule = blockFor(subscriptionCss, ".subscription-tier-table {")
+    expect(tableRule).toMatch(/min-width:\s*64rem;/)
+
+    const featureColumnRule = blockFor(subscriptionCss, ".subscription-tier-table__feature-col")
+    expect(featureColumnRule).toMatch(/width:\s*12rem;/)
+
+    const botItemsRule = blockFor(subscriptionCss, ".subscription-bot-list__items")
+    expect(botItemsRule).toMatch(/display:\s*grid;/)
+    expect(botItemsRule).toMatch(/list-style:\s*none;/)
+    expect(botItemsRule).toMatch(/margin:\s*0;/)
+  })
 })

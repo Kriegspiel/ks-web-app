@@ -621,8 +621,19 @@ button.theme-toggle:active {
   color: var(--muted-soft);
 }
 
+.auth-switch-prompt {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.auth-switch-prompt a {
+  color: inherit;
+  font-weight: inherit;
+  text-underline-offset: 0.14em;
+}
+
 .auth-legal-notice {
-  max-width: 42rem;
+  max-width: none;
   margin-top: 1rem !important;
   color: var(--muted-soft);
   font-size: 0.95rem;

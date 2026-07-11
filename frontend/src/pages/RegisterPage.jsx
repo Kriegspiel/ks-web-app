@@ -89,7 +89,7 @@ export default function RegisterPage() {
           {actionLoading ? "Registering…" : "Register"}
         </button>
       </form>
-      <p>
+      <p className="auth-switch-prompt">
         Already have an account? <Link to="/auth/login">Login</Link>
       </p>
       <AuthLegalNotice />

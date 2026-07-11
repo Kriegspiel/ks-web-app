@@ -37,5 +37,12 @@ describe("Auth layout CSS", () => {
     const authFormRule = blockFor(appCss, ".auth-form {")
     expect(authFormRule).toMatch(/padding:\s*0;/)
     expect(authFormRule).not.toMatch(/padding:\s*[^;]*1\.25rem/)
+
+    const authPromptLinkRule = blockFor(appCss, ".auth-switch-prompt a")
+    expect(authPromptLinkRule).toMatch(/color:\s*inherit;/)
+    expect(authPromptLinkRule).toMatch(/font-weight:\s*inherit;/)
+
+    const legalNoticeRule = blockFor(appCss, ".auth-legal-notice")
+    expect(legalNoticeRule).toMatch(/max-width:\s*none;/)
   })
 })
