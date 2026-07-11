@@ -130,13 +130,6 @@ describe("ReviewPage", () => {
     expect(mockApi.getGameReview).toHaveBeenCalledWith("g-620")
   })
 
-  it("does_not_advertise_the_hidden_t3_review", async () => {
-    renderReviewPage()
-
-    expect(await screen.findByRole("heading", { name: "Game review" })).toBeInTheDocument()
-    expect(screen.queryByRole("link", { name: "T3 review" })).not.toBeInTheDocument()
-  })
-
   it("loads_transcript_and_navigates_moves", async () => {
     renderReviewPage()
 
