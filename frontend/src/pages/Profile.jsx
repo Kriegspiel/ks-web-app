@@ -48,6 +48,14 @@ const PROFILE_TIER_DETAILS = {
     className: "profile-tier-card--tier6",
   },
 }
+const BOT_TIER_DETAILS_BY_USERNAME = {
+  darkboardmcts: {
+    code: "T1",
+    name: "MCTS bot",
+    limit: "Darkboard MCTS bot for T1 Casual.",
+    className: "profile-tier-card--tier1",
+  },
+}
 const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_gpt45nano: {
     code: "T2",
@@ -455,12 +463,12 @@ function opponentFilterValue(row) {
 function tierDetailsForProfile(profile) {
   if (profile?.role === "bot" || profile?.is_bot) {
     const username = String(profile?.username || "").trim().toLowerCase()
-    const tier = BOT_LLM_TIER_DETAILS_BY_USERNAME[username]
+    const tier = BOT_TIER_DETAILS_BY_USERNAME[username] ?? BOT_LLM_TIER_DETAILS_BY_USERNAME[username]
     if (!tier) return null
     return {
       code: tier.code,
-      name: "LLM bot",
-      limit: `${tier.model} model bot for ${tier.code} ${tier.tierName}.`,
+      name: tier.name ?? "LLM bot",
+      limit: tier.limit ?? `${tier.model} model bot for ${tier.code} ${tier.tierName}.`,
       className: `${tier.className} profile-tier-card--bot`,
       ariaLabel: "Bot tier",
     }

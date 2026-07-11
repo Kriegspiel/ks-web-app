@@ -27,6 +27,7 @@ const BOT_TIER_LABELS = {
   T5: "Master bots",
 }
 const BOT_TIER_BY_USERNAME = {
+  darkboardmcts: "T1",
   simpleheuristics: "T1",
   stockfishwild: "T1",
   llm_gpt45nano: "T2",

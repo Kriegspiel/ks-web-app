@@ -29,7 +29,17 @@ beforeEach(() => {
   mockApi.getLobbyStats.mockResolvedValue({ active_games_now: 123456789, completed_last_hour: 3, completed_last_24_hours: 42, completed_total: 314 })
   mockApi.getGame.mockResolvedValue({ state: "waiting" })
   mockApi.deleteWaitingGame.mockResolvedValue({})
-  mockApi.getBots.mockResolvedValue({ bots: [{ bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-2", username: "llm_gptnano", display_name: "LLM GPT-Nano (bot)", description: "LLM GPT-Nano (bot) Kriegspiel model bot.", elo: 1342, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" }, { bot_id: "bot-3", username: "randobotany", display_name: "Random Any Bot", description: "Asks any pawn captures first, then plays random legal-looking moves.", elo: 1200, supported_rule_variants: ["berkeley_any"] }, { bot_id: "bot-4", username: "llm_haiku", display_name: "LLM Haiku (bot)", description: "Anthropic model bot.", elo: 1300, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" }, { bot_id: "bot-5", username: "simpleheuristics", display_name: "Simple Heuristics Bot", description: "Uses simple tactical heuristics.", elo: 1250, supported_rule_variants: ["berkeley", "berkeley_any"] }, { bot_id: "bot-6", username: "stockfishwild", display_name: "Stockfish Wild 16", description: "Experimental Stockfish-backed Wild 16 bot using public-state board hypotheses.", elo: 1260, supported_rule_variants: ["wild16"] }] })
+  mockApi.getBots.mockResolvedValue({
+    bots: [
+      { bot_id: "bot-1", username: "randobot", display_name: "Random Bot", description: "Plays random legal-looking moves", elo: 1201, supported_rule_variants: ["berkeley", "berkeley_any"] },
+      { bot_id: "bot-2", username: "llm_gptnano", display_name: "LLM GPT-Nano (bot)", description: "LLM GPT-Nano (bot) Kriegspiel model bot.", elo: 1342, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-3", username: "randobotany", display_name: "Random Any Bot", description: "Asks any pawn captures first, then plays random legal-looking moves.", elo: 1200, supported_rule_variants: ["berkeley_any"] },
+      { bot_id: "bot-4", username: "llm_haiku", display_name: "LLM Haiku (bot)", description: "Anthropic model bot.", elo: 1300, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-5", username: "simpleheuristics", display_name: "Simple Heuristics Bot", description: "Uses simple tactical heuristics.", elo: 1250, supported_rule_variants: ["berkeley", "berkeley_any"] },
+      { bot_id: "bot-6", username: "stockfishwild", display_name: "Stockfish Wild 16", description: "Experimental Stockfish-backed Wild 16 bot using public-state board hypotheses.", elo: 1260, supported_rule_variants: ["wild16"] },
+      { bot_id: "bot-7", username: "darkboardmcts", display_name: "Darkboard MCTS", description: "Darkboard-inspired Wild 16 bot runtime.", elo: 1331, supported_rule_variants: ["wild16"] },
+    ],
+  })
 })
 afterEach(() => { cleanup(); window.localStorage.clear(); vi.useRealTimers() })
 
@@ -415,7 +425,7 @@ describe("LobbyPage", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/game/BOT123")
   })
 
-  it("shows_stockfish_as_a_t1_bot_for_wild16", async () => {
+  it("shows_wild16_bots_as_t1_bots", async () => {
     renderPage()
 
     fireEvent.change(await screen.findByLabelText("Ruleset"), { target: { value: "wild16" } })
@@ -429,8 +439,9 @@ describe("LobbyPage", () => {
     expect(within(listbox).getByText("Casual bots")).toBeInTheDocument()
     expect(within(listbox).getByText("T1")).toHaveClass("tier-badge", "tier-badge--t1")
     expect(screen.getByRole("option", { name: "1260 - Stockfish Wild 16" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1331 - Darkboard MCTS" })).toBeInTheDocument()
     expect(screen.queryByRole("option", { name: "1250 - Simple Heuristics Bot" })).not.toBeInTheDocument()
-    expect(botOptionLabels()).toEqual(["1260 - Stockfish Wild 16"])
+    expect(botOptionLabels()).toEqual(["1260 - Stockfish Wild 16", "1331 - Darkboard MCTS"])
   })
 
   it("shows_all_ruleset_options_and_supports_new_variant_specific_bots", async () => {
