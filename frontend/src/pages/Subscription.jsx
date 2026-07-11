@@ -81,9 +81,9 @@ const PLAY_BOTS_BY_TIER = [
 
 const FEATURES = [
   { name: "Play human games", values: ["Yes", "Yes", "Yes", "Yes", "Yes", null, null] },
+  { name: "Completed-game review", values: ["Yes", "Yes", "Yes", "Yes", "Yes", null, null] },
   { name: "Rating history", values: ["Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"] },
   { name: "Play bots", values: PLAY_BOTS_BY_TIER },
-  { name: "Completed-game review", values: ["Yes", "Yes", "Yes", "Yes", "Yes", null, null] },
   { name: "Persistent player name", values: ["No", "Yes", "Yes", "Yes", "Yes", null, null] },
 ]
 

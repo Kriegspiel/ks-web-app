@@ -85,7 +85,7 @@ describe("SubscriptionPage", () => {
     expect(currentTierHeader).toHaveAttribute("aria-current", "true")
     expect(currentTierHeader).toHaveTextContent("Casual")
     const rowHeaders = screen.getAllByRole("rowheader").map((cell) => cell.textContent)
-    expect(rowHeaders.slice(0, 3)).toEqual(["Play human games", "Rating history", "Play bots"])
+    expect(rowHeaders.slice(0, 4)).toEqual(["Play human games", "Completed-game review", "Rating history", "Play bots"])
     const ratingHistoryRow = screen.getByRole("rowheader", { name: "Rating history" }).closest("tr")
     expect(within(ratingHistoryRow).getAllByText("Yes")).toHaveLength(7)
     expect(screen.getByRole("rowheader", { name: "Play bots" })).toBeInTheDocument()
