@@ -15,7 +15,7 @@ const mockBillingApi = vi.hoisted(() => ({
 
 const stripeMount = vi.hoisted(() => vi.fn())
 const stripeDestroy = vi.hoisted(() => vi.fn())
-const initEmbeddedCheckout = vi.hoisted(() => vi.fn())
+const createEmbeddedCheckoutPage = vi.hoisted(() => vi.fn())
 
 vi.mock("../hooks/useAuth", () => ({
   useAuth: () => mockAuth,
@@ -26,7 +26,7 @@ vi.mock("../services/api", () => ({
 }))
 
 vi.mock("@stripe/stripe-js", () => ({
-  loadStripe: vi.fn(() => Promise.resolve({ initEmbeddedCheckout })),
+  loadStripe: vi.fn(() => Promise.resolve({ createEmbeddedCheckoutPage })),
 }))
 
 function billingStatus(overrides = {}) {
@@ -60,11 +60,11 @@ beforeEach(() => {
   mockBillingApi.createPortalSession.mockReset()
   stripeMount.mockReset()
   stripeDestroy.mockReset()
-  initEmbeddedCheckout.mockReset()
+  createEmbeddedCheckoutPage.mockReset()
   mockBillingApi.getSubscription.mockResolvedValue(billingStatus())
   mockBillingApi.createCheckoutSession.mockResolvedValue({ client_secret: "cs_test_123" })
   mockBillingApi.createPortalSession.mockResolvedValue({ url: "https://billing.example/session" })
-  initEmbeddedCheckout.mockImplementation(async ({ fetchClientSecret }) => {
+  createEmbeddedCheckoutPage.mockImplementation(async ({ fetchClientSecret }) => {
     const clientSecret = await fetchClientSecret()
     return { clientSecret, mount: stripeMount, destroy: stripeDestroy }
   })
@@ -89,7 +89,7 @@ describe("SubscriptionPage", () => {
     await waitFor(() => {
       expect(mockBillingApi.createCheckoutSession).toHaveBeenCalledWith({ tier: "tier3", interval: "yearly" })
     })
-    expect(initEmbeddedCheckout).toHaveBeenCalledTimes(1)
+    expect(createEmbeddedCheckoutPage).toHaveBeenCalledTimes(1)
     expect(stripeMount).toHaveBeenCalledTimes(1)
     expect(stripeMount.mock.calls[0][0]).toBeInstanceOf(HTMLElement)
   })
