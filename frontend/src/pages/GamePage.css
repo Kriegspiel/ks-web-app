@@ -179,9 +179,10 @@
 }
 
 .game-layout {
+  --game-board-card-max-width: calc(38rem + 2.7rem);
   display: grid;
   gap: 0.85rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: fit-content(var(--game-board-card-max-width)) minmax(16rem, 1fr);
   grid-template-areas:
     "board referee"
     "status status";
@@ -195,6 +196,8 @@
   align-content: start;
   gap: 0.8rem;
   padding: 1rem 1.05rem;
+  justify-self: start;
+  width: min(100%, var(--game-board-card-max-width));
 }
 
 .game-card--referee {
@@ -203,6 +206,7 @@
   grid-template-rows: auto auto minmax(0, 1fr);
   gap: 0.75rem;
   min-height: 0;
+  min-width: 0;
   padding: 1rem 1.05rem;
   overflow: hidden;
 }
@@ -578,9 +582,18 @@
   margin-top: 1rem;
 }
 
-@media (max-width: 1120px) {
+@media (max-width: 900px) {
   .game-layout {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "board"
+      "referee"
+      "status";
+  }
+
+  .game-card--board {
+    justify-self: stretch;
+    width: 100%;
   }
 }
 
