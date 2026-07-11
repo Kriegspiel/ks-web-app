@@ -145,6 +145,8 @@ describe("SubscriptionPage", () => {
     expect(within(botCells[2]).queryByText("T2 Gemini:")).not.toBeInTheDocument()
     expect(within(botCells[2]).queryByRole("link", { name: "2.5 Flash-Lite" })).not.toBeInTheDocument()
     expect(within(botCells[2]).queryByRole("link", { name: "3.1 Flash-Lite" })).not.toBeInTheDocument()
+    expect(within(botCells[2]).queryByRole("link", { name: "Nano" })).not.toBeInTheDocument()
+    expect(within(botCells[2]).queryByRole("link", { name: "Super" })).toHaveAttribute("href", "/user/llm_nemotron_super")
     expect(within(botCells[2]).queryByRole("link", { name: "Simple Heuristics Bot" })).not.toBeInTheDocument()
     expect(within(botCells[3]).getByText("Lower-tier bots included.")).toBeInTheDocument()
     expect(within(botCells[3]).getByRole("link", { name: "GPT-5.5" })).toHaveAttribute("href", "/user/llm_gpt55")

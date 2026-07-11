@@ -33,7 +33,7 @@ const T2_BOTS = [
   ["T2 Mistral", [["Small 3.2", "/user/llm_mistral_small32"]]],
   ["T2 Gemma", [["4 31B", "/user/llm_gemma4_31b"]]],
   ["T2 GLM", [["4.7 Flash", "/user/llm_glm47_flash"], ["4.5 Air", "/user/llm_glm45_air"]]],
-  ["T2 Nemotron", [["Nano", "/user/llm_nemotron_nano"], ["Super", "/user/llm_nemotron_super"]]],
+  ["T2 Nemotron", [["Super", "/user/llm_nemotron_super"]]],
   ["T2 Kimi", [["K2.5", "/user/llm_kimi_k25"]]],
   ["T2 Hermes", [["4 70B", "/user/llm_hermes4_70b"]]],
   ["T2 Phi", [["4", "/user/llm_phi4"]]],
