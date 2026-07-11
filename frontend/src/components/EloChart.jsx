@@ -13,16 +13,17 @@ function buildChartPoints(points) {
 
   const width = 332
   const height = 152
-  const paddingX = 28
+  const paddingLeft = 28
+  const paddingRight = 0
   const paddingY = 18
   const minElo = Math.min(...points.map((point) => point.elo))
   const maxElo = Math.max(...points.map((point) => point.elo))
   const eloRange = Math.max(1, maxElo - minElo)
-  const xStep = points.length === 1 ? 0 : (width - paddingX * 2) / (points.length - 1)
+  const xStep = points.length === 1 ? 0 : (width - paddingLeft - paddingRight) / (points.length - 1)
   const chartHeight = height - paddingY * 2
 
   const circles = points.map((point, index) => {
-    const x = paddingX + (xStep * index)
+    const x = paddingLeft + (xStep * index)
     const y = height - paddingY - (((point.elo - minElo) / eloRange) * chartHeight)
     return { ...point, index, x, y }
   })
@@ -49,7 +50,8 @@ function buildChartPoints(points) {
     ticks,
     width,
     height,
-    paddingX,
+    paddingLeft,
+    paddingRight,
     paddingY,
   }
 }
@@ -149,8 +151,8 @@ export default function EloChart({ seriesByMode, emptyText, ratingTrack = "overa
           </defs>
           {chart.ticks.map((tick) => (
             <g key={`${tick.value}-${tick.y}`}>
-              <line className="elo-chart__grid" x1={chart.paddingX} x2={chart.width - chart.paddingX} y1={tick.y} y2={tick.y} />
-              <text className="elo-chart__tick-label" x={chart.paddingX - 8} y={tick.y + 3.5}>{tick.value}</text>
+              <line className="elo-chart__grid" x1={chart.paddingLeft} x2={chart.width - chart.paddingRight} y1={tick.y} y2={tick.y} />
+              <text className="elo-chart__tick-label" x={chart.paddingLeft - 8} y={tick.y + 3.5}>{tick.value}</text>
             </g>
           ))}
           <path className="elo-chart__area" d={chart.areaPath} fill={`url(#elo-chart-fill-${ratingTrack})`} />

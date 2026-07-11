@@ -4,14 +4,37 @@
 
 .profile-tier-card {
   --profile-tier-color: #2a231d;
+  position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0.85rem;
   align-items: center;
   margin-top: 1rem;
+  cursor: pointer;
   border-color: color-mix(in srgb, var(--profile-tier-color) 38%, var(--border));
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--surface) 90%, var(--profile-tier-color) 10%), var(--surface));
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.profile-tier-card:hover,
+.profile-tier-card:focus-within {
+  border-color: color-mix(in srgb, var(--profile-tier-color) 58%, var(--border));
+  box-shadow: var(--shadow-soft);
+  transform: translateY(-1px);
+}
+
+.profile-tier-card__link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  text-decoration: none;
+}
+
+.profile-tier-card__link:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
 }
 
 .profile-tier-card--guest {
@@ -54,10 +77,16 @@
   --tier-badge-size: 2.35rem;
   --tier-badge-corner-size: 1.02rem;
   --tier-badge-font-size: 0.82rem;
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .profile-tier-card__body {
   min-width: 0;
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .profile-tier-card__body h2 {
@@ -265,6 +294,49 @@
   opacity: 0.68;
 }
 
+.profile-challenge-card h2 {
+  margin-top: 0;
+}
+
+.profile-challenge-form {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: minmax(12rem, 1fr) auto;
+  align-items: end;
+}
+
+.profile-challenge-form label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.profile-challenge-form button {
+  min-width: 8rem;
+}
+
+.profile-challenge-form .auth-error {
+  grid-column: 1 / -1;
+}
+
+.profile-challenge-upgrade {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.profile-challenge-upgrade p {
+  flex: 1 1 18rem;
+  margin-top: 0;
+}
+
+.profile-challenge-upgrade .button-link {
+  flex: 0 0 auto;
+}
+
 .profile-stats-grid {
   display: grid;
   gap: 0.75rem;
@@ -329,6 +401,14 @@
 }
 
 @media (max-width: 700px) {
+  .profile-challenge-form {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-challenge-form button {
+    width: 100%;
+  }
+
   .profile-recent-list li {
     flex-direction: column;
     align-items: flex-start;

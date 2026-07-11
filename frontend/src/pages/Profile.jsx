@@ -5,9 +5,9 @@ import { ELO_TRACKS } from "../components/eloChartConstants"
 import TierBadge from "../components/TierBadge"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"
-import { userApi } from "../services/api"
+import { createGame, getBots, userApi } from "../services/api"
 import { formatUtcDate } from "../utils/dateTime"
-import { formatRuleVariant } from "../utils/rules"
+import { DEFAULT_BOT_RULE_VARIANTS, formatRuleVariant } from "../utils/rules"
 import "./Profile.css"
 
 const BOT_BLOG_URL = "https://kriegspiel.org/blog/bot-registration-flow"
@@ -456,8 +456,31 @@ function profileGamesFilterPath(username, key, value) {
   return `${profilePath(username)}/games?${params.toString()}`
 }
 
+function normalizeUsername(value) {
+  return String(value || "").trim().toLowerCase()
+}
+
 function opponentFilterValue(row) {
   return row.username
+}
+
+function botSupportedRuleVariants(bot) {
+  const supported = Array.isArray(bot?.supported_rule_variants) ? bot.supported_rule_variants : []
+  const normalized = supported
+    .map((value) => (typeof value === "string" ? value.trim() : ""))
+    .filter(Boolean)
+
+  return normalized.length > 0 ? normalized : DEFAULT_BOT_RULE_VARIANTS
+}
+
+function challengeRuleLabel(ruleVariant) {
+  const formatted = formatRuleVariant(ruleVariant)
+  return formatted === "—" ? ruleVariant : formatted
+}
+
+function subscriptionTierLabel(code) {
+  const tier = Object.values(PROFILE_TIER_DETAILS).find((detail) => detail.code === code)
+  return tier ? `Tier ${tier.code} ${tier.name}` : `Tier ${code}`
 }
 
 function tierDetailsForProfile(profile) {
@@ -486,6 +509,13 @@ export default function ProfilePage() {
   const [recentGames, setRecentGames] = useState([])
   const [ratingSeries, setRatingSeries] = useState({ game: [], date: [] })
   const [ratingTrack, setRatingTrack] = useState("overall")
+  const [challengeBots, setChallengeBots] = useState([])
+  const [challengeBotsProfileUsername, setChallengeBotsProfileUsername] = useState("")
+  const [challengeBotsLoading, setChallengeBotsLoading] = useState(false)
+  const [challengeBotsError, setChallengeBotsError] = useState("")
+  const [challengeRuleVariant, setChallengeRuleVariant] = useState("")
+  const [challengeCreating, setChallengeCreating] = useState(false)
+  const [challengeError, setChallengeError] = useState("")
   const [conversionForm, setConversionForm] = useState({ email: "", password: "" })
   const [conversionError, setConversionError] = useState("")
 
@@ -545,6 +575,51 @@ export default function ProfilePage() {
     }
   }, [ratingTrack, username])
 
+  useEffect(() => {
+    const botProfile = profile?.role === "bot" || profile?.is_bot
+    if (!botProfile) {
+      setChallengeBots([])
+      setChallengeBotsProfileUsername("")
+      setChallengeBotsError("")
+      setChallengeBotsLoading(false)
+      setChallengeRuleVariant("")
+      setChallengeError("")
+      return undefined
+    }
+
+    let cancelled = false
+    const targetUsername = profile?.username || username
+
+    async function loadChallengeBots() {
+      setChallengeBotsLoading(true)
+      setChallengeBotsProfileUsername("")
+      setChallengeBotsError("")
+      setChallengeError("")
+      try {
+        const response = await getBots()
+        if (!cancelled) {
+          setChallengeBots(Array.isArray(response?.bots) ? response.bots : [])
+          setChallengeBotsProfileUsername(targetUsername)
+        }
+      } catch (apiError) {
+        if (!cancelled) {
+          setChallengeBots([])
+          setChallengeBotsProfileUsername(targetUsername)
+          setChallengeBotsError(apiError?.message ?? "Unable to check bot availability right now.")
+        }
+      } finally {
+        if (!cancelled) {
+          setChallengeBotsLoading(false)
+        }
+      }
+    }
+
+    loadChallengeBots()
+    return () => {
+      cancelled = true
+    }
+  }, [profile?.is_bot, profile?.role, profile?.username, username])
+
   const stats = useMemo(() => {
     const source = profile?.stats ?? {}
     const ratings = normalizeRatings(source)
@@ -562,9 +637,26 @@ export default function ProfilePage() {
   const userOpponentRows = useMemo(() => (userMetrics?.opponents ?? []).slice(0, 5), [userMetrics])
   const userRulesetRows = useMemo(() => (userMetrics?.rulesets ?? []).slice(0, 4), [userMetrics])
   const profileUsername = profile?.username || username
+  const challengeAvailabilityReady = challengeBotsProfileUsername === profileUsername
   const isOwnGuestProfile = user?.is_guest === true && profile?.role === "guest" && user?.username === profile?.username
   const convertedUsername = regularNameFromGuest(profile?.username)
   const profileTier = tierDetailsForProfile(profile)
+  const profileTierLabel = profileTier?.ariaLabel || "Player tier"
+  const challengeBot = useMemo(() => {
+    if (!isBotProfile) return null
+    const targetUsername = normalizeUsername(profileUsername)
+    return challengeBots.find((bot) => normalizeUsername(bot?.username) === targetUsername) ?? null
+  }, [challengeBots, isBotProfile, profileUsername])
+  const challengeRuleVariants = useMemo(() => (challengeBot ? botSupportedRuleVariants(challengeBot) : []), [challengeBot])
+
+  useEffect(() => {
+    if (!challengeBot) {
+      setChallengeRuleVariant("")
+      return
+    }
+
+    setChallengeRuleVariant((current) => (challengeRuleVariants.includes(current) ? current : (challengeRuleVariants[0] ?? "")))
+  }, [challengeBot, challengeRuleVariants])
 
   async function onConvertGuest(event) {
     event.preventDefault()
@@ -585,6 +677,42 @@ export default function ProfilePage() {
     }
   }
 
+  async function onChallengeBot(event) {
+    event.preventDefault()
+    setChallengeError("")
+
+    if (!challengeBot?.bot_id) {
+      setChallengeError("This bot is not available for your current tier.")
+      return
+    }
+
+    if (!challengeRuleVariant) {
+      setChallengeError("Choose a ruleset before starting the game.")
+      return
+    }
+
+    setChallengeCreating(true)
+    try {
+      const created = await createGame({
+        rule_variant: challengeRuleVariant,
+        play_as: "random",
+        time_control: "rapid",
+        opponent_type: "bot",
+        bot_id: challengeBot.bot_id,
+      })
+      const gameRef = created?.game_code ?? created?.game_id
+      if (gameRef) {
+        navigate(`/game/${gameRef}`)
+        return
+      }
+      setChallengeError("Game was created, but the game code was not returned.")
+    } catch (apiError) {
+      setChallengeError(apiError?.message ?? "Unable to create game right now.")
+    } finally {
+      setChallengeCreating(false)
+    }
+  }
+
   if (loading) {
     return <main className="page-shell profile-page"><h1>Profile</h1><p>Loading profile…</p></main>
   }
@@ -598,7 +726,8 @@ export default function ProfilePage() {
       <h1>{profile?.username}</h1>
       <p>Member since {formatDate(profile?.member_since)}.</p>
       {profileTier ? (
-        <section className={`profile-card profile-tier-card ${profileTier.className}`} aria-label={profileTier.ariaLabel || "Player tier"}>
+        <section className={`profile-card profile-tier-card ${profileTier.className}`} aria-label={profileTierLabel}>
+          <Link className="profile-tier-card__link" to="/subscription" aria-label={`${profileTierLabel}: Tier ${profileTier.code} ${profileTier.name}. View subscription options`} />
           <TierBadge code={profileTier.code} className="profile-tier-card__code" />
           <div className="profile-tier-card__body">
             <h2>Tier {profileTier.code} {profileTier.name}</h2>
@@ -755,6 +884,41 @@ export default function ProfilePage() {
         </div>
         <EloChart seriesByMode={ratingSeries} emptyText="No finished games with rating history yet." ratingTrack={ratingTrack} showTrackToggle={false} />
       </section>
+
+      {isBotProfile ? (
+        <section className="profile-card profile-challenge-card" aria-label="Challenge this bot">
+          <h2>Challenge this bot</h2>
+          {challengeBotsLoading || !challengeAvailabilityReady ? (
+            <p>Checking challenge availability…</p>
+          ) : challengeBotsError ? (
+            <p role="alert" className="auth-error">{challengeBotsError}</p>
+          ) : challengeBot ? (
+            <form className="profile-challenge-form" onSubmit={onChallengeBot}>
+              <label>
+                Ruleset
+                <select value={challengeRuleVariant} onChange={(event) => setChallengeRuleVariant(event.target.value)}>
+                  {challengeRuleVariants.map((ruleVariant) => (
+                    <option key={ruleVariant} value={ruleVariant}>{challengeRuleLabel(ruleVariant)}</option>
+                  ))}
+                </select>
+              </label>
+              <button type="submit" disabled={challengeCreating}>
+                {challengeCreating ? "Starting…" : "Play game"}
+              </button>
+              {challengeError ? <p role="alert" className="auth-error">{challengeError}</p> : null}
+            </form>
+          ) : (
+            <div className="profile-challenge-upgrade">
+              <p>
+                {profileTier
+                  ? `${profileUsername} is available from ${subscriptionTierLabel(profileTier.code)}. Upgrade your tier to challenge this bot.`
+                  : "This bot is not available for your current tier. Upgrade your tier to challenge it."}
+              </p>
+              <Link className="button-link button-link--primary" to="/subscription">View tiers</Link>
+            </div>
+          )}
+        </section>
+      ) : null}
 
       <section className="profile-card" aria-label="Recent games">
         <h2>Recent games</h2>
