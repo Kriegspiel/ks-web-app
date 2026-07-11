@@ -47,4 +47,23 @@ describe("Subscription CSS", () => {
     expect(botItemsRule).toMatch(/list-style:\s*none;/)
     expect(botItemsRule).toMatch(/margin:\s*0;/)
   })
+
+  it("makes the current tier badge high contrast", () => {
+    const currentLabelRule = blockFor(subscriptionCss, ".subscription-tier-table__current-label")
+    expect(currentLabelRule).toMatch(/background:\s*var\(--accent\);/)
+    expect(currentLabelRule).toMatch(/color:\s*var\(--bg\);/)
+    expect(currentLabelRule).toMatch(/box-shadow:/)
+    expect(currentLabelRule).toMatch(/font-weight:\s*800;/)
+  })
+
+  it("styles the support note as a readable post-table section", () => {
+    const supportNoteRule = blockFor(subscriptionCss, ".subscription-support-note")
+    expect(supportNoteRule).toMatch(/display:\s*grid;/)
+    expect(supportNoteRule).toMatch(/margin-top:\s*1\.15rem;/)
+    expect(supportNoteRule).toMatch(/background:\s*color-mix/)
+
+    const supportParagraphRule = blockFor(subscriptionCss, ".subscription-support-note p")
+    expect(supportParagraphRule).toMatch(/max-width:\s*58rem;/)
+    expect(supportParagraphRule).toMatch(/margin:\s*0;/)
+  })
 })
