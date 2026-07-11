@@ -49,6 +49,7 @@ beforeEach(() => {
       { bot_id: "bot-9", username: "llm_gemini31_pro_preview", display_name: "LLM Gemini 3.1 Pro Preview (bot)", description: "Gemini 3.1 Pro Preview model bot.", elo: 1600, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier4", llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-10", username: "llm_mistral_large3", display_name: "LLM Mistral Large 3 (bot)", description: "Mistral Large 3 model bot.", elo: 1475, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-11", username: "llm_mistral_nemo", display_name: "LLM Mistral Nemo (bot)", description: "Mistral Nemo model bot.", elo: 1180, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-12", username: "llm_gpt55", display_name: "LLM GPT-5.5 (bot)", description: "GPT-5.5 model bot.", elo: 1505, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
     ],
   })
 })
@@ -483,6 +484,7 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1300 - LLM Haiku" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1475 - LLM Mistral Large 3" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1460 - LLM Nemotron Ultra" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1200 - Random Any Bot" })).toBeInTheDocument()
@@ -491,9 +493,11 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1300 - LLM Haiku" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1475 - LLM Mistral Large 3" })).toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).toHaveAttribute("aria-disabled", "true")
     expect(within(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).getByText("Requires T2")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1475 - LLM Mistral Large 3" })).getByText("Requires T3")).toBeInTheDocument()
+    expect(within(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).getByText("Requires T3")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).getByText("Requires T4")).toBeInTheDocument()
     expect(botOptionLabels()).toEqual([
       "1200 - Random Any Bot",
@@ -503,6 +507,7 @@ describe("LobbyPage", () => {
       "1342 - LLM GPT-Nano",
       "1460 - LLM Nemotron Ultra",
       "1475 - LLM Mistral Large 3",
+      "1505 - LLM GPT-5.5",
       "1600 - LLM Gemini 3.1 Pro Preview",
     ])
     expect(screen.queryByText("(No ply limit)")).not.toBeInTheDocument()
