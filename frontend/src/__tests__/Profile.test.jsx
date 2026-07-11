@@ -421,6 +421,25 @@ describe("ProfilePage", () => {
     expect(screen.getByText("Qwen3.6 Flash model bot for T3 Strong.")).toBeInTheDocument()
   })
 
+  it("marks_nemotron_ultra_bot_as_tier_three", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "llm_nemotron_ultra",
+      role: "bot",
+      member_since: "2026-07-10T00:00:00Z",
+      stats: {},
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile("/user/llm_nemotron_ultra")
+
+    await screen.findByRole("heading", { name: "llm_nemotron_ultra" })
+    expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Tier T3 LLM bot" })).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T3")).toHaveClass("tier-badge", "tier-badge--t3", "profile-tier-card__code")
+    expect(screen.getByText("Nemotron Ultra model bot for T3 Strong.")).toBeInTheDocument()
+  })
+
   it("marks_darkboard_mcts_as_a_tier_one_bot", async () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username: "darkboardmcts",

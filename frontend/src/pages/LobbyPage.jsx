@@ -55,7 +55,7 @@ const BOT_TIER_BY_USERNAME = {
   llm_glm45_air: "T2",
   llm_nemotron_nano: "T2",
   llm_nemotron_super: "T2",
-  llm_nemotron_ultra: "T2",
+  llm_nemotron_ultra: "T3",
   llm_kimi_k25: "T2",
   llm_hermes4_70b: "T2",
   llm_phi4: "T2",

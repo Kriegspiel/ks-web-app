@@ -207,12 +207,6 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     tierName: "Club",
     className: "profile-tier-card--tier2",
   },
-  llm_nemotron_ultra: {
-    code: "T2",
-    model: "Nemotron Ultra",
-    tierName: "Club",
-    className: "profile-tier-card--tier2",
-  },
   llm_kimi_k25: {
     code: "T2",
     model: "Kimi K2.5",
@@ -246,6 +240,12 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_gemini25_flash: {
     code: "T3",
     model: "Gemini 2.5 Flash",
+    tierName: "Strong",
+    className: "profile-tier-card--tier3",
+  },
+  llm_nemotron_ultra: {
+    code: "T3",
+    model: "Nemotron Ultra",
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
