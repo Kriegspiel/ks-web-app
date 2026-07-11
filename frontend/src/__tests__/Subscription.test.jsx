@@ -129,7 +129,7 @@ describe("SubscriptionPage", () => {
     expect(within(botCells[3]).getByRole("link", { name: "Ultra" })).toHaveAttribute("href", "/user/llm_nemotron_ultra")
     expect(screen.getByRole("heading", { name: "Why subscriptions help" })).toBeInTheDocument()
     expect(screen.getByText(/The free T1 level covers almost everything most players need/i)).toBeInTheDocument()
-    expect(screen.getByText(/stronger bots use paid AI tokens/i)).toBeInTheDocument()
+    expect(screen.getByText(/bring more challenge, variety, and joy/i)).toBeInTheDocument()
     expect(screen.getByText(TEST_VERSION_STAMP)).toBeInTheDocument()
     expect(screen.queryByRole("rowheader", { name: "Public player profile" })).not.toBeInTheDocument()
     expect(screen.queryByRole("rowheader", { name: "Leaderboard eligibility" })).not.toBeInTheDocument()

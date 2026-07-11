@@ -436,9 +436,10 @@ export default function SubscriptionPage() {
           improving.
         </p>
         <p>
-          Paid tiers exist because stronger bots use paid AI tokens. A
-          subscription helps cover those costs, and it is also a generous way to
-          support the project and keep Kriegspiel welcoming for everyone.
+          Paid tiers exist because stronger bots use paid AI tokens, and they
+          bring more challenge, variety, and joy to the game. A subscription
+          helps cover those costs while supporting the project and keeping
+          Kriegspiel welcoming for everyone.
         </p>
       </section>
 
