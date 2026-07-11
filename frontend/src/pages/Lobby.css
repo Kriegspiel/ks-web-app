@@ -11,7 +11,7 @@
 .lobby-toast {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 0.9rem;
   min-height: 3rem;
   padding: 0.72rem 0.85rem;
@@ -22,10 +22,19 @@
   box-shadow: var(--shadow);
   font-weight: 750;
   pointer-events: auto;
+  text-align: center;
   animation: lobby-toast-fade var(--lobby-toast-duration, 5200ms) ease-in-out forwards;
 }
 .lobby-toast span {
+  flex: 1 1 auto;
   color: inherit;
+  text-align: center;
+}
+.lobby-toast--with-action {
+  justify-content: space-between;
+}
+.lobby-toast--with-action span {
+  text-align: left;
 }
 .lobby-toast--danger {
   border-color: var(--danger-border);
