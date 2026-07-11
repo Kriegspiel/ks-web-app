@@ -250,19 +250,11 @@ export function AppRoutes() {
           />
           <Route
             path="/subscription"
-            element={(
-              <RequireAuth>
-                <SubscriptionPage />
-              </RequireAuth>
-            )}
+            element={<SubscriptionPage />}
           />
           <Route
             path="/subcription"
-            element={(
-              <RequireAuth>
-                <SubscriptionPage />
-              </RequireAuth>
-            )}
+            element={<SubscriptionPage />}
           />
         </Route>
       </Routes>

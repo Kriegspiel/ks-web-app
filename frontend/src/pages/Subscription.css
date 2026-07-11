@@ -112,6 +112,86 @@
   overflow: hidden;
 }
 
+.subscription-public-invite {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.85rem 0 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 2px solid color-mix(in srgb, #d97706 78%, var(--border-strong) 22%);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #facc15 40%, var(--surface-strong) 60%),
+      color-mix(in srgb, #f59e0b 24%, var(--surface) 76%)
+    );
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #f59e0b 24%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.subscription-public-invite h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+  letter-spacing: 0;
+  color: color-mix(in srgb, #1f170f 88%, var(--text) 12%);
+}
+
+.subscription-public-invite p {
+  max-width: 62rem;
+  margin: 0;
+  color: color-mix(in srgb, #3e2b13 88%, var(--text) 12%);
+  font-weight: 650;
+}
+
+.subscription-public-invite__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.subscription-public-invite .button-link--primary {
+  background: #1e1611;
+  border-color: #1e1611;
+  color: #fff;
+}
+
+.subscription-public-invite .button-link--secondary {
+  background: rgba(255, 248, 240, 0.7);
+  border-color: rgba(85, 58, 34, 0.3);
+  color: #1e1611;
+}
+
+:root[data-theme="dark"] .subscription-public-invite {
+  border-color: color-mix(in srgb, #facc15 82%, var(--border-strong) 18%);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #facc15 28%, var(--surface-strong) 72%),
+      color-mix(in srgb, #d97706 24%, var(--surface) 76%)
+    );
+}
+
+:root[data-theme="dark"] .subscription-public-invite h2,
+:root[data-theme="dark"] .subscription-public-invite p {
+  color: #fff4c2;
+}
+
+:root[data-theme="dark"] .subscription-public-invite .button-link--primary {
+  background: #f4ede4;
+  border-color: #f4ede4;
+  color: #100d0a;
+}
+
+:root[data-theme="dark"] .subscription-public-invite .button-link--secondary {
+  background: rgba(28, 23, 18, 0.82);
+  border-color: rgba(244, 237, 228, 0.28);
+  color: #f4ede4;
+}
+
 .subscription-notice {
   margin: 0.85rem 0 1rem;
   padding: 0.85rem 1rem;
@@ -415,6 +495,14 @@
 
   .subscription-controls {
     grid-template-columns: 1fr;
+  }
+
+  .subscription-public-invite {
+    grid-template-columns: 1fr;
+  }
+
+  .subscription-public-invite__actions {
+    justify-content: flex-start;
   }
 
   .subscription-interval-toggle {

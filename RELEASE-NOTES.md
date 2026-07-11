@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.183
+
+- **Subscription**: make the subscription page public for logged-out visitors,
+  showing a free-profile invitation while keeping current-level and billing
+  controls limited to signed-in users.
+
 ## ks-web-app frontend v. 1.3.182
 
 - **Subscription**: hide Nemotron Nano from the visible tier matrix while
