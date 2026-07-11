@@ -2,7 +2,7 @@ import "./TierBadge.css"
 
 function tierClassName(code) {
   const normalized = String(code || "").trim().toLowerCase()
-  return /^t[0-6]$/.test(normalized) ? `tier-badge--${normalized}` : ""
+  return /^t[0-6]$/.test(normalized) || normalized === "td" ? `tier-badge--${normalized}` : ""
 }
 
 export default function TierBadge({ code, className = "", ...props }) {

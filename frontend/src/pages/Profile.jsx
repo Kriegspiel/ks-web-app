@@ -48,6 +48,12 @@ const PROFILE_TIER_DETAILS = {
     className: "profile-tier-card--tier6",
   },
 }
+const DEACTIVATED_BOT_TIER_DETAILS = {
+  code: "TD",
+  name: "Deactivated",
+  limit: "Deactivated bot account.",
+  className: "profile-tier-card--deactivated",
+}
 const BOT_TIER_DETAILS_BY_USERNAME = {
   randobot: {
     code: "T0",
@@ -73,6 +79,16 @@ const BOT_TIER_DETAILS_BY_USERNAME = {
     limit: "Darkboard MCTS bot for T1 Casual.",
     className: "profile-tier-card--tier1",
   },
+  stockfishwild: {
+    code: "T1",
+    name: "Stockfish Wild 16",
+    limit: "Stockfish Wild 16 bot for T1 Casual.",
+    className: "profile-tier-card--tier1",
+  },
+  openrouterbot: DEACTIVATED_BOT_TIER_DETAILS,
+  probebotnoemail: DEACTIVATED_BOT_TIER_DETAILS,
+  randobot_e2e1ebjq1: DEACTIVATED_BOT_TIER_DETAILS,
+  randobot_e2euvbdsb: DEACTIVATED_BOT_TIER_DETAILS,
 }
 const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_gpt45nano: {
