@@ -271,10 +271,14 @@
 .lobby-list li { display: flex; justify-content: space-between; gap: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.85rem 0.95rem; align-items: center; background: color-mix(in srgb, var(--surface-strong) 92%, var(--surface) 8%); }
 .lobby-open-games-list {
   --lobby-open-game-row-min-height: 5.55rem;
-  max-height: calc((var(--lobby-open-game-row-min-height) * 5) + (0.75rem * 4));
+  --lobby-open-game-row-visible-height: 8.85rem;
+}
+.lobby-open-games-list--scrollable {
+  max-height: calc((var(--lobby-open-game-row-visible-height) * 4) + (0.75rem * 3));
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 0.25rem;
+  scrollbar-gutter: stable;
 }
 .lobby-open-games-list li {
   min-height: var(--lobby-open-game-row-min-height);
@@ -438,6 +442,7 @@ button.lobby-created-game__code-button:focus-visible .lobby-created-game__code {
   .lobby-list__actions { justify-content: flex-start; }
   .lobby-open-games-list {
     --lobby-open-game-row-min-height: 6.45rem;
+    --lobby-open-game-row-visible-height: 10.75rem;
   }
   .lobby-opponent-options { grid-template-columns: 1fr; }
   .lobby-bot-tier-picker { width: 100%; }

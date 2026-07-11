@@ -1080,7 +1080,7 @@ export default function LobbyPage() {
           <p className="lobby-meta">No open games yet. Create a waiting game and it will appear here.</p>
         ) : null}
         {sortedOpenGames.length > 0 ? (
-          <ul className="lobby-list lobby-open-games-list">
+          <ul className={`lobby-list lobby-open-games-list${sortedOpenGames.length >= 5 ? " lobby-open-games-list--scrollable" : ""}`}>
             {sortedOpenGames.map((game, index) => {
               const ownOpenGame = isOwnOpenGame(game, user?.username)
               const gameCode = game.game_code ?? game.game_id ?? "Unknown code"

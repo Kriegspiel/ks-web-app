@@ -93,8 +93,10 @@ describe("LobbyPage", () => {
 
     expect(css).toContain("background: color-mix(in srgb, var(--surface-strong) 92%, var(--surface) 8%);")
     expect(css).toContain(".lobby-open-games-list")
-    expect(css).toContain("max-height: calc((var(--lobby-open-game-row-min-height) * 5) + (0.75rem * 4));")
+    expect(css).toContain(".lobby-open-games-list--scrollable")
+    expect(css).toContain("max-height: calc((var(--lobby-open-game-row-visible-height) * 4) + (0.75rem * 3));")
     expect(css).toContain("overflow-y: auto;")
+    expect(css).toContain("scrollbar-gutter: stable;")
     expect(css).toContain(".lobby-open-games-list li.is-joinable")
     expect(css).toContain(".lobby-open-game__opponent")
     expect(css).toContain(".lobby-open-game__rules")
@@ -300,6 +302,32 @@ describe("LobbyPage", () => {
     expect(text.indexOf("Rules: Wild 16")).toBeLessThan(text.indexOf("Color: black"))
     expect(text.indexOf("Color: black")).toBeLessThan(text.indexOf("2026-04-03 23:59:59 UTC"))
     expect(text.indexOf("2026-04-03 23:59:59 UTC")).toBeLessThan(text.indexOf("ABCD23"))
+  })
+
+  it("only_makes_open_games_scrollable_from_the_fifth_game", async () => {
+    const makeOpenGame = (index) => ({
+      game_code: `OPEN0${index}`,
+      rule_variant: "berkeley_any",
+      created_by: `player${index}`,
+      available_color: index % 2 === 0 ? "black" : "white",
+      created_at: `2026-04-03T23:59:5${index}Z`,
+    })
+
+    mockApi.getOpenGames.mockResolvedValue({ games: [1, 2, 3, 4].map(makeOpenGame) })
+    renderPage()
+
+    let openGamesSection = (await screen.findByRole("heading", { name: "Open games" })).closest("section")
+    expect(await within(openGamesSection).findAllByRole("listitem")).toHaveLength(4)
+    expect(within(openGamesSection).getByRole("list")).toHaveClass("lobby-open-games-list")
+    expect(within(openGamesSection).getByRole("list")).not.toHaveClass("lobby-open-games-list--scrollable")
+
+    cleanup()
+    mockApi.getOpenGames.mockResolvedValue({ games: [1, 2, 3, 4, 5].map(makeOpenGame) })
+    renderPage()
+
+    openGamesSection = (await screen.findByRole("heading", { name: "Open games" })).closest("section")
+    expect(await within(openGamesSection).findAllByRole("listitem")).toHaveLength(5)
+    expect(within(openGamesSection).getByRole("list")).toHaveClass("lobby-open-games-list--scrollable")
   })
 
   it("shows_unknown_creator_when_an_open_game_has_no_owner", async () => {
