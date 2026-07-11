@@ -138,6 +138,14 @@
   background: color-mix(in srgb, var(--surface-strong) 88%, var(--surface) 12%);
 }
 
+.subscription-tier-table th.subscription-tier-table__current-column,
+.subscription-tier-table td.subscription-tier-table__current-column {
+  background: color-mix(in srgb, var(--accent-soft) 56%, var(--surface-strong) 44%) !important;
+  box-shadow:
+    inset 0.16rem 0 0 var(--accent),
+    inset -0.16rem 0 0 var(--accent);
+}
+
 .subscription-tier-table thead th {
   position: sticky;
   top: 0;
@@ -194,6 +202,20 @@
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--muted);
+}
+
+.subscription-tier-table__current-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.45rem;
+  padding: 0.18rem 0.48rem;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .subscription-tier-table__heading button {

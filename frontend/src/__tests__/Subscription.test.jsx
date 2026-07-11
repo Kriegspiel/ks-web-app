@@ -81,6 +81,9 @@ describe("SubscriptionPage", () => {
 
     await screen.findByRole("heading", { name: "Subscription" })
     expect(screen.getByRole("button", { name: "Manage billing (opens external website)" })).toHaveTextContent(/Manage billing\s*↗/)
+    const currentTierHeader = screen.getByText("Current tier").closest("th")
+    expect(currentTierHeader).toHaveAttribute("aria-current", "true")
+    expect(currentTierHeader).toHaveTextContent("Casual")
     const rowHeaders = screen.getAllByRole("rowheader").map((cell) => cell.textContent)
     expect(rowHeaders.slice(0, 3)).toEqual(["Play human games", "Rating history", "Play bots"])
     const ratingHistoryRow = screen.getByRole("rowheader", { name: "Rating history" }).closest("tr")
@@ -100,6 +103,7 @@ describe("SubscriptionPage", () => {
     expect(screen.queryByRole("rowheader", { name: "Leaderboard eligibility" })).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Choose Tier T3 Strong" }))
+    expect(screen.getByText("Current tier").closest("th")).toHaveTextContent("Casual")
     fireEvent.click(screen.getByRole("button", { name: "Yearly" }))
     fireEvent.click(screen.getByRole("button", { name: "Open payment form" }))
 
