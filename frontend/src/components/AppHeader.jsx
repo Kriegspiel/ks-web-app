@@ -12,6 +12,7 @@ function AuthLinks() {
   const username = typeof user?.username === "string" ? user.username : ""
   const userProfilePath = username ? `/user/${encodeURIComponent(username)}` : "/settings"
   const userCurrent = username ? location.pathname === userProfilePath : location.pathname === "/settings"
+  const subscriptionCurrent = location.pathname === "/subscription" || location.pathname === "/subcription"
 
   useEffect(() => {
     if (!profileMenuOpen) {
@@ -66,6 +67,13 @@ function AuthLinks() {
               aria-current={userCurrent ? "page" : undefined}
             >
               User
+            </Link>
+            <Link
+              className="header-profile-menu__item"
+              to="/subscription"
+              aria-current={subscriptionCurrent ? "page" : undefined}
+            >
+              Subscription
             </Link>
             <button
               type="button"

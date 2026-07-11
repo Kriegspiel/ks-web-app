@@ -72,6 +72,7 @@ describe("Nav", () => {
     fireEvent.click(screen.getByText("Profile"))
 
     expect(screen.getByRole("link", { name: "User" })).toHaveAttribute("href", "/user/fil")
+    expect(screen.getByRole("link", { name: "Subscription" })).toHaveAttribute("href", "/subscription")
     expect(screen.getByRole("button", { name: "Logout" })).toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Home" })).not.toBeInTheDocument()
     expect(screen.queryByText(/signed in as/i)).not.toBeInTheDocument()

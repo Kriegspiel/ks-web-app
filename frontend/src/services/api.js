@@ -171,6 +171,32 @@ export const userApi = {
   },
   async updateSettings(payload) { const response = await api.patch('/api/user/settings', payload); return response.data },
 }
+export const billingApi = {
+  async getSubscription() {
+    try {
+      const response = await api.get("/api/billing/subscription")
+      return response.data
+    } catch (error) {
+      throw normalizeError(error, "Unable to load billing details right now.")
+    }
+  },
+  async createCheckoutSession(payload) {
+    try {
+      const response = await api.post("/api/billing/checkout-session", payload)
+      return response.data
+    } catch (error) {
+      throw normalizeError(error, "Unable to start checkout right now.")
+    }
+  },
+  async createPortalSession() {
+    try {
+      const response = await api.post("/api/billing/portal-session")
+      return response.data
+    } catch (error) {
+      throw normalizeError(error, "Unable to open billing management right now.")
+    }
+  },
+}
 export const techApi = {
   async getBotsReport(days = 10) { const response = await api.get("/api/tech/bots-report", { params: { days } }); return response.data },
   async getBotMatrixReport(period = "lifetime", outcomes = []) {
