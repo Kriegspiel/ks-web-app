@@ -50,6 +50,13 @@ beforeEach(() => {
       { bot_id: "bot-10", username: "llm_mistral_large3", display_name: "LLM Mistral Large 3 (bot)", description: "Mistral Large 3 model bot.", elo: 1475, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-11", username: "llm_mistral_nemo", display_name: "LLM Mistral Nemo (bot)", description: "Mistral Nemo model bot.", elo: 1180, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-12", username: "llm_gpt55", display_name: "LLM GPT-5.5 (bot)", description: "GPT-5.5 model bot.", elo: 1505, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-13", username: "llm_llama31_8b", display_name: "LLM Llama 3.1 8B (bot)", description: "Llama 3.1 8B model bot.", elo: 1311, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-14", username: "llm_llama4_scout", display_name: "LLM Llama 4 Scout (bot)", description: "Llama 4 Scout model bot.", elo: 1312, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-15", username: "llm_llama4_maverick", display_name: "LLM Llama 4 Maverick (bot)", description: "Llama 4 Maverick model bot.", elo: 1313, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-16", username: "llm_gemma3_4b", display_name: "LLM Gemma 3 4B (bot)", description: "Gemma 3 4B model bot.", elo: 1314, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-17", username: "llm_gemma3_27b", display_name: "LLM Gemma 3 27B (bot)", description: "Gemma 3 27B model bot.", elo: 1315, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-18", username: "llm_gemma4_31b", display_name: "LLM Gemma 4 31B (bot)", description: "Gemma 4 31B model bot.", elo: 1316, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-19", username: "openrouter_llama31_8b", display_name: "OpenRouter Llama 3.1 8B (bot)", description: "Legacy Llama 3.1 8B model bot.", elo: 1317, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
     ],
   })
 })
@@ -483,19 +490,30 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("option", { name: "1250 - Simple Heuristics Bot" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1300 - LLM Haiku" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1313 - LLM Llama 4 Maverick" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1316 - LLM Gemma 4 31B" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1475 - LLM Mistral Large 3" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1460 - LLM Nemotron Ultra" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1200 - Random Any Bot" })).toBeInTheDocument()
     expect(screen.queryByRole("option", { name: "1180 - LLM Mistral Nemo" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "1311 - LLM Llama 3.1 8B" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "1312 - LLM Llama 4 Scout" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "1314 - LLM Gemma 3 4B" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "1315 - LLM Gemma 3 27B" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "1317 - OpenRouter Llama 3.1 8B" })).not.toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1250 - Simple Heuristics Bot" })).not.toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1300 - LLM Haiku" })).toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByRole("option", { name: "1313 - LLM Llama 4 Maverick" })).toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByRole("option", { name: "1316 - LLM Gemma 4 31B" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1475 - LLM Mistral Large 3" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).toHaveAttribute("aria-disabled", "true")
     expect(within(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).getByText("Requires T2")).toBeInTheDocument()
+    expect(within(screen.getByRole("option", { name: "1313 - LLM Llama 4 Maverick" })).getByText("Requires T2")).toBeInTheDocument()
+    expect(within(screen.getByRole("option", { name: "1316 - LLM Gemma 4 31B" })).getByText("Requires T2")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1475 - LLM Mistral Large 3" })).getByText("Requires T3")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).getByText("Requires T3")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).getByText("Requires T4")).toBeInTheDocument()
@@ -504,6 +522,8 @@ describe("LobbyPage", () => {
       "1201 - Random Bot",
       "1250 - Simple Heuristics Bot",
       "1300 - LLM Haiku",
+      "1313 - LLM Llama 4 Maverick",
+      "1316 - LLM Gemma 4 31B",
       "1342 - LLM GPT-Nano",
       "1460 - LLM Nemotron Ultra",
       "1475 - LLM Mistral Large 3",

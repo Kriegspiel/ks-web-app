@@ -98,7 +98,14 @@ const BOT_TIER_BY_USERNAME = {
   llm_gpt55_pro: "T5",
   llm_qwen37_max: "T5",
 }
-const CATALOG_HIDDEN_BOT_USERNAMES = new Set(["llm_mistral_nemo"])
+const CATALOG_HIDDEN_BOT_USERNAMES = new Set([
+  "llm_gemma3_4b",
+  "llm_gemma3_27b",
+  "llm_llama31_8b",
+  "llm_llama4_scout",
+  "llm_mistral_nemo",
+  "openrouter_llama31_8b",
+])
 
 function normalizeRuleVariant(value) {
   const normalized = typeof value === "string" ? value.trim() : ""
