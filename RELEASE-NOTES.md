@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.170
+
+- **Lobby**: make created waiting-game codes and share links copyable with
+  clear feedback in the created-game panel.
+
 ## ks-web-app frontend v. 1.3.169
 
 - **Lobby**: make open-game codes copyable with explicit feedback and split
