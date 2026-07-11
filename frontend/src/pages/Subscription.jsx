@@ -64,9 +64,6 @@ const FEATURES = [
   { name: "Play T4 bots", values: ["No", "No", "No", "No", T4_BOTS, T4_BOTS, T4_BOTS] },
   { name: "Play T5 bots", values: ["No", "No", "No", "No", "No", T5_BOTS, T5_BOTS] },
   { name: "Persistent player name", values: ["No", "Yes", "Yes", "Yes", "Yes", null, null] },
-  { name: "Public player profile", values: ["No", "Yes", "Yes", "Yes", "Yes", null, null] },
-  { name: "Leaderboard eligibility", values: ["No", "Yes", "Yes", "Yes", "Yes", null, null] },
-  { name: "Rating history", values: ["No", "Yes", "Yes", "Yes", "Yes", null, null] },
 ]
 
 function BotList({ groups }) {
