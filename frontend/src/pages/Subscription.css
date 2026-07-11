@@ -210,13 +210,13 @@
   align-items: center;
   min-height: 1.45rem;
   padding: 0.2rem 0.58rem;
-  border: 1px solid var(--accent);
+  border: 1px solid color-mix(in srgb, var(--success) 70%, var(--text) 30%);
   border-radius: 999px;
-  background: var(--accent);
-  color: var(--bg);
+  background: color-mix(in srgb, var(--success) 16%, var(--surface-strong) 84%);
+  color: var(--success);
   box-shadow:
     0 0 0 2px var(--surface-strong),
-    0 0 0 4px color-mix(in srgb, var(--accent) 26%, transparent);
+    0 0 0 4px color-mix(in srgb, var(--success) 22%, transparent);
   font-size: 0.72rem;
   font-weight: 800;
   white-space: nowrap;

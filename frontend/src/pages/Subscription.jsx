@@ -386,8 +386,8 @@ export default function SubscriptionPage() {
                           <TierBadge code={tier.code} />
                         </span>
                         <span className="subscription-tier-table__name">{tier.name}</span>
-                        {current ? <span className="subscription-tier-table__current-label">Current tier</span> : null}
                         <span className="subscription-tier-table__price">{tier.price}</span>
+                        {current ? <span className="subscription-tier-table__current-label">Current level</span> : null}
                         {tier.selectable ? (
                           <button
                             type="button"
