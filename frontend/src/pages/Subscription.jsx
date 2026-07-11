@@ -10,9 +10,9 @@ import "./Subscription.css"
 const TIERS = [
   { key: "tier0", apiTier: null, code: "T0", name: "Guest", price: "Free", selectable: false },
   { key: "tier1", apiTier: null, code: "T1", name: "Casual", price: "Free", selectable: false },
-  { key: "tier2", apiTier: "tier2", code: "T2", name: "Club", price: "$10/mo / $100/yr", selectable: true },
-  { key: "tier3", apiTier: "tier3", code: "T3", name: "Strong", price: "$20/mo / $200/yr", selectable: true },
-  { key: "tier4", apiTier: "tier4", code: "T4", name: "Expert", price: "$50/mo / $500/yr", selectable: true },
+  { key: "tier2", apiTier: "tier2", code: "T2", name: "Club", price: { monthly: "$10/mo", yearly: "$100/yr" }, selectable: true },
+  { key: "tier3", apiTier: "tier3", code: "T3", name: "Strong", price: { monthly: "$20/mo", yearly: "$200/yr" }, selectable: true },
+  { key: "tier4", apiTier: "tier4", code: "T4", name: "Expert", price: { monthly: "$50/mo", yearly: "$500/yr" }, selectable: true },
   { key: "tier5", apiTier: null, code: "T5", name: "Master", price: "Not available yet", selectable: false, future: true },
   { key: "tier6", apiTier: null, code: "T6", name: "Elite", price: "Not available yet", selectable: false, future: true },
 ]
@@ -164,6 +164,18 @@ function currentTierKey(status, user) {
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ")
+}
+
+function TierPrice({ price, className = "" }) {
+  if (typeof price === "string") {
+    return <span className={className}>{price}</span>
+  }
+  return (
+    <span className={classNames(className, "subscription-tier-price--stacked")}>
+      <span>{price.monthly}</span>
+      <span>{price.yearly}</span>
+    </span>
+  )
 }
 
 function createEmbeddedCheckout(stripe, options) {
@@ -323,7 +335,7 @@ export default function SubscriptionPage() {
           <TierBadge code={selectedTierDetails.code} />
           <div>
             <h2>Tier {selectedTierDetails.code} {selectedTierDetails.name}</h2>
-            <p>{selectedTierDetails.price}</p>
+            <p><TierPrice price={selectedTierDetails.price} className="subscription-controls__price" /></p>
           </div>
         </div>
         <div className="subscription-interval-toggle" aria-label="Billing interval">
@@ -386,7 +398,7 @@ export default function SubscriptionPage() {
                           <TierBadge code={tier.code} />
                         </span>
                         <span className="subscription-tier-table__name">{tier.name}</span>
-                        <span className="subscription-tier-table__price">{tier.price}</span>
+                        <TierPrice price={tier.price} className="subscription-tier-table__price" />
                         {current ? <span className="subscription-tier-table__current-label">Current level</span> : null}
                         {tier.selectable ? (
                           <button

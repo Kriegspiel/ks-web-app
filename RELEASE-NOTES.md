@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.167
+
+- **Subscription**: stack monthly and yearly tier prices on separate lines so
+  pricing stays compact and easier to scan in the tier table.
+
 ## ks-web-app frontend v. 1.3.127
 
 - **T3 Replay**: turn the hidden T3 review route into a synced replay with

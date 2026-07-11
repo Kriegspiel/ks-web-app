@@ -86,6 +86,12 @@ describe("SubscriptionPage", () => {
     expect(currentTierHeader).toHaveTextContent("Casual")
     const documentPositionFollowing = 4
     expect(within(currentTierHeader).getByText("Free").compareDocumentPosition(within(currentTierHeader).getByText("Current level")) & documentPositionFollowing).toBeTruthy()
+    const controls = screen.getByRole("region", { name: "Subscription controls" })
+    expect(within(controls).getByText("$10/mo").compareDocumentPosition(within(controls).getByText("$100/yr")) & documentPositionFollowing).toBeTruthy()
+    expect(within(controls).queryByText("$10/mo / $100/yr")).not.toBeInTheDocument()
+    const tier2Header = screen.getByText("Club").closest("th")
+    expect(within(tier2Header).getByText("$10/mo").compareDocumentPosition(within(tier2Header).getByText("$100/yr")) & documentPositionFollowing).toBeTruthy()
+    expect(within(tier2Header).queryByText("$10/mo / $100/yr")).not.toBeInTheDocument()
     const rowHeaders = screen.getAllByRole("rowheader").map((cell) => cell.textContent)
     expect(rowHeaders.slice(0, 4)).toEqual(["Play human games", "Completed-game review", "Rating history", "Play bots"])
     const humanGamesRow = screen.getByRole("rowheader", { name: "Play human games" }).closest("tr")
