@@ -72,6 +72,11 @@
   --tier-badge-corner: #d88fe8;
 }
 
+.tier-badge--td {
+  --tier-badge-color: #3f3f46;
+  --tier-badge-corner: #a1a1aa;
+}
+
 :root[data-theme="dark"] .tier-badge {
   border-color: rgba(255, 248, 240, 0.24);
   box-shadow:

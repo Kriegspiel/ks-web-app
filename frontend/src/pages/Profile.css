@@ -64,6 +64,10 @@
   --profile-tier-color: #56345d;
 }
 
+.profile-tier-card--deactivated {
+  --profile-tier-color: #3f3f46;
+}
+
 .profile-tier-card--bot {
   align-items: start;
 }

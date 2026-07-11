@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.179
+
+- **Profile**: show Stockfish Wild 16 as a T1 bot and add a TD badge for
+  deactivated bot accounts on profile pages.
+
 ## ks-web-app frontend v. 1.3.178
 
 - **Bot Catalog**: promote Gemini 3.1 Flash-Lite to the visible T3 Gemini slot

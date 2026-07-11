@@ -66,6 +66,7 @@ describe("ProfilePage", () => {
     expect(badgeCss).toContain(".tier-badge--t4 {\n  --tier-badge-color: #255660;\n  --tier-badge-corner: #67d9ec;")
     expect(badgeCss).toContain(".tier-badge--t5 {\n  --tier-badge-color: #2f4772;\n  --tier-badge-corner: #86a8ff;")
     expect(badgeCss).toContain(".tier-badge--t6 {\n  --tier-badge-color: #56345d;\n  --tier-badge-corner: #d88fe8;")
+    expect(badgeCss).toContain(".tier-badge--td {\n  --tier-badge-color: #3f3f46;\n  --tier-badge-corner: #a1a1aa;")
     expect(badgeCss).toContain(".tier-badge::before")
     expect(badgeCss).toContain("clip-path: polygon(100% 0, 0 0, 100% 100%)")
     expect(profileCss).toContain("--tier-badge-size: 2.35rem")
@@ -617,6 +618,7 @@ describe("ProfilePage", () => {
     ["randobot", "Tier T0 Random Bot", "T0", "tier-badge--t0", "Random Bot for T0 Guest."],
     ["randobotany", "Tier T0 Random Any Bot", "T0", "tier-badge--t0", "Random Any Bot for T0 Guest."],
     ["simpleheuristics", "Tier T1 Simple Heuristics Bot", "T1", "tier-badge--t1", "Simple Heuristics Bot for T1 Casual."],
+    ["stockfishwild", "Tier T1 Stockfish Wild 16", "T1", "tier-badge--t1", "Stockfish Wild 16 bot for T1 Casual."],
   ])("marks_%s_with_the_non_llm_bot_tier", async (username, heading, code, tierClass, copy) => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username,
@@ -636,6 +638,31 @@ describe("ProfilePage", () => {
     expect(within(botTier).getByRole("heading", { name: heading })).toBeInTheDocument()
     expect(within(botTier).getByText(code)).toHaveClass("tier-badge", tierClass, "profile-tier-card__code")
     expect(within(botTier).getByText(copy)).toBeInTheDocument()
+  })
+
+  it.each([
+    "openrouterbot",
+    "probebotnoemail",
+    "randobot_e2e1ebjq1",
+    "randobot_e2euvbdsb",
+  ])("marks_%s_as_a_deactivated_bot_tier", async (username) => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username,
+      role: "bot",
+      llm_bot_tier: null,
+      member_since: "2026-07-11T00:00:00Z",
+      stats: {},
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile(`/user/${username}`)
+
+    await screen.findByRole("heading", { name: username })
+    const botTier = screen.getByRole("region", { name: "Bot tier" })
+    expect(within(botTier).getByRole("heading", { name: "Tier TD Deactivated" })).toBeInTheDocument()
+    expect(within(botTier).getByText("TD")).toHaveClass("tier-badge", "tier-badge--td", "profile-tier-card__code")
+    expect(within(botTier).getByText("Deactivated bot account.")).toBeInTheDocument()
   })
 
   it("marks_darkboard_mcts_as_a_tier_one_bot", async () => {
