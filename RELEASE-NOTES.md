@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.174
+
+- **Subscriptions**: link every live T4 model entry to its bot profile and keep
+  T4 bots grouped as Expert opponents in the lobby picker.
+
 ## ks-web-app frontend v. 1.3.173
 
 - **Subscription**: add a bot availability disclaimer with contact links for
