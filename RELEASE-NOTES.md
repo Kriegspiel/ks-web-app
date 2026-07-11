@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.175
+
+- **Game Review**: remove the unsupported alternate completed-game review
+  route so game review uses the standard replay surface only.
+
 ## ks-web-app frontend v. 1.3.174
 
 - **Subscriptions**: link every live T4 model entry to its bot profile and keep
@@ -45,25 +50,10 @@ need version entries unless they ship a user-visible change.
 - **Subscription**: stack monthly and yearly tier prices on separate lines so
   pricing stays compact and easier to scan in the tier table.
 
-## ks-web-app frontend v. 1.3.127
-
-- **T3 Replay**: turn the hidden T3 review route into a synced replay with
-  board controls, move timeline, per-move risk, best-gap, and GPT coaching.
-
 ## ks-web-app frontend v. 1.3.126
 
 - **Profile**: stop requesting game-history filter options for the recent-games
   preview so profile loads avoid unnecessary archive-history work.
-
-## ks-web-app frontend v. 1.3.125
-
-- **Game Review**: keep the experimental T3 review available by direct URL
-  without advertising it from the main review page.
-
-## ks-web-app frontend v. 1.3.124
-
-- **T3 Review**: add `/game/{code}/review/t3` with Darkboard-style move scores,
-  score terms, probabilities, and concise coach explanations.
 
 ## ks-web-app frontend v. 1.3.122
 

@@ -18,6 +18,7 @@ const mockApi = vi.hoisted(() => ({
   getMyArchivedGames: vi.fn(),
   getGame: vi.fn(),
   getGameState: vi.fn(),
+  getGameReview: vi.fn(),
   deleteWaitingGame: vi.fn(),
   submitMove: vi.fn(),
   askAny: vi.fn(),
@@ -66,6 +67,7 @@ beforeEach(() => {
   mockApi.billingApi.createPortalSession.mockReset()
   window.sessionStorage.clear()
   mockApi.getGame.mockResolvedValue({ state: "waiting" })
+  mockApi.getGameReview.mockResolvedValue({ game: { state: "completed" }, transcript: { moves: [] } })
   mockApi.userApi.getGameHistory.mockReset()
   mockApi.userApi.getGameHistory.mockResolvedValue({ games: [] })
   mockApi.techApi.getAcquisitionReport.mockReset()
@@ -203,6 +205,25 @@ describe("App routes", () => {
     await screen.findByRole("heading", { name: "Lobby" })
     expect(screen.getByRole("link", { name: "Lobby" })).toHaveAttribute("aria-current", "page")
     expect(screen.queryByRole("heading", { name: "Home" })).not.toBeInTheDocument()
+  })
+
+  it("does_not_register_removed_alternate_review_routes", async () => {
+    mockApi.me.mockResolvedValueOnce({ username: "fil" })
+    const removedReviewPath = ["/game/ABC123/review", "t3"].join("/")
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+    try {
+      renderRoute(removedReviewPath)
+
+      await waitFor(() => {
+        expect(mockApi.me).toHaveBeenCalled()
+      })
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("No routes matched location"))
+      expect(screen.queryByRole("heading", { name: "Game review" })).not.toBeInTheDocument()
+      expect(mockApi.getGameReview).not.toHaveBeenCalled()
+    } finally {
+      warnSpy.mockRestore()
+    }
   })
 
   it("renders_subscription_route_and_subcription_alias_for_authenticated_users", async () => {
