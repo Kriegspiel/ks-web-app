@@ -851,19 +851,21 @@ export default function LobbyPage() {
           <p className="lobby-meta">No open games yet. Create a waiting game and it will appear here.</p>
         ) : null}
         {sortedOpenGames.length > 0 ? (
-          <ul className="lobby-list">
+          <ul className="lobby-list lobby-open-games-list">
             {sortedOpenGames.map((game, index) => (
               <li key={game.game_code ?? game.game_id ?? `open-game-${index}`}>
-                <div>
-                  <strong>{game.game_code}</strong>
-                  <div className="lobby-meta">
+                <div className="lobby-open-game">
+                  <div className="lobby-open-game__opponent">
                     {renderCreatorLink(game, botUsernames)}
-                    {" · "}
-                    {game.available_color}
-                    {" · "}
-                    {formatUtcDateTime(game.created_at)}
                   </div>
-                  <div className="lobby-meta">Rules: {formatRuleVariant(game.rule_variant)}</div>
+                  <div className="lobby-open-game__match">
+                    <span>Rules: {formatRuleVariant(game.rule_variant)}</span>
+                    {game.available_color ? <span>Color: {game.available_color}</span> : null}
+                  </div>
+                  <div className="lobby-open-game__meta">
+                    <span>{game.game_code ?? game.game_id ?? "Unknown code"}</span>
+                    <span>{formatUtcDateTime(game.created_at)}</span>
+                  </div>
                 </div>
                 <div className="lobby-list__actions">
                   {isOwnOpenGame(game, user?.username) ? (
