@@ -41,14 +41,14 @@ const T2_BOTS = [
 ]
 
 const T3_BOTS = [
-  ["T3 OpenAI", ["GPT-5.5"]],
-  ["T3 Anthropic", ["Claude Sonnet 5"]],
-  ["T3 Gemini", ["2.5 Flash"]],
+  ["T3 OpenAI", [["GPT-5.5", "/user/llm_gpt55"]]],
+  ["T3 Anthropic", [["Claude Sonnet 5", "/user/llm_sonnet5"]]],
+  ["T3 Gemini", [["2.5 Flash", "/user/llm_gemini25_flash"]]],
   ["T3 Mistral", [["Large 3", "/user/llm_mistral_large3"]]],
   ["T3 Nemotron", [["Ultra", "/user/llm_nemotron_ultra"]]],
-  ["T3 Qwen", [["3.6 Flash", "/user/llm_qwen36_flash"], "Plus"]],
-  ["T3 Kimi", ["K2 Thinking"]],
-  ["T3 Hermes", ["3 70B"]],
+  ["T3 Qwen", [["3.6 Flash", "/user/llm_qwen36_flash"], ["Plus", "/user/llm_qwen_plus"]]],
+  ["T3 Kimi", [["K2 Thinking", "/user/llm_kimi_k2_thinking"]]],
+  ["T3 Hermes", [["3 70B", "/user/llm_hermes3_70b"]]],
 ]
 
 const T4_BOTS = [
