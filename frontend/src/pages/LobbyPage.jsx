@@ -68,7 +68,7 @@ const BOT_TIER_BY_USERNAME = {
   llm_llama4_maverick: "T2",
   llm_mistral_nemo: "T2",
   llm_mistral_small32: "T2",
-  llm_mistral_large3: "T2",
+  llm_mistral_large3: "T3",
   llm_gemma3_4b: "T2",
   llm_gemma3_27b: "T2",
   llm_gemma4_31b: "T2",
@@ -98,6 +98,7 @@ const BOT_TIER_BY_USERNAME = {
   llm_gpt55_pro: "T5",
   llm_qwen37_max: "T5",
 }
+const CATALOG_HIDDEN_BOT_USERNAMES = new Set(["llm_mistral_nemo"])
 
 function normalizeRuleVariant(value) {
   const normalized = typeof value === "string" ? value.trim() : ""
@@ -168,6 +169,10 @@ function preferredBotId(bots) {
 function botRating(bot) {
   const elo = Number(bot?.elo)
   return Number.isFinite(elo) ? elo : 1200
+}
+
+function isCatalogHiddenBot(bot) {
+  return CATALOG_HIDDEN_BOT_USERNAMES.has(String(bot?.username || "").trim().toLowerCase())
 }
 
 function botTierCode(bot) {
@@ -559,6 +564,7 @@ export default function LobbyPage() {
   const supportedBots = useMemo(
     () =>
       bots
+        .filter((bot) => !isCatalogHiddenBot(bot))
         .filter((bot) => botSupportsRuleVariant(bot, ruleVariant))
         .sort(compareBotPickerBots),
     [bots, ruleVariant],

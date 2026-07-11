@@ -105,6 +105,11 @@ describe("game helpers", () => {
   beforeEach(() => { vi.restoreAllMocks() })
   it("create_game_posts_to_api_game_create", async () => { const payload = { rule_variant: "berkeley_any", play_as: "random", time_control: "rapid", opponent_type: "human" }; const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { game_id: "g1" } }); const result = await createGame(payload); expect(postSpy).toHaveBeenCalledWith("/api/game/create", payload); expect(result).toEqual({ game_id: "g1" }) })
   it("bot_and_game_reads_use_expected_endpoints", async () => { const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: { games: [] } }); await getBots(); await getOpenGames(); await getMyActiveGames(); await getMyArchivedGames(); await getGame("g-123"); await getGamePublicStatus("g-123"); await getGameState("g-123"); expect(getSpy).toHaveBeenNthCalledWith(1, "/api/bots"); expect(getSpy).toHaveBeenNthCalledWith(2, "/api/game/open"); expect(getSpy).toHaveBeenNthCalledWith(3, "/api/game/mine/active"); expect(getSpy).toHaveBeenNthCalledWith(4, "/api/game/mine/archived"); expect(getSpy).toHaveBeenNthCalledWith(5, "/api/game/g-123"); expect(getSpy).toHaveBeenNthCalledWith(6, "/api/game/g-123/public-status"); expect(getSpy).toHaveBeenNthCalledWith(7, "/api/game/g-123/state") })
+  it("get_bots_can_request_profile_context_for_direct_bot_challenges", async () => {
+    const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: { bots: [] } })
+    await getBots({ profileUsername: " llm_mistral_nemo " })
+    expect(getSpy).toHaveBeenCalledWith("/api/bots", { params: { profile_username: "llm_mistral_nemo" } })
+  })
   it("game_event_streams_use_expected_endpoint", () => {
     expect(gameEventsUrl("g/123")).toBe("/api/game/g%2F123/events")
   })
