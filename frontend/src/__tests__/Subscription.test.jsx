@@ -80,6 +80,10 @@ describe("SubscriptionPage", () => {
     renderPage()
 
     await screen.findByRole("heading", { name: "Subscription" })
+    const rowHeaders = screen.getAllByRole("rowheader").map((cell) => cell.textContent)
+    expect(rowHeaders.slice(0, 3)).toEqual(["Play human games", "Rating history", "Play bots"])
+    const ratingHistoryRow = screen.getByRole("rowheader", { name: "Rating history" }).closest("tr")
+    expect(within(ratingHistoryRow).getAllByText("Yes")).toHaveLength(7)
     expect(screen.getByRole("rowheader", { name: "Play bots" })).toBeInTheDocument()
     expect(screen.queryByRole("rowheader", { name: "Play simple bots" })).not.toBeInTheDocument()
     expect(screen.queryByRole("rowheader", { name: "Play T2 bots" })).not.toBeInTheDocument()
@@ -93,7 +97,6 @@ describe("SubscriptionPage", () => {
     expect(screen.getByText(TEST_VERSION_STAMP)).toBeInTheDocument()
     expect(screen.queryByRole("rowheader", { name: "Public player profile" })).not.toBeInTheDocument()
     expect(screen.queryByRole("rowheader", { name: "Leaderboard eligibility" })).not.toBeInTheDocument()
-    expect(screen.queryByRole("rowheader", { name: "Rating history" })).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Choose Tier T3 Strong" }))
     fireEvent.click(screen.getByRole("button", { name: "Yearly" }))
