@@ -69,6 +69,12 @@
   font-weight: 700;
 }
 
+.subscription-controls__price {
+  display: inline-grid;
+  gap: 0.06rem;
+  line-height: 1.2;
+}
+
 .subscription-interval-toggle {
   display: inline-flex;
   gap: 0.25rem;
@@ -212,10 +218,18 @@
 }
 
 .subscription-tier-table__price {
+  display: grid;
+  justify-items: center;
+  gap: 0.06rem;
   min-height: 2.5rem;
   font-size: 0.78rem;
   font-weight: 700;
+  line-height: 1.2;
   color: var(--muted);
+}
+
+.subscription-tier-price--stacked {
+  white-space: nowrap;
 }
 
 .subscription-tier-table__current-label {

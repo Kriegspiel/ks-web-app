@@ -46,6 +46,14 @@ describe("Subscription CSS", () => {
     expect(botItemsRule).toMatch(/display:\s*grid;/)
     expect(botItemsRule).toMatch(/list-style:\s*none;/)
     expect(botItemsRule).toMatch(/margin:\s*0;/)
+
+    const priceRule = blockFor(subscriptionCss, ".subscription-tier-table__price")
+    expect(priceRule).toMatch(/display:\s*grid;/)
+    expect(priceRule).toMatch(/justify-items:\s*center;/)
+    expect(priceRule).toMatch(/line-height:\s*1\.2;/)
+
+    const stackedPriceRule = blockFor(subscriptionCss, ".subscription-tier-price--stacked")
+    expect(stackedPriceRule).toMatch(/white-space:\s*nowrap;/)
   })
 
   it("makes the current tier badge high contrast", () => {
