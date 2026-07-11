@@ -4,9 +4,11 @@
 }
 
 .game-page__header {
+  --game-page-header-spacing: 0.85rem;
   display: grid;
-  gap: 0.2rem;
+  gap: var(--game-page-header-spacing);
   justify-content: flex-start;
+  margin-bottom: var(--game-page-header-spacing);
 }
 
 .game-page__signed-in {
@@ -20,6 +22,10 @@
   align-items: baseline;
   gap: 0.65rem;
   min-width: 0;
+}
+
+.game-page__title-block h1 {
+  margin: 0;
 }
 
 .game-page__meta--below-board {
