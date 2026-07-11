@@ -57,6 +57,16 @@ describe("Subscription CSS", () => {
     expect(currentLabelRule).toMatch(/font-weight:\s*800;/)
   })
 
+  it("keeps subscription action buttons readable in dark mode", () => {
+    const manageBillingRule = blockFor(subscriptionCss, ".subscription-manage-billing-button")
+    expect(manageBillingRule).toMatch(/background:\s*var\(--surface-strong\);/)
+    expect(manageBillingRule).toMatch(/color:\s*var\(--text\);/)
+
+    const selectedButtonRule = blockFor(subscriptionCss, ".subscription-tier-table__heading button.is-selected")
+    expect(selectedButtonRule).toMatch(/background:\s*var\(--accent\);/)
+    expect(selectedButtonRule).toMatch(/color:\s*var\(--bg\);/)
+  })
+
   it("styles the support note as a readable post-table section", () => {
     const supportNoteRule = blockFor(subscriptionCss, ".subscription-support-note")
     expect(supportNoteRule).toMatch(/display:\s*grid;/)
