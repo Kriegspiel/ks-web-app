@@ -12,6 +12,8 @@ const WAITING_GAME_POLL_MS = 3000
 const OPEN_GAMES_POLL_MS = 5000
 const MY_GAMES_POLL_MS = 10000
 const LOBBY_STATS_POLL_MS = 10000
+const LOBBY_TOAST_DURATION_MS = 5200
+const LOBBY_TOAST_ACTION_DURATION_MS = 7200
 const ACTIVE_STATES = new Set(["active"])
 const RULES_URL = "https://kriegspiel.org/rules"
 const DEFAULT_RULE_VARIANT = "berkeley_any"
@@ -499,6 +501,12 @@ function isInteractiveRowTarget(target) {
   )
 }
 
+function isBotTierJoinError(error) {
+  const code = String(error?.code || "").trim().toUpperCase()
+  const message = String(error?.message || "").trim().toLowerCase()
+  return code === "BOT_TIER_REQUIRED" || code === "LLM_BOT_TIER_REQUIRED" || message.includes("current tier does not include this bot")
+}
+
 async function writeClipboardText(text) {
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(text)
@@ -526,11 +534,9 @@ export default function LobbyPage() {
   const navigate = useNavigate()
   const { user, actionError } = useAuth()
   const [joinCode, setJoinCode] = useState("")
-  const [joinError, setJoinError] = useState("")
   const [joiningGame, setJoiningGame] = useState(false)
   const [createResult, setCreateResult] = useState(null)
   const [createError, setCreateError] = useState("")
-  const [createdGameCopyStatus, setCreatedGameCopyStatus] = useState("")
   const [creatingGame, setCreatingGame] = useState(false)
   const [closingWaitingGame, setClosingWaitingGame] = useState(false)
   const formatCount = useMemo(() => new Intl.NumberFormat("en-US"), [])
@@ -543,7 +549,7 @@ export default function LobbyPage() {
   const [openGames, setOpenGames] = useState([])
   const [openGamesError, setOpenGamesError] = useState("")
   const [openGamesLoading, setOpenGamesLoading] = useState(true)
-  const [openGameCopyStatus, setOpenGameCopyStatus] = useState("")
+  const [lobbyToast, setLobbyToast] = useState(null)
   const [myGames, setMyGames] = useState([])
   const [lobbyStats, setLobbyStats] = useState(null)
   const [lobbyStatsError, setLobbyStatsError] = useState("")
@@ -573,6 +579,7 @@ export default function LobbyPage() {
   )
   const activeGame = useMemo(() => getActiveGame(myGames), [myGames])
   const playNowPath = gamePagePath(activeGame)
+  const toastIdRef = useRef(0)
   const sortedOpenGames = useMemo(() => {
     const ownUsername = String(user?.username || "").trim().toLowerCase()
     if (!ownUsername) {
@@ -588,6 +595,27 @@ export default function LobbyPage() {
       return leftOwn ? -1 : 1
     })
   }, [openGames, user?.username])
+
+  const showLobbyToast = useCallback((kind, message, options = {}) => {
+    toastIdRef.current += 1
+    setLobbyToast({
+      id: toastIdRef.current,
+      kind,
+      message,
+      actionLabel: options.actionLabel ?? "",
+      actionPath: options.actionPath ?? "",
+      durationMs: options.durationMs ?? (options.actionLabel ? LOBBY_TOAST_ACTION_DURATION_MS : LOBBY_TOAST_DURATION_MS),
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!lobbyToast) {
+      return undefined
+    }
+
+    const id = window.setTimeout(() => setLobbyToast(null), lobbyToast.durationMs)
+    return () => window.clearTimeout(id)
+  }, [lobbyToast])
 
   async function refreshOpenGames({ markLoading = false } = {}) {
     if (markLoading) {
@@ -729,7 +757,6 @@ export default function LobbyPage() {
     event.preventDefault()
     setCreatingGame(true)
     setCreateError("")
-    setCreatedGameCopyStatus("")
 
     if (opponentType === "bot" && !selectedBot?.bot_id) {
       setCreatingGame(false)
@@ -772,12 +799,11 @@ export default function LobbyPage() {
     event.preventDefault()
     const normalizedCode = joinCode.trim().toUpperCase()
     if (!normalizedCode) {
-      setJoinError("Enter a game code to join.")
+      showLobbyToast("danger", "Enter a game code to join.")
       return
     }
 
     setJoiningGame(true)
-    setJoinError("")
 
     try {
       const joined = await joinGame(normalizedCode)
@@ -791,7 +817,8 @@ export default function LobbyPage() {
         return
       }
 
-      setJoinError(error?.message ?? "Unable to join that game right now.")
+      const message = error?.message ?? "Unable to join that game right now."
+      showLobbyToast("danger", message, isBotTierJoinError(error) ? { actionLabel: "Change tier", actionPath: "/subscription" } : undefined)
     } finally {
       setJoiningGame(false)
     }
@@ -800,7 +827,6 @@ export default function LobbyPage() {
   async function handleJoinOpenGame(gameCode) {
     setJoinCode(gameCode)
     setJoiningGame(true)
-    setJoinError("")
 
     try {
       const joined = await joinGame(gameCode)
@@ -812,7 +838,8 @@ export default function LobbyPage() {
         return
       }
 
-      setJoinError(error?.message ?? "Unable to join that game right now.")
+      const message = error?.message ?? "Unable to join that game right now."
+      showLobbyToast("danger", message, isBotTierJoinError(error) ? { actionLabel: "Change tier", actionPath: "/subscription" } : undefined)
     } finally {
       setJoiningGame(false)
     }
@@ -835,9 +862,9 @@ export default function LobbyPage() {
 
     try {
       await writeClipboardText(code)
-      setOpenGameCopyStatus(`Game code ${code} copied.`)
+      showLobbyToast("success", `Game code ${code} copied.`)
     } catch {
-      setOpenGameCopyStatus("Unable to copy game code.")
+      showLobbyToast("danger", "Unable to copy game code.")
     }
   }
 
@@ -849,9 +876,9 @@ export default function LobbyPage() {
 
     try {
       await writeClipboardText(code)
-      setCreatedGameCopyStatus(`Game code ${code} copied.`)
+      showLobbyToast("success", `Game code ${code} copied.`)
     } catch {
-      setCreatedGameCopyStatus("Unable to copy game code.")
+      showLobbyToast("danger", "Unable to copy game code.")
     }
   }
 
@@ -862,9 +889,9 @@ export default function LobbyPage() {
 
     try {
       await writeClipboardText(shareJoinUrl)
-      setCreatedGameCopyStatus("Share link copied.")
+      showLobbyToast("success", "Share link copied.")
     } catch {
-      setCreatedGameCopyStatus("Unable to copy share link.")
+      showLobbyToast("danger", "Unable to copy share link.")
     }
   }
 
@@ -879,7 +906,6 @@ export default function LobbyPage() {
 
     setClosingWaitingGame(true)
     setCreateError("")
-    setJoinError("")
 
     try {
       await deleteWaitingGame(target)
@@ -889,7 +915,6 @@ export default function LobbyPage() {
       }
       if (createResult?.game_id === targetId || (targetCode && String(createResult?.game_code || "").trim().toUpperCase() === targetCode)) {
         setCreateResult(null)
-        setCreatedGameCopyStatus("")
       }
       await Promise.all([refreshOpenGames(), refreshMyGames()])
     } catch (error) {
@@ -901,6 +926,22 @@ export default function LobbyPage() {
 
   return (
     <main className="page-shell lobby-page">
+      {lobbyToast ? (
+        <div className="lobby-toast-region" aria-live={lobbyToast.kind === "danger" ? "assertive" : "polite"}>
+          <div
+            key={lobbyToast.id}
+            className={`lobby-toast lobby-toast--${lobbyToast.kind}${lobbyToast.actionLabel ? " lobby-toast--with-action" : ""}`}
+            role={lobbyToast.kind === "danger" ? "alert" : "status"}
+            style={{ "--lobby-toast-duration": `${lobbyToast.durationMs}ms` }}
+          >
+            <span>{lobbyToast.message}</span>
+            {lobbyToast.actionLabel && lobbyToast.actionPath ? (
+              <Link className="lobby-toast__action" to={lobbyToast.actionPath}>{lobbyToast.actionLabel}</Link>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
       <div className="lobby-page__header">
         <div className="lobby-page__title-block">
           <h1>Lobby</h1>
@@ -1001,7 +1042,6 @@ export default function LobbyPage() {
                 Copy link
               </button>
             </p>
-            {createdGameCopyStatus ? <p className="lobby-copy-status">{createdGameCopyStatus}</p> : null}
             <p><strong>State:</strong> {waitingGameId ? "Waiting for opponent…" : createResult.state}</p>
             <button
               type="button"
@@ -1017,7 +1057,6 @@ export default function LobbyPage() {
 
       <section className="lobby-card" aria-labelledby="open-games-heading">
         <h2 id="open-games-heading">Open games</h2>
-        {openGameCopyStatus ? <p className="lobby-copy-status" role="status">{openGameCopyStatus}</p> : null}
         {openGamesError ? <p role="alert">{openGamesError}</p> : null}
         {openGamesLoading ? <p>Loading…</p> : null}
         {!openGamesLoading && !openGamesError && sortedOpenGames.length === 0 ? (
@@ -1094,7 +1133,6 @@ export default function LobbyPage() {
           />
           <button type="submit" disabled={joiningGame}>{joiningGame ? "Joining…" : "Join game"}</button>
         </form>
-        {joinError ? <p className="auth-error" role="alert">{joinError}</p> : null}
       </section>
 
       <section className="lobby-card" aria-labelledby="lobby-stats-heading">

@@ -88,6 +88,10 @@ describe("LobbyPage", () => {
     expect(css).toContain("button.lobby-open-game__code-button")
     expect(css).toContain(".lobby-open-game__code")
     expect(css).toContain(".lobby-copy-status")
+    expect(css).toContain(".lobby-toast-region")
+    expect(css).toContain(".lobby-toast--danger")
+    expect(css).toContain(".lobby-toast__action")
+    expect(css).toContain("@keyframes lobby-toast-fade")
     expect(css).toContain(".lobby-created-game__line")
     expect(css).toContain("button.lobby-created-game__code-button")
     expect(css).toContain(".lobby-created-game__copy-link-button")
@@ -400,7 +404,7 @@ describe("LobbyPage", () => {
     await waitFor(() => {
       expect(mockClipboardWriteText).toHaveBeenCalledWith("ABCD23")
     })
-    expect(screen.getByText("Game code ABCD23 copied.")).toBeInTheDocument()
+    expect(screen.getByText("Game code ABCD23 copied.").closest(".lobby-toast")).toHaveClass("lobby-toast")
 
     const shareLink = screen.getByRole("link", { name: /\/join\/ABCD23$/ })
     fireEvent.click(screen.getByRole("button", { name: "Copy link" }))
@@ -408,7 +412,7 @@ describe("LobbyPage", () => {
     await waitFor(() => {
       expect(mockClipboardWriteText).toHaveBeenLastCalledWith(shareLink.href)
     })
-    expect(screen.getByText("Share link copied.")).toBeInTheDocument()
+    expect(screen.getByText("Share link copied.").closest(".lobby-toast")).toHaveClass("lobby-toast")
   })
 
   it("closes_the_created_waiting_game", async () => {
@@ -772,6 +776,28 @@ describe("LobbyPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Join failed")
   })
 
+  it("shows_a_top_toast_with_subscription_action_for_tier_join_errors", async () => {
+    mockApi.joinGame.mockRejectedValueOnce({
+      status: 403,
+      code: "BOT_TIER_REQUIRED",
+      message: "Your current tier does not include this bot",
+    })
+
+    renderPage()
+
+    fireEvent.change(await screen.findByLabelText("Game code"), { target: { value: "u2my7x" } })
+    fireEvent.click(screen.getByRole("button", { name: "Join game" }))
+
+    await waitFor(() => {
+      expect(mockApi.joinGame).toHaveBeenCalledWith("U2MY7X")
+    })
+
+    const toast = await screen.findByRole("alert")
+    expect(toast).toHaveClass("lobby-toast", "lobby-toast--danger")
+    expect(toast).toHaveTextContent("Your current tier does not include this bot")
+    expect(within(toast).getByRole("link", { name: "Change tier" })).toHaveAttribute("href", "/subscription")
+  })
+
   it("shows_the_default_join_error_when_join_by_code_fails_without_details", async () => {
     mockApi.joinGame.mockRejectedValueOnce({})
 
@@ -851,7 +877,7 @@ describe("LobbyPage", () => {
     renderPage()
 
     const openGamesSection = (await screen.findByRole("heading", { name: "Open games" })).closest("section")
-    const openGame = within(openGamesSection).getByRole("listitem")
+    const openGame = await within(openGamesSection).findByRole("listitem")
 
     fireEvent.click(within(openGame).getByRole("link", { name: "randobot (bot)" }))
     expect(mockApi.joinGame).not.toHaveBeenCalled()
@@ -880,7 +906,7 @@ describe("LobbyPage", () => {
     renderPage()
 
     const openGamesSection = (await screen.findByRole("heading", { name: "Open games" })).closest("section")
-    const openGame = within(openGamesSection).getByRole("listitem")
+    const openGame = await within(openGamesSection).findByRole("listitem")
 
     fireEvent.click(within(openGame).getByRole("button", { name: "Copy game code ZZZ999" }))
 
