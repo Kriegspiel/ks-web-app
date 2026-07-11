@@ -107,6 +107,8 @@ describe("LobbyPage", () => {
     expect(css).toContain(".lobby-open-game__code")
     expect(css).toContain(".lobby-copy-status")
     expect(css).toContain(".lobby-toast-region")
+    expect(css).toContain("text-align: center;")
+    expect(css).toContain(".lobby-toast--with-action")
     expect(css).toContain(".lobby-toast--danger")
     expect(css).toContain(".lobby-toast__action")
     expect(css).toContain("@keyframes lobby-toast-fade")
