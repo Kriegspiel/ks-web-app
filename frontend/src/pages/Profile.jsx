@@ -501,8 +501,16 @@ function challengeRuleLabel(ruleVariant) {
 }
 
 function subscriptionTierLabel(code) {
-  const tier = Object.values(PROFILE_TIER_DETAILS).find((detail) => detail.code === code)
+  const tier = subscriptionTierDetails(code)
   return tier ? `Tier ${tier.code} ${tier.name}` : `Tier ${code}`
+}
+
+function subscriptionTierName(code) {
+  return subscriptionTierDetails(code)?.name ?? code
+}
+
+function subscriptionTierDetails(code) {
+  return Object.values(PROFILE_TIER_DETAILS).find((detail) => detail.code === code)
 }
 
 function tierDetailsForProfile(profile) {
@@ -932,9 +940,23 @@ export default function ProfilePage() {
           ) : (
             <div className="profile-challenge-upgrade">
               <p>
-                {profileTier
-                  ? `${profileUsername} is available from ${subscriptionTierLabel(profileTier.code)}. Upgrade your tier to challenge this bot.`
-                  : "This bot is not available for your current tier. Upgrade your tier to challenge it."}
+                {profileTier ? (
+                  <>
+                    <span className="profile-challenge-upgrade__bot-name">{profileUsername}</span>{" "}
+                    is available from{" "}
+                    <Link
+                      className="profile-challenge-upgrade__tier-link"
+                      to="/subscription"
+                      aria-label={`View ${subscriptionTierLabel(profileTier.code)} subscription tier`}
+                    >
+                      <TierBadge code={profileTier.code} className="profile-challenge-upgrade__tier-code" />
+                      <span className="profile-challenge-upgrade__tier-name">{subscriptionTierName(profileTier.code)}</span>
+                    </Link>
+                    . Upgrade your tier to challenge this bot.
+                  </>
+                ) : (
+                  "This bot is not available for your current tier. Upgrade your tier to challenge it."
+                )}
               </p>
               <Link className="button-link button-link--primary" to="/subscription">View tiers</Link>
             </div>
