@@ -83,6 +83,9 @@ describe("SubscriptionPage", () => {
     expect(screen.getByRole("rowheader", { name: "Play T2 bots" })).toBeInTheDocument()
     expect(screen.getAllByRole("link", { name: "GPTNano" })[0]).toHaveAttribute("href", "/user/llm_gptnano")
     expect(screen.getByText(TEST_VERSION_STAMP)).toBeInTheDocument()
+    expect(screen.queryByRole("rowheader", { name: "Public player profile" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("rowheader", { name: "Leaderboard eligibility" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("rowheader", { name: "Rating history" })).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Choose Tier T3 Strong" }))
     fireEvent.click(screen.getByRole("button", { name: "Yearly" }))
@@ -103,7 +106,7 @@ describe("SubscriptionPage", () => {
 
     await screen.findByRole("heading", { name: "Subscription" })
     const controls = screen.getByRole("region", { name: "Subscription controls" })
-    expect(within(controls).getByRole("heading", { name: "Tier T4 Expert" })).toBeInTheDocument()
+    expect(await within(controls).findByRole("heading", { name: "Tier T4 Expert" })).toBeInTheDocument()
   })
 
   it("asks_guest_accounts_to_convert_before_subscribing", async () => {
