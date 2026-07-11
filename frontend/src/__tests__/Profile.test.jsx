@@ -332,6 +332,7 @@ describe("ProfilePage", () => {
     renderProfile("/user/randobotany")
 
     await screen.findByRole("heading", { name: "randobotany" })
+    await waitFor(() => expect(mockApi.getBots).toHaveBeenCalledWith({ profileUsername: "randobotany" }))
     const challengeCard = await screen.findByRole("region", { name: "Challenge this bot" })
     const recentGames = screen.getByRole("region", { name: "Recent games" })
     const documentPositionFollowing = 4
@@ -354,6 +355,46 @@ describe("ProfilePage", () => {
       })
     })
     expect(await screen.findByRole("heading", { name: "Game route" })).toBeInTheDocument()
+  })
+
+  it("lets_catalog_hidden_mistral_nemo_be_challenged_from_the_profile", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "llm_mistral_nemo",
+      role: "bot",
+      owner_email: "bots@kriegspiel.org",
+      member_since: "2026-07-11T00:00:00Z",
+      stats: {},
+      user_metrics: { completed_games: 0 },
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+    mockApi.getBots.mockResolvedValueOnce({
+      bots: [
+        {
+          bot_id: "bot-mistral-nemo",
+          username: "llm_mistral_nemo",
+          display_name: "LLM Mistral Nemo (bot)",
+          supported_rule_variants: ["berkeley", "berkeley_any"],
+        },
+      ],
+    })
+    mockApi.createGame.mockResolvedValueOnce({ game_code: "NEMO12", state: "active" })
+
+    renderProfile("/user/llm_mistral_nemo")
+
+    await screen.findByRole("heading", { name: "llm_mistral_nemo" })
+    await waitFor(() => expect(mockApi.getBots).toHaveBeenCalledWith({ profileUsername: "llm_mistral_nemo" }))
+    const challengeCard = await screen.findByRole("region", { name: "Challenge this bot" })
+    await within(challengeCard).findByRole("option", { name: "Berkeley" })
+
+    fireEvent.click(within(challengeCard).getByRole("button", { name: "Play game" }))
+
+    await waitFor(() => {
+      expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({
+        opponent_type: "bot",
+        bot_id: "bot-mistral-nemo",
+      }))
+    })
   })
 
   it("points_to_subscription_when_a_bot_is_above_the_current_tier", async () => {
@@ -551,6 +592,25 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("heading", { name: "Tier T3 LLM bot" })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T3")).toHaveClass("tier-badge", "tier-badge--t3", "profile-tier-card__code")
     expect(screen.getByText("Nemotron Ultra model bot for T3 Strong.")).toBeInTheDocument()
+  })
+
+  it("marks_mistral_large3_bot_as_tier_three", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "llm_mistral_large3",
+      role: "bot",
+      member_since: "2026-07-11T00:00:00Z",
+      stats: {},
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile("/user/llm_mistral_large3")
+
+    await screen.findByRole("heading", { name: "llm_mistral_large3" })
+    expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Tier T3 LLM bot" })).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T3")).toHaveClass("tier-badge", "tier-badge--t3", "profile-tier-card__code")
+    expect(screen.getByText("Mistral Large 3 model bot for T3 Strong.")).toBeInTheDocument()
   })
 
   it.each([

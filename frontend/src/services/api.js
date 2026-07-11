@@ -92,7 +92,17 @@ export async function recordCampaignVisit(payload) {
     throw normalizeError(error, 'Unable to record campaign visit.')
   }
 }
-export async function getBots() { try { const response = await api.get('/api/bots'); return response.data } catch (error) { throw normalizeError(error, 'Unable to load bots right now.') } }
+export async function getBots(options = {}) {
+  try {
+    const profileUsername = typeof options?.profileUsername === "string" ? options.profileUsername.trim() : ""
+    const response = profileUsername
+      ? await api.get('/api/bots', { params: { profile_username: profileUsername } })
+      : await api.get('/api/bots')
+    return response.data
+  } catch (error) {
+    throw normalizeError(error, 'Unable to load bots right now.')
+  }
+}
 export async function createGame(payload) { try { const response = await api.post('/api/game/create', payload); return response.data } catch (error) { throw normalizeError(error, 'Unable to create game right now.') } }
 export async function joinGame(gameCode) { try { const response = await api.post(`/api/game/join/${encodeURIComponent(gameCode)}`); return response.data } catch (error) { throw normalizeError(error, 'Unable to join that game right now.') } }
 export async function getOpenGames() { try { const response = await api.get('/api/game/open'); return response.data } catch (error) { throw normalizeError(error, 'Unable to load open games right now.') } }

@@ -178,10 +178,10 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     className: "profile-tier-card--tier2",
   },
   llm_mistral_large3: {
-    code: "T2",
+    code: "T3",
     model: "Mistral Large 3",
-    tierName: "Club",
-    className: "profile-tier-card--tier2",
+    tierName: "Strong",
+    className: "profile-tier-card--tier3",
   },
   llm_gemma3_4b: {
     code: "T2",
@@ -626,7 +626,7 @@ export default function ProfilePage() {
       setChallengeBotsError("")
       setChallengeError("")
       try {
-        const response = await getBots()
+        const response = await getBots({ profileUsername: targetUsername })
         if (!cancelled) {
           setChallengeBots(Array.isArray(response?.bots) ? response.bots : [])
           setChallengeBotsProfileUsername(targetUsername)
