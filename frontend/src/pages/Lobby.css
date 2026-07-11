@@ -313,7 +313,59 @@ button.lobby-open-game__code-button:focus-visible .lobby-open-game__code {
 .lobby-list__actions { display: flex; gap: 0.55rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 .lobby-list button { margin-top: 0; }
 .lobby-meta { color: var(--muted-soft); font-size: 0.92rem; }
-.lobby-created-game code { font-size: 1.1rem; }
+.lobby-created-game {
+  display: grid;
+  gap: 0.6rem;
+}
+.lobby-created-game__line {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem 0.6rem;
+  flex-wrap: wrap;
+  margin: 0;
+}
+button.lobby-created-game__code-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+}
+button.lobby-created-game__code-button:hover,
+button.lobby-created-game__code-button:focus-visible {
+  background: transparent;
+  box-shadow: none;
+}
+.lobby-created-game__code {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-strong) 82%, var(--accent-soft) 18%);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 1.05rem;
+  font-weight: 750;
+  letter-spacing: 0.03em;
+  line-height: 1.1;
+}
+button.lobby-created-game__code-button:hover .lobby-created-game__code,
+button.lobby-created-game__code-button:focus-visible .lobby-created-game__code {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: color-mix(in srgb, var(--surface-strong) 72%, var(--accent-soft) 28%);
+}
+.lobby-created-game__copy-link-button {
+  min-height: 2.1rem;
+  padding: 0.38rem 0.7rem;
+  border-radius: 999px;
+}
 @media (max-width: 700px) {
   .lobby-join-form { grid-template-columns: 1fr; }
   .lobby-stats-grid { grid-template-columns: 1fr 1fr; }

@@ -88,6 +88,9 @@ describe("LobbyPage", () => {
     expect(css).toContain("button.lobby-open-game__code-button")
     expect(css).toContain(".lobby-open-game__code")
     expect(css).toContain(".lobby-copy-status")
+    expect(css).toContain(".lobby-created-game__line")
+    expect(css).toContain("button.lobby-created-game__code-button")
+    expect(css).toContain(".lobby-created-game__copy-link-button")
     expect(css).toContain("font-family: ui-monospace")
     expect(css).toContain(".lobby-bot-tier-picker__option.is-unavailable")
     expect(css).not.toContain("background: rgba(248, 250, 252, 0.72);")
@@ -380,7 +383,32 @@ describe("LobbyPage", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Create waiting game" }))
     await screen.findByText("Join code:")
     expect(screen.getByText("ABCD23")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Copy game code ABCD23" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Copy link" })).toBeInTheDocument()
     expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({ opponent_type: "human", bot_id: undefined, rule_variant: "berkeley" }))
+  })
+
+  it("copies_created_waiting_game_code_and_share_link", async () => {
+    mockApi.createGame.mockResolvedValue({ game_id: "g-1", game_code: "ABCD23", state: "waiting" })
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create waiting game" }))
+
+    const codeButton = await screen.findByRole("button", { name: "Copy game code ABCD23" })
+    fireEvent.click(codeButton)
+
+    await waitFor(() => {
+      expect(mockClipboardWriteText).toHaveBeenCalledWith("ABCD23")
+    })
+    expect(screen.getByText("Game code ABCD23 copied.")).toBeInTheDocument()
+
+    const shareLink = screen.getByRole("link", { name: /\/join\/ABCD23$/ })
+    fireEvent.click(screen.getByRole("button", { name: "Copy link" }))
+
+    await waitFor(() => {
+      expect(mockClipboardWriteText).toHaveBeenLastCalledWith(shareLink.href)
+    })
+    expect(screen.getByText("Share link copied.")).toBeInTheDocument()
   })
 
   it("closes_the_created_waiting_game", async () => {

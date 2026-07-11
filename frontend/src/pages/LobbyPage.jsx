@@ -530,6 +530,7 @@ export default function LobbyPage() {
   const [joiningGame, setJoiningGame] = useState(false)
   const [createResult, setCreateResult] = useState(null)
   const [createError, setCreateError] = useState("")
+  const [createdGameCopyStatus, setCreatedGameCopyStatus] = useState("")
   const [creatingGame, setCreatingGame] = useState(false)
   const [closingWaitingGame, setClosingWaitingGame] = useState(false)
   const formatCount = useMemo(() => new Intl.NumberFormat("en-US"), [])
@@ -728,6 +729,7 @@ export default function LobbyPage() {
     event.preventDefault()
     setCreatingGame(true)
     setCreateError("")
+    setCreatedGameCopyStatus("")
 
     if (opponentType === "bot" && !selectedBot?.bot_id) {
       setCreatingGame(false)
@@ -839,6 +841,33 @@ export default function LobbyPage() {
     }
   }
 
+  async function handleCopyCreatedGameCode(gameCode) {
+    const code = String(gameCode || "").trim().toUpperCase()
+    if (!code) {
+      return
+    }
+
+    try {
+      await writeClipboardText(code)
+      setCreatedGameCopyStatus(`Game code ${code} copied.`)
+    } catch {
+      setCreatedGameCopyStatus("Unable to copy game code.")
+    }
+  }
+
+  async function handleCopyCreatedGameLink() {
+    if (!shareJoinUrl) {
+      return
+    }
+
+    try {
+      await writeClipboardText(shareJoinUrl)
+      setCreatedGameCopyStatus("Share link copied.")
+    } catch {
+      setCreatedGameCopyStatus("Unable to copy share link.")
+    }
+  }
+
   async function handleCloseWaitingGame(gameRef) {
     const targetCode = String(gameRef?.game_code || "").trim().toUpperCase()
     const targetId = String(gameRef?.game_id || "").trim()
@@ -860,6 +889,7 @@ export default function LobbyPage() {
       }
       if (createResult?.game_id === targetId || (targetCode && String(createResult?.game_code || "").trim().toUpperCase() === targetCode)) {
         setCreateResult(null)
+        setCreatedGameCopyStatus("")
       }
       await Promise.all([refreshOpenGames(), refreshMyGames()])
     } catch (error) {
@@ -953,8 +983,25 @@ export default function LobbyPage() {
 
         {createResult && createResult.state === "waiting" ? (
           <div className="lobby-created-game" role="status" aria-live="polite">
-            <p><strong>Join code:</strong> <code>{createResult.game_code}</code></p>
-            <p><strong>Share link:</strong> <a href={shareJoinUrl}>{shareJoinUrl}</a></p>
+            <p className="lobby-created-game__line">
+              <strong>Join code:</strong>
+              <button
+                type="button"
+                className="lobby-created-game__code-button"
+                onClick={() => handleCopyCreatedGameCode(createResult.game_code)}
+                aria-label={`Copy game code ${createResult.game_code}`}
+              >
+                <code className="lobby-created-game__code">{createResult.game_code}</code>
+              </button>
+            </p>
+            <p className="lobby-created-game__line lobby-created-game__share-line">
+              <strong>Share link:</strong>
+              <a href={shareJoinUrl}>{shareJoinUrl}</a>
+              <button type="button" className="lobby-created-game__copy-link-button" onClick={handleCopyCreatedGameLink}>
+                Copy link
+              </button>
+            </p>
+            {createdGameCopyStatus ? <p className="lobby-copy-status">{createdGameCopyStatus}</p> : null}
             <p><strong>State:</strong> {waitingGameId ? "Waiting for opponent…" : createResult.state}</p>
             <button
               type="button"
