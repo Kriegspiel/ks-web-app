@@ -169,7 +169,8 @@ describe("SubscriptionPage", () => {
     renderPage()
 
     await screen.findByRole("heading", { name: "Subscription" })
-    expect(screen.getByRole("region", { name: "Guest subscription notice" })).toBeInTheDocument()
+    const guestNotice = screen.getByRole("region", { name: "Guest subscription notice" })
+    expect(guestNotice).toHaveClass("subscription-notice--warning")
     expect(screen.getByRole("link", { name: "profile" })).toHaveAttribute("href", "/user/guest_adolf_adams")
     expect(screen.getByRole("button", { name: "Open payment form" })).toBeDisabled()
   })

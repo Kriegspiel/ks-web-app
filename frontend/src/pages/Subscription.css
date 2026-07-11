@@ -120,6 +120,44 @@
   background: var(--surface-alt);
 }
 
+.subscription-notice--warning {
+  border: 2px solid color-mix(in srgb, #d97706 82%, var(--border-strong) 18%);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #facc15 34%, var(--surface-strong) 66%),
+      color-mix(in srgb, #f59e0b 22%, var(--surface) 78%)
+    );
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #f59e0b 28%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.subscription-notice--warning p {
+  color: color-mix(in srgb, #3b2500 88%, var(--text) 12%);
+  font-weight: 750;
+}
+
+.subscription-notice--warning a {
+  color: inherit;
+  font-weight: 850;
+  text-underline-offset: 0.14em;
+}
+
+:root[data-theme="dark"] .subscription-notice--warning {
+  border-color: color-mix(in srgb, #facc15 82%, var(--border-strong) 18%);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #facc15 26%, var(--surface-strong) 74%),
+      color-mix(in srgb, #d97706 24%, var(--surface) 76%)
+    );
+}
+
+:root[data-theme="dark"] .subscription-notice--warning p {
+  color: #fff4c2;
+}
+
 .subscription-notice p {
   margin: 0;
 }

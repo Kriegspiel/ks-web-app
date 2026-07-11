@@ -35,6 +35,21 @@ describe("Subscription CSS", () => {
     expect(noticeParagraphRule).toMatch(/margin:\s*0;/)
   })
 
+  it("makes the guest subscription notice a prominent yellow warning", () => {
+    const warningRule = blockFor(subscriptionCss, ".subscription-notice--warning")
+    expect(warningRule).toMatch(/border:\s*2px solid color-mix\(in srgb, #d97706/)
+    expect(warningRule).toMatch(/background:\s*linear-gradient/)
+    expect(warningRule).toMatch(/#facc15/)
+    expect(warningRule).toMatch(/box-shadow:/)
+
+    const warningParagraphRule = blockFor(subscriptionCss, ".subscription-notice--warning p")
+    expect(warningParagraphRule).toMatch(/color:\s*color-mix\(in srgb, #3b2500/)
+    expect(warningParagraphRule).toMatch(/font-weight:\s*750;/)
+
+    const warningLinkRule = blockFor(subscriptionCss, ".subscription-notice--warning a")
+    expect(warningLinkRule).toMatch(/font-weight:\s*850;/)
+  })
+
   it("uses a compact tier table and stacked bot list items", () => {
     const tableRule = blockFor(subscriptionCss, ".subscription-tier-table {")
     expect(tableRule).toMatch(/min-width:\s*64rem;/)

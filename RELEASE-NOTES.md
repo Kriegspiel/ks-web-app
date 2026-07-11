@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.3.168
+
+- **Subscription**: make the guest-account subscription blocker a prominent
+  yellow warning so users notice they must convert before subscribing.
+
 ## ks-web-app frontend v. 1.3.167
 
 - **Subscription**: stack monthly and yearly tier prices on separate lines so
