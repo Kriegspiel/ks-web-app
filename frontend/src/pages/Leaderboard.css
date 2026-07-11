@@ -27,7 +27,7 @@
 }
 
 .leaderboard-table-wrap--interactive {
-  overflow-y: visible;
+  overflow: visible;
   max-height: none;
 }
 
@@ -35,6 +35,7 @@
   min-width: 64rem;
   border-collapse: separate;
   border-spacing: 0;
+  overflow: visible;
 }
 
 .leaderboard-table--interactive thead th {
