@@ -296,10 +296,10 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     className: "profile-tier-card--tier3",
   },
   llm_qwen_plus: {
-    code: "T3",
+    code: "T2",
     model: "Qwen Plus",
-    tierName: "Strong",
-    className: "profile-tier-card--tier3",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
   },
   llm_kimi_k2_thinking: {
     code: "T3",
