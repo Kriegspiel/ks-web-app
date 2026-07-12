@@ -74,10 +74,6 @@ describe("Subscription CSS", () => {
     expect(botItemsRule).toMatch(/list-style:\s*none;/)
     expect(botItemsRule).toMatch(/margin:\s*0;/)
 
-    const botMetadataRule = blockFor(subscriptionCss, ".subscription-bot-list__metadata")
-    expect(botMetadataRule).toMatch(/display:\s*block;/)
-    expect(botMetadataRule).toMatch(/font-size:\s*0\.76rem;/)
-
     const priceRule = blockFor(subscriptionCss, ".subscription-tier-table__price")
     expect(priceRule).toMatch(/display:\s*grid;/)
     expect(priceRule).toMatch(/justify-items:\s*center;/)

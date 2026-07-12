@@ -17,8 +17,8 @@ const TIERS = [
   { key: "tier6", apiTier: null, code: "T6", name: "Elite", price: "Not available yet", selectable: false, future: true },
 ]
 
-const REASONING_NONE = "Default reasoning level: none"
-const REASONING_MEDIUM = "Default reasoning level: medium"
+const REASONING_NONE = "no"
+const REASONING_MEDIUM = "medium"
 
 const T0_BOTS = [
   ["T0-level bots", [["Random Bot", "/user/randobot"], ["Random Any", "/user/randobotany"]]],
@@ -107,8 +107,8 @@ const FEATURES = [
       "No",
       "No",
       "No",
-      "New LLM providers and modes; fully customizable prompts and conversation strategies.",
-      "New LLM providers and modes; fully customizable prompts and conversation strategies.",
+      "New LLM providers by request.",
+      "New LLMs by request and fully customizable strategies and prompts.",
     ],
   },
   { name: "Persistent player name", values: ["No", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"] },
@@ -129,12 +129,12 @@ function BotList({ groups }) {
               {items.map((item, index) => {
                 const text = Array.isArray(item) ? item[0] : item
                 const path = Array.isArray(item) ? item[1] : null
-                const metadata = Array.isArray(item) ? item[2] : null
+                const reasoning = Array.isArray(item) ? item[2] : null
+                const displayText = reasoning ? `${text} (reasoning: ${reasoning})` : text
                 return (
                   <li key={`${label}-${text}`}>
-                    {path ? <Link to={path}>{text}</Link> : text}
+                    {path ? <Link to={path}>{displayText}</Link> : displayText}
                     {index < items.length - 1 ? ";" : ""}
-                    {metadata ? <span className="subscription-bot-list__metadata">{metadata}</span> : null}
                   </li>
                 )
               })}

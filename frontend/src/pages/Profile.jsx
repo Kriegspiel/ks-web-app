@@ -588,16 +588,21 @@ function subscriptionTierDetails(code) {
   return Object.values(PROFILE_TIER_DETAILS).find((detail) => detail.code === code)
 }
 
+function formatReasoningLabel(reasoningLevel) {
+  if (!reasoningLevel) return ""
+  return reasoningLevel === "none" ? "no" : reasoningLevel
+}
+
 function tierDetailsForProfile(profile) {
   if (profile?.role === "bot" || profile?.is_bot) {
     const username = String(profile?.username || "").trim().toLowerCase()
     const tier = BOT_TIER_DETAILS_BY_USERNAME[username] ?? BOT_LLM_TIER_DETAILS_BY_USERNAME[username]
     if (!tier) return null
+    const reasoningLabel = formatReasoningLabel(tier.reasoningLevel)
     return {
       code: tier.code,
       name: tier.name ?? "LLM bot",
-      limit: tier.limit ?? `${tier.model} model bot for ${tier.code} ${tier.tierName}.`,
-      reasoningLevel: tier.reasoningLevel,
+      limit: tier.limit ?? `${tier.model} model bot for ${tier.code} ${tier.tierName}${reasoningLabel ? ` (reasoning: ${reasoningLabel})` : ""}.`,
       className: `${tier.className} profile-tier-card--bot`,
       ariaLabel: "Bot tier",
     }
@@ -838,9 +843,6 @@ export default function ProfilePage() {
           <div className="profile-tier-card__body">
             <h2>Tier {profileTier.code} {profileTier.name}</h2>
             {profileTier.limit ? <p>{profileTier.limit}</p> : null}
-            {profileTier.reasoningLevel ? (
-              <p className="profile-tier-card__meta">Default reasoning level: {profileTier.reasoningLevel}</p>
-            ) : null}
           </div>
         </section>
       ) : null}
