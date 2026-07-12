@@ -284,10 +284,10 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     className: "profile-tier-card--tier2",
   },
   llm_gpt55: {
-    code: "T3",
+    code: "T5",
     model: "GPT-5.5",
-    tierName: "Strong",
-    className: "profile-tier-card--tier3",
+    tierName: "Master",
+    className: "profile-tier-card--tier5",
   },
   llm_gpt56_luna: {
     code: "T3",
@@ -302,10 +302,10 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     className: "profile-tier-card--tier3",
   },
   llm_grok45: {
-    code: "T3",
+    code: "T5",
     model: "Grok 4.5",
-    tierName: "Strong",
-    className: "profile-tier-card--tier3",
+    tierName: "Master",
+    className: "profile-tier-card--tier5",
   },
   llm_gemini25_flash: {
     code: "T3",

@@ -575,7 +575,7 @@ describe("LobbyPage", () => {
     expect(within(screen.getByRole("option", { name: "1390 - LLM Qwen Plus" })).getByText("Requires T2")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1395 - LLM Qwen 3.7 Plus" })).getByText("Requires T2")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1475 - LLM Mistral Large 3" })).getByText("Requires T3")).toBeInTheDocument()
-    expect(within(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).getByText("Requires T3")).toBeInTheDocument()
+    expect(within(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).getByText("Requires T5")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1510 - LLM GPT-5.6 Luna" })).getByText("Requires T3")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1468 - LLM Gemini 3.1 Flash-Lite" })).getByText("Requires T3")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).getByText("Requires T4")).toBeInTheDocument()
@@ -594,10 +594,10 @@ describe("LobbyPage", () => {
       "1460 - LLM Nemotron Ultra",
       "1468 - LLM Gemini 3.1 Flash-Lite",
       "1475 - LLM Mistral Large 3",
-      "1505 - LLM GPT-5.5",
       "1510 - LLM GPT-5.6 Luna",
       "1600 - LLM Gemini 3.1 Pro Preview",
       "1610 - LLM GPT-5.6 Terra",
+      "1505 - LLM GPT-5.5",
       "1700 - LLM GPT-5.6 Sol",
     ])
     expect(screen.queryByText("(No ply limit)")).not.toBeInTheDocument()

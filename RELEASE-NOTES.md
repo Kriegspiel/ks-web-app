@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.4.2
+
+- **Bot Catalog UI**: move OpenAI GPT-5.5 and xAI Grok 4.5 from T3 Strong to
+  T5 Master across the subscription matrix, lobby labels, and bot profile
+  cards.
+
 ## ks-web-app frontend v. 1.4.1
 
 - **Bot Catalog UI**: add GPT-5.6 Sol/Terra/Luna, Grok 4.5,
