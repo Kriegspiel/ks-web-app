@@ -63,9 +63,9 @@ const T4_BOTS = [
 ]
 
 const T5_BOTS = [
-  ["T5 OpenAI", [["GPT-5.6 Sol", "/user/llm_gpt56_sol"], ["GPT-5.5", "/user/llm_gpt55"], "GPT-5.5 Pro"]],
+  ["T5 OpenAI", [["GPT-5.6 Sol", "/user/llm_gpt56_sol"], ["GPT-5.5", "/user/llm_gpt55"], ["GPT-5.5 Pro", "/user/llm_gpt55_pro"]]],
   ["T5 xAI", [["Grok 4.5", "/user/llm_grok45"]]],
-  ["T5 Qwen", ["3.7 Max"]],
+  ["T5 Qwen", [["3.7 Max", "/user/llm_qwen37_max"]]],
 ]
 
 const LOWER_TIER_BOTS_INCLUDED = { type: "note", text: "Lower-tier bots included." }
@@ -89,6 +89,18 @@ const FEATURES = [
   { name: "Completed-game review", values: ["Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"] },
   { name: "Rating history", values: ["Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"] },
   { name: "Play bots", values: PLAY_BOTS_BY_TIER },
+  {
+    name: "Custom LLM providers and strategies",
+    values: [
+      "No",
+      "No",
+      "No",
+      "No",
+      "No",
+      "New LLM providers and modes; fully customizable prompts and conversation strategies.",
+      "New LLM providers and modes; fully customizable prompts and conversation strategies.",
+    ],
+  },
   { name: "Persistent player name", values: ["No", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"] },
 ]
 
@@ -128,6 +140,9 @@ function FeatureValue({ value }) {
   }
   if (Array.isArray(value)) {
     return <BotList groups={value} />
+  }
+  if (value !== "Yes" && value !== "No") {
+    return <span className="subscription-tier-table__text">{value}</span>
   }
   const markClass = value === "Yes" ? "subscription-tier-table__mark--yes" : "subscription-tier-table__mark--no"
   return <span className={`subscription-tier-table__mark ${markClass}`}>{value}</span>
@@ -521,8 +536,8 @@ export default function SubscriptionPage() {
           If something looks inconsistent, broken, or unexpectedly unavailable,
           please tell us right away at{" "}
           <a href="mailto:any@kriegspiel.org">any@kriegspiel.org</a> or on{" "}
-          <a href="https://x.com/kriegspiel" target="_blank" rel="noreferrer">
-            X.com
+          <a href="https://x.com/kriegspiel_org" target="_blank" rel="noreferrer">
+            X.com (@kriegspiel_org)
           </a>
           .
         </p>
