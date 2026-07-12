@@ -42,9 +42,8 @@ const T2_BOTS = [
 ]
 
 const T3_BOTS = [
-  ["T3 OpenAI", [["GPT-5.5", "/user/llm_gpt55"], ["GPT-5.6 Luna", "/user/llm_gpt56_luna"]]],
+  ["T3 OpenAI", [["GPT-5.6 Luna", "/user/llm_gpt56_luna"]]],
   ["T3 Anthropic", [["Claude Sonnet 5", "/user/llm_sonnet5"]]],
-  ["T3 xAI", [["Grok 4.5", "/user/llm_grok45"]]],
   ["T3 Gemini", [["3.1 Flash-Lite", "/user/llm_gemini31_lite"], ["3.5 Flash", "/user/llm_gemini35_flash"]]],
   ["T3 Mistral", [["Large 3", "/user/llm_mistral_large3"], ["Medium 3.5", "/user/llm_mistral_medium35"]]],
   ["T3 Nemotron", [["Ultra", "/user/llm_nemotron_ultra"]]],
@@ -64,7 +63,8 @@ const T4_BOTS = [
 ]
 
 const T5_BOTS = [
-  ["T5 OpenAI", [["GPT-5.6 Sol", "/user/llm_gpt56_sol"], "GPT-5.5 Pro"]],
+  ["T5 OpenAI", [["GPT-5.6 Sol", "/user/llm_gpt56_sol"], ["GPT-5.5", "/user/llm_gpt55"], "GPT-5.5 Pro"]],
+  ["T5 xAI", [["Grok 4.5", "/user/llm_grok45"]]],
   ["T5 Qwen", ["3.7 Max"]],
 ]
 
