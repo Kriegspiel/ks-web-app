@@ -8,7 +8,8 @@ need version entries unless they ship a user-visible change.
 ## ks-web-app frontend v. 1.4.5
 
 - **Bot Catalog UI**: make reasoning labels compact and inline with model bot
-  links on subscription and profile pages.
+  links on subscription and profile pages, and shorten the T5/T6 custom LLM
+  request copy.
 
 ## ks-web-app frontend v. 1.4.4
 
