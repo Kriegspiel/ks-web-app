@@ -17,6 +17,9 @@ const TIERS = [
   { key: "tier6", apiTier: null, code: "T6", name: "Elite", price: "Not available yet", selectable: false, future: true },
 ]
 
+const REASONING_NONE = "Default reasoning level: none"
+const REASONING_MEDIUM = "Default reasoning level: medium"
+
 const T0_BOTS = [
   ["T0-level bots", [["Random Bot", "/user/randobot"], ["Random Any", "/user/randobotany"]]],
 ]
@@ -42,7 +45,7 @@ const T2_BOTS = [
 ]
 
 const T3_BOTS = [
-  ["T3 OpenAI", [["GPT-5.6 Luna", "/user/llm_gpt56_luna"]]],
+  ["T3 OpenAI", [["GPT-5.6 Luna", "/user/llm_gpt56_luna", REASONING_NONE]]],
   ["T3 Anthropic", [["Claude Sonnet 5", "/user/llm_sonnet5"]]],
   ["T3 Gemini", [["3.1 Flash-Lite", "/user/llm_gemini31_lite"], ["3.5 Flash", "/user/llm_gemini35_flash"]]],
   ["T3 Mistral", [["Large 3", "/user/llm_mistral_large3"], ["Medium 3.5", "/user/llm_mistral_medium35"]]],
@@ -54,7 +57,7 @@ const T3_BOTS = [
 
 const T4_BOTS = [
   ["T4 Anthropic", [["Claude Opus 4.8", "/user/llm_opus48"]]],
-  ["T4 OpenAI", [["GPT-5.6 Terra", "/user/llm_gpt56_terra"]]],
+  ["T4 OpenAI", [["GPT-5.6 Terra", "/user/llm_gpt56_terra", REASONING_NONE]]],
   ["T4 DeepSeek", [["V4 Pro", "/user/bot_deepseekv4_pro"]]],
   ["T4 Gemini", [["3.1 Pro Preview", "/user/llm_gemini31_pro_preview"]]],
   ["T4 GLM", [["5.2", "/user/llm_glm52"]]],
@@ -63,7 +66,14 @@ const T4_BOTS = [
 ]
 
 const T5_BOTS = [
-  ["T5 OpenAI", [["GPT-5.6 Sol", "/user/llm_gpt56_sol"], ["GPT-5.5", "/user/llm_gpt55"], ["GPT-5.5 Pro", "/user/llm_gpt55_pro"]]],
+  [
+    "T5 OpenAI",
+    [
+      ["GPT-5.6 Sol", "/user/llm_gpt56_sol", REASONING_NONE],
+      ["GPT-5.5", "/user/llm_gpt55", REASONING_NONE],
+      ["GPT-5.5 Pro", "/user/llm_gpt55_pro", REASONING_MEDIUM],
+    ],
+  ],
   ["T5 xAI", [["Grok 4.5", "/user/llm_grok45"]]],
   ["T5 Qwen", [["3.7 Max", "/user/llm_qwen37_max"]]],
 ]
@@ -119,10 +129,12 @@ function BotList({ groups }) {
               {items.map((item, index) => {
                 const text = Array.isArray(item) ? item[0] : item
                 const path = Array.isArray(item) ? item[1] : null
+                const metadata = Array.isArray(item) ? item[2] : null
                 return (
                   <li key={`${label}-${text}`}>
                     {path ? <Link to={path}>{text}</Link> : text}
                     {index < items.length - 1 ? ";" : ""}
+                    {metadata ? <span className="subscription-bot-list__metadata">{metadata}</span> : null}
                   </li>
                 )
               })}
