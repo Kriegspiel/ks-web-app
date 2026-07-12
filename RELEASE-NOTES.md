@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.4.3
+
+- **Subscription Page**: link GPT-5.5 Pro and Qwen 3.7 Max to their T5 bot
+  profiles, update the X contact link to `@kriegspiel_org`, and advertise the
+  T5/T6 custom LLM provider and strategy option.
+
 ## ks-web-app frontend v. 1.4.2
 
 - **Bot Catalog UI**: move OpenAI GPT-5.5 and xAI Grok 4.5 from T3 Strong to

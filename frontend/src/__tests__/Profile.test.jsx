@@ -600,6 +600,7 @@ describe("ProfilePage", () => {
     ["llm_gpt56_luna", "Tier T3 LLM bot", "T3", "tier-badge--t3", "GPT-5.6 Luna model bot for T3 Strong."],
     ["llm_gpt56_terra", "Tier T4 LLM bot", "T4", "tier-badge--t4", "GPT-5.6 Terra model bot for T4 Expert."],
     ["llm_gpt56_sol", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.6 Sol model bot for T5 Master."],
+    ["llm_gpt55_pro", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.5 Pro model bot for T5 Master."],
   ])("marks_%s_with_the_configured_llm_tier", async (username, heading, code, badgeClass, description) => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username,

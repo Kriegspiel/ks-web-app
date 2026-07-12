@@ -81,6 +81,10 @@ describe("Subscription CSS", () => {
 
     const stackedPriceRule = blockFor(subscriptionCss, ".subscription-tier-price--stacked")
     expect(stackedPriceRule).toMatch(/white-space:\s*nowrap;/)
+
+    const textValueRule = blockFor(subscriptionCss, ".subscription-tier-table__text")
+    expect(textValueRule).toMatch(/display:\s*block;/)
+    expect(textValueRule).toMatch(/line-height:\s*1\.35;/)
   })
 
   it("makes the current tier badge high contrast", () => {

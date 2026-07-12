@@ -67,6 +67,8 @@ beforeEach(() => {
       { bot_id: "bot-27", username: "llm_gpt56_luna", display_name: "LLM GPT-5.6 Luna (bot)", description: "GPT-5.6 Luna model bot.", elo: 1510, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-28", username: "llm_gpt56_terra", display_name: "LLM GPT-5.6 Terra (bot)", description: "GPT-5.6 Terra model bot.", elo: 1610, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-29", username: "llm_gpt56_sol", display_name: "LLM GPT-5.6 Sol (bot)", description: "GPT-5.6 Sol model bot.", elo: 1700, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-30", username: "llm_qwen37_max", display_name: "LLM Qwen 3.7 Max (bot)", description: "Qwen 3.7 Max model bot.", elo: 1710, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-31", username: "llm_gpt55_pro", display_name: "LLM GPT-5.5 Pro (bot)", description: "GPT-5.5 Pro model bot.", elo: 1720, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
     ],
   })
 })
@@ -544,6 +546,8 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1610 - LLM GPT-5.6 Terra" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1700 - LLM GPT-5.6 Sol" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1710 - LLM Qwen 3.7 Max" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1720 - LLM GPT-5.5 Pro" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1200 - Random Any Bot" })).toBeInTheDocument()
     expect(screen.queryByRole("option", { name: "1180 - LLM Mistral Nemo" })).not.toBeInTheDocument()
     expect(screen.queryByRole("option", { name: "1311 - LLM Llama 3.1 8B" })).not.toBeInTheDocument()
@@ -569,6 +573,8 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1610 - LLM GPT-5.6 Terra" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1700 - LLM GPT-5.6 Sol" })).toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByRole("option", { name: "1710 - LLM Qwen 3.7 Max" })).toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByRole("option", { name: "1720 - LLM GPT-5.5 Pro" })).toHaveAttribute("aria-disabled", "true")
     expect(within(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).getByText("Requires T2")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1313 - LLM Llama 4 Maverick" })).getByText("Requires T2")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1316 - LLM Gemma 4 31B" })).getByText("Requires T2")).toBeInTheDocument()
@@ -581,6 +587,8 @@ describe("LobbyPage", () => {
     expect(within(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).getByText("Requires T4")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1610 - LLM GPT-5.6 Terra" })).getByText("Requires T4")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1700 - LLM GPT-5.6 Sol" })).getByText("Requires T5")).toBeInTheDocument()
+    expect(within(screen.getByRole("option", { name: "1710 - LLM Qwen 3.7 Max" })).getByText("Requires T5")).toBeInTheDocument()
+    expect(within(screen.getByRole("option", { name: "1720 - LLM GPT-5.5 Pro" })).getByText("Requires T5")).toBeInTheDocument()
     expect(botOptionLabels()).toEqual([
       "1200 - Random Any Bot",
       "1201 - Random Bot",
@@ -599,6 +607,8 @@ describe("LobbyPage", () => {
       "1610 - LLM GPT-5.6 Terra",
       "1505 - LLM GPT-5.5",
       "1700 - LLM GPT-5.6 Sol",
+      "1710 - LLM Qwen 3.7 Max",
+      "1720 - LLM GPT-5.5 Pro",
     ])
     expect(screen.queryByText("(No ply limit)")).not.toBeInTheDocument()
     expect(screen.queryByText("LLM Haiku (bot)")).not.toBeInTheDocument()
