@@ -28,23 +28,25 @@ const T1_BOTS = [
 const T2_BOTS = [
   ["T2 OpenAI", [["GPTNano", "/user/llm_gptnano"], ["GPT-OSS", "/user/llm_gptoss120b"]]],
   ["T2 Anthropic", [["Claude Haiku", "/user/llm_haiku"]]],
-  ["T2 DeepSeek", [["V4 Flash", "/user/llm_deepseekv4_flash"]]],
+  ["T2 DeepSeek", [["V4 Flash", "/user/llm_deepseekv4_flash"], ["V3.2", "/user/llm_deepseek_v32"]]],
   ["T2 Llama", [["4 Maverick", "/user/llm_llama4_maverick"]]],
   ["T2 Mistral", [["Small 3.2", "/user/llm_mistral_small32"]]],
   ["T2 Gemma", [["4 31B", "/user/llm_gemma4_31b"]]],
   ["T2 GLM", [["4.7 Flash", "/user/llm_glm47_flash"], ["4.5 Air", "/user/llm_glm45_air"]]],
   ["T2 Nemotron", [["Super", "/user/llm_nemotron_super"]]],
-  ["T2 Qwen", [["Plus", "/user/llm_qwen_plus"]]],
+  ["T2 Qwen", [["Plus", "/user/llm_qwen_plus"], ["3.7 Plus", "/user/llm_qwen37_plus"]]],
+  ["T2 MiniMax", [["M3", "/user/llm_minimax_m3"]]],
   ["T2 Kimi", [["K2.5", "/user/llm_kimi_k25"]]],
   ["T2 Hermes", [["4 70B", "/user/llm_hermes4_70b"]]],
   ["T2 Phi", [["4", "/user/llm_phi4"]]],
 ]
 
 const T3_BOTS = [
-  ["T3 OpenAI", [["GPT-5.5", "/user/llm_gpt55"]]],
+  ["T3 OpenAI", [["GPT-5.5", "/user/llm_gpt55"], ["GPT-5.6 Luna", "/user/llm_gpt56_luna"]]],
   ["T3 Anthropic", [["Claude Sonnet 5", "/user/llm_sonnet5"]]],
-  ["T3 Gemini", [["3.1 Flash-Lite", "/user/llm_gemini31_lite"]]],
-  ["T3 Mistral", [["Large 3", "/user/llm_mistral_large3"]]],
+  ["T3 xAI", [["Grok 4.5", "/user/llm_grok45"]]],
+  ["T3 Gemini", [["3.1 Flash-Lite", "/user/llm_gemini31_lite"], ["3.5 Flash", "/user/llm_gemini35_flash"]]],
+  ["T3 Mistral", [["Large 3", "/user/llm_mistral_large3"], ["Medium 3.5", "/user/llm_mistral_medium35"]]],
   ["T3 Nemotron", [["Ultra", "/user/llm_nemotron_ultra"]]],
   ["T3 Qwen", [["3.6 Flash", "/user/llm_qwen36_flash"]]],
   ["T3 Kimi", [["K2 Thinking", "/user/llm_kimi_k2_thinking"]]],
@@ -53,6 +55,7 @@ const T3_BOTS = [
 
 const T4_BOTS = [
   ["T4 Anthropic", [["Claude Opus 4.8", "/user/llm_opus48"]]],
+  ["T4 OpenAI", [["GPT-5.6 Terra", "/user/llm_gpt56_terra"]]],
   ["T4 DeepSeek", [["V4 Pro", "/user/bot_deepseekv4_pro"]]],
   ["T4 Gemini", [["3.1 Pro Preview", "/user/llm_gemini31_pro_preview"]]],
   ["T4 GLM", [["5.2", "/user/llm_glm52"]]],
@@ -61,7 +64,7 @@ const T4_BOTS = [
 ]
 
 const T5_BOTS = [
-  ["T5 OpenAI", ["GPT-5.5 Pro"]],
+  ["T5 OpenAI", [["GPT-5.6 Sol", "/user/llm_gpt56_sol"], "GPT-5.5 Pro"]],
   ["T5 Qwen", ["3.7 Max"]],
 ]
 

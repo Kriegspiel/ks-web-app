@@ -5,6 +5,13 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.4.1
+
+- **Bot Catalog UI**: add GPT-5.6 Sol/Terra/Luna, Grok 4.5,
+  Gemini 3.5 Flash, Qwen 3.7 Plus, DeepSeek V3.2, MiniMax M3, and
+  Mistral Medium 3.5 to subscription tiers, lobby tier labels, and bot
+  profile cards.
+
 ## ks-web-app frontend v. 1.4.0
 
 - **LLM Bot Playground**: make the expanded model-bot catalog visible in the

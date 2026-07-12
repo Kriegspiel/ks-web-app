@@ -595,6 +595,30 @@ describe("ProfilePage", () => {
     expect(screen.getByText("Qwen Plus model bot for T2 Club.")).toBeInTheDocument()
   })
 
+  it.each([
+    ["llm_qwen37_plus", "Tier T2 LLM bot", "T2", "tier-badge--t2", "Qwen 3.7 Plus model bot for T2 Club."],
+    ["llm_gpt56_luna", "Tier T3 LLM bot", "T3", "tier-badge--t3", "GPT-5.6 Luna model bot for T3 Strong."],
+    ["llm_gpt56_terra", "Tier T4 LLM bot", "T4", "tier-badge--t4", "GPT-5.6 Terra model bot for T4 Expert."],
+    ["llm_gpt56_sol", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.6 Sol model bot for T5 Master."],
+  ])("marks_%s_with_the_configured_llm_tier", async (username, heading, code, badgeClass, description) => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username,
+      role: "bot",
+      member_since: "2026-07-12T00:00:00Z",
+      stats: {},
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile(`/user/${username}`)
+
+    await screen.findByRole("heading", { name: username })
+    expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: heading })).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText(code)).toHaveClass("tier-badge", badgeClass, "profile-tier-card__code")
+    expect(screen.getByText(description)).toBeInTheDocument()
+  })
+
   it("marks_nemotron_ultra_bot_as_tier_three", async () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username: "llm_nemotron_ultra",

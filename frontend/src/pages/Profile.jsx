@@ -199,6 +199,12 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
+  llm_mistral_medium35: {
+    code: "T3",
+    model: "Mistral Medium 3.5",
+    tierName: "Strong",
+    className: "profile-tier-card--tier3",
+  },
   llm_gemma3_4b: {
     code: "T2",
     model: "Gemma 3 4B",
@@ -259,9 +265,33 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     tierName: "Club",
     className: "profile-tier-card--tier2",
   },
+  llm_qwen37_plus: {
+    code: "T2",
+    model: "Qwen 3.7 Plus",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
+  },
+  llm_deepseek_v32: {
+    code: "T2",
+    model: "DeepSeek V3.2",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
+  },
+  llm_minimax_m3: {
+    code: "T2",
+    model: "MiniMax M3",
+    tierName: "Club",
+    className: "profile-tier-card--tier2",
+  },
   llm_gpt55: {
     code: "T3",
     model: "GPT-5.5",
+    tierName: "Strong",
+    className: "profile-tier-card--tier3",
+  },
+  llm_gpt56_luna: {
+    code: "T3",
+    model: "GPT-5.6 Luna",
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
@@ -271,9 +301,21 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
+  llm_grok45: {
+    code: "T3",
+    model: "Grok 4.5",
+    tierName: "Strong",
+    className: "profile-tier-card--tier3",
+  },
   llm_gemini25_flash: {
     code: "T3",
     model: "Gemini 2.5 Flash",
+    tierName: "Strong",
+    className: "profile-tier-card--tier3",
+  },
+  llm_gemini35_flash: {
+    code: "T3",
+    model: "Gemini 3.5 Flash",
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
@@ -319,6 +361,12 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     tierName: "Expert",
     className: "profile-tier-card--tier4",
   },
+  llm_gpt56_terra: {
+    code: "T4",
+    model: "GPT-5.6 Terra",
+    tierName: "Expert",
+    className: "profile-tier-card--tier4",
+  },
   bot_deepseekv4_pro: {
     code: "T4",
     model: "DeepSeek V4 Pro",
@@ -354,6 +402,12 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     model: "Hermes 4 405B",
     tierName: "Expert",
     className: "profile-tier-card--tier4",
+  },
+  llm_gpt56_sol: {
+    code: "T5",
+    model: "GPT-5.6 Sol",
+    tierName: "Master",
+    className: "profile-tier-card--tier5",
   },
   llm_gpt55_pro: {
     code: "T5",
