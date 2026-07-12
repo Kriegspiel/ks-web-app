@@ -287,12 +287,14 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     code: "T5",
     model: "GPT-5.5",
     tierName: "Master",
+    reasoningLevel: "none",
     className: "profile-tier-card--tier5",
   },
   llm_gpt56_luna: {
     code: "T3",
     model: "GPT-5.6 Luna",
     tierName: "Strong",
+    reasoningLevel: "none",
     className: "profile-tier-card--tier3",
   },
   llm_sonnet5: {
@@ -365,6 +367,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     code: "T4",
     model: "GPT-5.6 Terra",
     tierName: "Expert",
+    reasoningLevel: "none",
     className: "profile-tier-card--tier4",
   },
   bot_deepseekv4_pro: {
@@ -407,12 +410,14 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     code: "T5",
     model: "GPT-5.6 Sol",
     tierName: "Master",
+    reasoningLevel: "none",
     className: "profile-tier-card--tier5",
   },
   llm_gpt55_pro: {
     code: "T5",
     model: "GPT-5.5 Pro",
     tierName: "Master",
+    reasoningLevel: "medium",
     className: "profile-tier-card--tier5",
   },
   llm_qwen37_max: {
@@ -592,6 +597,7 @@ function tierDetailsForProfile(profile) {
       code: tier.code,
       name: tier.name ?? "LLM bot",
       limit: tier.limit ?? `${tier.model} model bot for ${tier.code} ${tier.tierName}.`,
+      reasoningLevel: tier.reasoningLevel,
       className: `${tier.className} profile-tier-card--bot`,
       ariaLabel: "Bot tier",
     }
@@ -832,6 +838,9 @@ export default function ProfilePage() {
           <div className="profile-tier-card__body">
             <h2>Tier {profileTier.code} {profileTier.name}</h2>
             {profileTier.limit ? <p>{profileTier.limit}</p> : null}
+            {profileTier.reasoningLevel ? (
+              <p className="profile-tier-card__meta">Default reasoning level: {profileTier.reasoningLevel}</p>
+            ) : null}
           </div>
         </section>
       ) : null}

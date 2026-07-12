@@ -596,12 +596,13 @@ describe("ProfilePage", () => {
   })
 
   it.each([
-    ["llm_qwen37_plus", "Tier T2 LLM bot", "T2", "tier-badge--t2", "Qwen 3.7 Plus model bot for T2 Club."],
-    ["llm_gpt56_luna", "Tier T3 LLM bot", "T3", "tier-badge--t3", "GPT-5.6 Luna model bot for T3 Strong."],
-    ["llm_gpt56_terra", "Tier T4 LLM bot", "T4", "tier-badge--t4", "GPT-5.6 Terra model bot for T4 Expert."],
-    ["llm_gpt56_sol", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.6 Sol model bot for T5 Master."],
-    ["llm_gpt55_pro", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.5 Pro model bot for T5 Master."],
-  ])("marks_%s_with_the_configured_llm_tier", async (username, heading, code, badgeClass, description) => {
+    ["llm_qwen37_plus", "Tier T2 LLM bot", "T2", "tier-badge--t2", "Qwen 3.7 Plus model bot for T2 Club.", null],
+    ["llm_gpt56_luna", "Tier T3 LLM bot", "T3", "tier-badge--t3", "GPT-5.6 Luna model bot for T3 Strong.", "none"],
+    ["llm_gpt56_terra", "Tier T4 LLM bot", "T4", "tier-badge--t4", "GPT-5.6 Terra model bot for T4 Expert.", "none"],
+    ["llm_gpt55", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.5 model bot for T5 Master.", "none"],
+    ["llm_gpt56_sol", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.6 Sol model bot for T5 Master.", "none"],
+    ["llm_gpt55_pro", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.5 Pro model bot for T5 Master.", "medium"],
+  ])("marks_%s_with_the_configured_llm_tier", async (username, heading, code, badgeClass, description, reasoningLevel) => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username,
       role: "bot",
@@ -618,6 +619,11 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("heading", { name: heading })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText(code)).toHaveClass("tier-badge", badgeClass, "profile-tier-card__code")
     expect(screen.getByText(description)).toBeInTheDocument()
+    if (reasoningLevel) {
+      expect(screen.getByText(`Default reasoning level: ${reasoningLevel}`)).toBeInTheDocument()
+    } else {
+      expect(screen.queryByText(/Default reasoning level:/)).not.toBeInTheDocument()
+    }
   })
 
   it("marks_nemotron_ultra_bot_as_tier_three", async () => {
@@ -767,6 +773,7 @@ describe("ProfilePage", () => {
     expect(within(botTier).getByRole("heading", { name: "Tier T2 LLM bot" })).toBeInTheDocument()
     expect(within(botTier).getByText("T2")).toHaveClass("tier-badge", "tier-badge--t2", "profile-tier-card__code")
     expect(screen.getByText("GPT-5.4 Nano model bot for T2 Club.")).toBeInTheDocument()
+    expect(within(botTier).queryByText(/Default reasoning level:/)).not.toBeInTheDocument()
   })
 
   it("falls_back_to_unknown_bot_values_and_recent_game_labels", async () => {
