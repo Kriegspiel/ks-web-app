@@ -5,6 +5,27 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.4.0
+
+- **LLM Bot Playground**: make the expanded model-bot catalog visible in the
+  lobby, profiles, subscription matrix, and direct challenge flows, with clear
+  tier badges and unavailable-bot states.
+- **Subscriptions**: add the public and signed-in subscription surface, current
+  level messaging, billing/checkout flows, guest-account blockers, and upgrade
+  prompts for stronger paid bot tiers.
+- **Bots' Matrix**: replace static snapshots with the live private matrix
+  report, including row/column bot filters, period controls, outcome filters,
+  matchup history links, totals, and token/spend averages.
+- **Profiles, History, and Leaderboard**: use server-backed filtering, sorting,
+  pagination, exact opponent links, group filters, public profile metrics, and
+  bot tier/profile cards so large histories and bot pages remain readable.
+- **Live Play and Review**: add SSE-backed game refreshes, completed-link
+  review redirects, improved mobile referee logs, stronger replay controls,
+  stable game-board layouts, and clearer result/reason labels.
+- **Rulesets and Polish**: expose RAND, English, and CrazyKrieg gameplay
+  details across app flows, refine subscription/lobby copy, show RSS/footer
+  links, and improve production security headers and API proxy behavior.
+
 ## ks-web-app frontend v. 1.3.184
 
 - **Bot Catalog**: move Qwen Plus from T3 Strong to T2 Club across the
