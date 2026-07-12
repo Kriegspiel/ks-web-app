@@ -34,6 +34,7 @@ const T2_BOTS = [
   ["T2 Gemma", [["4 31B", "/user/llm_gemma4_31b"]]],
   ["T2 GLM", [["4.7 Flash", "/user/llm_glm47_flash"], ["4.5 Air", "/user/llm_glm45_air"]]],
   ["T2 Nemotron", [["Super", "/user/llm_nemotron_super"]]],
+  ["T2 Qwen", [["Plus", "/user/llm_qwen_plus"]]],
   ["T2 Kimi", [["K2.5", "/user/llm_kimi_k25"]]],
   ["T2 Hermes", [["4 70B", "/user/llm_hermes4_70b"]]],
   ["T2 Phi", [["4", "/user/llm_phi4"]]],
@@ -45,7 +46,7 @@ const T3_BOTS = [
   ["T3 Gemini", [["3.1 Flash-Lite", "/user/llm_gemini31_lite"]]],
   ["T3 Mistral", [["Large 3", "/user/llm_mistral_large3"]]],
   ["T3 Nemotron", [["Ultra", "/user/llm_nemotron_ultra"]]],
-  ["T3 Qwen", [["3.6 Flash", "/user/llm_qwen36_flash"], ["Plus", "/user/llm_qwen_plus"]]],
+  ["T3 Qwen", [["3.6 Flash", "/user/llm_qwen36_flash"]]],
   ["T3 Kimi", [["K2 Thinking", "/user/llm_kimi_k2_thinking"]]],
   ["T3 Hermes", [["3 70B", "/user/llm_hermes3_70b"]]],
 ]

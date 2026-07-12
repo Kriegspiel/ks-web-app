@@ -62,6 +62,7 @@ beforeEach(() => {
       { bot_id: "bot-22", username: "llm_gemini25_flash", display_name: "LLM Gemini 2.5 Flash (bot)", description: "Gemini 2.5 Flash model bot.", elo: 1469, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier3", llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-23", username: "openrouter_gemini25_lite", display_name: "OpenRouter Gemini 2.5 Flash-Lite (bot)", description: "Legacy Gemini 2.5 Flash-Lite model bot.", elo: 1319, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier2", llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-24", username: "openrouter_gemini31_lite", display_name: "OpenRouter Gemini 3.1 Flash-Lite (bot)", description: "Legacy Gemini 3.1 Flash-Lite model bot.", elo: 1467, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier3", llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-25", username: "llm_qwen_plus", display_name: "LLM Qwen Plus (bot)", description: "Qwen Plus model bot.", elo: 1390, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier2", llm_bot_limit_label: "No ply limit" },
     ],
   })
 })
@@ -527,6 +528,7 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("option", { name: "1300 - LLM Haiku" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1313 - LLM Llama 4 Maverick" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1316 - LLM Gemma 4 31B" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1390 - LLM Qwen Plus" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1475 - LLM Mistral Large 3" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1460 - LLM Nemotron Ultra" })).toBeInTheDocument()
@@ -548,6 +550,7 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("option", { name: "1300 - LLM Haiku" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1313 - LLM Llama 4 Maverick" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1316 - LLM Gemma 4 31B" })).toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByRole("option", { name: "1390 - LLM Qwen Plus" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1475 - LLM Mistral Large 3" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1468 - LLM Gemini 3.1 Flash-Lite" })).toHaveAttribute("aria-disabled", "true")
@@ -555,6 +558,7 @@ describe("LobbyPage", () => {
     expect(within(screen.getByRole("option", { name: "1342 - LLM GPT-Nano" })).getByText("Requires T2")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1313 - LLM Llama 4 Maverick" })).getByText("Requires T2")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1316 - LLM Gemma 4 31B" })).getByText("Requires T2")).toBeInTheDocument()
+    expect(within(screen.getByRole("option", { name: "1390 - LLM Qwen Plus" })).getByText("Requires T2")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1475 - LLM Mistral Large 3" })).getByText("Requires T3")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).getByText("Requires T3")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1468 - LLM Gemini 3.1 Flash-Lite" })).getByText("Requires T3")).toBeInTheDocument()
@@ -567,6 +571,7 @@ describe("LobbyPage", () => {
       "1313 - LLM Llama 4 Maverick",
       "1316 - LLM Gemma 4 31B",
       "1342 - LLM GPT-Nano",
+      "1390 - LLM Qwen Plus",
       "1460 - LLM Nemotron Ultra",
       "1468 - LLM Gemini 3.1 Flash-Lite",
       "1475 - LLM Mistral Large 3",
