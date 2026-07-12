@@ -430,15 +430,6 @@
   padding: 0;
 }
 
-.subscription-bot-list__metadata {
-  display: block;
-  margin-top: 0.08rem;
-  color: var(--muted);
-  font-size: 0.76rem;
-  font-weight: 650;
-  line-height: 1.2;
-}
-
 .subscription-bot-list__note {
   color: var(--muted);
   font-weight: 700;

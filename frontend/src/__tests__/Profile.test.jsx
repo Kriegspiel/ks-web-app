@@ -596,13 +596,13 @@ describe("ProfilePage", () => {
   })
 
   it.each([
-    ["llm_qwen37_plus", "Tier T2 LLM bot", "T2", "tier-badge--t2", "Qwen 3.7 Plus model bot for T2 Club.", null],
-    ["llm_gpt56_luna", "Tier T3 LLM bot", "T3", "tier-badge--t3", "GPT-5.6 Luna model bot for T3 Strong.", "none"],
-    ["llm_gpt56_terra", "Tier T4 LLM bot", "T4", "tier-badge--t4", "GPT-5.6 Terra model bot for T4 Expert.", "none"],
-    ["llm_gpt55", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.5 model bot for T5 Master.", "none"],
-    ["llm_gpt56_sol", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.6 Sol model bot for T5 Master.", "none"],
-    ["llm_gpt55_pro", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.5 Pro model bot for T5 Master.", "medium"],
-  ])("marks_%s_with_the_configured_llm_tier", async (username, heading, code, badgeClass, description, reasoningLevel) => {
+    ["llm_qwen37_plus", "Tier T2 LLM bot", "T2", "tier-badge--t2", "Qwen 3.7 Plus model bot for T2 Club."],
+    ["llm_gpt56_luna", "Tier T3 LLM bot", "T3", "tier-badge--t3", "GPT-5.6 Luna model bot for T3 Strong (reasoning: no)."],
+    ["llm_gpt56_terra", "Tier T4 LLM bot", "T4", "tier-badge--t4", "GPT-5.6 Terra model bot for T4 Expert (reasoning: no)."],
+    ["llm_gpt55", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.5 model bot for T5 Master (reasoning: no)."],
+    ["llm_gpt56_sol", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.6 Sol model bot for T5 Master (reasoning: no)."],
+    ["llm_gpt55_pro", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.5 Pro model bot for T5 Master (reasoning: medium)."],
+  ])("marks_%s_with_the_configured_llm_tier", async (username, heading, code, badgeClass, description) => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username,
       role: "bot",
@@ -619,11 +619,7 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("heading", { name: heading })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText(code)).toHaveClass("tier-badge", badgeClass, "profile-tier-card__code")
     expect(screen.getByText(description)).toBeInTheDocument()
-    if (reasoningLevel) {
-      expect(screen.getByText(`Default reasoning level: ${reasoningLevel}`)).toBeInTheDocument()
-    } else {
-      expect(screen.queryByText(/Default reasoning level:/)).not.toBeInTheDocument()
-    }
+    expect(screen.queryByText(/Default reasoning level:/)).not.toBeInTheDocument()
   })
 
   it("marks_nemotron_ultra_bot_as_tier_three", async () => {
