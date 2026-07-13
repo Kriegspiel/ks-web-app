@@ -111,6 +111,9 @@ describe("Subscription CSS", () => {
     expect(disabledPaymentButtonRule).toMatch(/background:\s*var\(--surface-strong\);/)
     expect(disabledPaymentButtonRule).toMatch(/color:\s*var\(--muted\);/)
 
+    const selectedColumnRule = blockFor(subscriptionCss, ".subscription-tier-table th.subscription-tier-table__selected-column")
+    expect(selectedColumnRule).toMatch(/box-shadow:\s*inset 0 0 0 2px var\(--accent\);/)
+
     const selectedButtonRule = blockFor(subscriptionCss, ".subscription-tier-table__heading button.is-selected")
     expect(selectedButtonRule).toMatch(/background:\s*var\(--accent\);/)
     expect(selectedButtonRule).toMatch(/color:\s*var\(--bg\);/)

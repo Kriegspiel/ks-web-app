@@ -311,6 +311,21 @@ describe("SubscriptionPage", () => {
     })
   })
 
+  it("uses_a_t5_tier_query_param_as_the_initial_unavailable_selection", async () => {
+    renderPage("/subscription?tier=tier5")
+
+    const controls = await screen.findByRole("region", { name: "Subscription controls" })
+    expect(await within(controls).findByRole("heading", { name: "Tier T5 Master" })).toBeInTheDocument()
+    expect(within(controls).getByText("Not available yet")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Open payment form" })).toBeDisabled()
+    expect(screen.queryByRole("button", { name: "Choose Tier T5 Master" })).not.toBeInTheDocument()
+
+    const tier5Header = screen.getByRole("columnheader", { name: /Tier\s+T5\s+Master/i })
+    expect(tier5Header).toHaveClass("subscription-tier-table__selected-column")
+    expect(tier5Header).toHaveClass("subscription-tier-table__unavailable-column")
+    expect(mockBillingApi.createCheckoutSession).not.toHaveBeenCalled()
+  })
+
   it("uses_the_current_paid_tier_as_the_initial_selection", async () => {
     mockBillingApi.getSubscription.mockResolvedValueOnce(billingStatus({ current_tier: "tier4" }))
 

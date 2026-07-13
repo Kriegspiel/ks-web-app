@@ -20,11 +20,11 @@ const TIERS = [
   { key: "tier2", apiTier: "tier2", code: "T2", name: "Club", price: { monthly: "$10/mo", yearly: "$100/yr" }, selectable: true },
   { key: "tier3", apiTier: "tier3", code: "T3", name: "Strong", price: { monthly: "$20/mo", yearly: "$200/yr" }, selectable: true },
   { key: "tier4", apiTier: "tier4", code: "T4", name: "Expert", price: { monthly: "$50/mo", yearly: "$500/yr" }, selectable: true },
-  { key: "tier5", apiTier: null, code: "T5", name: "Master", price: "Not available yet", selectable: false, future: true },
+  { key: "tier5", apiTier: "tier5", code: "T5", name: "Master", price: "Not available yet", selectable: false, future: true },
   { key: "tier6", apiTier: null, code: "T6", name: "Elite", price: "Not available yet", selectable: false, future: true },
 ]
 const SUBSCRIPTION_BOT_TIER_ORDER = TIERS.map((tier) => tier.code)
-const SELECTABLE_TIER_KEYS = new Set(TIERS.filter((tier) => tier.selectable).map((tier) => tier.apiTier))
+const REQUESTED_TIER_KEYS = new Set(TIERS.map((tier) => tier.apiTier).filter(Boolean))
 
 const REASONING_NONE = "no"
 const REASONING_MEDIUM = "medium"
@@ -224,12 +224,12 @@ function firstAvailablePlan(status) {
 
 function normalizeDesiredTier(value) {
   const normalized = typeof value === "string" ? value.trim().toLowerCase().replace(/[-_\s]/g, "") : ""
-  const tier = /^t[2-4]$/.test(normalized) ? `tier${normalized.slice(1)}` : normalized
-  return SELECTABLE_TIER_KEYS.has(tier) ? tier : ""
+  const tier = /^t[2-6]$/.test(normalized) ? `tier${normalized.slice(1)}` : normalized
+  return REQUESTED_TIER_KEYS.has(tier) ? tier : ""
 }
 
 function initialPlan(status, desiredTier) {
-  if (desiredTier && isTierAvailable(status, desiredTier)) {
+  if (desiredTier) {
     return { tier: desiredTier, interval: firstAvailableInterval(status, desiredTier) ?? "monthly" }
   }
   return firstAvailablePlan(status)
@@ -562,6 +562,7 @@ export default function SubscriptionPage() {
                       className={classNames(
                         tier.future && "subscription-tier-table__unavailable-column",
                         current && "subscription-tier-table__current-column",
+                        selected && "subscription-tier-table__selected-column",
                       )}
                     >
                       <span className="subscription-tier-table__heading">
@@ -599,6 +600,7 @@ export default function SubscriptionPage() {
                       className={classNames(
                         TIERS[index].future && "subscription-tier-table__unavailable-column",
                         TIERS[index].key === currentTier && "subscription-tier-table__current-column",
+                        TIERS[index].apiTier === selectedTier && "subscription-tier-table__selected-column",
                       )}
                     >
                       <FeatureValue value={value} />

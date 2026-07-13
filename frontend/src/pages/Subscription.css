@@ -471,6 +471,11 @@
   background: color-mix(in srgb, var(--surface-alt) 88%, #8a8580 12%) !important;
 }
 
+.subscription-tier-table th.subscription-tier-table__selected-column,
+.subscription-tier-table td.subscription-tier-table__selected-column {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
 .subscription-support-note {
   display: grid;
   gap: 0.55rem;

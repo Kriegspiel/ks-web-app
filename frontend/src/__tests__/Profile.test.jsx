@@ -420,10 +420,10 @@ describe("ProfilePage", () => {
     expect(challengeCard).toHaveTextContent(/llm_gpt55 is available from T5Master\. Upgrade your tier to challenge this bot\./)
     expect(within(challengeCard).getByText("llm_gpt55")).toHaveClass("profile-challenge-upgrade__bot-name")
     const tierLink = within(challengeCard).getByRole("link", { name: "View Tier T5 Master subscription tier" })
-    expect(tierLink).toHaveAttribute("href", "/subscription")
+    expect(tierLink).toHaveAttribute("href", "/subscription?tier=tier5")
     expect(within(tierLink).getByText("T5")).toHaveClass("tier-badge", "tier-badge--t5", "profile-challenge-upgrade__tier-code")
     expect(within(tierLink).getByText("Master")).toHaveClass("profile-challenge-upgrade__tier-name")
-    expect(within(challengeCard).getByRole("link", { name: "View tiers" })).toHaveAttribute("href", "/subscription")
+    expect(within(challengeCard).getByRole("link", { name: "View tiers" })).toHaveAttribute("href", "/subscription?tier=tier5")
     expect(within(challengeCard).queryByRole("button", { name: "Play game" })).not.toBeInTheDocument()
   })
 
