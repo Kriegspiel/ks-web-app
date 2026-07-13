@@ -376,6 +376,7 @@ describe("ProfilePage", () => {
           username: "llm_mistral_nemo",
           display_name: "LLM Mistral Nemo (bot)",
           supported_rule_variants: ["berkeley", "berkeley_any"],
+          available_for_viewer: true,
         },
       ],
     })
@@ -425,6 +426,48 @@ describe("ProfilePage", () => {
     expect(within(tierLink).getByText("Master")).toHaveClass("profile-challenge-upgrade__tier-name")
     expect(within(challengeCard).getByRole("link", { name: "View tiers" })).toHaveAttribute("href", "/subscription?tier=tier5")
     expect(within(challengeCard).queryByRole("button", { name: "Play game" })).not.toBeInTheDocument()
+  })
+
+  it("points_to_subscription_when_profile_bot_is_listed_but_unavailable_for_the_viewer", async () => {
+    mockAuthState.value = {
+      user: { username: "playerone", llm_bot_tier: "tier2" },
+      convertGuest: vi.fn(),
+      actionLoading: false,
+    }
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "llm_sonnet5",
+      role: "bot",
+      owner_email: "bot-sonnet5@kriegspiel.org",
+      member_since: "2026-07-11T00:00:00Z",
+      stats: {},
+      user_metrics: { completed_games: 0 },
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+    mockApi.getBots.mockResolvedValueOnce({
+      bots: [
+        {
+          bot_id: "bot-sonnet5",
+          username: "llm_sonnet5",
+          display_name: "LLM Claude Sonnet 5 (bot)",
+          required_tier: "tier3",
+          available_for_viewer: false,
+          supported_rule_variants: ["berkeley", "berkeley_any"],
+        },
+      ],
+    })
+
+    renderProfile("/user/llm_sonnet5")
+
+    await screen.findByRole("heading", { name: "llm_sonnet5" })
+    const challengeCard = await screen.findByRole("region", { name: "Challenge this bot" })
+
+    await within(challengeCard).findByText("llm_sonnet5")
+    expect(challengeCard).toHaveTextContent(/llm_sonnet5 is available from T3Strong\. Upgrade your tier to challenge this bot\./)
+    expect(within(challengeCard).getByRole("link", { name: "View Tier T3 Strong subscription tier" })).toHaveAttribute("href", "/subscription?tier=tier3")
+    expect(within(challengeCard).getByRole("link", { name: "View tiers" })).toHaveAttribute("href", "/subscription?tier=tier3")
+    expect(within(challengeCard).queryByRole("button", { name: "Play game" })).not.toBeInTheDocument()
+    expect(within(challengeCard).queryByLabelText("Ruleset")).not.toBeInTheDocument()
   })
 
   it("shows_user_metrics_for_human_profiles", async () => {

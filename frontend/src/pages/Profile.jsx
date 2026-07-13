@@ -4,7 +4,7 @@ import EloChart from "../components/EloChart"
 import { ELO_TRACKS } from "../components/eloChartConstants"
 import TierBadge from "../components/TierBadge"
 import VersionStamp from "../components/VersionStamp"
-import { subscriptionPathForTierCode } from "../botCatalog"
+import { botAvailableForViewer, subscriptionPathForTierCode, viewerBotAccessTier } from "../botCatalog"
 import { useAuth } from "../hooks/useAuth"
 import { createGame, getBots, userApi } from "../services/api"
 import { formatUtcDate } from "../utils/dateTime"
@@ -755,21 +755,26 @@ export default function ProfilePage() {
   const profileTier = tierDetailsForProfile(profile)
   const profileTierLabel = profileTier?.ariaLabel || "Player tier"
   const profileTierSubscriptionPath = profileTier ? subscriptionPathForTierCode(profileTier.code) : "/subscription"
+  const viewerTier = viewerBotAccessTier(user)
   const challengeBot = useMemo(() => {
     if (!isBotProfile) return null
     const targetUsername = normalizeUsername(profileUsername)
     return challengeBots.find((bot) => normalizeUsername(bot?.username) === targetUsername) ?? null
   }, [challengeBots, isBotProfile, profileUsername])
-  const challengeRuleVariants = useMemo(() => (challengeBot ? botSupportedRuleVariants(challengeBot) : []), [challengeBot])
+  const challengeBotAvailable = Boolean(challengeBot && botAvailableForViewer(challengeBot, viewerTier))
+  const challengeRuleVariants = useMemo(
+    () => (challengeBotAvailable ? botSupportedRuleVariants(challengeBot) : []),
+    [challengeBot, challengeBotAvailable],
+  )
 
   useEffect(() => {
-    if (!challengeBot) {
+    if (!challengeBotAvailable) {
       setChallengeRuleVariant("")
       return
     }
 
     setChallengeRuleVariant((current) => (challengeRuleVariants.includes(current) ? current : (challengeRuleVariants[0] ?? "")))
-  }, [challengeBot, challengeRuleVariants])
+  }, [challengeBotAvailable, challengeRuleVariants])
 
   async function onConvertGuest(event) {
     event.preventDefault()
@@ -794,7 +799,7 @@ export default function ProfilePage() {
     event.preventDefault()
     setChallengeError("")
 
-    if (!challengeBot?.bot_id) {
+    if (!challengeBotAvailable || !challengeBot?.bot_id) {
       setChallengeError("This bot is not available for your current tier.")
       return
     }
@@ -1005,7 +1010,7 @@ export default function ProfilePage() {
             <p>Checking challenge availability…</p>
           ) : challengeBotsError ? (
             <p role="alert" className="auth-error">{challengeBotsError}</p>
-          ) : challengeBot ? (
+          ) : challengeBotAvailable ? (
             <form className="profile-challenge-form" onSubmit={onChallengeBot}>
               <label>
                 Ruleset
