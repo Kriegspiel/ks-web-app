@@ -62,7 +62,7 @@ describe("Subscription CSS", () => {
     expect(actionsRule).toMatch(/justify-content:\s*flex-end;/)
   })
 
-  it("uses a compact tier table and stacked bot list items", () => {
+  it("uses a compact tier table and wrapping bot list items", () => {
     const tableRule = blockFor(subscriptionCss, ".subscription-tier-table {")
     expect(tableRule).toMatch(/min-width:\s*64rem;/)
 
@@ -70,9 +70,15 @@ describe("Subscription CSS", () => {
     expect(featureColumnRule).toMatch(/width:\s*12rem;/)
 
     const botItemsRule = blockFor(subscriptionCss, ".subscription-bot-list__items")
-    expect(botItemsRule).toMatch(/display:\s*grid;/)
+    expect(botItemsRule).toMatch(/display:\s*flex;/)
+    expect(botItemsRule).toMatch(/flex-wrap:\s*wrap;/)
+    expect(botItemsRule).toMatch(/align-items:\s*baseline;/)
     expect(botItemsRule).toMatch(/list-style:\s*none;/)
     expect(botItemsRule).toMatch(/margin:\s*0;/)
+
+    const botItemSeparatorRule = blockFor(subscriptionCss, ".subscription-bot-list__items li:not(:last-child)::after")
+    expect(botItemSeparatorRule).toMatch(/content:\s*",";/)
+    expect(botItemSeparatorRule).toMatch(/color:\s*var\(--muted\);/)
 
     const priceRule = blockFor(subscriptionCss, ".subscription-tier-table__price")
     expect(priceRule).toMatch(/display:\s*grid;/)

@@ -2,10 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { loadStripe } from "@stripe/stripe-js"
 import {
-  BOT_TIER_LABELS,
+  botPickerName,
   botTierCode,
   compareBotPickerBots,
-  formatBotPickerLabel,
   isCatalogHiddenBot,
 } from "../botCatalog"
 import TierBadge from "../components/TierBadge"
@@ -26,66 +25,92 @@ const TIERS = [
 const SUBSCRIPTION_BOT_TIER_ORDER = TIERS.map((tier) => tier.code)
 const REQUESTED_TIER_KEYS = new Set(TIERS.map((tier) => tier.apiTier).filter(Boolean))
 
-const REASONING_NONE = "no"
 const REASONING_MEDIUM = "medium"
 
+function subscriptionBot(username, model, reasoning = "") {
+  return { username, model, path: `/user/${username}`, reasoning }
+}
+
 const T0_BOTS = [
-  ["T0-level bots", [["Random Bot", "/user/randobot"], ["Random Any", "/user/randobotany"]]],
+  ["Kriegspiel", [subscriptionBot("randobot", "Random Bot"), subscriptionBot("randobotany", "Random Any")]],
 ]
 
 const T1_BOTS = [
-  ["T1-level bots", [["Darkboard MCTS", "/user/darkboardmcts"], ["Simple Heuristics Bot", "/user/simpleheuristics"], ["Stockfish Wild 16", "/user/stockfishwild"]]],
+  [
+    "Kriegspiel",
+    [
+      subscriptionBot("darkboardmcts", "Darkboard MCTS"),
+      subscriptionBot("simpleheuristics", "Simple Heuristics Bot"),
+      subscriptionBot("stockfishwild", "Stockfish Wild 16"),
+    ],
+  ],
 ]
 
 const T2_BOTS = [
-  ["T2 OpenAI", [["GPTNano", "/user/llm_gptnano"], ["GPT-OSS", "/user/llm_gptoss120b"]]],
-  ["T2 Anthropic", [["Claude Haiku", "/user/llm_haiku"]]],
-  ["T2 DeepSeek", [["V4 Flash", "/user/llm_deepseekv4_flash"], ["V3.2", "/user/llm_deepseek_v32"]]],
-  ["T2 Llama", [["4 Maverick", "/user/llm_llama4_maverick"]]],
-  ["T2 Mistral", [["Small 3.2", "/user/llm_mistral_small32"]]],
-  ["T2 Gemma", [["4 31B", "/user/llm_gemma4_31b"]]],
-  ["T2 GLM", [["4.7 Flash", "/user/llm_glm47_flash"], ["4.5 Air", "/user/llm_glm45_air"]]],
-  ["T2 Nemotron", [["Super", "/user/llm_nemotron_super"]]],
-  ["T2 Qwen", [["Plus", "/user/llm_qwen_plus"], ["3.7 Plus", "/user/llm_qwen37_plus"]]],
-  ["T2 MiniMax", [["M3", "/user/llm_minimax_m3"]]],
-  ["T2 Kimi", [["K2.5", "/user/llm_kimi_k25"]]],
-  ["T2 Hermes", [["4 70B", "/user/llm_hermes4_70b"]]],
-  ["T2 Phi", [["4", "/user/llm_phi4"]]],
+  ["OpenAI", [subscriptionBot("llm_gptnano", "GPT Nano"), subscriptionBot("llm_gptoss120b", "GPT-OSS 120B")]],
+  ["Anthropic", [subscriptionBot("llm_haiku", "Claude Haiku")]],
+  ["DeepSeek", [subscriptionBot("llm_deepseekv4_flash", "DeepSeek V4 Flash"), subscriptionBot("llm_deepseek_v32", "DeepSeek V3.2")]],
+  ["Meta", [subscriptionBot("llm_llama4_maverick", "Llama 4 Maverick")]],
+  ["Mistral AI", [subscriptionBot("llm_mistral_small32", "Mistral Small 3.2")]],
+  ["Google", [subscriptionBot("llm_gemma4_31b", "Gemma 4 31B")]],
+  ["Z.AI", [subscriptionBot("llm_glm47_flash", "GLM 4.7 Flash"), subscriptionBot("llm_glm45_air", "GLM 4.5 Air")]],
+  ["Nvidia", [subscriptionBot("llm_nemotron_super", "Nemotron Super")]],
+  ["Alibaba", [subscriptionBot("llm_qwen_plus", "Qwen Plus"), subscriptionBot("llm_qwen37_plus", "Qwen 3.7 Plus")]],
+  ["MiniMax", [subscriptionBot("llm_minimax_m3", "MiniMax M3")]],
+  ["Moonshot AI", [subscriptionBot("llm_kimi_k25", "Kimi K2.5")]],
+  ["Nous Research", [subscriptionBot("llm_hermes4_70b", "Hermes 4 70B")]],
+  ["Microsoft", [subscriptionBot("llm_phi4", "Phi 4")]],
 ]
 
 const T3_BOTS = [
-  ["T3 OpenAI", [["GPT-5.6 Luna", "/user/llm_gpt56_luna", REASONING_NONE]]],
-  ["T3 Anthropic", [["Claude Sonnet 5", "/user/llm_sonnet5"]]],
-  ["T3 Gemini", [["3.1 Flash-Lite", "/user/llm_gemini31_lite"], ["3.5 Flash", "/user/llm_gemini35_flash"]]],
-  ["T3 Mistral", [["Large 3", "/user/llm_mistral_large3"], ["Medium 3.5", "/user/llm_mistral_medium35"]]],
-  ["T3 Nemotron", [["Ultra", "/user/llm_nemotron_ultra"]]],
-  ["T3 Qwen", [["3.6 Flash", "/user/llm_qwen36_flash"]]],
-  ["T3 Kimi", [["K2 Thinking", "/user/llm_kimi_k2_thinking"]]],
-  ["T3 Hermes", [["3 70B", "/user/llm_hermes3_70b"]]],
+  ["OpenAI", [subscriptionBot("llm_gpt56_luna", "GPT-5.6 Luna")]],
+  ["Anthropic", [subscriptionBot("llm_sonnet5", "Claude Sonnet 5")]],
+  ["Google", [subscriptionBot("llm_gemini31_lite", "Gemini 3.1 Flash-Lite"), subscriptionBot("llm_gemini35_flash", "Gemini 3.5 Flash")]],
+  ["Mistral AI", [subscriptionBot("llm_mistral_large3", "Mistral Large 3"), subscriptionBot("llm_mistral_medium35", "Mistral Medium 3.5")]],
+  ["Nvidia", [subscriptionBot("llm_nemotron_ultra", "Nemotron Ultra")]],
+  ["Alibaba", [subscriptionBot("llm_qwen36_flash", "Qwen 3.6 Flash")]],
+  ["Moonshot AI", [subscriptionBot("llm_kimi_k2_thinking", "Kimi K2 Thinking")]],
+  ["Nous Research", [subscriptionBot("llm_hermes3_70b", "Hermes 3 70B")]],
 ]
 
 const T4_BOTS = [
-  ["T4 Anthropic", [["Claude Opus 4.8", "/user/llm_opus48"]]],
-  ["T4 OpenAI", [["GPT-5.6 Terra", "/user/llm_gpt56_terra", REASONING_NONE]]],
-  ["T4 DeepSeek", [["V4 Pro", "/user/bot_deepseekv4_pro"]]],
-  ["T4 Gemini", [["3.1 Pro Preview", "/user/llm_gemini31_pro_preview"]]],
-  ["T4 GLM", [["5.2", "/user/llm_glm52"]]],
-  ["T4 Kimi", [["K2.7 Code", "/user/llm_kimi_k27_code"]]],
-  ["T4 Hermes", [["4 405B", "/user/llm_hermes4_405b"]]],
+  ["Anthropic", [subscriptionBot("llm_opus48", "Claude Opus 4.8")]],
+  ["OpenAI", [subscriptionBot("llm_gpt56_terra", "GPT-5.6 Terra")]],
+  ["DeepSeek", [subscriptionBot("bot_deepseekv4_pro", "DeepSeek V4 Pro")]],
+  ["Google", [subscriptionBot("llm_gemini31_pro_preview", "Gemini 3.1 Pro Preview")]],
+  ["Z.AI", [subscriptionBot("llm_glm52", "GLM 5.2")]],
+  ["Moonshot AI", [subscriptionBot("llm_kimi_k27_code", "Kimi K2.7 Code")]],
+  ["Nous Research", [subscriptionBot("llm_hermes4_405b", "Hermes 4 405B")]],
 ]
 
 const T5_BOTS = [
   [
-    "T5 OpenAI",
+    "OpenAI",
     [
-      ["GPT-5.6 Sol", "/user/llm_gpt56_sol", REASONING_NONE],
-      ["GPT-5.5", "/user/llm_gpt55", REASONING_NONE],
-      ["GPT-5.5 Pro", "/user/llm_gpt55_pro", REASONING_MEDIUM],
+      subscriptionBot("llm_gpt56_sol", "GPT-5.6 Sol"),
+      subscriptionBot("llm_gpt55", "GPT-5.5"),
+      subscriptionBot("llm_gpt55_pro", "GPT-5.5 Pro", REASONING_MEDIUM),
     ],
   ],
-  ["T5 xAI", [["Grok 4.5", "/user/llm_grok45"]]],
-  ["T5 Qwen", [["3.7 Max", "/user/llm_qwen37_max"]]],
+  ["xAI", [subscriptionBot("llm_grok45", "Grok 4.5")]],
+  ["Alibaba", [subscriptionBot("llm_qwen37_max", "Qwen 3.7 Max")]],
 ]
+
+const SUBSCRIPTION_BOT_CATALOG_GROUPS = [T0_BOTS, T1_BOTS, T2_BOTS, T3_BOTS, T4_BOTS, T5_BOTS]
+const SUBSCRIPTION_BOT_DISPLAY_BY_USERNAME = new Map()
+let subscriptionBotCatalogOrder = 0
+SUBSCRIPTION_BOT_CATALOG_GROUPS.forEach((tierGroups) => {
+  tierGroups.forEach(([provider, items]) => {
+    items.forEach((item) => {
+      SUBSCRIPTION_BOT_DISPLAY_BY_USERNAME.set(item.username, {
+        ...item,
+        provider,
+        order: subscriptionBotCatalogOrder,
+      })
+      subscriptionBotCatalogOrder += 1
+    })
+  })
+})
 
 const LOWER_TIER_BOTS_INCLUDED = { type: "note", text: "Lower-tier bots included." }
 
@@ -128,21 +153,109 @@ function profilePathForBot(bot) {
   return username ? `/user/${encodeURIComponent(username)}` : null
 }
 
+function normalizedBotUsername(bot) {
+  return String(bot?.username || "").trim().toLowerCase()
+}
+
+function knownSubscriptionBot(bot) {
+  return SUBSCRIPTION_BOT_DISPLAY_BY_USERNAME.get(normalizedBotUsername(bot)) ?? null
+}
+
+function visibleReasoningLevel(value) {
+  const reasoning = String(value || "").trim().toLowerCase()
+  return reasoning && reasoning !== "none" && reasoning !== "no" ? reasoning : ""
+}
+
+function subscriptionBotReasoning(bot) {
+  const known = knownSubscriptionBot(bot)
+  return visibleReasoningLevel(
+    known?.reasoning
+      || bot?.llm_reasoning_level
+      || bot?.llm_reasoning_effort
+      || bot?.reasoning_level
+      || bot?.reasoning_effort
+      || bot?.default_reasoning_level,
+  )
+}
+
+function inferSubscriptionProvider(bot) {
+  const known = knownSubscriptionBot(bot)
+  if (known) return known.provider
+
+  const haystack = `${normalizedBotUsername(bot)} ${botPickerName(bot)}`.toLowerCase()
+  if (/gpt|openai/.test(haystack)) return "OpenAI"
+  if (/claude|haiku|sonnet|opus|anthropic/.test(haystack)) return "Anthropic"
+  if (/gemini|gemma|google/.test(haystack)) return "Google"
+  if (/llama|meta/.test(haystack)) return "Meta"
+  if (/mistral/.test(haystack)) return "Mistral AI"
+  if (/deepseek/.test(haystack)) return "DeepSeek"
+  if (/glm|z-ai|zai/.test(haystack)) return "Z.AI"
+  if (/nemotron|nvidia/.test(haystack)) return "Nvidia"
+  if (/qwen|alibaba/.test(haystack)) return "Alibaba"
+  if (/minimax/.test(haystack)) return "MiniMax"
+  if (/kimi|moonshot/.test(haystack)) return "Moonshot AI"
+  if (/hermes|nous/.test(haystack)) return "Nous Research"
+  if (/phi|microsoft/.test(haystack)) return "Microsoft"
+  if (/grok|xai|x-ai/.test(haystack)) return "xAI"
+  return bot?.llm_backed ? "Other LLM" : "Kriegspiel"
+}
+
+function inferSubscriptionModelName(bot) {
+  const known = knownSubscriptionBot(bot)
+  if (known) return known.model
+
+  const cleanName = botPickerName(bot)
+    .replace(/^(?:LLM|OpenRouter|OR)\s+/i, "")
+    .replace(/\s+Bot$/i, "")
+    .replace(/\s+/g, " ")
+    .trim()
+  return cleanName || normalizedBotUsername(bot) || "Unknown bot"
+}
+
+function liveSubscriptionBotItem(bot) {
+  const known = knownSubscriptionBot(bot)
+  return {
+    username: normalizedBotUsername(bot),
+    model: inferSubscriptionModelName(bot),
+    path: profilePathForBot(bot),
+    provider: inferSubscriptionProvider(bot),
+    reasoning: subscriptionBotReasoning(bot),
+    order: known?.order ?? Number.POSITIVE_INFINITY,
+  }
+}
+
+function compareSubscriptionBots(left, right) {
+  const leftOrder = knownSubscriptionBot(left)?.order ?? Number.POSITIVE_INFINITY
+  const rightOrder = knownSubscriptionBot(right)?.order ?? Number.POSITIVE_INFINITY
+  if (leftOrder !== rightOrder) {
+    return leftOrder - rightOrder
+  }
+  return compareBotPickerBots(left, right)
+}
+
+function subscriptionBotDisplayText(item) {
+  const reasoning = visibleReasoningLevel(item?.reasoning)
+  return reasoning ? `${item.model} (reasoning: ${reasoning})` : item.model
+}
+
 function livePlayBotsByTier(bots) {
-  const groupsByTier = new Map(SUBSCRIPTION_BOT_TIER_ORDER.map((code) => [code, []]))
+  const groupsByTier = new Map(SUBSCRIPTION_BOT_TIER_ORDER.map((code) => [code, new Map()]))
   bots
     .filter((bot) => !isCatalogHiddenBot(bot))
-    .sort(compareBotPickerBots)
+    .sort(compareSubscriptionBots)
     .forEach((bot) => {
       const code = botTierCode(bot)
-      const items = groupsByTier.get(code)
-      if (!items) return
-      items.push([formatBotPickerLabel(bot), profilePathForBot(bot)])
+      const providerGroups = groupsByTier.get(code)
+      if (!providerGroups) return
+      const item = liveSubscriptionBotItem(bot)
+      const providerItems = providerGroups.get(item.provider) ?? []
+      providerItems.push(item)
+      providerGroups.set(item.provider, providerItems)
     })
 
   return SUBSCRIPTION_BOT_TIER_ORDER.map((code, index) => {
-    const items = groupsByTier.get(code) ?? []
-    const groups = items.length ? [[`${code} ${BOT_TIER_LABELS[code] ?? `${code} bots`}`, items]] : []
+    const providerGroups = groupsByTier.get(code) ?? new Map()
+    const groups = Array.from(providerGroups.entries())
     return index === 0 ? groups : withLowerTierBots(groups)
   })
 }
@@ -165,15 +278,13 @@ function BotList({ groups }) {
           <div key={label} className="subscription-bot-list__group">
             <strong className="subscription-bot-list__label">{label}:</strong>
             <ul className="subscription-bot-list__items">
-              {items.map((item, index) => {
-                const text = Array.isArray(item) ? item[0] : item
-                const path = Array.isArray(item) ? item[1] : null
-                const reasoning = Array.isArray(item) ? item[2] : null
-                const displayText = reasoning ? `${text} (reasoning: ${reasoning})` : text
+              {items.map((item) => {
+                const model = typeof item === "string" ? item : item.model
+                const path = typeof item === "string" ? null : item.path
+                const displayText = subscriptionBotDisplayText({ model, reasoning: item?.reasoning })
                 return (
-                  <li key={`${label}-${text}`}>
+                  <li key={`${label}-${path || model}`}>
                     {path ? <Link to={path}>{displayText}</Link> : displayText}
-                    {index < items.length - 1 ? ";" : ""}
                   </li>
                 )
               })}
