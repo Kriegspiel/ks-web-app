@@ -197,6 +197,14 @@ export const billingApi = {
       throw normalizeError(error, "Unable to start checkout right now.")
     }
   },
+  async createSubscriptionChangeSession(payload) {
+    try {
+      const response = await api.post("/api/billing/subscription-change-session", payload)
+      return response.data
+    } catch (error) {
+      throw normalizeError(error, "Unable to review that subscription change right now.")
+    }
+  },
   async createPortalSession() {
     try {
       const response = await api.post("/api/billing/portal-session")

@@ -323,6 +323,11 @@ function isTierAvailable(status, tier) {
   return firstAvailableInterval(status, tier) !== null
 }
 
+function selectedPlanMatchesBilling(status, tier, interval) {
+  const billing = status?.billing
+  return billing?.tier === tier && billing?.interval === interval
+}
+
 function firstAvailablePlan(status) {
   const currentTier = ["tier2", "tier3", "tier4"].includes(status?.current_tier) ? status.current_tier : null
   const preferredTiers = currentTier ? [currentTier, ...["tier2", "tier3", "tier4"].filter((tier) => tier !== currentTier)] : ["tier2", "tier3", "tier4"]
@@ -512,7 +517,16 @@ export default function SubscriptionPage() {
   const selectedTierDetails = tierByApiTier(selectedTier)
   const selectedAvailable = isPlanAvailable(status, selectedTier, interval)
   const activeSubscription = ["active", "trialing"].includes(status?.billing?.subscription_status)
+  const selectedCurrentSubscriptionPlan = activeSubscription && selectedPlanMatchesBilling(status, selectedTier, interval)
   const canSubscribe = hasSignedInUser && status?.enabled === true && selectedAvailable && user?.is_guest !== true && !activeSubscription
+  const canChangeSubscription = (
+    hasSignedInUser
+    && status?.enabled === true
+    && selectedAvailable
+    && user?.is_guest !== true
+    && activeSubscription
+    && !selectedCurrentSubscriptionPlan
+  )
   const currentTier = hasSignedInUser ? currentTierKey(status, user) : null
 
   function clearCheckoutForm() {
@@ -548,11 +562,17 @@ export default function SubscriptionPage() {
   }
 
   async function startCheckout() {
-    if (!canSubscribe || !stripePromise || !checkoutContainerRef.current) return
+    if (!canSubscribe && !canChangeSubscription) return
     setCheckoutLoading(true)
     setBillingError("")
     clearCheckoutForm()
     try {
+      if (canChangeSubscription) {
+        const response = await billingApi.createSubscriptionChangeSession({ tier: selectedTier, interval })
+        window.location.assign(response.url)
+        return
+      }
+      if (!stripePromise || !checkoutContainerRef.current) return
       const stripe = await stripePromise
       if (!stripe) throw new Error("Stripe is not ready.")
       const checkout = await createEmbeddedCheckout(stripe, {
@@ -569,6 +589,16 @@ export default function SubscriptionPage() {
     } finally {
       setCheckoutLoading(false)
     }
+  }
+
+  function paymentButtonText() {
+    if (checkoutLoading) {
+      return canChangeSubscription ? "Opening change review..." : "Opening payment form..."
+    }
+    if (canChangeSubscription) return "Review prorated change"
+    if (activeSubscription && !selectedAvailable) return "Not available"
+    if (activeSubscription) return "Current subscription"
+    return checkoutMounted ? "Refresh payment form" : "Open payment form"
   }
 
   async function openPortal() {
@@ -669,13 +699,9 @@ export default function SubscriptionPage() {
             type="button"
             className="subscription-payment-button"
             onClick={startCheckout}
-            disabled={!canSubscribe || checkoutLoading}
+            disabled={(!canSubscribe && !canChangeSubscription) || checkoutLoading}
           >
-            {activeSubscription
-              ? "Use billing management"
-              : checkoutLoading
-                ? "Opening payment form..."
-                : checkoutMounted ? "Refresh payment form" : "Open payment form"}
+            {paymentButtonText()}
           </button>
         </section>
       ) : null}

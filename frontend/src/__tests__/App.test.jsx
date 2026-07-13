@@ -29,6 +29,7 @@ const mockApi = vi.hoisted(() => ({
   billingApi: {
     getSubscription: vi.fn(),
     createCheckoutSession: vi.fn(),
+    createSubscriptionChangeSession: vi.fn(),
     createPortalSession: vi.fn(),
   },
   userApi: {
@@ -66,6 +67,7 @@ beforeEach(() => {
     billing: { has_customer: false },
   })
   mockApi.billingApi.createCheckoutSession.mockReset()
+  mockApi.billingApi.createSubscriptionChangeSession.mockReset()
   mockApi.billingApi.createPortalSession.mockReset()
   window.sessionStorage.clear()
   mockApi.getGame.mockResolvedValue({ state: "waiting" })
