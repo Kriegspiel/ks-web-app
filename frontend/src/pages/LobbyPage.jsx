@@ -47,6 +47,11 @@ const BOT_TIER_LABELS = {
   T4: "Expert bots",
   T5: "Master bots",
 }
+const SUBSCRIPTION_TIER_BY_BOT_TIER_CODE = {
+  T2: "tier2",
+  T3: "tier3",
+  T4: "tier4",
+}
 const BOT_TIER_BY_USERNAME = {
   darkboardmcts: "T1",
   simpleheuristics: "T1",
@@ -250,6 +255,15 @@ function botRequiredTierCode(bot) {
   return BOT_ACCESS_TIER_CODE[botRequiredAccessTier(bot)] ?? botTierCode(bot)
 }
 
+function subscriptionPathForBotTier(code) {
+  const tier = SUBSCRIPTION_TIER_BY_BOT_TIER_CODE[code]
+  return tier ? `/subscription?tier=${tier}` : "/subscription"
+}
+
+function subscriptionPathForBot(bot) {
+  return subscriptionPathForBotTier(botRequiredTierCode(bot))
+}
+
 function botPickerName(bot) {
   return String(bot?.display_name ?? "Unknown bot").replace(/\s*\(bot\)\s*$/i, "").trim() || "Unknown bot"
 }
@@ -378,6 +392,17 @@ function BotTierPicker({ bots, selectedBotId, isBotAvailable, onChange, onUnavai
     setOpen(false)
   }
 
+  function handleUnavailableGroupClick(event, group) {
+    if (event.target instanceof Element && event.target.closest(".lobby-bot-tier-picker__option")) {
+      return
+    }
+    const firstUnavailableBot = group.bots.find((bot) => !isBotAvailable(bot))
+    if (firstUnavailableBot) {
+      setOpen(false)
+      onUnavailable?.(firstUnavailableBot)
+    }
+  }
+
   function handleKeyDown(event) {
     if (event.key === "ArrowDown") {
       event.preventDefault()
@@ -462,8 +487,15 @@ function BotTierPicker({ bots, selectedBotId, isBotAvailable, onChange, onUnavai
       {open && bots.length ? (
         <div id={listboxId} className="lobby-bot-tier-picker__listbox" role="listbox" aria-labelledby={labelId}>
           {groupedBots.map((group) => {
+            const groupUnavailable = group.bots.length > 0 && group.bots.every((bot) => !isBotAvailable(bot))
             return (
-              <div key={group.code} className="lobby-bot-tier-picker__group" role="group" aria-label={`${group.code} ${group.label}`}>
+              <div
+                key={group.code}
+                className={`lobby-bot-tier-picker__group${groupUnavailable ? " is-unavailable" : ""}`}
+                role="group"
+                aria-label={`${group.code} ${group.label}`}
+                onClick={groupUnavailable ? (event) => handleUnavailableGroupClick(event, group) : undefined}
+              >
                 <div className="lobby-bot-tier-picker__group-heading">
                   <TierBadge code={group.code} className="lobby-bot-tier-picker__group-badge" aria-hidden="true" />
                   <span className="lobby-bot-tier-picker__group-label">{group.label}</span>
@@ -483,7 +515,10 @@ function BotTierPicker({ bots, selectedBotId, isBotAvailable, onChange, onUnavai
                       aria-selected={selected}
                       onMouseEnter={() => setActiveBotId(bot.bot_id)}
                       onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => selectBot(bot.bot_id)}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        selectBot(bot.bot_id)
+                      }}
                     >
                       <BotPickerOptionContent bot={bot} unavailable={unavailable} />
                     </div>
@@ -1027,7 +1062,7 @@ export default function LobbyPage() {
                       selectedBotId={selectedBotId}
                       isBotAvailable={(bot) => botAvailableForViewer(bot, viewerBotTier)}
                       onChange={setSelectedBotId}
-                      onUnavailable={() => navigate("/subscription")}
+                      onUnavailable={(bot) => navigate(subscriptionPathForBot(bot))}
                     />
                     {!supportedBots.length ? <p className="lobby-meta">No bots support this ruleset.</p> : null}
                     {supportedBots.length > 0 && !availableSupportedBots.length ? (

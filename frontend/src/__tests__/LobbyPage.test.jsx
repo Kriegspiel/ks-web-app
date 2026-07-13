@@ -640,6 +640,34 @@ describe("LobbyPage", () => {
     expect(mockApi.createGame).not.toHaveBeenCalled()
   })
 
+  it("routes_clicks_on_unavailable_t3_bot_groups_to_subscription_with_t3_selected", async () => {
+    mockAuth.user = { username: "fil", llm_bot_tier: "tier2" }
+
+    renderPage()
+
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    await openBotPicker()
+
+    fireEvent.click(screen.getByRole("group", { name: "T3 Strong bots" }))
+
+    expect(mockNavigate).toHaveBeenCalledWith("/subscription?tier=tier3")
+    expect(mockApi.createGame).not.toHaveBeenCalled()
+  })
+
+  it("routes_clicks_on_unavailable_t3_bot_options_to_subscription_with_t3_selected", async () => {
+    mockAuth.user = { username: "fil", llm_bot_tier: "tier2" }
+
+    renderPage()
+
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    await openBotPicker()
+
+    fireEvent.click(screen.getByRole("option", { name: "1475 - LLM Mistral Large 3" }))
+
+    expect(mockNavigate).toHaveBeenCalledWith("/subscription?tier=tier3")
+    expect(mockApi.createGame).not.toHaveBeenCalled()
+  })
+
   it("shows_wild16_bots_as_t1_bots", async () => {
     renderPage()
 
