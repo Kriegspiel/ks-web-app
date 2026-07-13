@@ -15,6 +15,7 @@ const mockBillingApi = vi.hoisted(() => ({
   createCheckoutSession: vi.fn(),
   createPortalSession: vi.fn(),
 }))
+const mockGetBots = vi.hoisted(() => vi.fn())
 
 const stripeMount = vi.hoisted(() => vi.fn())
 const stripeDestroy = vi.hoisted(() => vi.fn())
@@ -26,6 +27,7 @@ vi.mock("../hooks/useAuth", () => ({
 
 vi.mock("../services/api", () => ({
   billingApi: mockBillingApi,
+  getBots: mockGetBots,
 }))
 
 vi.mock("@stripe/stripe-js", () => ({
@@ -63,12 +65,14 @@ beforeEach(() => {
   mockBillingApi.getSubscription.mockReset()
   mockBillingApi.createCheckoutSession.mockReset()
   mockBillingApi.createPortalSession.mockReset()
+  mockGetBots.mockReset()
   stripeMount.mockReset()
   stripeDestroy.mockReset()
   createEmbeddedCheckoutPage.mockReset()
   mockBillingApi.getSubscription.mockResolvedValue(billingStatus())
   mockBillingApi.createCheckoutSession.mockResolvedValue({ client_secret: "cs_test_123" })
   mockBillingApi.createPortalSession.mockResolvedValue({ url: "https://billing.example/session" })
+  mockGetBots.mockRejectedValue(new Error("Unable to load bots right now."))
   createEmbeddedCheckoutPage.mockImplementation(async ({ fetchClientSecret }) => {
     const clientSecret = await fetchClientSecret()
     return { clientSecret, mount: stripeMount, destroy: stripeDestroy }
@@ -101,6 +105,7 @@ describe("SubscriptionPage", () => {
     expect(screen.queryByRole("button", { name: "Open payment form" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Choose Tier T2 Club" })).not.toBeInTheDocument()
     expect(mockBillingApi.getSubscription).not.toHaveBeenCalled()
+    expect(mockGetBots).not.toHaveBeenCalled()
   })
 
   it("renders_the_tier_table_and_mounts_embedded_checkout_for_the_selected_plan", async () => {
@@ -139,6 +144,7 @@ describe("SubscriptionPage", () => {
     expect(screen.queryByRole("rowheader", { name: "Play T5 bots" })).not.toBeInTheDocument()
     const playBotsRow = screen.getByRole("rowheader", { name: "Play bots" }).closest("tr")
     const botCells = within(playBotsRow).getAllByRole("cell")
+    expect(botCells).toHaveLength(7)
     expect(within(botCells[0]).getByText("T0-level bots:")).toBeInTheDocument()
     expect(within(botCells[0]).getByRole("link", { name: "Random Bot" })).toHaveAttribute("href", "/user/randobot")
     expect(within(botCells[0]).getByRole("link", { name: "Random Any" })).toHaveAttribute("href", "/user/randobotany")
@@ -263,6 +269,32 @@ describe("SubscriptionPage", () => {
     expect(createEmbeddedCheckoutPage).toHaveBeenCalledTimes(1)
     expect(stripeMount).toHaveBeenCalledTimes(1)
     expect(stripeMount.mock.calls[0][0]).toBeInstanceOf(HTMLElement)
+  })
+
+  it("uses_the_live_signed_in_bot_list_when_available", async () => {
+    mockGetBots.mockResolvedValueOnce({
+      bots: [
+        { bot_id: "bot-random", username: "randobot", display_name: "Random Bot", elo: 1200 },
+        { bot_id: "bot-grok", username: "llm_grok45", display_name: "LLM Grok 4.5 (bot)", elo: 1201, llm_backed: true, required_tier: "tier5" },
+        { bot_id: "bot-qwen", username: "llm_qwen37_max", display_name: "LLM Qwen 3.7 Max (bot)", elo: 1227, llm_backed: true, required_tier: "tier5" },
+      ],
+    })
+
+    renderPage()
+
+    const playBotsRow = await screen.findByRole("rowheader", { name: "Play bots" }).then((row) => row.closest("tr"))
+    const botCells = within(playBotsRow).getAllByRole("cell")
+    expect(botCells).toHaveLength(7)
+
+    await waitFor(() => {
+      expect(within(botCells[5]).getByRole("link", { name: "1201 - LLM Grok 4.5" })).toHaveAttribute("href", "/user/llm_grok45")
+    })
+    expect(within(botCells[5]).getByRole("link", { name: "1227 - LLM Qwen 3.7 Max" })).toHaveAttribute("href", "/user/llm_qwen37_max")
+    expect(within(botCells[5]).getByText("T5 Master bots:")).toBeInTheDocument()
+    expect(within(botCells[5]).queryByRole("link", { name: "GPT-5.5 (reasoning: no)" })).not.toBeInTheDocument()
+    expect(within(botCells[5]).queryByText("T5 OpenAI:")).not.toBeInTheDocument()
+    expect(within(botCells[6]).getByText("Lower-tier bots included.")).toBeInTheDocument()
+    expect(mockGetBots).toHaveBeenCalledTimes(1)
   })
 
   it("uses_the_tier_query_param_as_the_initial_selected_plan", async () => {
