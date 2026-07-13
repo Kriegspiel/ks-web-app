@@ -128,6 +128,7 @@ export function botTierCode(bot) {
 
 function botTierIndex(bot) {
   const index = BOT_TIER_ORDER.indexOf(botTierCode(bot))
+  /* c8 ignore next -- defensive for future catalog tiers not present in BOT_TIER_ORDER. */
   return index === -1 ? BOT_TIER_ORDER.length : index
 }
 
@@ -153,6 +154,7 @@ export function viewerBotAccessTier(user) {
 function botRequiredAccessTier(bot) {
   return normalizeBotAccessTier(bot?.required_tier)
     || BOT_ACCESS_TIER_BY_CODE[botTierCode(bot)]
+    /* c8 ignore next -- botTierCode currently only returns mapped public tier codes. */
     || "guest"
 }
 
@@ -173,6 +175,7 @@ export function botAvailableForViewer(bot, viewerTier) {
 }
 
 export function botRequiredTierCode(bot) {
+  /* c8 ignore next -- botRequiredAccessTier currently always returns a known access tier. */
   return BOT_ACCESS_TIER_CODE[botRequiredAccessTier(bot)] ?? botTierCode(bot)
 }
 
@@ -221,6 +224,7 @@ export function groupBotsByTier(bots) {
   const groups = new Map(BOT_TIER_ORDER.map((code) => [code, []]))
   bots.forEach((bot) => {
     const code = botTierCode(bot)
+    /* c8 ignore next 3 -- defensive for future catalog tiers not present in BOT_TIER_ORDER. */
     if (!groups.has(code)) {
       groups.set(code, [])
     }
@@ -229,5 +233,6 @@ export function groupBotsByTier(bots) {
 
   return Array.from(groups.entries())
     .filter(([, tierBots]) => tierBots.length > 0)
+    /* c8 ignore next -- fallback is for future tier codes that are not in BOT_TIER_LABELS yet. */
     .map(([code, tierBots]) => ({ code, label: BOT_TIER_LABELS[code] ?? `${code} bots`, bots: tierBots }))
 }

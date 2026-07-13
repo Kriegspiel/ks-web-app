@@ -150,6 +150,7 @@ describe("ChessBoard", () => {
         overlayBadges={[
           { square: "c3", label: "1", tone: "success" },
           { square: "d4", label: "2", tone: "oops" },
+          { square: "e5", tone: "success" },
           { square: "q9", label: "x", tone: "success" },
         ]}
       />,
@@ -158,8 +159,33 @@ describe("ChessBoard", () => {
     expect(container.querySelectorAll(".board-overlay")).toHaveLength(1)
     expect(container.querySelectorAll(".board-overlay__arrow--success")).toHaveLength(1)
     expect(container.querySelectorAll(".board-overlay__arrow--illegal")).toHaveLength(1)
-    expect(container.querySelectorAll(".board-overlay__badge--success")).toHaveLength(1)
+    expect(container.querySelectorAll(".board-overlay__badge--success")).toHaveLength(2)
     expect(container.querySelectorAll(".board-overlay__badge--illegal")).toHaveLength(1)
+  })
+
+  it("positions_overlays_for_black_orientation_and_ignores_null_entries", () => {
+    const { container } = render(
+      <ChessBoard
+        boardFen="8/8/8/8/8/8/8/4K3 w - - 0 1"
+        orientation="black"
+        overlayArrows={[
+          null,
+          { from: "a1", to: "h8" },
+        ]}
+        overlayBadges={[
+          null,
+          { square: "a1", label: "!" },
+        ]}
+      />,
+    )
+
+    const arrow = container.querySelector(".board-overlay__arrow")
+    const badge = container.querySelector(".board-overlay g")
+    expect(arrow).toHaveAttribute("x1", "750")
+    expect(arrow).toHaveAttribute("y1", "50")
+    expect(arrow).toHaveAttribute("x2", "50")
+    expect(arrow).toHaveAttribute("y2", "750")
+    expect(badge).toHaveAttribute("transform", "translate(750, 50)")
   })
 
   it("omits_the_overlay_svg_when_all_overlay_entries_are_invalid", () => {

@@ -1,3 +1,4 @@
+import { StrictMode } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
@@ -47,6 +48,24 @@ describe("JoinPage", () => {
       expect(mockApi.joinGame).toHaveBeenCalledTimes(1)
       expect(mockApi.joinGame).toHaveBeenCalledWith("ABC123")
       expect(mockNavigate).toHaveBeenCalledWith("/game/game-1", { replace: true })
+    })
+  })
+
+  it("does_not_duplicate_the_join_request_under_strict_mode", async () => {
+    mockApi.joinGame.mockResolvedValue({ game_id: "game-1" })
+
+    render(
+      <StrictMode>
+        <MemoryRouter initialEntries={["/join/ABC123"]}>
+          <Routes>
+            <Route path="/join/:gameCode" element={<JoinPage />} />
+          </Routes>
+        </MemoryRouter>
+      </StrictMode>,
+    )
+
+    await waitFor(() => {
+      expect(mockApi.joinGame).toHaveBeenCalledTimes(1)
     })
   })
 

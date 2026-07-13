@@ -29,16 +29,16 @@ const requiredRulesLinks = [
   { label: "Comparison", href: "https://kriegspiel.org/rules/comparison/" },
 ]
 
-function normalizeFooterLabel(label) {
+export function normalizeFooterLabel(label) {
   return label === "hi@kriegspiel.org" ? "any@kriegspiel.org" : label
 }
 
-function normalizeFooterHref(href) {
+export function normalizeFooterHref(href) {
   const normalized = absoluteFooterLinks.get(href) ?? href
   return normalized === "mailto:hi@kriegspiel.org" ? "mailto:any@kriegspiel.org" : normalized
 }
 
-function parseFooterMarkdown(markdown) {
+export function parseFooterMarkdown(markdown) {
   const groups = []
   let currentGroup = null
 
@@ -78,7 +78,7 @@ function parseFooterMarkdown(markdown) {
   return groups
 }
 
-function withFeedFooterLink(groups) {
+export function withFeedFooterLink(groups) {
   const communicationGroup = groups.find((group) => group.title.toLowerCase() === "communication")
   if (!communicationGroup) {
     groups.push({

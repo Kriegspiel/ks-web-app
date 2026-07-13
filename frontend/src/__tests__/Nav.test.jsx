@@ -124,6 +124,29 @@ describe("Nav", () => {
     expect(mockAuth.logout).toHaveBeenCalledTimes(1)
     await waitFor(() => expect(menu).not.toHaveAttribute("open"))
   })
+
+  it("closes_the_profile_menu_even_when_logout_fails", async () => {
+    mockAuth.isAuthenticated = true
+    mockAuth.user = { username: "fil" }
+    mockAuth.logout.mockRejectedValueOnce(new Error("network"))
+
+    render(
+      <ThemeProvider>
+        <MemoryRouter>
+          <AppHeader />
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    const trigger = screen.getByText("Profile")
+    const menu = trigger.closest("details")
+    fireEvent.click(trigger)
+    await waitFor(() => expect(menu).toHaveAttribute("open"))
+
+    fireEvent.click(screen.getByRole("button", { name: "Logout" }))
+    await waitFor(() => expect(mockAuth.logout).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(menu).not.toHaveAttribute("open"))
+  })
 })
 
 describe("theme toggle", () => {

@@ -219,6 +219,37 @@ describe("AuthProvider", () => {
     expect(result.current.actionLoading).toBe(false)
   })
 
+  it("uses_default_action_error_messages_when_failures_have_no_details", async () => {
+    mockMeRequest.mockResolvedValueOnce(null)
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.bootstrapping).toBe(false)
+    })
+
+    const cases = [
+      ["login", mockLoginRequest, () => result.current.login({ username: "captain", password: "wrong" }), "Login failed."],
+      ["register", mockRegisterRequest, () => result.current.register({ username: "new", email: "n@example.com", password: "pw" }), "Registration failed."],
+      ["playAsGuest", mockPlayAsGuestRequest, () => result.current.playAsGuest(), "Guest play failed."],
+      ["convertGuest", mockConvertGuestRequest, () => result.current.convertGuest({ email: "n@example.com", password: "pw" }), "Guest conversion failed."],
+      ["logout", mockLogoutRequest, () => result.current.logout(), "Logout failed."],
+    ]
+
+    for (const [, requestMock, action, message] of cases) {
+      requestMock.mockRejectedValueOnce({})
+      await act(async () => {
+        try {
+          await action()
+        } catch {
+          // Expected: this case is asserting the user-facing fallback.
+        }
+      })
+      expect(result.current.actionError).toBe(message)
+      expect(result.current.actionLoading).toBe(false)
+    }
+  })
+
   it("uses_the_default_login_message_when_login_fails_without_details", async () => {
     mockMeRequest.mockResolvedValueOnce(null)
     mockLoginRequest.mockRejectedValueOnce({})

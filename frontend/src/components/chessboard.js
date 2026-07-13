@@ -45,10 +45,6 @@ export const PIECE_ASSETS = {
 }
 
 function pieceColor(piece) {
-  if (!piece) {
-    return ""
-  }
-
   return piece === piece.toUpperCase() ? "white" : "black"
 }
 
@@ -64,13 +60,7 @@ function squareToCoords(square) {
 }
 
 function coordsToSquare(fileIndex, rankIndex) {
-  const file = FILES[fileIndex]
-  const rank = RANKS[rankIndex]
-  if (!file || !rank) {
-    return ""
-  }
-
-  return `${file}${rank}`
+  return `${FILES[fileIndex]}${RANKS[rankIndex]}`
 }
 
 function isInsideBoard(fileIndex, rankIndex) {

@@ -133,6 +133,19 @@ describe("createGameSoundPlayer", () => {
 
     await expect(player.prime()).resolves.toBeUndefined()
     expect(() => player.playCategories(["move"])).not.toThrow()
+    expect(() => player.playCategories()).not.toThrow()
+    expect(() => player.playCategories("move")).not.toThrow()
+  })
+
+  it("does_nothing_during_server_side_rendering", async () => {
+    const originalWindow = globalThis.window
+    vi.stubGlobal("window", undefined)
+    const player = createGameSoundPlayer()
+
+    await expect(player.prime()).resolves.toBeUndefined()
+    expect(() => player.playCategories(["move"])).not.toThrow()
+
+    vi.stubGlobal("window", originalWindow)
   })
 
   it("resumes_suspended_audio_context_and_ignores_autoplay_resume_errors", async () => {

@@ -40,6 +40,12 @@ describe("EloChart", () => {
     expect(screen.getByText("No Elo history yet.")).toBeInTheDocument()
   })
 
+  it("renders_empty_state_when_the_selected_series_is_not_an_array", () => {
+    render(<EloChart seriesByMode={{ date: null, game: [] }} emptyText="No Elo history yet." />)
+
+    expect(screen.getByText("No Elo history yet.")).toBeInTheDocument()
+  })
+
   it("renders_toolbars_and_updates_the_tooltip_when_hovering_points", () => {
     const { container } = render(
       <EloChart

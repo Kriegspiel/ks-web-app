@@ -42,6 +42,14 @@ describe("Sentry browser setup", () => {
     expect(options.release).toMatch(/^ks-web-app@\d+\.\d+\.\d+$/)
     expect(options.integrations).toEqual([{ name: "react-router-v7" }])
     expect(sentryMocks.reactRouterV7BrowserTracingIntegration).toHaveBeenCalledTimes(1)
+
+    expect(buildSentryOptions({
+      MODE: "staging",
+      VITE_SENTRY_DSN: "https://public@example.com/1",
+    }).environment).toBe("staging")
+    expect(buildSentryOptions({
+      VITE_SENTRY_DSN: "https://public@example.com/1",
+    }).environment).toBe("production")
   })
 
   it("initializes_and_tags_browser_events_when_a_dsn_is_present", async () => {
@@ -76,6 +84,15 @@ describe("Sentry browser setup", () => {
         },
       },
     })
+  })
+
+  it("leaves_events_without_plain_object_headers_unchanged", async () => {
+    const { beforeSend } = await import("../sentry")
+    const missingHeaders = { request: {} }
+    const arrayHeaders = { request: { headers: [] } }
+
+    expect(beforeSend(missingHeaders)).toBe(missingHeaders)
+    expect(beforeSend(arrayHeaders)).toBe(arrayHeaders)
   })
 
   it("clamps_invalid_trace_sample_rates_to_the_safe_range", async () => {

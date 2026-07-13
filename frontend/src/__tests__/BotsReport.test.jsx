@@ -104,6 +104,18 @@ describe("BotsReportPage", () => {
     expect(screen.getAllByText("0.0%")).toHaveLength(3)
   })
 
+  it("renders_no_bot_sections_for_missing_bot_arrays", async () => {
+    techApi.getBotsReport.mockResolvedValue({
+      bots: null,
+      timezone: "UTC",
+    })
+
+    render(<MemoryRouter><BotsReportPage /></MemoryRouter>)
+
+    expect(await screen.findByText(/Completed-game stats for the last 10 days in UTC/)).toBeInTheDocument()
+    expect(screen.queryByRole("table")).not.toBeInTheDocument()
+  })
+
   it("shows_the_default_error_message_when_the_report_request_has_no_details", async () => {
     const nowSpy = vi.spyOn(Date, "now")
     nowSpy.mockReturnValueOnce(2_000).mockReturnValueOnce(3_250)

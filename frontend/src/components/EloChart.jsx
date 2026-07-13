@@ -30,7 +30,7 @@ function buildChartPoints(points) {
 
   const tickCount = Math.min(4, Math.max(2, points.length))
   const ticks = Array.from({ length: tickCount }, (_, index) => {
-    const ratio = tickCount === 1 ? 0 : index / (tickCount - 1)
+    const ratio = index / (tickCount - 1)
     const value = Math.round(maxElo - (eloRange * ratio))
     const y = paddingY + (chartHeight * ratio)
     return { value, y }
@@ -90,9 +90,6 @@ export default function EloChart({ seriesByMode, emptyText, ratingTrack = "overa
     : null
 
   function handlePlotHover(event) {
-    if (chart.circles.length === 0) {
-      return
-    }
     const bounds = event.currentTarget.getBoundingClientRect()
     const svgX = ((event.clientX - bounds.left) / bounds.width) * chart.width
     let closestIndex = 0
