@@ -515,7 +515,12 @@ export default function SubscriptionPage() {
               </button>
             ))}
           </div>
-          <button type="button" onClick={startCheckout} disabled={!canSubscribe || checkoutLoading}>
+          <button
+            type="button"
+            className="subscription-payment-button"
+            onClick={startCheckout}
+            disabled={!canSubscribe || checkoutLoading}
+          >
             {activeSubscription
               ? "Use billing management"
               : checkoutLoading
