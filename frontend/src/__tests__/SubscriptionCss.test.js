@@ -101,6 +101,16 @@ describe("Subscription CSS", () => {
     expect(manageBillingRule).toMatch(/background:\s*var\(--surface-strong\);/)
     expect(manageBillingRule).toMatch(/color:\s*var\(--text\);/)
 
+    const paymentButtonRule = blockFor(subscriptionCss, ".subscription-payment-button")
+    expect(paymentButtonRule).toMatch(/background:\s*#050505;/)
+    expect(paymentButtonRule).toMatch(/border-color:\s*#050505;/)
+    expect(paymentButtonRule).toMatch(/color:\s*#ffffff;/)
+    expect(paymentButtonRule).toMatch(/font-weight:\s*800;/)
+
+    const disabledPaymentButtonRule = blockFor(subscriptionCss, ".subscription-payment-button:disabled")
+    expect(disabledPaymentButtonRule).toMatch(/background:\s*var\(--surface-strong\);/)
+    expect(disabledPaymentButtonRule).toMatch(/color:\s*var\(--muted\);/)
+
     const selectedButtonRule = blockFor(subscriptionCss, ".subscription-tier-table__heading button.is-selected")
     expect(selectedButtonRule).toMatch(/background:\s*var\(--accent\);/)
     expect(selectedButtonRule).toMatch(/color:\s*var\(--bg\);/)

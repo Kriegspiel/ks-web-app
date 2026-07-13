@@ -99,6 +99,32 @@
   color: var(--text);
 }
 
+.subscription-payment-button {
+  background: #050505;
+  border-color: #050505;
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow:
+    0 0.18rem 0.36rem color-mix(in srgb, #050505 22%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.subscription-payment-button:hover:not(:disabled),
+.subscription-payment-button:focus-visible {
+  background: #000000;
+  border-color: #000000;
+  color: #ffffff;
+  box-shadow:
+    0 0.22rem 0.48rem color-mix(in srgb, #050505 30%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.subscription-payment-button:disabled {
+  background: var(--surface-strong);
+  border-color: var(--border-strong);
+  color: var(--muted);
+}
+
 .subscription-checkout {
   min-height: 0;
   margin: 1rem 0 1.25rem;
