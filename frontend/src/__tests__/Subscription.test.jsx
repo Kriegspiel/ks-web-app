@@ -47,9 +47,9 @@ function billingStatus(overrides = {}) {
   }
 }
 
-function renderPage() {
+function renderPage(initialEntry = "/subscription") {
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <SubscriptionPage />
     </MemoryRouter>,
   )
@@ -263,6 +263,20 @@ describe("SubscriptionPage", () => {
     expect(createEmbeddedCheckoutPage).toHaveBeenCalledTimes(1)
     expect(stripeMount).toHaveBeenCalledTimes(1)
     expect(stripeMount.mock.calls[0][0]).toBeInstanceOf(HTMLElement)
+  })
+
+  it("uses_the_tier_query_param_as_the_initial_selected_plan", async () => {
+    renderPage("/subscription?tier=tier3")
+
+    const controls = await screen.findByRole("region", { name: "Subscription controls" })
+    expect(await within(controls).findByRole("heading", { name: "Tier T3 Strong" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Choose Tier T3 Strong" })).toHaveClass("is-selected")
+
+    fireEvent.click(screen.getByRole("button", { name: "Open payment form" }))
+
+    await waitFor(() => {
+      expect(mockBillingApi.createCheckoutSession).toHaveBeenCalledWith({ tier: "tier3", interval: "monthly" })
+    })
   })
 
   it("uses_the_current_paid_tier_as_the_initial_selection", async () => {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useSearchParams } from "react-router-dom"
 import { loadStripe } from "@stripe/stripe-js"
 import TierBadge from "../components/TierBadge"
 import VersionStamp from "../components/VersionStamp"
@@ -16,6 +16,7 @@ const TIERS = [
   { key: "tier5", apiTier: null, code: "T5", name: "Master", price: "Not available yet", selectable: false, future: true },
   { key: "tier6", apiTier: null, code: "T6", name: "Elite", price: "Not available yet", selectable: false, future: true },
 ]
+const SELECTABLE_TIER_KEYS = new Set(TIERS.filter((tier) => tier.selectable).map((tier) => tier.apiTier))
 
 const REASONING_NONE = "no"
 const REASONING_MEDIUM = "medium"
@@ -183,6 +184,19 @@ function firstAvailablePlan(status) {
   return { tier: "tier2", interval: "monthly" }
 }
 
+function normalizeDesiredTier(value) {
+  const normalized = typeof value === "string" ? value.trim().toLowerCase().replace(/[-_\s]/g, "") : ""
+  const tier = /^t[2-4]$/.test(normalized) ? `tier${normalized.slice(1)}` : normalized
+  return SELECTABLE_TIER_KEYS.has(tier) ? tier : ""
+}
+
+function initialPlan(status, desiredTier) {
+  if (desiredTier && isTierAvailable(status, desiredTier)) {
+    return { tier: desiredTier, interval: firstAvailableInterval(status, desiredTier) ?? "monthly" }
+  }
+  return firstAvailablePlan(status)
+}
+
 function tierByApiTier(apiTier) {
   return TIERS.find((tier) => tier.apiTier === apiTier) ?? TIERS[2]
 }
@@ -221,6 +235,8 @@ function createEmbeddedCheckout(stripe, options) {
 
 export default function SubscriptionPage() {
   const { user, isAuthenticated, bootstrapping } = useAuth()
+  const [searchParams] = useSearchParams()
+  const desiredTier = normalizeDesiredTier(searchParams.get("tier") ?? searchParams.get("desiredTier") ?? searchParams.get("desired_tier"))
   const [status, setStatus] = useState(null)
   const [selectedTier, setSelectedTier] = useState("tier2")
   const [interval, setInterval] = useState("monthly")
@@ -246,7 +262,7 @@ export default function SubscriptionPage() {
       setLoading(false)
       setBillingError("")
       setStatus(null)
-      setSelectedTier("tier2")
+      setSelectedTier(desiredTier || "tier2")
       setInterval("monthly")
       embeddedCheckoutRef.current?.destroy?.()
       embeddedCheckoutRef.current = null
@@ -262,7 +278,7 @@ export default function SubscriptionPage() {
       try {
         const payload = await billingApi.getSubscription()
         if (!active) return
-        const firstPlan = firstAvailablePlan(payload)
+        const firstPlan = initialPlan(payload, desiredTier)
         setStatus(payload)
         setSelectedTier(firstPlan.tier)
         setInterval(firstPlan.interval)
@@ -278,7 +294,7 @@ export default function SubscriptionPage() {
       embeddedCheckoutRef.current?.destroy?.()
       embeddedCheckoutRef.current = null
     }
-  }, [bootstrapping, hasSignedInUser])
+  }, [bootstrapping, desiredTier, hasSignedInUser])
 
   const stripePromise = useMemo(() => {
     if (!status?.publishable_key) return null

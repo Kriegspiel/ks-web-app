@@ -223,6 +223,9 @@
   padding-top: 0.55rem;
   border-top: 1px solid var(--border);
 }
+.lobby-bot-tier-picker__group.is-unavailable {
+  cursor: pointer;
+}
 .lobby-bot-tier-picker__group-heading {
   display: flex;
   align-items: center;
