@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { loadStripe } from "@stripe/stripe-js"
+import {
+  BOT_TIER_LABELS,
+  botTierCode,
+  compareBotPickerBots,
+  formatBotPickerLabel,
+  isCatalogHiddenBot,
+} from "../botCatalog"
 import TierBadge from "../components/TierBadge"
 import VersionStamp from "../components/VersionStamp"
-import { billingApi } from "../services/api"
+import { billingApi, getBots } from "../services/api"
 import { useAuth } from "../hooks/useAuth"
 import "./Subscription.css"
 
@@ -16,6 +23,7 @@ const TIERS = [
   { key: "tier5", apiTier: null, code: "T5", name: "Master", price: "Not available yet", selectable: false, future: true },
   { key: "tier6", apiTier: null, code: "T6", name: "Elite", price: "Not available yet", selectable: false, future: true },
 ]
+const SUBSCRIPTION_BOT_TIER_ORDER = TIERS.map((tier) => tier.code)
 const SELECTABLE_TIER_KEYS = new Set(TIERS.filter((tier) => tier.selectable).map((tier) => tier.apiTier))
 
 const REASONING_NONE = "no"
@@ -85,7 +93,7 @@ function withLowerTierBots(groups) {
   return [LOWER_TIER_BOTS_INCLUDED, ...groups]
 }
 
-const PLAY_BOTS_BY_TIER = [
+const STATIC_PLAY_BOTS_BY_TIER = [
   T0_BOTS,
   withLowerTierBots(T1_BOTS),
   withLowerTierBots(T2_BOTS),
@@ -95,11 +103,11 @@ const PLAY_BOTS_BY_TIER = [
   withLowerTierBots([]),
 ]
 
-const FEATURES = [
+const STATIC_FEATURES = [
   { name: "Play human games", values: ["Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"] },
   { name: "Completed-game review", values: ["Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"] },
   { name: "Rating history", values: ["Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"] },
-  { name: "Play bots", values: PLAY_BOTS_BY_TIER },
+  { name: "Play bots", values: STATIC_PLAY_BOTS_BY_TIER },
   {
     name: "Custom LLM providers and strategies",
     values: [
@@ -114,6 +122,36 @@ const FEATURES = [
   },
   { name: "Persistent player name", values: ["No", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"] },
 ]
+
+function profilePathForBot(bot) {
+  const username = String(bot?.username || "").trim()
+  return username ? `/user/${encodeURIComponent(username)}` : null
+}
+
+function livePlayBotsByTier(bots) {
+  const groupsByTier = new Map(SUBSCRIPTION_BOT_TIER_ORDER.map((code) => [code, []]))
+  bots
+    .filter((bot) => !isCatalogHiddenBot(bot))
+    .sort(compareBotPickerBots)
+    .forEach((bot) => {
+      const code = botTierCode(bot)
+      const items = groupsByTier.get(code)
+      if (!items) return
+      items.push([formatBotPickerLabel(bot), profilePathForBot(bot)])
+    })
+
+  return SUBSCRIPTION_BOT_TIER_ORDER.map((code, index) => {
+    const items = groupsByTier.get(code) ?? []
+    const groups = items.length ? [[`${code} ${BOT_TIER_LABELS[code] ?? `${code} bots`}`, items]] : []
+    return index === 0 ? groups : withLowerTierBots(groups)
+  })
+}
+
+function featuresWithBotList(playBotsByTier) {
+  return STATIC_FEATURES.map((feature) => (
+    feature.name === "Play bots" ? { ...feature, values: playBotsByTier } : feature
+  ))
+}
 
 function BotList({ groups }) {
   return (
@@ -245,9 +283,41 @@ export default function SubscriptionPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
   const [checkoutMounted, setCheckoutMounted] = useState(false)
+  const [liveBots, setLiveBots] = useState(null)
   const checkoutContainerRef = useRef(null)
   const embeddedCheckoutRef = useRef(null)
   const hasSignedInUser = isAuthenticated && user !== null
+
+  useEffect(() => {
+    let active = true
+
+    if (bootstrapping || !hasSignedInUser) {
+      setLiveBots(null)
+      return () => {
+        active = false
+      }
+    }
+
+    async function loadLiveBots() {
+      try {
+        const response = await getBots()
+        if (active) setLiveBots(Array.isArray(response?.bots) ? response.bots : [])
+      } catch {
+        if (active) setLiveBots(null)
+      }
+    }
+
+    loadLiveBots()
+    return () => {
+      active = false
+    }
+  }, [bootstrapping, hasSignedInUser])
+
+  const playBotsByTier = useMemo(
+    () => liveBots === null ? STATIC_PLAY_BOTS_BY_TIER : livePlayBotsByTier(liveBots),
+    [liveBots],
+  )
+  const features = useMemo(() => featuresWithBotList(playBotsByTier), [playBotsByTier])
 
   useEffect(() => {
     let active = true
@@ -515,7 +585,7 @@ export default function SubscriptionPage() {
               </tr>
             </thead>
             <tbody>
-              {FEATURES.map((feature) => (
+              {features.map((feature) => (
                 <tr key={feature.name}>
                   <th scope="row">{feature.name}</th>
                   {feature.values.map((value, index) => (

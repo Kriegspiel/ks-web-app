@@ -19,6 +19,7 @@ const mockApi = vi.hoisted(() => ({
   getGame: vi.fn(),
   getGameState: vi.fn(),
   getGameReview: vi.fn(),
+  getBots: vi.fn(),
   deleteWaitingGame: vi.fn(),
   submitMove: vi.fn(),
   askAny: vi.fn(),
@@ -54,6 +55,7 @@ beforeEach(() => {
   mockApi.getOpenGames.mockResolvedValue({ games: [] })
   mockApi.getMyActiveGames.mockResolvedValue({ games: [] })
   mockApi.getMyArchivedGames.mockResolvedValue({ games: [] })
+  mockApi.getBots.mockResolvedValue({ bots: [] })
   mockApi.recordCampaignVisit.mockResolvedValue({ attribution_id: "attr" })
   mockApi.billingApi.getSubscription.mockReset()
   mockApi.billingApi.getSubscription.mockResolvedValue({
@@ -241,10 +243,11 @@ describe("App routes", () => {
     renderRoute("/subscription")
 
     await screen.findByRole("heading", { name: "Subscription" })
-    expect(screen.getByRole("heading", { name: "Create a profile and start playing." })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "Create a profile and start playing." })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Create free profile" })).toHaveAttribute("href", "/auth/register")
     expect(screen.queryByRole("heading", { name: "Login" })).not.toBeInTheDocument()
     expect(mockApi.billingApi.getSubscription).not.toHaveBeenCalled()
+    expect(mockApi.getBots).not.toHaveBeenCalled()
   })
 
   it("shows_inline_validation_message_for_empty_register_form", async () => {
