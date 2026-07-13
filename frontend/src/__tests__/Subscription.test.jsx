@@ -20,6 +20,7 @@ const mockGetBots = vi.hoisted(() => vi.fn())
 const stripeMount = vi.hoisted(() => vi.fn())
 const stripeDestroy = vi.hoisted(() => vi.fn())
 const createEmbeddedCheckoutPage = vi.hoisted(() => vi.fn())
+const originalScrollTo = window.scrollTo
 
 vi.mock("../hooks/useAuth", () => ({
   useAuth: () => mockAuth,
@@ -59,6 +60,7 @@ function renderPage(initialEntry = "/subscription") {
 
 beforeEach(() => {
   cleanup()
+  window.scrollTo = vi.fn()
   mockAuth.user = { username: "playerone", is_guest: false }
   mockAuth.isAuthenticated = true
   mockAuth.bootstrapping = false
@@ -80,6 +82,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  window.scrollTo = originalScrollTo
   cleanup()
 })
 
@@ -316,6 +319,20 @@ describe("SubscriptionPage", () => {
     await waitFor(() => {
       expect(mockBillingApi.createCheckoutSession).toHaveBeenCalledWith({ tier: "tier3", interval: "monthly" })
     })
+  })
+
+  it("scrolls_to_the_top_when_opened_with_a_preselected_tier", async () => {
+    document.documentElement.scrollTop = 640
+    document.body.scrollTop = 640
+
+    renderPage("/subscription?tier=tier4")
+
+    const controls = await screen.findByRole("region", { name: "Subscription controls" })
+    expect(await within(controls).findByRole("heading", { name: "Tier T4 Expert" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Choose Tier T4 Expert" })).toHaveClass("is-selected")
+    expect(document.documentElement.scrollTop).toBe(0)
+    expect(document.body.scrollTop).toBe(0)
+    expect(window.scrollTo).toHaveBeenCalledWith({ left: 0, top: 0, behavior: "auto" })
   })
 
   it("uses_a_t5_tier_query_param_as_the_initial_unavailable_selection", async () => {

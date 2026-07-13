@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { loadStripe } from "@stripe/stripe-js"
 import {
@@ -382,6 +382,25 @@ function createEmbeddedCheckout(stripe, options) {
   throw new Error("Stripe embedded checkout is not available.")
 }
 
+function scrollPageToTop() {
+  const scrollRoot = document.scrollingElement ?? document.documentElement ?? document.body
+  if (scrollRoot) {
+    scrollRoot.scrollLeft = 0
+    scrollRoot.scrollTop = 0
+  }
+  document.documentElement.scrollLeft = 0
+  document.documentElement.scrollTop = 0
+  document.body.scrollLeft = 0
+  document.body.scrollTop = 0
+
+  if (typeof window.scrollTo !== "function") return
+  try {
+    window.scrollTo({ left: 0, top: 0, behavior: "auto" })
+  } catch {
+    window.scrollTo(0, 0)
+  }
+}
+
 export default function SubscriptionPage() {
   const { user, isAuthenticated, bootstrapping } = useAuth()
   const [searchParams] = useSearchParams()
@@ -398,6 +417,10 @@ export default function SubscriptionPage() {
   const checkoutContainerRef = useRef(null)
   const embeddedCheckoutRef = useRef(null)
   const hasSignedInUser = isAuthenticated && user !== null
+
+  useLayoutEffect(() => {
+    scrollPageToTop()
+  }, [desiredTier])
 
   useEffect(() => {
     let active = true
