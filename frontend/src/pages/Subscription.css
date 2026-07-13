@@ -393,17 +393,22 @@
   white-space: nowrap;
 }
 
-.subscription-tier-table__heading button {
-  min-height: 2.25rem;
-  padding: 0.42rem 0.72rem;
-  border-radius: 0.65rem;
-  font-size: 0.84rem;
+.subscription-tier-table th.subscription-tier-table__selectable-column,
+.subscription-tier-table td.subscription-tier-table__selectable-column {
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease;
 }
 
-.subscription-tier-table__heading button.is-selected {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--bg);
+.subscription-tier-table th.subscription-tier-table__selectable-column:hover,
+.subscription-tier-table td.subscription-tier-table__selectable-column:hover {
+  background: color-mix(in srgb, var(--accent-soft) 22%, var(--surface-strong) 78%) !important;
+}
+
+.subscription-tier-table th.subscription-tier-table__selectable-column:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -5px;
 }
 
 .subscription-tier-table__mark {

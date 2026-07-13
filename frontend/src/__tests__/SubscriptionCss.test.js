@@ -128,9 +128,13 @@ describe("Subscription CSS", () => {
     const selectedLastCellRule = blockFor(subscriptionCss, ".subscription-tier-table tbody tr:last-child td.subscription-tier-table__selected-column")
     expect(selectedLastCellRule).toMatch(/inset 0 -2px 0 var\(--accent\)/)
 
-    const selectedButtonRule = blockFor(subscriptionCss, ".subscription-tier-table__heading button.is-selected")
-    expect(selectedButtonRule).toMatch(/background:\s*var\(--accent\);/)
-    expect(selectedButtonRule).toMatch(/color:\s*var\(--bg\);/)
+    const selectableColumnRule = blockFor(subscriptionCss, ".subscription-tier-table th.subscription-tier-table__selectable-column")
+    expect(selectableColumnRule).toMatch(/cursor:\s*pointer;/)
+    expect(selectableColumnRule).toMatch(/transition:/)
+
+    const selectableColumnHoverRule = blockFor(subscriptionCss, ".subscription-tier-table th.subscription-tier-table__selectable-column:hover")
+    expect(selectableColumnHoverRule).toMatch(/background:\s*color-mix/)
+    expect(selectableColumnHoverRule).toMatch(/!important;/)
   })
 
   it("styles the support note as a readable post-table section", () => {

@@ -252,12 +252,13 @@ describe("SubscriptionPage", () => {
     expect(screen.getByText(TEST_VERSION_STAMP)).toBeInTheDocument()
     expect(screen.queryByRole("rowheader", { name: "Public player profile" })).not.toBeInTheDocument()
     expect(screen.queryByRole("rowheader", { name: "Leaderboard eligibility" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /Choose Tier/i })).not.toBeInTheDocument()
 
-    const chooseStrongButton = screen.getByRole("button", { name: "Choose Tier T3 Strong" })
+    const strongHumanGamesCell = within(humanGamesRow).getAllByRole("cell")[3]
     await waitFor(() => {
-      expect(chooseStrongButton).toBeEnabled()
+      expect(strongHumanGamesCell).toHaveClass("subscription-tier-table__selectable-column")
     })
-    fireEvent.click(chooseStrongButton)
+    fireEvent.click(strongHumanGamesCell)
     expect(screen.getByText("Current level").closest("th")).toHaveTextContent("Casual")
     await waitFor(() => {
       expect(within(controls).getByRole("heading", { name: "Tier T3 Strong" })).toBeInTheDocument()
@@ -312,13 +313,30 @@ describe("SubscriptionPage", () => {
 
     const controls = await screen.findByRole("region", { name: "Subscription controls" })
     expect(await within(controls).findByRole("heading", { name: "Tier T3 Strong" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Choose Tier T3 Strong" })).toHaveClass("is-selected")
+    expect(screen.getByRole("columnheader", { name: /Tier\s+T3\s+Strong/i })).toHaveClass("subscription-tier-table__selected-column")
 
     fireEvent.click(screen.getByRole("button", { name: "Open payment form" }))
 
     await waitFor(() => {
       expect(mockBillingApi.createCheckoutSession).toHaveBeenCalledWith({ tier: "tier3", interval: "monthly" })
     })
+  })
+
+  it("does_not_select_a_tier_when_a_bot_link_inside_the_column_is_clicked", async () => {
+    renderPage("/subscription?tier=tier4")
+
+    const controls = await screen.findByRole("region", { name: "Subscription controls" })
+    expect(await within(controls).findByRole("heading", { name: "Tier T4 Expert" })).toBeInTheDocument()
+
+    const playBotsRow = await screen.findByRole("rowheader", { name: "Play bots" }).then((row) => row.closest("tr"))
+    const botCells = within(playBotsRow).getAllByRole("cell")
+    const sonnetLink = within(botCells[3]).getByRole("link", { name: "Claude Sonnet 5" })
+    sonnetLink.addEventListener("click", (event) => event.preventDefault(), { once: true })
+    fireEvent.click(sonnetLink)
+
+    expect(within(controls).getByRole("heading", { name: "Tier T4 Expert" })).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: /Tier\s+T3\s+Strong/i })).not.toHaveClass("subscription-tier-table__selected-column")
+    expect(screen.getByRole("columnheader", { name: /Tier\s+T4\s+Expert/i })).toHaveClass("subscription-tier-table__selected-column")
   })
 
   it("scrolls_to_the_top_when_opened_with_a_preselected_tier", async () => {
@@ -329,7 +347,7 @@ describe("SubscriptionPage", () => {
 
     const controls = await screen.findByRole("region", { name: "Subscription controls" })
     expect(await within(controls).findByRole("heading", { name: "Tier T4 Expert" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Choose Tier T4 Expert" })).toHaveClass("is-selected")
+    expect(screen.getByRole("columnheader", { name: /Tier\s+T4\s+Expert/i })).toHaveClass("subscription-tier-table__selected-column")
     expect(document.documentElement.scrollTop).toBe(0)
     expect(document.body.scrollTop).toBe(0)
     expect(window.scrollTo).toHaveBeenCalledWith({ left: 0, top: 0, behavior: "auto" })

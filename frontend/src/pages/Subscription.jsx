@@ -401,6 +401,10 @@ function scrollPageToTop() {
   }
 }
 
+function isColumnLinkClickTarget(target) {
+  return target instanceof Element && target.closest("a")
+}
+
 export default function SubscriptionPage() {
   const { user, isAuthenticated, bootstrapping } = useAuth()
   const [searchParams] = useSearchParams()
@@ -524,6 +528,18 @@ export default function SubscriptionPage() {
       const nextInterval = firstAvailableInterval(status, tier)
       if (nextInterval) setInterval(nextInterval)
     }
+  }
+
+  function handleTierColumnClick(event, tier, selectable) {
+    if (!selectable || isColumnLinkClickTarget(event.target)) return
+    chooseTier(tier)
+  }
+
+  function handleTierColumnKeyDown(event, tier, selectable) {
+    if (!selectable || isColumnLinkClickTarget(event.target)) return
+    if (event.key !== "Enter" && event.key !== " ") return
+    event.preventDefault()
+    chooseTier(tier)
   }
 
   function chooseInterval(nextInterval) {
@@ -686,6 +702,7 @@ export default function SubscriptionPage() {
                 <th scope="col">Feature</th>
                 {TIERS.map((tier) => {
                   const available = tier.selectable && isTierAvailable(status, tier.apiTier)
+                  const selectable = hasSignedInUser && available
                   const selected = tier.apiTier === selectedTier
                   const current = tier.key === currentTier
                   return (
@@ -693,8 +710,13 @@ export default function SubscriptionPage() {
                       key={tier.key}
                       scope="col"
                       aria-current={current ? "true" : undefined}
+                      tabIndex={selectable ? 0 : undefined}
+                      title={selectable ? `Choose Tier ${tier.code} ${tier.name}` : undefined}
+                      onClick={(event) => handleTierColumnClick(event, tier.apiTier, selectable)}
+                      onKeyDown={(event) => handleTierColumnKeyDown(event, tier.apiTier, selectable)}
                       className={classNames(
                         tier.future && "subscription-tier-table__unavailable-column",
+                        selectable && "subscription-tier-table__selectable-column",
                         current && "subscription-tier-table__current-column",
                         selected && "subscription-tier-table__selected-column",
                       )}
@@ -707,17 +729,6 @@ export default function SubscriptionPage() {
                         <span className="subscription-tier-table__name">{tier.name}</span>
                         <TierPrice price={tier.price} className="subscription-tier-table__price" />
                         {current ? <span className="subscription-tier-table__current-label">Current level</span> : null}
-                        {hasSignedInUser && tier.selectable ? (
-                          <button
-                            type="button"
-                            className={selected ? "is-selected" : ""}
-                            onClick={() => chooseTier(tier.apiTier)}
-                            disabled={!available}
-                            aria-label={`Choose Tier ${tier.code} ${tier.name}`}
-                          >
-                            {selected ? "Selected" : "Choose"}
-                          </button>
-                        ) : null}
                       </span>
                     </th>
                   )
@@ -728,18 +739,25 @@ export default function SubscriptionPage() {
               {features.map((feature) => (
                 <tr key={feature.name}>
                   <th scope="row">{feature.name}</th>
-                  {feature.values.map((value, index) => (
-                    <td
-                      key={`${feature.name}-${TIERS[index].key}`}
-                      className={classNames(
-                        TIERS[index].future && "subscription-tier-table__unavailable-column",
-                        TIERS[index].key === currentTier && "subscription-tier-table__current-column",
-                        TIERS[index].apiTier === selectedTier && "subscription-tier-table__selected-column",
-                      )}
-                    >
-                      <FeatureValue value={value} />
-                    </td>
-                  ))}
+                  {feature.values.map((value, index) => {
+                    const tier = TIERS[index]
+                    const selectable = hasSignedInUser && tier.selectable && isTierAvailable(status, tier.apiTier)
+                    return (
+                      <td
+                        key={`${feature.name}-${tier.key}`}
+                        title={selectable ? `Choose Tier ${tier.code} ${tier.name}` : undefined}
+                        onClick={(event) => handleTierColumnClick(event, tier.apiTier, selectable)}
+                        className={classNames(
+                          tier.future && "subscription-tier-table__unavailable-column",
+                          selectable && "subscription-tier-table__selectable-column",
+                          tier.key === currentTier && "subscription-tier-table__current-column",
+                          tier.apiTier === selectedTier && "subscription-tier-table__selected-column",
+                        )}
+                      >
+                        <FeatureValue value={value} />
+                      </td>
+                    )
+                  })}
                 </tr>
               ))}
             </tbody>
