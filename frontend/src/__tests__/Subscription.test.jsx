@@ -13,6 +13,7 @@ const mockAuth = vi.hoisted(() => ({
 const mockBillingApi = vi.hoisted(() => ({
   getSubscription: vi.fn(),
   createCheckoutSession: vi.fn(),
+  createSubscriptionChangeSession: vi.fn(),
   createPortalSession: vi.fn(),
 }))
 const mockGetBots = vi.hoisted(() => vi.fn())
@@ -66,6 +67,7 @@ beforeEach(() => {
   mockAuth.bootstrapping = false
   mockBillingApi.getSubscription.mockReset()
   mockBillingApi.createCheckoutSession.mockReset()
+  mockBillingApi.createSubscriptionChangeSession.mockReset()
   mockBillingApi.createPortalSession.mockReset()
   mockGetBots.mockReset()
   stripeMount.mockReset()
@@ -73,6 +75,7 @@ beforeEach(() => {
   createEmbeddedCheckoutPage.mockReset()
   mockBillingApi.getSubscription.mockResolvedValue(billingStatus())
   mockBillingApi.createCheckoutSession.mockResolvedValue({ client_secret: "cs_test_123" })
+  mockBillingApi.createSubscriptionChangeSession.mockResolvedValue({ url: "#stripe-subscription-change" })
   mockBillingApi.createPortalSession.mockResolvedValue({ url: "https://billing.example/session" })
   mockGetBots.mockRejectedValue(new Error("Unable to load bots right now."))
   createEmbeddedCheckoutPage.mockImplementation(async ({ fetchClientSecret }) => {
@@ -83,6 +86,7 @@ beforeEach(() => {
 
 afterEach(() => {
   window.scrollTo = originalScrollTo
+  window.history.replaceState(null, "", "/")
   cleanup()
 })
 
@@ -376,6 +380,41 @@ describe("SubscriptionPage", () => {
     await screen.findByRole("heading", { name: "Subscription" })
     const controls = screen.getByRole("region", { name: "Subscription controls" })
     expect(await within(controls).findByRole("heading", { name: "Tier T4 Expert" })).toBeInTheDocument()
+  })
+
+  it("opens_a_prorated_subscription_change_review_for_active_subscribers", async () => {
+    mockBillingApi.getSubscription.mockResolvedValueOnce(billingStatus({
+      current_tier: "tier2",
+      billing: {
+        has_customer: true,
+        subscription_status: "active",
+        tier: "tier2",
+        interval: "monthly",
+      },
+    }))
+
+    renderPage()
+
+    const controls = await screen.findByRole("region", { name: "Subscription controls" })
+    expect(await within(controls).findByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Current subscription" })).toBeDisabled()
+
+    const humanGamesRow = screen.getByRole("rowheader", { name: "Play human games" }).closest("tr")
+    fireEvent.click(within(humanGamesRow).getAllByRole("cell")[3])
+
+    await waitFor(() => {
+      expect(within(controls).getByRole("heading", { name: "Tier T3 Strong" })).toBeInTheDocument()
+    })
+    const changeButton = screen.getByRole("button", { name: "Review prorated change" })
+    expect(changeButton).toBeEnabled()
+    fireEvent.click(changeButton)
+
+    await waitFor(() => {
+      expect(mockBillingApi.createSubscriptionChangeSession).toHaveBeenCalledWith({ tier: "tier3", interval: "monthly" })
+    })
+    expect(mockBillingApi.createCheckoutSession).not.toHaveBeenCalled()
+    expect(stripeMount).not.toHaveBeenCalled()
+    expect(window.location.hash).toBe("#stripe-subscription-change")
   })
 
   it("asks_guest_accounts_to_convert_before_subscribing", async () => {

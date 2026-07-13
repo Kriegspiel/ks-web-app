@@ -285,14 +285,17 @@ describe("user helpers", () => {
     const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: { enabled: true } })
     const postSpy = vi.spyOn(api, "post")
       .mockResolvedValueOnce({ data: { client_secret: "cs_test" } })
+      .mockResolvedValueOnce({ data: { url: "https://billing.example/change" } })
       .mockResolvedValueOnce({ data: { url: "https://billing.example/session" } })
 
     await billingApi.getSubscription()
     await billingApi.createCheckoutSession({ tier: "tier2", interval: "monthly" })
+    await billingApi.createSubscriptionChangeSession({ tier: "tier3", interval: "yearly" })
     await billingApi.createPortalSession()
 
     expect(getSpy).toHaveBeenCalledWith("/api/billing/subscription")
     expect(postSpy).toHaveBeenNthCalledWith(1, "/api/billing/checkout-session", { tier: "tier2", interval: "monthly" })
-    expect(postSpy).toHaveBeenNthCalledWith(2, "/api/billing/portal-session")
+    expect(postSpy).toHaveBeenNthCalledWith(2, "/api/billing/subscription-change-session", { tier: "tier3", interval: "yearly" })
+    expect(postSpy).toHaveBeenNthCalledWith(3, "/api/billing/portal-session")
   })
 })
