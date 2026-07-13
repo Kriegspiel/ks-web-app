@@ -271,8 +271,8 @@ describe("ProfilePage", () => {
     await screen.findByRole("heading", { name: "llm_gptoss120b" })
     expect(screen.queryByRole("region", { name: "Player tier" })).not.toBeInTheDocument()
     expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
-    expect(within(screen.getByRole("region", { name: "Bot tier" })).getByRole("link", { name: "Bot tier: Tier T2 LLM bot. View subscription options" })).toHaveAttribute("href", "/subscription")
-    expect(screen.getByRole("heading", { name: "Tier T2 LLM bot" })).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "Bot tier" })).getByRole("link", { name: "Bot tier: Tier T2 Club. View subscription options" })).toHaveAttribute("href", "/subscription")
+    expect(screen.getByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T2")).toHaveClass("tier-badge", "tier-badge--t2", "profile-tier-card__code")
     expect(screen.getByText("GPT-OSS 120B model bot for T2 Club.")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "This user is bot" })).toBeInTheDocument()
@@ -614,7 +614,7 @@ describe("ProfilePage", () => {
 
     await screen.findByRole("heading", { name: "llm_qwen36_flash" })
     expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "Tier T3 LLM bot" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Tier T3 Strong" })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T3")).toHaveClass("tier-badge", "tier-badge--t3", "profile-tier-card__code")
     expect(screen.getByText("Qwen3.6 Flash model bot for T3 Strong.")).toBeInTheDocument()
   })
@@ -633,18 +633,18 @@ describe("ProfilePage", () => {
 
     await screen.findByRole("heading", { name: "llm_qwen_plus" })
     expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "Tier T2 LLM bot" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T2")).toHaveClass("tier-badge", "tier-badge--t2", "profile-tier-card__code")
     expect(screen.getByText("Qwen Plus model bot for T2 Club.")).toBeInTheDocument()
   })
 
   it.each([
-    ["llm_qwen37_plus", "Tier T2 LLM bot", "T2", "tier-badge--t2", "Qwen 3.7 Plus model bot for T2 Club."],
-    ["llm_gpt56_luna", "Tier T3 LLM bot", "T3", "tier-badge--t3", "GPT-5.6 Luna model bot for T3 Strong (reasoning: no)."],
-    ["llm_gpt56_terra", "Tier T4 LLM bot", "T4", "tier-badge--t4", "GPT-5.6 Terra model bot for T4 Expert (reasoning: no)."],
-    ["llm_gpt55", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.5 model bot for T5 Master (reasoning: no)."],
-    ["llm_gpt56_sol", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.6 Sol model bot for T5 Master (reasoning: no)."],
-    ["llm_gpt55_pro", "Tier T5 LLM bot", "T5", "tier-badge--t5", "GPT-5.5 Pro model bot for T5 Master (reasoning: medium)."],
+    ["llm_qwen37_plus", "Tier T2 Club", "T2", "tier-badge--t2", "Qwen 3.7 Plus model bot for T2 Club."],
+    ["llm_gpt56_luna", "Tier T3 Strong", "T3", "tier-badge--t3", "GPT-5.6 Luna model bot for T3 Strong (reasoning: no)."],
+    ["llm_gpt56_terra", "Tier T4 Expert", "T4", "tier-badge--t4", "GPT-5.6 Terra model bot for T4 Expert (reasoning: no)."],
+    ["llm_gpt55", "Tier T5 Master", "T5", "tier-badge--t5", "GPT-5.5 model bot for T5 Master (reasoning: no)."],
+    ["llm_gpt56_sol", "Tier T5 Master", "T5", "tier-badge--t5", "GPT-5.6 Sol model bot for T5 Master (reasoning: no)."],
+    ["llm_gpt55_pro", "Tier T5 Master", "T5", "tier-badge--t5", "GPT-5.5 Pro model bot for T5 Master (reasoning: medium)."],
   ])("marks_%s_with_the_configured_llm_tier", async (username, heading, code, badgeClass, description) => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
       username,
@@ -679,7 +679,7 @@ describe("ProfilePage", () => {
 
     await screen.findByRole("heading", { name: "llm_nemotron_ultra" })
     expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "Tier T3 LLM bot" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Tier T3 Strong" })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T3")).toHaveClass("tier-badge", "tier-badge--t3", "profile-tier-card__code")
     expect(screen.getByText("Nemotron Ultra model bot for T3 Strong.")).toBeInTheDocument()
   })
@@ -698,7 +698,7 @@ describe("ProfilePage", () => {
 
     await screen.findByRole("heading", { name: "llm_mistral_large3" })
     expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "Tier T3 LLM bot" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Tier T3 Strong" })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T3")).toHaveClass("tier-badge", "tier-badge--t3", "profile-tier-card__code")
     expect(screen.getByText("Mistral Large 3 model bot for T3 Strong.")).toBeInTheDocument()
   })
@@ -787,7 +787,7 @@ describe("ProfilePage", () => {
 
     await screen.findByRole("heading", { name: "llm_qwen37_max" })
     expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "Tier T5 LLM bot" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Tier T5 Master" })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T5")).toHaveClass("tier-badge", "tier-badge--t5", "profile-tier-card__code")
     expect(screen.getByText("Qwen 3.7 Max model bot for T5 Master.")).toBeInTheDocument()
   })
@@ -809,7 +809,7 @@ describe("ProfilePage", () => {
 
     await screen.findByRole("heading", { name: "llm_gptnano" })
     const botTier = screen.getByRole("region", { name: "Bot tier" })
-    expect(within(botTier).getByRole("heading", { name: "Tier T2 LLM bot" })).toBeInTheDocument()
+    expect(within(botTier).getByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
     expect(within(botTier).getByText("T2")).toHaveClass("tier-badge", "tier-badge--t2", "profile-tier-card__code")
     expect(screen.getByText("GPT-5.4 Nano model bot for T2 Club.")).toBeInTheDocument()
     expect(within(botTier).queryByText(/Default reasoning level:/)).not.toBeInTheDocument()
@@ -839,7 +839,7 @@ describe("ProfilePage", () => {
 
     await screen.findByRole("heading", { name: "llm_haiku" })
     expect(screen.getByText("Member since Unknown.")).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "Tier T2 LLM bot" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
     expect(screen.getByText("Claude Haiku 4.5 model bot for T2 Club.")).toBeInTheDocument()
     expect(screen.getByText(/Email address of this bot owner is unknown\./i)).toBeInTheDocument()
     expect(screen.getByText("No completed games yet.")).toBeInTheDocument()

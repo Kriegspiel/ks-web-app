@@ -5,6 +5,11 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.4.16
+
+- **Bot Profiles**: show model bot tier cards with the same `T#` level names
+  used for player tiers, such as `Tier T2 Club`.
+
 ## ks-web-app frontend v. 1.4.5
 
 - **Bot Catalog UI**: make reasoning labels compact and inline with model bot
@@ -170,7 +175,6 @@ need version entries unless they ship a user-visible change.
 
 - **Bot Matrix Report**: move row/column bot menu bulk actions to the top and
   fix the sticky player column width so bot names wrap cleanly.
-
 ## ks-web-app frontend v. 1.3.112
 
 - **Bot Matrix Report**: add row-bot and column-bot selection menus for the
