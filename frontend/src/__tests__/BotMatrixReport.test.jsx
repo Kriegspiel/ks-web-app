@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
-import BotMatrixReportPage from "../pages/BotMatrixReport"
+import BotMatrixReportPage, { __botMatrixReportInternals as h } from "../pages/BotMatrixReport"
 
 const mockApi = vi.hoisted(() => ({
   techApi: {
@@ -180,6 +180,70 @@ afterEach(() => {
 })
 
 describe("BotMatrixReportPage", () => {
+  it("covers_bot_matrix_helper_fallbacks", () => {
+    expect(h.numberOrNull("bad")).toBeNull()
+    expect(h.formatTokens(null)).toBe("—")
+    expect(h.formatTokens(0)).toBe("0")
+    expect(h.formatTokens(950)).toBe("950")
+    expect(h.formatTokens(1_250)).toBe("1.3k")
+    expect(h.formatTokens(1_250_000)).toBe("1.25M")
+    expect(h.periodRangeLabel("today", "2026-07-06T13:30:00Z")).toBe("2026-07-06 — 2026-07-06")
+    expect(h.periodRangeLabel("lifetime", "2026-07-06T13:30:00Z")).toBe("Through 2026-07-06")
+    expect(h.periodRangeLabel("week", "not-a-date")).toBe("")
+
+    expect(h.reviewOutcomeOptions([{ condition: "custom_reason", label: "Custom reason" }])).toEqual(expect.arrayContaining([
+      { value: "custom_reason", label: "Custom reason" },
+    ]))
+    expect(h.reviewOutcomeOptions([{ condition: "" }, { condition: "draw", label: "Duplicate draw" }]).some((option) => option.label === "Duplicate draw")).toBe(false)
+    expect(h.outcomeRequestValues([], ["checkmate"])).toEqual(["__none__"])
+    expect(h.outcomeRequestValues(["checkmate"], ["checkmate"])).toEqual([])
+
+    expect(h.normalizePlayer(null)).toEqual({ username: "", name: "Unknown bot", code: "" })
+    expect(h.normalizePlayer({ username: " bot_user ", displayName: " Display Bot " })).toEqual({ username: "bot_user", name: "Display Bot", code: "bot_user" })
+    expect(h.normalizeSummary({ wins: 1, draws: 2, losses: 3, usageStartDate: "2026-07-05" })).toMatchObject({
+      games: 0,
+      record: "1-2-3",
+      usageStartDate: "2026-07-05",
+    })
+    expect(h.normalizeTotalRow({ username: "fallback_bot", avgPlies: "bad" }, "2026-07-06")).toMatchObject({
+      code: "fallback_bot",
+      games: 0,
+      avgPlies: null,
+      usageStartDate: "2026-07-06",
+    })
+
+    const rows = [
+      { playerName: "Beta", games: null },
+      { playerName: "Alpha", games: 2 },
+      { playerName: "Gamma", games: 2 },
+    ]
+    expect(h.sortTotalRows(rows, null).map((row) => row.playerName)).toEqual(["Beta", "Alpha", "Gamma"])
+    expect(h.sortTotalRows(rows, { key: "player", direction: "asc" }).map((row) => row.playerName)).toEqual(["Alpha", "Beta", "Gamma"])
+    expect(h.sortTotalRows(rows, { key: "unknown", direction: "asc" }).map((row) => row.playerName)).toEqual(["Alpha", "Gamma", "Beta"])
+    expect(h.sortTotalRows([{ playerName: "Beta", games: null }, { playerName: "Alpha", games: null }], { key: "games", direction: "desc" }).map((row) => row.playerName)).toEqual(["Alpha", "Beta"])
+
+    expect(h.sortValuesByReference(["z", "a"], ["a"])).toEqual(["a", "z"])
+    expect(h.toggleSelectionValue(null, "a", ["a", "b"])).toEqual(["b"])
+    expect(h.toggleSelectionValue(["a"], "b", ["a", "b"])).toEqual(["a", "b"])
+    expect(h.botMatchupName({ name: "LLM GPT-Nano (bot)" })).toBe("GPT Nano")
+    expect(h.botMatchupName({})).toBe("Unknown bot")
+    expect(h.botMatchupName({ name: "   " })).toBe("Unknown bot")
+  })
+
+  it("renders_total_metric_helper_variants", () => {
+    const { rerender } = render(<h.TotalMetric value={1234} kind="number" />)
+    expect(screen.getByText("1,234")).toBeInTheDocument()
+
+    rerender(<h.TotalMetric value={1234} kind="tokens" usageStartDate="2026-07-04" />)
+    expect(screen.getByText("1.2k")).toHaveAttribute("title", expect.stringContaining("2026-07-04"))
+
+    rerender(<h.TotalMetric value={{ input: 1000, cache: 0, output: null }} kind="tokenSplit" usageStartDate="2026-07-04" />)
+    expect(screen.getByText("1k/0/—")).toHaveAttribute("title", expect.stringContaining("2026-07-04"))
+
+    rerender(<h.TotalMetric value={0.125} kind="share" />)
+    expect(screen.getByText("13%")).toBeInTheDocument()
+  })
+
   it("renders_the_live_bot_matrix_with_full_linked_player_names_and_row_stats", async () => {
     const nowSpy = vi.spyOn(Date, "now")
     nowSpy.mockReturnValueOnce(1_000).mockReturnValueOnce(1_042)
@@ -313,6 +377,15 @@ describe("BotMatrixReportPage", () => {
     expect(within(rowMenu).getByLabelText("LLM Haiku (bot)")).toBeChecked()
     expect(within(rowMenu).getByLabelText("LLM GPT-Nano (bot)")).toBeChecked()
     expect(within(rowMenu).getByLabelText("Random Any Bot")).toBeChecked()
+
+    fireEvent.click(within(rowMenu).getByRole("button", { name: "Clear all" }))
+
+    expect(within(matrixTable).getByText("No row bots selected.")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Row bots 0/3" })).toHaveAttribute("aria-expanded", "true")
+
+    fireEvent.click(within(rowMenu).getByRole("button", { name: "Select all" }))
+
+    expect(screen.getByRole("button", { name: "Row bots 3/3" })).toHaveAttribute("aria-expanded", "true")
 
     fireEvent.click(within(rowMenu).getByLabelText("Random Any Bot"))
 

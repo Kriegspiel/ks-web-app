@@ -309,4 +309,36 @@ describe("HomePage", () => {
     expect(screen.getByText("No games yet. Start one from the lobby.")).toBeInTheDocument()
     expect(mockApi.userApi.getRatingHistory).toHaveBeenCalledWith("fil", "overall", 100)
   })
+
+  it("uses_user_stats_when_profile_is_missing_and_handles_empty_game_dates", async () => {
+    mockAuth.isAuthenticated = true
+    mockAuth.user = {
+      username: "fil",
+      stats: {
+        elo: 1250,
+        elo_peak: 1260,
+        games_played: 3,
+        games_won: 1,
+        games_lost: 1,
+        games_drawn: 1,
+      },
+    }
+    mockApi.getMyActiveGames.mockResolvedValue({
+      games: [
+        { game_id: "game-undated", state: "completed", white: { username: "fil" }, black: { username: "" } },
+      ],
+    })
+    mockApi.userApi.getProfile.mockResolvedValue(null)
+
+    renderPage()
+
+    expect(await screen.findByText("1250")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText("Loading your recent games…")).not.toBeInTheDocument()
+    })
+    expect(screen.getByText("1260")).toBeInTheDocument()
+    expect(screen.getByText("3")).toBeInTheDocument()
+    expect(screen.getAllByText("1 (33.3%)").length).toBe(3)
+    expect(screen.getByText(/Updated/)).toBeInTheDocument()
+  })
 })

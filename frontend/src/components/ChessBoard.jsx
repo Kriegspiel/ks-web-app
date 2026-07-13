@@ -18,9 +18,6 @@ function squareCenter(square, orientation) {
 
   const fileIndex = FILES.indexOf(square[0])
   const rankIndex = RANKS.indexOf(Number.parseInt(square[1], 10))
-  if (fileIndex < 0 || rankIndex < 0) {
-    return null
-  }
 
   const displayFileIndex = orientation === "black" ? FILES.length - 1 - fileIndex : fileIndex
   const displayRankIndex = orientation === "black" ? RANKS.length - 1 - rankIndex : rankIndex

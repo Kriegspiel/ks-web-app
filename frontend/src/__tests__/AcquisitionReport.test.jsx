@@ -39,6 +39,16 @@ describe("AcquisitionReportPage", () => {
           games_created: 5,
           games_completed: 2,
         },
+        {
+          source: "",
+          medium: null,
+          campaign: "   ",
+          visits: "not-a-number",
+          sessions: 0,
+          acquired_users: null,
+          games_created: undefined,
+          games_completed: Number.NaN,
+        },
       ],
     })
 
@@ -55,8 +65,21 @@ describe("AcquisitionReportPage", () => {
     expect(row).toHaveTextContent("3")
     expect(row).toHaveTextContent("5")
     expect(row).toHaveTextContent("2")
+    expect(screen.getAllByText("—")).toHaveLength(3)
+    expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(5)
 
     nowSpy.mockRestore()
+  })
+
+  it("renders_zero_for_missing_completed_game_counts", async () => {
+    techApi.getAcquisitionReport.mockResolvedValue({
+      rows: [{ source: "direct" }],
+    })
+
+    render(<AcquisitionReportPage />)
+
+    expect(await screen.findByText("direct")).toBeInTheDocument()
+    expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(5)
   })
 
   it("reloads_when_the_range_changes", async () => {

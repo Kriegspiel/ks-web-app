@@ -2,7 +2,7 @@ import fs from "node:fs"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
-import ProfilePage from "../pages/Profile"
+import ProfilePage, { __profilePageInternals as h } from "../pages/Profile"
 
 const mockApi = vi.hoisted(() => ({
   createGame: vi.fn(),
@@ -55,6 +55,23 @@ function renderProfile(path = "/user/fil") {
 }
 
 describe("ProfilePage", () => {
+  it("covers_profile_helper_fallbacks", () => {
+    expect(h.formatDuration(3_600)).toBe("1h")
+    expect(h.formatDuration(3_900)).toBe("1h 5m")
+    expect(h.normalizeUsername(null)).toBe("")
+    expect(h.normalizeUsername(" Fil ")).toBe("fil")
+    expect(h.botSupportedRuleVariants({ supported_rule_variants: [null, " berkeley ", ""] })).toEqual(["berkeley"])
+    expect(h.botSupportedRuleVariants({ supported_rule_variants: [] })).toEqual(["berkeley", "berkeley_any"])
+    expect(h.challengeRuleLabel("mystery_rules")).toBe("mystery_rules")
+    expect(h.tierDetailsForProfile({ role: "bot", username: "unknown_bot" })).toBeNull()
+    expect(h.tierDetailsForProfile({ role: "bot", username: "llm_gptnano" })).toMatchObject({
+      code: "T2",
+      name: expect.any(String),
+      ariaLabel: "Bot tier",
+    })
+    expect(h.tierDetailsForProfile({ role: "user", llm_bot_tier: "tier3" })).toMatchObject({ code: "T3" })
+  })
+
   it("keeps_profile_tier_badges_aligned_with_the_public_tier_palette", () => {
     const badgeCss = fs.readFileSync("src/components/TierBadge.css", "utf8")
     const profileCss = fs.readFileSync("src/pages/Profile.css", "utf8")
@@ -256,10 +273,12 @@ describe("ProfilePage", () => {
         opponents: [
           { username: "llm_haiku", role: "bot", total_games: 16190, wins: 228, losses: 3766, draws: 12196, win_rate: 0.014 },
           { username: "fil", role: "user", total_games: 4342, wins: 67, losses: 1409, draws: 2866, win_rate: 0.015 },
+          { total_games: 1, wins: 0, losses: 0, draws: 1, win_rate: 0.0 },
         ],
         rulesets: [
           { rule_variant: "wild16", total_games: 1211, wins: 55, losses: 200, draws: 956, win_rate: 0.045 },
           { rule_variant: "berkeley_any", total_games: 1, wins: 1, losses: 0, draws: 0, win_rate: 1.0 },
+          { total_games: 1, wins: 0, losses: 0, draws: 1, win_rate: 0.0 },
         ],
       },
     })
@@ -301,9 +320,13 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("link", { name: "fil" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?opponent=fil")
     expect(screen.getByText("228-3,766-12,196 · 1.4%")).toBeInTheDocument()
     expect(screen.getByText("67-1,409-2,866 · 1.5%")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "unknown" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?opponent=unknown")
+    expect(screen.getByText("0-0-1 · 0.0%")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Wild 16" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?rule_set=wild16")
     expect(screen.getByRole("link", { name: "Berkeley + Any" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?rule_set=berkeley_any")
+    expect(screen.getByRole("link", { name: "—" })).toHaveAttribute("href", "/user/llm_gptoss120b/games?rule_set=unknown")
     expect(screen.getByText("1,211 · 4.5%")).toBeInTheDocument()
+    expect(screen.getByText("1 · 0.0%")).toBeInTheDocument()
     expect(screen.queryByText("1211 · 4.5%")).not.toBeInTheDocument()
   })
 
@@ -356,6 +379,52 @@ describe("ProfilePage", () => {
       })
     })
     expect(await screen.findByRole("heading", { name: "Game route" })).toBeInTheDocument()
+  })
+
+  it("surfaces_bot_challenge_availability_and_creation_errors", async () => {
+    mockApi.userApi.getProfile.mockResolvedValue({
+      username: "randobotany",
+      role: "bot",
+      owner_email: "bot-random-any@kriegspiel.org",
+      member_since: "2026-04-03T01:10:41Z",
+      stats: {},
+      user_metrics: { completed_games: 0 },
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValue({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValue({ series: { game: [], date: [] } })
+    mockApi.getBots.mockRejectedValueOnce({ message: "Availability failed" })
+
+    renderProfile("/user/randobotany")
+
+    let challengeCard = await screen.findByRole("region", { name: "Challenge this bot" })
+    expect(await within(challengeCard).findByRole("alert")).toHaveTextContent("Availability failed")
+
+    cleanup()
+    mockApi.getBots.mockResolvedValue({
+      bots: [
+        {
+          bot_id: "bot-random-any",
+          username: "randobotany",
+          display_name: "Random Any Bot (bot)",
+          supported_rule_variants: ["berkeley_any"],
+        },
+      ],
+    })
+    mockApi.createGame.mockResolvedValueOnce({})
+
+    renderProfile("/user/randobotany")
+
+    challengeCard = await screen.findByRole("region", { name: "Challenge this bot" })
+    const rulesetSelect = await within(challengeCard).findByLabelText("Ruleset")
+    await waitFor(() => {
+      expect(rulesetSelect).toHaveValue("berkeley_any")
+    })
+    fireEvent.click(await within(challengeCard).findByRole("button", { name: "Play game" }))
+    expect(await within(challengeCard).findByRole("alert")).toHaveTextContent("Game was created, but the game code was not returned.")
+
+    mockApi.createGame.mockRejectedValueOnce({ message: "Create failed" })
+    fireEvent.click(within(challengeCard).getByRole("button", { name: "Play game" }))
+    expect(await within(challengeCard).findByRole("alert")).toHaveTextContent("Create failed")
   })
 
   it("lets_catalog_hidden_mistral_nemo_be_challenged_from_the_profile", async () => {
@@ -567,6 +636,51 @@ describe("ProfilePage", () => {
     })
   })
 
+  it("uses_the_regularized_guest_name_when_conversion_response_omits_username", async () => {
+    const convertGuest = vi.fn().mockResolvedValue({})
+    mockAuthState.value = {
+      user: { username: "guest_adolf_adams", is_guest: true },
+      convertGuest,
+      actionLoading: true,
+    }
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "guest_adolf_adams",
+      role: "guest",
+      member_since: "2026-04-28T00:00:00Z",
+      stats: {},
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({})
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({})
+
+    renderProfile("/user/guest_adolf_adams")
+
+    await screen.findByRole("heading", { name: "guest_adolf_adams" })
+    expect(screen.getByRole("button", { name: "Converting…" })).toBeDisabled()
+
+    cleanup()
+    mockAuthState.value = { ...mockAuthState.value, actionLoading: false }
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "guest_adolf_adams",
+      role: "guest",
+      member_since: "2026-04-28T00:00:00Z",
+      stats: {},
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({})
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({})
+
+    renderProfile("/user/guest_adolf_adams")
+
+    await screen.findByRole("heading", { name: "guest_adolf_adams" })
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "player@example.com" } })
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret123" } })
+    fireEvent.click(screen.getByRole("button", { name: "Convert to regular account" }))
+
+    await waitFor(() => {
+      expect(convertGuest).toHaveBeenCalledWith({ email: "player@example.com", password: "secret123" })
+    })
+    expect(await screen.findByRole("heading", { name: "adolf_adams" })).toBeInTheDocument()
+  })
+
   it("does_not_show_guest_conversion_section_on_other_guest_profiles", async () => {
     mockAuthState.value = {
       user: { username: "guest_judit_polgar", is_guest: true },
@@ -586,6 +700,100 @@ describe("ProfilePage", () => {
 
     await screen.findByRole("heading", { name: "guest_adolf_adams" })
     expect(screen.queryByRole("heading", { name: "Keep this account." })).not.toBeInTheDocument()
+  })
+
+  it("validates_and_surfaces_guest_conversion_errors", async () => {
+    const convertGuest = vi.fn().mockRejectedValue({})
+    mockAuthState.value = {
+      user: { username: "guest_adolf_adams", is_guest: true },
+      convertGuest,
+      actionLoading: false,
+    }
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "guest_adolf_adams",
+      role: "guest",
+      member_since: "2026-04-28T00:00:00Z",
+      stats: {},
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile("/user/guest_adolf_adams")
+
+    await screen.findByRole("heading", { name: "guest_adolf_adams" })
+    const form = screen.getByRole("button", { name: "Convert to regular account" }).closest("form")
+    fireEvent.submit(form)
+    expect(screen.getByRole("alert")).toHaveTextContent("Please enter an email and password.")
+
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "player@example.com" } })
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret123" } })
+    fireEvent.submit(form)
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Unable to convert guest account right now.")
+    })
+  })
+
+  it("shows_empty_bot_metric_rows_for_sparse_completed_bot_metrics", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "sparsebot",
+      role: "bot",
+      member_since: "2026-04-03T01:10:41Z",
+      stats: {},
+      bot_metrics: {
+        completed_games: 1,
+        average_duration_seconds: 0,
+      },
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile("/user/sparsebot")
+
+    await screen.findByRole("heading", { name: "sparsebot" })
+    expect(screen.getByText("0m")).toBeInTheDocument()
+    expect(screen.getByText("No opponent rows yet.")).toBeInTheDocument()
+    expect(screen.getByText("No ruleset rows yet.")).toBeInTheDocument()
+  })
+
+  it("shows_minute_only_bot_average_duration", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "minutebot",
+      role: "bot",
+      member_since: "2026-04-03T01:10:41Z",
+      stats: {},
+      bot_metrics: {
+        completed_games: 1,
+        average_duration_seconds: 420,
+      },
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile("/user/minutebot")
+
+    await screen.findByRole("heading", { name: "minutebot" })
+    expect(screen.getByText("7m")).toBeInTheDocument()
+  })
+
+  it("shows_hour_only_bot_average_duration", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "hourbot",
+      role: "bot",
+      member_since: "2026-04-03T01:10:41Z",
+      stats: {},
+      bot_metrics: {
+        completed_games: 1,
+        average_duration_seconds: 3600,
+      },
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+
+    renderProfile("/user/hourbot")
+
+    await screen.findByRole("heading", { name: "hourbot" })
+    expect(screen.getByText("1h")).toBeInTheDocument()
   })
 
   it("shows_the_default_error_message_when_profile_loading_fails_without_details", async () => {
@@ -845,5 +1053,25 @@ describe("ProfilePage", () => {
     expect(screen.getByText("No completed games yet.")).toBeInTheDocument()
     expect(screen.getByText(/draw vs unknown/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", "/user/llm_haiku/games")
+  })
+
+  it("shows_generic_upgrade_copy_for_uncataloged_unavailable_bots", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "uncataloged_bot",
+      role: "bot",
+      owner_email: null,
+      member_since: "2026-07-13T00:00:00Z",
+      stats: {},
+      user_metrics: { completed_games: 0 },
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+    mockApi.getBots.mockResolvedValueOnce({ bots: [] })
+
+    renderProfile("/user/uncataloged_bot")
+
+    const challengeCard = await screen.findByRole("region", { name: "Challenge this bot" })
+    expect(await within(challengeCard).findByText("This bot is not available for your current tier. Upgrade your tier to challenge it.")).toBeInTheDocument()
+    expect(within(challengeCard).getByRole("link", { name: "View tiers" })).toHaveAttribute("href", "/subscription")
   })
 })

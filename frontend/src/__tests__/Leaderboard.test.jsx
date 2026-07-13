@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { MemoryRouter } from "react-router-dom"
-import LeaderboardPage from "../pages/Leaderboard"
+import LeaderboardPage, { __leaderboardInternals as h } from "../pages/Leaderboard"
 
 const mockApi = vi.hoisted(() => ({
   userApi: {
@@ -22,6 +22,34 @@ beforeEach(() => {
 })
 
 describe("LeaderboardPage", () => {
+  it("covers_leaderboard_helper_fallbacks", () => {
+    const usernameConfig = h.FILTER_CONFIGS.find((config) => config.key === "username")
+    const typeConfig = h.FILTER_CONFIGS.find((config) => config.key === "type")
+
+    expect(h.filterLabel("__empty__")).toBe("—")
+    expect(h.filterLabel(" amy ")).toBe("amy")
+    expect(h.playerTypeLabel({ role: "bot" })).toBe("Bot")
+    expect(h.playerTypeLabel({ role: "user" })).toBe("Human")
+    expect(h.parseSort(new URLSearchParams("sort=unknown&dir=sideways"))).toEqual({ key: "rank", direction: "asc" })
+    expect(h.parseSort(new URLSearchParams("sort=username&dir=sideways"))).toEqual({ key: "username", direction: "asc" })
+    expect(h.parseSort(new URLSearchParams("sort=none"))).toBeNull()
+    expect(h.selectedFilterCount({ username: ["amy"], type: null })).toBe(1)
+
+    const players = [
+      { username: "", role: "user" },
+      { username: "botone", role: "bot", is_bot: true },
+    ]
+    expect(h.buildFilterOptions(null, usernameConfig, ["missing"], players).map((option) => option.value)).toEqual(["__empty__", "botone", "missing"])
+    expect(h.buildFilterOptions([{ value: "bot", label: "", group: "Bots" }], typeConfig, [], players)).toEqual([
+      { value: "bot", label: "Bot", group: "Bots" },
+    ])
+    expect(h.ratingValue({ elo: "bad", ratings: { overall: { elo: "bad" } } }, "overall")).toBe(1200)
+    expect(h.ratingValue({ ratings: { vs_bots: { elo: 1420 } } }, "vs_bots")).toBe(1420)
+    expect(h.gamesPlayed({ games_played: "bad" })).toBe(0)
+    expect(h.winRateText({ win_rate: "bad" })).toBe("0.0%")
+    expect(h.SORT_COLUMNS.map((column) => column.key)).toContain("win_rate")
+  })
+
   it("lets_long_leaderboards_use_page_scroll_with_a_sticky_header", () => {
     const css = readFileSync(resolve(process.cwd(), "src/pages/Leaderboard.css"), "utf8")
 
@@ -96,6 +124,7 @@ describe("LeaderboardPage", () => {
     mockApi.userApi.getLeaderboard
       .mockResolvedValueOnce({ players: [{ rank: 1, username: "amy" }], pagination: { page: 1, pages: 2, total: 40 } })
       .mockResolvedValueOnce({ players: [{ rank: 21, username: "bob" }], pagination: { page: 2, pages: 2, total: 40 } })
+      .mockResolvedValueOnce({ players: [{ rank: 1, username: "amy" }], pagination: { page: 1, pages: 2, total: 40 } })
 
     render(<MemoryRouter><LeaderboardPage /></MemoryRouter>)
 
@@ -103,6 +132,13 @@ describe("LeaderboardPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
     await screen.findByText("bob")
     await waitFor(() => expect(mockApi.userApi.getLeaderboard).toHaveBeenNthCalledWith(2, 2, 20, {
+      sort: { key: "rank", direction: "asc" },
+      filters: { username: [], type: [] },
+      includeFilterOptions: false,
+    }))
+
+    fireEvent.click(screen.getByRole("button", { name: "Prev" }))
+    await waitFor(() => expect(mockApi.userApi.getLeaderboard).toHaveBeenNthCalledWith(3, 1, 20, {
       sort: { key: "rank", direction: "asc" },
       filters: { username: [], type: [] },
       includeFilterOptions: false,
@@ -148,6 +184,8 @@ describe("LeaderboardPage", () => {
     mockApi.userApi.getLeaderboard
       .mockResolvedValueOnce({ players: [{ rank: 1, username: "amy" }], pagination: { page: 1, pages: 1, total: 1 } })
       .mockResolvedValueOnce({ players: [{ rank: 2, username: "bob" }], pagination: { page: 1, pages: 1, total: 1 } })
+      .mockResolvedValueOnce({ players: [{ rank: 3, username: "cyd" }], pagination: { page: 1, pages: 1, total: 1 } })
+      .mockResolvedValueOnce({ players: [{ rank: 4, username: "dee" }], pagination: { page: 1, pages: 1, total: 1 } })
 
     render(<MemoryRouter><LeaderboardPage /></MemoryRouter>)
 
@@ -161,6 +199,23 @@ describe("LeaderboardPage", () => {
       includeFilterOptions: false,
     })
     expect(screen.getByRole("columnheader", { name: /Games/ })).toHaveAttribute("aria-sort", "ascending")
+
+    fireEvent.click(screen.getByRole("button", { name: "Sort Games" }))
+    await screen.findByText("cyd")
+    expect(mockApi.userApi.getLeaderboard).toHaveBeenNthCalledWith(3, 1, 20, {
+      sort: { key: "games", direction: "desc" },
+      filters: { username: [], type: [] },
+      includeFilterOptions: false,
+    })
+    expect(screen.getByRole("columnheader", { name: /Games/ })).toHaveAttribute("aria-sort", "descending")
+
+    fireEvent.click(screen.getByRole("button", { name: "Sort Games" }))
+    await screen.findByText("dee")
+    expect(mockApi.userApi.getLeaderboard).toHaveBeenNthCalledWith(4, 1, 20, {
+      sort: null,
+      filters: { username: [], type: [] },
+      includeFilterOptions: false,
+    })
   })
 
   it("filters_by_type_from_the_column_menu", async () => {
@@ -194,6 +249,13 @@ describe("LeaderboardPage", () => {
       includeFilterOptions: false,
     })
     expect(screen.getByRole("button", { name: "Type 1" })).toHaveTextContent("1")
+
+    fireEvent.click(await screen.findByRole("button", { name: "Clear Type" }))
+    await waitFor(() => expect(mockApi.userApi.getLeaderboard).toHaveBeenNthCalledWith(3, 1, 20, {
+      sort: { key: "rank", direction: "asc" },
+      filters: { username: [], type: [] },
+      includeFilterOptions: false,
+    }))
   })
 
   it("shows_filter_empty_state_when_active_filters_match_no_players", async () => {
@@ -211,5 +273,34 @@ describe("LeaderboardPage", () => {
       filters: { username: [], type: ["bot"] },
       includeFilterOptions: false,
     })
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }))
+    await waitFor(() => expect(mockApi.userApi.getLeaderboard).toHaveBeenLastCalledWith(1, 20, {
+      sort: { key: "rank", direction: "asc" },
+      filters: { username: [], type: [] },
+      includeFilterOptions: false,
+    }))
+  })
+
+  it("changes_page_size_and_reports_filter_option_errors", async () => {
+    mockApi.userApi.getLeaderboard
+      .mockResolvedValueOnce({ players: [{ rank: 1, username: "amy" }], pagination: { page: 1, pages: 2, total: 50 } })
+      .mockResolvedValueOnce({ players: [{ rank: 1, username: "amy" }], pagination: { page: 1, pages: 1, total: 50 } })
+    mockApi.userApi.getLeaderboardFilterOptions.mockRejectedValue({ message: "Filter boom" })
+
+    render(<MemoryRouter initialEntries={["/leaderboard?per_page=50"]}><LeaderboardPage /></MemoryRouter>)
+
+    await screen.findByText("amy")
+    fireEvent.change(screen.getByLabelText("Players per page"), { target: { value: "20" } })
+
+    await waitFor(() => expect(mockApi.userApi.getLeaderboard).toHaveBeenNthCalledWith(2, 1, 20, {
+      sort: { key: "rank", direction: "asc" },
+      filters: { username: [], type: [] },
+      includeFilterOptions: false,
+    }))
+
+    fireEvent.click(screen.getByRole("button", { name: "Username" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Filter boom")
   })
 })

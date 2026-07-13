@@ -71,6 +71,16 @@ describe("UsersReportPage", () => {
           played_at: "2026-05-01T12:05:00+00:00",
           review_path: "/game/LIVE02/review",
         },
+        {
+          game_id: "gid-3",
+          game_code: "WINNER",
+          rule_variant: "berkeley",
+          white: { username: "amy", role: "user" },
+          black: { username: "sam", role: "user" },
+          result: { winner: "black" },
+          played_at: "2026-05-01T12:06:00+00:00",
+          review_path: "/game/WINNER/review",
+        },
       ],
     })
 
@@ -93,6 +103,7 @@ describe("UsersReportPage", () => {
     expect(within(userRow).getByRole("link", { name: "fil" })).toHaveAttribute("href", "/user/fil")
     expect(within(userRow).getByRole("link", { name: "llm_gptnano (bot)" })).toHaveAttribute("href", "/user/llm_gptnano")
     expect(within(userRow).getByText("white, checkmate")).toBeInTheDocument()
+    expect(within(gamesSection).getByText("black")).toBeInTheDocument()
     expect(liveRow).toHaveTextContent("—")
     expect(within(gamesSection).getByText("2026-05-01 12:00:00 UTC")).toBeInTheDocument()
 
@@ -105,6 +116,57 @@ describe("UsersReportPage", () => {
     render(<MemoryRouter><UsersReportPage /></MemoryRouter>)
 
     expect(await screen.findByText("No user games found.")).toBeInTheDocument()
+  })
+
+  it("renders_fallbacks_for_sparse_sections_and_games", async () => {
+    techApi.getUsersReport.mockResolvedValue({
+      timezone: "",
+      sections: [
+        {
+          key: "dau",
+          title: "DAU",
+          rows: [
+            { label: null, active_users: "oops", active_bots: null, total_games: undefined },
+          ],
+        },
+        {
+          key: "bad",
+          title: "Bad rows",
+          rows: null,
+        },
+      ],
+      last_games: [
+        {
+          game_id: "gid-only",
+          rule_variant: "",
+          white: { role: "guest" },
+          black: { username: "guest_user", role: "guest" },
+          result: null,
+          played_at: "",
+        },
+        {
+          game_code: "DRAW01",
+          rule_variant: "berkeley",
+          white: { username: "human", role: "user" },
+          black: null,
+          result: { winner: "", reason: "stalemate" },
+          played_at: "not-a-date",
+        },
+      ],
+    })
+
+    render(<MemoryRouter><UsersReportPage /></MemoryRouter>)
+
+    expect(await screen.findByText("Activity periods are grouped in America/New_York. Games include active and archived records.")).toBeInTheDocument()
+    expect(screen.getByText("Bad rows")).toBeInTheDocument()
+    expect(screen.getAllByText("0").length).toBeGreaterThan(0)
+
+    const gamesSection = screen.getByRole("heading", { name: "Last 100 games by users" }).closest("section")
+    expect(within(gamesSection).getByText("gid-only")).toBeInTheDocument()
+    expect(within(gamesSection).queryByRole("link", { name: "gid-only" })).not.toBeInTheDocument()
+    expect(within(gamesSection).getByRole("link", { name: "guest_user (guest)" })).toHaveAttribute("href", "/user/guest_user")
+    expect(within(gamesSection).getByText("draw, stalemate")).toBeInTheDocument()
+    expect(within(gamesSection).getByText("not-a-date")).toBeInTheDocument()
   })
 
   it("shows_the_default_error_message_when_the_report_request_has_no_details", async () => {

@@ -51,8 +51,18 @@ describe("PromotionModal", () => {
 
     fireEvent.keyDown(window, { key: "Escape" })
     fireEvent.click(screen.getByRole("presentation"))
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
 
-    expect(onCancel).toHaveBeenCalledTimes(2)
+    expect(onCancel).toHaveBeenCalledTimes(3)
+  })
+
+  it("does_not_cancel_when_clicking_inside_the_dialog", () => {
+    const onCancel = vi.fn()
+    render(<PromotionModal open onSelect={() => {}} onCancel={onCancel} />)
+
+    fireEvent.click(screen.getByRole("dialog"))
+
+    expect(onCancel).not.toHaveBeenCalled()
   })
 
   it("keeps_dialog_text_legible_when_page_theme_is_dark", () => {

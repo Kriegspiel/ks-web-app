@@ -99,6 +99,22 @@ describe("auth helpers", () => {
       message: "Unable to start guest session right now.",
     })
   })
+  it("convert_guest_uses_the_default_fallback_when_requests_fail_without_details", async () => {
+    vi.spyOn(api, "post").mockRejectedValue({})
+    await expect(convertGuest({ email: "player@example.com", password: "secret123" })).rejects.toEqual({
+      status: undefined,
+      code: undefined,
+      message: "Unable to convert guest account right now.",
+    })
+  })
+  it("record_campaign_visit_uses_the_default_fallback_when_requests_fail_without_details", async () => {
+    vi.spyOn(api, "post").mockRejectedValue({})
+    await expect(recordCampaignVisit({ landing_path: "/", utm: { source: "reddit" } })).rejects.toEqual({
+      status: undefined,
+      code: undefined,
+      message: "Unable to record campaign visit.",
+    })
+  })
 })
 
 describe("game helpers", () => {
@@ -297,5 +313,16 @@ describe("user helpers", () => {
     expect(postSpy).toHaveBeenNthCalledWith(1, "/api/billing/checkout-session", { tier: "tier2", interval: "monthly" })
     expect(postSpy).toHaveBeenNthCalledWith(2, "/api/billing/subscription-change-session", { tier: "tier3", interval: "yearly" })
     expect(postSpy).toHaveBeenNthCalledWith(3, "/api/billing/portal-session")
+  })
+
+  it.each([
+    ["getSubscription", "get", () => billingApi.getSubscription(), "Unable to load billing details right now."],
+    ["createCheckoutSession", "post", () => billingApi.createCheckoutSession({ tier: "tier2" }), "Unable to start checkout right now."],
+    ["createSubscriptionChangeSession", "post", () => billingApi.createSubscriptionChangeSession({ tier: "tier3" }), "Unable to review that subscription change right now."],
+    ["createPortalSession", "post", () => billingApi.createPortalSession(), "Unable to open billing management right now."],
+  ])("%s_uses_the_default_fallback_when_requests_fail_without_details", async (_name, method, invoke, message) => {
+    vi.spyOn(api, method).mockRejectedValue({})
+
+    await expect(invoke()).rejects.toEqual({ status: undefined, code: undefined, message })
   })
 })

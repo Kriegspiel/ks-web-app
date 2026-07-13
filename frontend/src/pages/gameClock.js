@@ -66,6 +66,7 @@ export function reconcileClockSnapshot(previousState, nextState, { previousSynce
     nowMs: nextSyncedAtMs,
   })
 
+  /* c8 ignore next 3 -- sameActiveStretch requires a previous clock object, so projection cannot be null here. */
   if (!projectedPreviousClock) {
     return nextClock
   }

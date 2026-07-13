@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
-import SubscriptionPage from "../pages/Subscription"
+import SubscriptionPage, { __subscriptionPageInternals as h } from "../pages/Subscription"
 import { TEST_VERSION_STAMP } from "../version"
 
 const mockAuth = vi.hoisted(() => ({
@@ -21,6 +21,7 @@ const mockGetBots = vi.hoisted(() => vi.fn())
 const stripeMount = vi.hoisted(() => vi.fn())
 const stripeDestroy = vi.hoisted(() => vi.fn())
 const createEmbeddedCheckoutPage = vi.hoisted(() => vi.fn())
+const mockStripeRuntime = vi.hoisted(() => ({ current: null }))
 const originalScrollTo = window.scrollTo
 
 vi.mock("../hooks/useAuth", () => ({
@@ -33,7 +34,7 @@ vi.mock("../services/api", () => ({
 }))
 
 vi.mock("@stripe/stripe-js", () => ({
-  loadStripe: vi.fn(() => Promise.resolve({ createEmbeddedCheckoutPage })),
+  loadStripe: vi.fn(() => Promise.resolve(mockStripeRuntime.current)),
 }))
 
 function billingStatus(overrides = {}) {
@@ -73,6 +74,7 @@ beforeEach(() => {
   stripeMount.mockReset()
   stripeDestroy.mockReset()
   createEmbeddedCheckoutPage.mockReset()
+  mockStripeRuntime.current = { createEmbeddedCheckoutPage }
   mockBillingApi.getSubscription.mockResolvedValue(billingStatus())
   mockBillingApi.createCheckoutSession.mockResolvedValue({ client_secret: "cs_test_123" })
   mockBillingApi.createSubscriptionChangeSession.mockResolvedValue({ url: "#stripe-subscription-change" })
@@ -91,6 +93,40 @@ afterEach(() => {
 })
 
 describe("SubscriptionPage", () => {
+  it("covers_subscription_helper_fallbacks", () => {
+    expect(h.profilePathForBot({ username: " bot one " })).toBe("/user/bot%20one")
+    expect(h.profilePathForBot({ username: " " })).toBeNull()
+    expect(h.normalizedBotUsername(null)).toBe("")
+    expect(h.inferSubscriptionModelName({ username: "", display_name: "" })).toBe("Unknown")
+    expect(h.isPlanAvailable(null, null, "monthly")).toBe(false)
+    expect(h.normalizeDesiredTier("T-3")).toBe("tier3")
+    expect(h.normalizeDesiredTier("unknown")).toBe("")
+    expect(h.tierByApiTier("missing")).toMatchObject({ key: "tier2" })
+    expect(h.currentTierKey({ billing: { tier: "tier3" } }, { is_guest: false })).toBe("tier3")
+    expect(h.currentTierKey({}, { is_guest: true })).toBe("tier0")
+
+    const { rerender } = render(<MemoryRouter><h.FeatureValue value={null} /></MemoryRouter>)
+    expect(screen.getByText("Not available")).toHaveClass("subscription-tier-table__future")
+
+    rerender(
+      <MemoryRouter>
+        <h.FeatureValue value={[["Provider", ["Static model", { model: "Linked model", path: "/user/linked_bot", reasoning: "high" }]]]} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText("Static model")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Linked model (reasoning: high)" })).toHaveAttribute("href", "/user/linked_bot")
+
+    const scrollTo = vi.fn((options) => {
+      if (typeof options === "object") {
+        throw new Error("old scrollTo")
+      }
+    })
+    window.scrollTo = scrollTo
+    h.scrollPageToTop()
+    expect(scrollTo).toHaveBeenCalledWith({ left: 0, top: 0, behavior: "auto" })
+    expect(scrollTo).toHaveBeenCalledWith(0, 0)
+  })
+
   it("renders_a_public_signup_invite_without_billing_state_for_unauthenticated_visitors", async () => {
     mockAuth.user = null
     mockAuth.isAuthenticated = false
@@ -312,6 +348,57 @@ describe("SubscriptionPage", () => {
     expect(mockGetBots).toHaveBeenCalledTimes(1)
   })
 
+  it("groups_live_unknown_bots_by_inferred_provider_and_model_name", async () => {
+    mockGetBots.mockResolvedValueOnce({
+      bots: [
+        { username: "custom_gpt", display_name: "LLM Custom GPT (bot)", llm_backed: true },
+        { username: "custom_claude", display_name: "Claude Custom (bot)", llm_backed: true },
+        { username: "custom_gemini", display_name: "Gemini Custom (bot)", llm_backed: true },
+        { username: "custom_llama", display_name: "Llama Custom (bot)", llm_backed: true },
+        { username: "custom_mistral", display_name: "Mistral Custom (bot)", llm_backed: true },
+        { username: "custom_deepseek", display_name: "DeepSeek Custom (bot)", llm_backed: true },
+        { username: "custom_glm", display_name: "GLM Custom (bot)", llm_backed: true },
+        { username: "custom_nemotron", display_name: "Nemotron Custom (bot)", llm_backed: true },
+        { username: "custom_qwen", display_name: "Qwen Custom (bot)", llm_backed: true },
+        { username: "custom_minimax", display_name: "MiniMax Custom (bot)", llm_backed: true },
+        { username: "custom_kimi", display_name: "Kimi Custom (bot)", llm_backed: true },
+        { username: "custom_hermes", display_name: "Hermes Custom (bot)", llm_backed: true },
+        { username: "custom_phi", display_name: "Phi Custom (bot)", llm_backed: true },
+        { username: "custom_grok", display_name: "Grok Custom (bot)", llm_backed: true },
+        { username: "custom_other", display_name: "OR Mystery Bot", llm_backed: true, default_reasoning_level: "high" },
+        { username: "classic_engine", display_name: "", llm_backed: false },
+      ],
+    })
+
+    renderPage()
+
+    const playBotsRow = await screen.findByRole("rowheader", { name: "Play bots" }).then((row) => row.closest("tr"))
+    const simpleBotCell = within(playBotsRow).getAllByRole("cell")[0]
+
+    await waitFor(() => expect(within(simpleBotCell).getByText("OpenAI:")).toBeInTheDocument())
+    ;[
+      "Anthropic:",
+      "Google:",
+      "Meta:",
+      "Mistral AI:",
+      "DeepSeek:",
+      "Z.AI:",
+      "Nvidia:",
+      "Alibaba:",
+      "MiniMax:",
+      "Moonshot AI:",
+      "Nous Research:",
+      "Microsoft:",
+      "xAI:",
+      "Other LLM:",
+      "Kriegspiel:",
+    ].forEach((providerLabel) => {
+      expect(within(simpleBotCell).getByText(providerLabel)).toBeInTheDocument()
+    })
+    expect(within(simpleBotCell).getByRole("link", { name: "Mystery (reasoning: high)" })).toHaveAttribute("href", "/user/custom_other")
+    expect(within(simpleBotCell).getByRole("link", { name: "Unknown" })).toHaveAttribute("href", "/user/classic_engine")
+  })
+
   it("uses_the_tier_query_param_as_the_initial_selected_plan", async () => {
     renderPage("/subscription?tier=tier3")
 
@@ -341,6 +428,29 @@ describe("SubscriptionPage", () => {
     expect(within(controls).getByRole("heading", { name: "Tier T4 Expert" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: /Tier\s+T3\s+Strong/i })).not.toHaveClass("subscription-tier-table__selected-column")
     expect(screen.getByRole("columnheader", { name: /Tier\s+T4\s+Expert/i })).toHaveClass("subscription-tier-table__selected-column")
+  })
+
+  it("selects_tiers_from_keyboard_and_moves_to_an_available_interval", async () => {
+    mockBillingApi.getSubscription.mockResolvedValueOnce(billingStatus({
+      available_prices: {
+        tier2: { monthly: true, yearly: true },
+        tier3: { monthly: false, yearly: true },
+        tier4: { monthly: true, yearly: true },
+      },
+    }))
+
+    renderPage()
+
+    const controls = await screen.findByRole("region", { name: "Subscription controls" })
+    expect(await within(controls).findByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
+
+    fireEvent.keyDown(screen.getByRole("columnheader", { name: /Tier\s+T3\s+Strong/i }), { key: "Escape" })
+    expect(within(controls).getByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
+
+    fireEvent.keyDown(screen.getByRole("columnheader", { name: /Tier\s+T3\s+Strong/i }), { key: "Enter" })
+
+    await waitFor(() => expect(within(controls).getByRole("heading", { name: "Tier T3 Strong" })).toBeInTheDocument())
+    expect(screen.getByRole("button", { name: "Yearly" })).toHaveClass("is-active")
   })
 
   it("scrolls_to_the_top_when_opened_with_a_preselected_tier", async () => {
@@ -415,6 +525,44 @@ describe("SubscriptionPage", () => {
     expect(mockBillingApi.createCheckoutSession).not.toHaveBeenCalled()
     expect(stripeMount).not.toHaveBeenCalled()
     expect(window.location.hash).toBe("#stripe-subscription-change")
+  })
+
+  it("uses_legacy_stripe_embedded_checkout_helper", async () => {
+    const legacyMount = vi.fn()
+    const legacyDestroy = vi.fn()
+    const initEmbeddedCheckout = vi.fn(async ({ fetchClientSecret }) => ({
+      clientSecret: await fetchClientSecret(),
+      mount: legacyMount,
+      destroy: legacyDestroy,
+    }))
+
+    const legacyCheckout = await h.createEmbeddedCheckout({ initEmbeddedCheckout }, {
+      fetchClientSecret: async () => "cs_legacy_123",
+    })
+
+    expect(initEmbeddedCheckout).toHaveBeenCalledTimes(1)
+    expect(legacyCheckout.clientSecret).toBe("cs_legacy_123")
+    legacyCheckout.mount(document.createElement("div"))
+    expect(legacyMount).toHaveBeenCalledTimes(1)
+    legacyCheckout.destroy()
+    expect(legacyDestroy).toHaveBeenCalledTimes(1)
+    expect(() => h.createEmbeddedCheckout({}, {})).toThrow("Stripe embedded checkout is not available.")
+  })
+
+  it("opens_billing_portal_and_surfaces_portal_errors", async () => {
+    mockBillingApi.createPortalSession.mockResolvedValueOnce({ url: "#billing-portal" })
+
+    renderPage()
+
+    await screen.findByRole("heading", { name: "Subscription" })
+    fireEvent.click(screen.getByRole("button", { name: "Manage billing (opens external website)" }))
+
+    await waitFor(() => expect(window.location.hash).toBe("#billing-portal"))
+
+    mockBillingApi.createPortalSession.mockRejectedValueOnce({ message: "Portal failed" })
+    fireEvent.click(screen.getByRole("button", { name: "Manage billing (opens external website)" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Portal failed")
   })
 
   it("asks_guest_accounts_to_convert_before_subscribing", async () => {

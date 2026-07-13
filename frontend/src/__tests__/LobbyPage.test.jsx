@@ -3,7 +3,7 @@ import { resolve } from "node:path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
-import LobbyPage from "../pages/LobbyPage"
+import LobbyPage, { __lobbyPageInternals as h } from "../pages/LobbyPage"
 import { TEST_VERSION_STAMP } from "../version"
 
 const mockNavigate = vi.hoisted(() => vi.fn())
@@ -95,6 +95,30 @@ function botOptionLabels() {
 }
 
 describe("LobbyPage", () => {
+  it("covers_lobby_helper_fallbacks", () => {
+    expect(h.normalizeRuleVariant(" mystery ")).toBe("berkeley_any")
+    expect(h.normalizeBotDescription(null)).toBe("")
+    expect(h.normalizeBotDescription({ username: "", display_name: "", description: "" })).toBe("")
+    expect(h.preferredBotId(null)).toBe("")
+    expect(h.preferredBotId([{ bot_id: "first" }])).toBe("first")
+    expect(h.preferredBotId([{ username: "none" }])).toBe("")
+    expect(h.preferredBotId([{ bot_id: "first" }, { bot_id: "random", display_name: "Random Bot" }])).toBe("random")
+    expect(h.botRating({ elo: "bad" })).toBe(1200)
+    expect(h.formatBotPickerLabel({ elo: "bad" })).toBe("1200 - Unknown bot")
+    expect(h.botSupportsRuleVariant({}, "berkeley_any")).toBe(true)
+    expect(h.botSupportsRuleVariant({ supported_rule_variants: ["wild16"] }, "berkeley_any")).toBe(false)
+    expect(h.botSortLabel({ username: "fallback" })).toBe("fallback")
+    expect(h.botSortLabel(null)).toBe("")
+    expect(h.compareSupportedBots({ elo: 1200, username: "beta" }, { elo: 1300, username: "alpha" })).toBeGreaterThan(0)
+    expect(h.compareSupportedBots({ elo: 1200, username: "alpha" }, { elo: 1200, username: "beta" })).toBeLessThan(0)
+    expect(h.getActiveGame([{ state: null }, { state: "active" }])).toMatchObject({ state: "active" })
+    expect(h.getActiveGame([{ state: "waiting" }])).toBeNull()
+    expect(h.gamePagePath("  ")).toBe("")
+    expect(h.gamePagePath({})).toBe("")
+    expect(h.gamePagePath({ game_id: "g-1" })).toBe("/game/g-1")
+    expect(h.isOwnOpenGame({ created_by: " Fil " }, "fil")).toBe(true)
+  })
+
   it("uses_theme_surface_tokens_for_lobby_list_cards", () => {
     const css = readFileSync(resolve(process.cwd(), "src/pages/Lobby.css"), "utf8")
 
@@ -175,6 +199,26 @@ describe("LobbyPage", () => {
     renderPage()
 
     expect(await screen.findByLabelText("Ruleset")).toHaveValue("berkeley_any")
+  })
+
+  it("keeps_ruleset_selection_working_when_browser_storage_is_unavailable", async () => {
+    const getItem = vi.spyOn(Storage.prototype, "getItem").mockImplementationOnce(() => {
+      throw new Error("storage unavailable")
+    })
+
+    renderPage()
+
+    const rulesetSelect = await screen.findByLabelText("Ruleset")
+    expect(rulesetSelect).toHaveValue("berkeley_any")
+    getItem.mockRestore()
+
+    const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => {
+      throw new Error("storage unavailable")
+    })
+    fireEvent.change(rulesetSelect, { target: { value: "cincinnati" } })
+
+    expect(rulesetSelect).toHaveValue("cincinnati")
+    setItem.mockRestore()
   })
 
   it("hides_resume_active_game_when_user_has_no_active_game", async () => {
@@ -415,6 +459,13 @@ describe("LobbyPage", () => {
           created_at: "2026-04-03T23:59:58Z",
         },
         {
+          game_id: "g-open-other-two",
+          game_code: "YYY888",
+          created_by: "amy",
+          available_color: "white",
+          created_at: "2026-04-03T23:59:57Z",
+        },
+        {
           game_code: "OWN123",
           created_by: "fil",
           available_color: "white",
@@ -431,6 +482,7 @@ describe("LobbyPage", () => {
     expect(within(openGames[0]).getByRole("button", { name: "Close" })).toBeInTheDocument()
     expect(within(openGames[1]).getByText("ZZZ999")).toBeInTheDocument()
     expect(within(openGames[1]).getByRole("button", { name: "Join" })).toBeInTheDocument()
+    expect(within(openGames[2]).getByText("YYY888")).toBeInTheDocument()
   })
 
   it("creates_waiting_game_and_shows_join_code", async () => {
@@ -466,6 +518,42 @@ describe("LobbyPage", () => {
       expect(mockClipboardWriteText).toHaveBeenLastCalledWith(shareLink.href)
     })
     expect(screen.getByText("Share link copied.").closest(".lobby-toast")).toHaveClass("lobby-toast")
+  })
+
+  it("surfaces_copy_failures_for_created_and_open_game_links", async () => {
+    mockApi.createGame.mockResolvedValue({ game_id: "g-1", game_code: "ABCD23", state: "waiting" })
+    mockApi.getOpenGames.mockResolvedValue({
+      games: [
+        {
+          game_code: "ZZZ999",
+          created_by: "randobot",
+          available_color: "black",
+          created_at: "2026-04-03T23:59:58Z",
+        },
+      ],
+    })
+    mockClipboardWriteText
+      .mockRejectedValueOnce(new Error("copy failed"))
+      .mockRejectedValueOnce(new Error("copy failed"))
+      .mockRejectedValueOnce(new Error("copy failed"))
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create waiting game" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Copy game code ABCD23" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("Unable to copy game code.")
+
+    fireEvent.click(screen.getByRole("button", { name: "Copy link" }))
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Unable to copy share link.")
+    })
+
+    const openGamesSection = screen.getByRole("heading", { name: "Open games" }).closest("section")
+    const openGame = await within(openGamesSection).findByRole("listitem")
+    fireEvent.click(within(openGame).getByRole("button", { name: "Copy game code ZZZ999" }))
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Unable to copy game code.")
+    })
   })
 
   it("closes_the_created_waiting_game", async () => {
@@ -516,7 +604,11 @@ describe("LobbyPage", () => {
     expect(picker).toHaveTextContent("1201")
     expect(picker).toHaveTextContent("Random Bot")
 
-    fireEvent.click(picker)
+    fireEvent.click(screen.getByLabelText("Human"))
+    expect(screen.getByRole("button", { name: "Create waiting game" })).toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText("Bot"))
+    const reopenedPicker = await screen.findByRole("combobox", { name: "Bot opponent" })
+    fireEvent.click(reopenedPicker)
     const listbox = screen.getByRole("listbox", { name: "Bot opponent" })
     expect(within(listbox).getByText("Simple bots")).toBeInTheDocument()
     expect(within(listbox).getByText("Casual bots")).toBeInTheDocument()
@@ -666,6 +758,85 @@ describe("LobbyPage", () => {
 
     expect(mockNavigate).toHaveBeenCalledWith("/subscription?tier=tier3")
     expect(mockApi.createGame).not.toHaveBeenCalled()
+  })
+
+  it("supports_keyboard_and_pointer_interactions_in_the_bot_picker", async () => {
+    renderPage()
+
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    const picker = await screen.findByRole("combobox", { name: "Bot opponent" })
+
+    fireEvent.keyDown(picker, { key: "ArrowDown" })
+    expect(screen.getByRole("listbox", { name: "Bot opponent" })).toBeInTheDocument()
+
+    fireEvent.keyDown(picker, { key: "ArrowDown" })
+    fireEvent.keyDown(picker, { key: "ArrowUp" })
+    fireEvent.keyDown(picker, { key: "End" })
+    fireEvent.keyDown(picker, { key: "Home" })
+
+    const simpleBot = screen.getByRole("option", { name: "1250 - Simple Heuristics Bot" })
+    fireEvent.mouseEnter(simpleBot)
+    fireEvent.mouseDown(simpleBot)
+
+    fireEvent.keyDown(picker, { key: "Enter" })
+    expect(picker).toHaveTextContent("Simple Heuristics Bot")
+
+    fireEvent.keyDown(picker, { key: " " })
+    expect(screen.getByRole("listbox", { name: "Bot opponent" })).toBeInTheDocument()
+    fireEvent.keyDown(picker, { key: "Escape" })
+    expect(screen.queryByRole("listbox", { name: "Bot opponent" })).not.toBeInTheDocument()
+
+    fireEvent.keyDown(picker, { key: "ArrowDown" })
+    expect(screen.getByRole("listbox", { name: "Bot opponent" })).toBeInTheDocument()
+    fireEvent.pointerDown(document.body)
+    expect(screen.queryByRole("listbox", { name: "Bot opponent" })).not.toBeInTheDocument()
+  })
+
+  it("shows_limited_bot_labels_in_the_picker", async () => {
+    mockAuth.user = { username: "club_player", llm_bot_tier: "tier2" }
+    mockApi.getBots.mockResolvedValue({
+      bots: [
+        {
+          bot_id: "limited-gpt",
+          username: "llm_gptnano",
+          display_name: "LLM GPT-Nano (bot)",
+          description: "Limited test bot.",
+          elo: 1342,
+          supported_rule_variants: ["berkeley_any"],
+          llm_backed: true,
+          llm_bot_limit_label: "12 plies",
+        },
+      ],
+    })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    const picker = await screen.findByRole("combobox", { name: "Bot opponent" })
+    expect(picker).toHaveTextContent("(12 plies)")
+    fireEvent.click(picker)
+    expect(screen.getByRole("option", { name: "1342 - LLM GPT-Nano (12 plies)" })).toHaveTextContent("(12 plies)")
+  })
+
+  it("shows_upgrade_copy_when_no_supported_bot_is_available_to_the_viewer", async () => {
+    mockAuth.user = { username: "guest_jan_fine", is_guest: true, llm_bot_tier: "guest" }
+    mockApi.getBots.mockResolvedValue({
+      bots: [
+        {
+          bot_id: "simple-only",
+          username: "simpleheuristics",
+          display_name: "Simple Heuristics Bot",
+          description: "Uses simple tactical heuristics.",
+          elo: 1250,
+          supported_rule_variants: ["berkeley_any"],
+        },
+      ],
+    })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    expect(await screen.findByText("Upgrade your tier to play bots for this ruleset.")).toBeInTheDocument()
   })
 
   it("shows_wild16_bots_as_t1_bots", async () => {
@@ -1132,6 +1303,21 @@ describe("LobbyPage", () => {
     })
     expect(await screen.findByText("waiting")).toBeInTheDocument()
     expect(screen.queryByText("Waiting for opponent…")).not.toBeInTheDocument()
+  })
+
+  it("updates_the_created_waiting_state_when_polling_reports_a_non_active_state_change", async () => {
+    mockApi.createGame.mockResolvedValueOnce({ game_id: "g-1", game_code: "ABCD23", state: "waiting" })
+    mockApi.getGame.mockResolvedValueOnce({ state: "queued" })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create waiting game" }))
+    await screen.findByText("Join code:")
+
+    await waitFor(() => {
+      expect(mockApi.getGame).toHaveBeenCalledWith("g-1")
+      expect(screen.queryByText("Join code:")).not.toBeInTheDocument()
+    })
   })
 
   it("falls_back_to_no_active_games_when_refreshing_my_games_fails", async () => {

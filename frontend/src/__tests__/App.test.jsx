@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
-import { AppProviders, AppRoutes } from "../App"
+import App, { AppProviders, AppRoutes } from "../App"
 import { TEST_VERSION_STAMP } from "../version"
 
 const mockApi = vi.hoisted(() => ({
@@ -115,6 +115,16 @@ function renderRoute(path) {
 }
 
 describe("App routes", () => {
+  it("renders_the_default_browser_app_shell", async () => {
+    mockApi.me.mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
+    window.history.pushState({}, "", "/auth/login")
+
+    render(<App />)
+
+    await screen.findByRole("heading", { name: "Login" })
+    expect(screen.getByText(TEST_VERSION_STAMP)).toBeInTheDocument()
+  })
+
   it("shows_guest_header_links_on_login", async () => {
     mockApi.me.mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
 

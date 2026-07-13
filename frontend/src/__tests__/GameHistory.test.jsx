@@ -3,7 +3,7 @@ import { resolve } from "node:path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom"
-import GameHistoryPage from "../pages/GameHistory"
+import GameHistoryPage, { __gameHistoryInternals as h } from "../pages/GameHistory"
 
 const mockApi = vi.hoisted(() => ({
   userApi: {
@@ -66,6 +66,39 @@ function expectedHistoryOptions({ sort = DEFAULT_SORT, filters = {} } = {}) {
 }
 
 describe("GameHistoryPage", () => {
+  it("covers_game_history_helper_fallbacks", () => {
+    const params = new URLSearchParams("sort=unknown&dir=sideways&opponent=bot%3Arandobot,human%3Aamy")
+
+    expect(h.defaultSortDirection("played_at")).toBe("desc")
+    expect(h.defaultSortDirection("result")).toBe("asc")
+    expect(h.parseSort(params)).toEqual(DEFAULT_SORT)
+    expect(h.parseSort(new URLSearchParams("sort=result&dir=sideways"))).toEqual({ key: "result", direction: "asc" })
+    expect(h.parseSort(new URLSearchParams("sort=none"))).toBeNull()
+    expect(h.parseFilterValues(params, "opponent")).toEqual(["randobot", "amy"])
+    expect(h.opponentFilterLabel("bot:randobot")).toBe("randobot (bot)")
+    expect(h.opponentFilterLabel("bot:*")).toBe("All bots")
+    expect(h.opponentGroupFilterValueForOpponentValue("randobot", "Bots")).toBe("bot:*")
+    expect(h.opponentGroupFilterValueForOpponentValue("human:amy")).toBe("human:*")
+    expect(h.reviewPath({})).toBe("")
+    expect(h.selectedFilterCount({ result: ["win"], reason: null })).toBe(1)
+
+    const opponentConfig = h.FILTER_CONFIGS.find((config) => config.key === "opponent")
+    const opponentOptions = h.buildFilterOptions(
+      [{ value: "bot:randobot", label: "", group: "" }, "human:amy"],
+      opponentConfig,
+      ["bot:*", "human:zoe"],
+    )
+    expect(opponentOptions.map((option) => option.value)).toEqual(expect.arrayContaining(["randobot", "amy", "human:zoe"]))
+    expect(h.buildFilterOptions([], opponentConfig, ["bot:queued"])).toEqual([
+      { value: "bot:queued", label: "queued (bot)", group: "Bots" },
+    ])
+    const grouped = h.filterMenuGroups(opponentConfig, [], ["bot:*"])
+    expect(grouped).toEqual(expect.arrayContaining([{ label: "Bots", options: [] }]))
+
+    const row = { rule_variant: "", play_as: "", opponent: "randobot", opponent_role: "bot", result: "", reason: "too_many_reversible_moves", turn_count: "bad", move_count: 5, played_at: null }
+    expect(h.SORT_COLUMNS.map((column) => column.value(row))).toEqual(["—", "—", "randobot (bot)", "—", "too many reversible moves", 3, null])
+  })
+
   it("uses_theme_surface_tokens_for_history_table_headers", () => {
     const css = readFileSync(resolve(process.cwd(), "src/pages/GameHistory.css"), "utf8")
 
@@ -502,14 +535,27 @@ describe("GameHistoryPage", () => {
           turn_count: 1000,
           played_at: "2026-06-02T14:45:16Z",
         },
+        {
+          game_id: "g-custom-reason",
+          game_code: "CUSTOM",
+          rule_variant: "berkeley_any",
+          opponent: "bob",
+          opponent_role: "user",
+          play_as: "black",
+          result: "loss",
+          reason: "custom_reason",
+          turn_count: 4,
+          played_at: "2026-06-02T14:50:16Z",
+        },
       ],
-      pagination: { page: 1, pages: 1, total: 1 },
+      pagination: { page: 1, pages: 1, total: 2 },
     })
 
     renderHistory()
 
     expect(await screen.findByText("too many reversible moves")).toBeInTheDocument()
     expect(screen.queryByText("too_many_reversible_moves")).not.toBeInTheDocument()
+    expect(screen.getByText("custom reason")).toBeInTheDocument()
   })
 
   it("renders_cincinnati_and_wild16_rule_labels", async () => {
@@ -654,6 +700,15 @@ describe("GameHistoryPage", () => {
     expect(screen.queryByRole("link", { name: "Open" })).not.toBeInTheDocument()
     expect(screen.getByText(/Page 1 of 0/)).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Next" })).not.toBeDisabled()
+  })
+
+  it("falls_back_when_the_history_payload_is_empty", async () => {
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({})
+
+    renderHistory()
+
+    expect(await screen.findByText("No games found on this page.")).toBeInTheDocument()
+    expect(screen.getByText(/Page 1 of 0/)).toBeInTheDocument()
   })
 
   it("uses_visible_fallbacks_when_opponent_and_pagination_fields_are_nullish", async () => {

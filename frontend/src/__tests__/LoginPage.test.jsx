@@ -127,4 +127,17 @@ describe("LoginPage", () => {
       expect(mockNavigate).toHaveBeenCalledWith("/game/abc-123?from=invite#board", { replace: true })
     })
   })
+
+  it("keeps_the_user_on_login_when_guest_play_fails", async () => {
+    mockAuth.playAsGuest.mockRejectedValue(new Error("blocked"))
+
+    renderPage()
+
+    fireEvent.click(screen.getByRole("button", { name: "Play as guest" }))
+
+    await waitFor(() => {
+      expect(mockAuth.playAsGuest).toHaveBeenCalledTimes(1)
+    })
+    expect(mockNavigate).not.toHaveBeenCalled()
+  })
 })
