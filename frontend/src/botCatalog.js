@@ -35,6 +35,7 @@ const SUBSCRIPTION_TIER_BY_BOT_TIER_CODE = {
   T2: "tier2",
   T3: "tier3",
   T4: "tier4",
+  T5: "tier5",
 }
 
 const BOT_TIER_BY_USERNAME = {
@@ -175,13 +176,13 @@ export function botRequiredTierCode(bot) {
   return BOT_ACCESS_TIER_CODE[botRequiredAccessTier(bot)] ?? botTierCode(bot)
 }
 
-function subscriptionPathForBotTier(code) {
+export function subscriptionPathForTierCode(code) {
   const tier = SUBSCRIPTION_TIER_BY_BOT_TIER_CODE[code]
   return tier ? `/subscription?tier=${tier}` : "/subscription"
 }
 
 export function subscriptionPathForBot(bot) {
-  return subscriptionPathForBotTier(botRequiredTierCode(bot))
+  return subscriptionPathForTierCode(botRequiredTierCode(bot))
 }
 
 export function botPickerName(bot) {

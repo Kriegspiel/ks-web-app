@@ -4,6 +4,7 @@ import EloChart from "../components/EloChart"
 import { ELO_TRACKS } from "../components/eloChartConstants"
 import TierBadge from "../components/TierBadge"
 import VersionStamp from "../components/VersionStamp"
+import { subscriptionPathForTierCode } from "../botCatalog"
 import { useAuth } from "../hooks/useAuth"
 import { createGame, getBots, userApi } from "../services/api"
 import { formatUtcDate } from "../utils/dateTime"
@@ -753,6 +754,7 @@ export default function ProfilePage() {
   const convertedUsername = regularNameFromGuest(profile?.username)
   const profileTier = tierDetailsForProfile(profile)
   const profileTierLabel = profileTier?.ariaLabel || "Player tier"
+  const profileTierSubscriptionPath = profileTier ? subscriptionPathForTierCode(profileTier.code) : "/subscription"
   const challengeBot = useMemo(() => {
     if (!isBotProfile) return null
     const targetUsername = normalizeUsername(profileUsername)
@@ -1027,7 +1029,7 @@ export default function ProfilePage() {
                     is available from{" "}
                     <Link
                       className="profile-challenge-upgrade__tier-link"
-                      to="/subscription"
+                      to={profileTierSubscriptionPath}
                       aria-label={`View ${subscriptionTierLabel(profileTier.code)} subscription tier`}
                     >
                       <TierBadge code={profileTier.code} className="profile-challenge-upgrade__tier-code" />
@@ -1039,7 +1041,7 @@ export default function ProfilePage() {
                   "This bot is not available for your current tier. Upgrade your tier to challenge it."
                 )}
               </p>
-              <Link className="button-link button-link--primary" to="/subscription">View tiers</Link>
+              <Link className="button-link button-link--primary" to={profileTierSubscriptionPath}>View tiers</Link>
             </div>
           )}
         </section>
