@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.4.17
+
+- **Game History**: remove the false gap between the sticky column headings
+  and the first game row while keeping scrolled rows hidden behind the app
+  header.
+
 ## ks-web-app frontend v. 1.4.16
 
 - **Bot Profiles**: show model bot tier cards with the same `T#` level names

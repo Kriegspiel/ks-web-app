@@ -99,15 +99,14 @@ describe("GameHistoryPage", () => {
     expect(h.SORT_COLUMNS.map((column) => column.value(row))).toEqual(["—", "—", "randobot (bot)", "—", "too many reversible moves", 3, null])
   })
 
-  it("uses_theme_surface_tokens_for_history_table_headers", () => {
+  it("keeps_the_sticky_header_mask_from_covering_the_first_history_row", () => {
     const css = readFileSync(resolve(process.cwd(), "src/pages/GameHistory.css"), "utf8")
 
     expect(css).toContain("background: color-mix(in srgb, var(--surface-strong) 94%, var(--surface) 6%);")
-    expect(css).toContain(".history-table-wrap {\n  --history-sticky-header-offset: 4.1rem;\n  position: relative;\n  overflow: visible;")
-    expect(css).toContain(".history-table-wrap::before")
-    expect(css).toContain("height: var(--history-sticky-header-offset);")
-    expect(css).toContain("margin-bottom: calc(var(--history-sticky-header-offset) * -1);")
-    expect(css).toContain("z-index: 2;")
+    expect(css).toContain("body:has(.history-page) .app-header {\n  background: var(--bg);\n}")
+    expect(css).toContain(".history-table-wrap {\n  --history-sticky-header-offset: 4.1rem;\n  overflow: visible;")
+    expect(css).not.toContain(".history-table-wrap::before")
+    expect(css).not.toContain("margin-bottom: calc(var(--history-sticky-header-offset) * -1);")
     expect(css).toContain("border-collapse: separate;")
     expect(css).toContain(".history-table {\n  width: 100%;\n  min-width: 62rem;\n  border-collapse: separate;\n  border-spacing: 0;\n  overflow: visible;\n}")
     expect(css).toContain(".history-table thead th {\n  position: sticky;\n  top: var(--history-sticky-header-offset);")
