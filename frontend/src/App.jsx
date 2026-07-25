@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom"
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router"
 import AppHeader from "./components/AppHeader"
 import AppFooter from "./components/AppFooter"
 import AttributionCapture from "./components/AttributionCapture"

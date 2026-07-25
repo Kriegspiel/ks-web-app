@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter } from "react-router"
 import LobbyPage, { __lobbyPageInternals as h } from "../pages/LobbyPage"
 import { TEST_VERSION_STAMP } from "../version"
 
@@ -12,7 +12,7 @@ const mockAuth = vi.hoisted(() => ({
   actionError: "",
 }))
 const mockApi = vi.hoisted(() => ({ createGame: vi.fn(), deleteWaitingGame: vi.fn(), joinGame: vi.fn(), getOpenGames: vi.fn(), getMyActiveGames: vi.fn(), getGame: vi.fn(), getBots: vi.fn(), getLobbyStats: vi.fn() }))
-vi.mock("react-router-dom", async () => ({ ...(await vi.importActual("react-router-dom")), useNavigate: () => mockNavigate }))
+vi.mock("react-router", async () => ({ ...(await vi.importActual("react-router")), useNavigate: () => mockNavigate }))
 vi.mock("../hooks/useAuth", () => ({ useAuth: () => mockAuth }))
 vi.mock("../services/api", () => mockApi)
 

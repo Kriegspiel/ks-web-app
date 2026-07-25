@@ -1,7 +1,7 @@
 import fs from "node:fs"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { MemoryRouter, Route, Routes } from "react-router"
 import ProfilePage, { __profilePageInternals as h } from "../pages/Profile"
 
 const mockApi = vi.hoisted(() => ({

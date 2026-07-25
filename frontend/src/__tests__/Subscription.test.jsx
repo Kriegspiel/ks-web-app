@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter } from "react-router"
 import SubscriptionPage, { __subscriptionPageInternals as h } from "../pages/Subscription"
 import { TEST_VERSION_STAMP } from "../version"
 

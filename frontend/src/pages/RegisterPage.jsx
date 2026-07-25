@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router"
 import AuthLegalNotice from "../components/AuthLegalNotice"
 import VersionStamp from "../components/VersionStamp"
 import { useAuth } from "../hooks/useAuth"

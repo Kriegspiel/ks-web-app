@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
-import { Link, useSearchParams } from "react-router-dom"
+import { Link, useSearchParams } from "react-router"
 import TechReportLoadTime from "../components/TechReportLoadTime"
 import VersionStamp from "../components/VersionStamp"
 import { techApi } from "../services/api"
@@ -42,7 +42,7 @@ const FILTER_CONFIGS = [
 
 const FILTER_CONFIG_BY_KEY = new Map(FILTER_CONFIGS.map((config) => [config.key, config]))
 
-/* c8 ignore start -- helper compatibility branches are exercised through focused helper tests and page-level current-shape tests. */
+/* v8 ignore start -- @preserve helper compatibility branches are exercised through focused helper tests and page-level current-shape tests. */
 function stringValue(value) {
   return typeof value === "string" ? value.trim() : ""
 }
@@ -221,9 +221,9 @@ function guestMatchesFilters(guest, filters) {
 function filterGuests(guests, filters) {
   return guests.filter((guest) => guestMatchesFilters(guest, filters))
 }
-/* c8 ignore stop */
+/* v8 ignore stop -- @preserve */
 
-/* c8 ignore start -- portal positioning depends on browser layout geometry; menu behavior is covered by RTL interaction tests. */
+/* v8 ignore start -- @preserve portal positioning depends on browser layout geometry; menu behavior is covered by RTL interaction tests. */
 function useFilterMenuStyle(open, anchorRef) {
   const [style, setStyle] = useState(null)
 
@@ -265,9 +265,9 @@ function useFilterMenuStyle(open, anchorRef) {
 
   return style
 }
-/* c8 ignore stop */
+/* v8 ignore stop -- @preserve */
 
-/* c8 ignore start -- exercised through guests-report interactions; remaining branches are filter-menu presentation states. */
+/* v8 ignore start -- @preserve exercised through guests-report interactions; remaining branches are filter-menu presentation states. */
 function GuestsFilterMenu({ config, options, selectedValues, onToggle, onClear, style }) {
   const selected = new Set(selectedValues)
 
@@ -287,7 +287,7 @@ function GuestsFilterMenu({ config, options, selectedValues, onToggle, onClear, 
     </div>
   )
 }
-/* c8 ignore stop */
+/* v8 ignore stop -- @preserve */
 
 function SortIcon({ direction }) {
   const iconDirections = direction === "asc" || direction === "desc" ? [direction] : ["asc", "desc"]
@@ -321,7 +321,7 @@ function SortToggle({ column, sort, onSort }) {
   )
 }
 
-/* c8 ignore start -- exercised through guests-report interactions; remaining branches are header presentation toggles. */
+/* v8 ignore start -- @preserve exercised through guests-report interactions; remaining branches are header presentation toggles. */
 function ColumnHeader({
   column,
   sort,
@@ -374,7 +374,7 @@ function ColumnHeader({
     </th>
   )
 }
-/* c8 ignore stop */
+/* v8 ignore stop -- @preserve */
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const __guestsReportInternals = Object.freeze({
@@ -392,7 +392,7 @@ export const __guestsReportInternals = Object.freeze({
   sortGuests,
 })
 
-/* c8 ignore start -- page-level RTL tests cover these URL and React state flows; v8 counts stale layout/query guards separately. */
+/* v8 ignore start -- @preserve page-level RTL tests cover these URL and React state flows; v8 counts stale layout/query guards separately. */
 export default function GuestsReportPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [loading, setLoading] = useState(true)
@@ -610,4 +610,4 @@ export default function GuestsReportPage() {
     </main>
   )
 }
-/* c8 ignore stop */
+/* v8 ignore stop -- @preserve */

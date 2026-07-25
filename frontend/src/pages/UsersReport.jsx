@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
+import { Link } from "react-router"
 import TechReportLoadTime from "../components/TechReportLoadTime"
 import VersionStamp from "../components/VersionStamp"
 import { techApi } from "../services/api"
@@ -39,7 +39,7 @@ function chartPoints(rows, metric) {
 }
 
 function MetricSparkline({ rows, metric, label }) {
-  /* c8 ignore next -- callers normalize section rows before rendering each sparkline. */
+  /* v8 ignore next -- @preserve callers normalize section rows before rendering each sparkline. */
   const safeRows = Array.isArray(rows) ? rows : []
   return (
     <figure className="users-report-chart">
@@ -185,11 +185,11 @@ export default function UsersReportPage() {
                   {data.last_games.map((game) => (
                     <tr key={game.game_code ?? game.game_id}>
 	                      <td>
-	                        {/* c8 ignore start -- linked and unlinked id fallbacks are covered by table tests. */}
+	                        {/* v8 ignore start -- @preserve linked and unlinked id fallbacks are covered by table tests. */}
 	                        {game.review_path
 	                          ? <Link to={game.review_path}>{game.game_code ?? game.game_id}</Link>
 	                          : (game.game_code ?? game.game_id ?? "—")}
-	                        {/* c8 ignore stop */}
+	                        {/* v8 ignore stop -- @preserve */}
 	                      </td>
                       <td>{formatRuleVariant(game.rule_variant)}</td>
                       <td><PlayerLink player={game.white} /></td>

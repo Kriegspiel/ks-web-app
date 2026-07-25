@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter } from "react-router"
 import App, { AppProviders, AppRoutes } from "../App"
 import { TEST_VERSION_STAMP } from "../version"
 
@@ -152,6 +152,18 @@ describe("App routes", () => {
           campaign: "ruleset-default",
         },
       })
+    })
+  })
+
+  it("keeps_rendering_when_campaign_recording_fails", async () => {
+    mockApi.me.mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
+    mockApi.recordCampaignVisit.mockRejectedValueOnce(new Error("Attribution unavailable"))
+
+    renderRoute("/auth/login?utm_source=reddit")
+
+    await screen.findByRole("heading", { name: "Login" })
+    await waitFor(() => {
+      expect(mockApi.recordCampaignVisit).toHaveBeenCalledTimes(1)
     })
   })
 

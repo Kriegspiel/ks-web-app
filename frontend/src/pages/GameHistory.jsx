@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
+import { Link, useNavigate, useParams, useSearchParams } from "react-router"
 import VersionStamp from "../components/VersionStamp"
 import { userApi } from "../services/api"
 import { formatUtcDateTime } from "../utils/dateTime"
@@ -70,7 +70,7 @@ const OPPONENT_GROUP_FILTERS = [
   { group: "Bots", value: "bot:*", label: "All bots" },
 ]
 
-/* c8 ignore start -- helper compatibility branches are exercised through focused helper tests and page-level current-shape tests. */
+/* v8 ignore start -- @preserve helper compatibility branches are exercised through focused helper tests and page-level current-shape tests. */
 function formatDate(value) {
   return formatUtcDateTime(value) || "—"
 }
@@ -344,9 +344,9 @@ function canonicalizeFilterParams(searchParams) {
     setFilterParam(searchParams, "opponent", parseFilterValues(searchParams, "opponent"))
   }
 }
-/* c8 ignore stop */
+/* v8 ignore stop -- @preserve */
 
-/* c8 ignore start -- portal positioning depends on browser layout geometry; menu behavior is covered by RTL interaction tests. */
+/* v8 ignore start -- @preserve portal positioning depends on browser layout geometry; menu behavior is covered by RTL interaction tests. */
 function useFilterMenuStyle(open, anchorRef) {
   const [style, setStyle] = useState(null)
 
@@ -388,9 +388,9 @@ function useFilterMenuStyle(open, anchorRef) {
 
   return style
 }
-/* c8 ignore stop */
+/* v8 ignore stop -- @preserve */
 
-/* c8 ignore start -- exercised through history interactions; remaining branches are filter-menu presentation states. */
+/* v8 ignore start -- @preserve exercised through history interactions; remaining branches are filter-menu presentation states. */
 function HistoryFilterMenu({ config, options, selectedValues, loading, error, onToggle, onClear, style }) {
   const selected = new Set(selectedValues)
   const groups = filterMenuGroups(config, options, selectedValues)
@@ -433,7 +433,7 @@ function HistoryFilterMenu({ config, options, selectedValues, loading, error, on
     </div>
   )
 }
-/* c8 ignore stop */
+/* v8 ignore stop -- @preserve */
 
 function SortIcon({ direction }) {
   const iconDirections = direction === "asc" || direction === "desc" ? [direction] : ["asc", "desc"]
@@ -467,7 +467,7 @@ function SortToggle({ column, sort, onSort }) {
   )
 }
 
-/* c8 ignore start -- exercised through history interactions; remaining branches are header presentation toggles. */
+/* v8 ignore start -- @preserve exercised through history interactions; remaining branches are header presentation toggles. */
 function ColumnHeader({
   column,
   sort,
@@ -524,7 +524,7 @@ function ColumnHeader({
     </th>
   )
 }
-/* c8 ignore stop */
+/* v8 ignore stop -- @preserve */
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const __gameHistoryInternals = Object.freeze({
@@ -541,7 +541,7 @@ export const __gameHistoryInternals = Object.freeze({
   selectedFilterCount,
 })
 
-/* c8 ignore start -- page-level RTL tests cover these URL and React state flows; v8 counts stale-request guards as separate branches. */
+/* v8 ignore start -- @preserve page-level RTL tests cover these URL and React state flows; v8 counts stale-request guards as separate branches. */
 export default function GameHistoryPage() {
   const { username = "" } = useParams()
   const navigate = useNavigate()
@@ -683,7 +683,7 @@ export default function GameHistoryPage() {
     return undefined
   }, [filterOptionsState.loaded, filterOptionsState.loading, openFilterKey, username])
 
-  /* c8 ignore next -- loadHistory always normalizes missing pagination before render. */
+  /* v8 ignore next -- @preserve loadHistory always normalizes missing pagination before render. */
   const pagination = history.pagination ?? { page, pages: 0, total: 0 }
   const filterOptions = useMemo(() => Object.fromEntries(
     FILTER_CONFIGS.map((config) => [
@@ -908,4 +908,4 @@ export default function GameHistoryPage() {
     </main>
   )
 }
-/* c8 ignore stop */
+/* v8 ignore stop -- @preserve */

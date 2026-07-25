@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter } from "react-router"
 import RegisterPage from "../pages/RegisterPage"
 
 const mockNavigate = vi.hoisted(() => vi.fn())
@@ -11,8 +11,8 @@ const mockAuth = vi.hoisted(() => ({
   clearActionError: vi.fn(),
 }))
 
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual("react-router-dom")
+vi.mock("react-router", async () => {
+  const actual = await vi.importActual("react-router")
   return {
     ...actual,
     useNavigate: () => mockNavigate,

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter } from "react-router"
 import LeaderboardPage, { __leaderboardInternals as h } from "../pages/Leaderboard"
 
 const mockApi = vi.hoisted(() => ({

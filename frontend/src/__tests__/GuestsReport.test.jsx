@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter } from "react-router"
 import GuestsReportPage, { __guestsReportInternals as h } from "../pages/GuestsReport"
 
 vi.mock("../services/api", () => ({

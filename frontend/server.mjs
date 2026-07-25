@@ -239,7 +239,7 @@ export function createServer({
   })
 }
 
-/* c8 ignore next 8 -- CLI listen path is covered by deployment smoke; unit tests exercise createServer directly. */
+/* v8 ignore next 8 -- @preserve CLI listen path is covered by deployment smoke; unit tests exercise createServer directly. */
 if (import.meta.url === `file://${process.argv[1]}`) {
   const host = process.env.HOST || "127.0.0.1"
   const port = Number.parseInt(process.env.PORT || "4173", 10)

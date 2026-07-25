@@ -11,7 +11,7 @@ const UTM_PARAMS = [
 ]
 
 function sanitizeValue(value, maxLength) {
-  /* c8 ignore next -- URLSearchParams returns strings; this keeps direct internal calls defensive. */
+  /* v8 ignore next -- @preserve URLSearchParams returns strings; this keeps direct internal calls defensive. */
   if (typeof value !== "string") return ""
   return value
     .trim()
@@ -31,7 +31,7 @@ function referrerHost(referrer) {
 
 function locationPath(location) {
   const pathname = location?.pathname || "/"
-  /* c8 ignore next -- buildCampaignVisitPayload only calls this after a UTM-bearing search string exists. */
+  /* v8 ignore next -- @preserve buildCampaignVisitPayload only calls this after a UTM-bearing search string exists. */
   const search = location?.search || ""
   const hash = location?.hash || ""
   return `${pathname}${search}${hash}`
