@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router"
 import EloChart from "../components/EloChart"
 import { ELO_TRACKS } from "../components/eloChartConstants"
 import TierBadge from "../components/TierBadge"
@@ -529,7 +529,7 @@ function formatMetricRecord(bucket) {
   return `${formatCount(bucket.wins)}-${formatCount(bucket.losses)}-${formatCount(bucket.draws)}`
 }
 
-/* c8 ignore start -- profile helper compatibility branches are covered by focused helper assertions and rendered profile tests. */
+/* v8 ignore start -- @preserve profile helper compatibility branches are covered by focused helper assertions and rendered profile tests. */
 function formatDuration(seconds) {
   const totalSeconds = statOrZero(seconds)
   if (totalSeconds <= 0) return "0m"
@@ -611,7 +611,7 @@ function tierDetailsForProfile(profile) {
   }
   return PROFILE_TIER_DETAILS[profile?.llm_bot_tier] ?? null
 }
-/* c8 ignore stop */
+/* v8 ignore stop -- @preserve */
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const __profilePageInternals = Object.freeze({
@@ -622,7 +622,7 @@ export const __profilePageInternals = Object.freeze({
   tierDetailsForProfile,
 })
 
-/* c8 ignore start -- page-level RTL tests cover these React state flows; v8 counts stale request/submit guards separately. */
+/* v8 ignore start -- @preserve page-level RTL tests cover these React state flows; v8 counts stale request/submit guards separately. */
 export default function ProfilePage() {
   const { username = "" } = useParams()
   const navigate = useNavigate()
@@ -654,7 +654,7 @@ export default function ProfilePage() {
           userApi.getProfile(username),
           userApi.getGameHistory(username, 1, 20, { includeFilterOptions: false }),
         ])
-        /* c8 ignore next -- cleanup cancellation prevents late state writes after unmount. */
+        /* v8 ignore next -- @preserve cleanup cancellation prevents late state writes after unmount. */
         if (cancelled) return
 
         setProfile(profileResponse)
@@ -753,7 +753,7 @@ export default function ProfilePage() {
       results: normalizeResults(source),
     }
   }, [profile])
-  /* c8 ignore next -- ratingTrack is controlled by fixed tab keys; fallback protects future bad state. */
+  /* v8 ignore next -- @preserve ratingTrack is controlled by fixed tab keys; fallback protects future bad state. */
   const selectedTrack = ELO_TRACKS.find((track) => track.key === ratingTrack) ?? ELO_TRACKS[0]
   const selectedRating = ratingTrack === "vs_humans" ? stats.ratings.vsHumans : ratingTrack === "vs_bots" ? stats.ratings.vsBots : stats.ratings.overall
   const selectedResults = ratingTrack === "vs_humans" ? stats.results.vsHumans : ratingTrack === "vs_bots" ? stats.results.vsBots : stats.results.overall
@@ -802,7 +802,7 @@ export default function ProfilePage() {
     try {
       const converted = await convertGuest({ email, password })
       const nextUsername = converted?.username ?? convertedUsername
-      /* c8 ignore next -- conversion is only submitted after a loaded profile exists. */
+      /* v8 ignore next -- @preserve conversion is only submitted after a loaded profile exists. */
       setProfile((current) => current ? { ...current, username: nextUsername, role: "user" } : current)
       navigate(`/user/${encodeURIComponent(nextUsername)}`, { replace: true })
     } catch (apiError) {
@@ -814,13 +814,13 @@ export default function ProfilePage() {
     event.preventDefault()
     setChallengeError("")
 
-    /* c8 ignore next 4 -- the challenge form only renders once a concrete available bot is selected. */
+    /* v8 ignore next 4 -- @preserve the challenge form only renders once a concrete available bot is selected. */
     if (!challengeBotAvailable || !challengeBot?.bot_id) {
       setChallengeError("This bot is not available for your current tier.")
       return
     }
 
-    /* c8 ignore next 4 -- challengeRuleVariant is initialized from available bot rule variants before submit is possible. */
+    /* v8 ignore next 4 -- @preserve challengeRuleVariant is initialized from available bot rule variants before submit is possible. */
     if (!challengeRuleVariant) {
       setChallengeError("Choose a ruleset before starting the game.")
       return
@@ -1088,4 +1088,4 @@ export default function ProfilePage() {
     </main>
   )
 }
-/* c8 ignore stop */
+/* v8 ignore stop -- @preserve */

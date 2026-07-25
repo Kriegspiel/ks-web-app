@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter } from "react-router"
 import ReviewPage from "../pages/Review"
 const mockApi = vi.hoisted(() => ({
   getGame: vi.fn(),
@@ -8,8 +8,8 @@ const mockApi = vi.hoisted(() => ({
   getGameTranscript: vi.fn(),
 }))
 
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual("react-router-dom")
+vi.mock("react-router", async () => {
+  const actual = await vi.importActual("react-router")
   return {
     ...actual,
     useParams: () => ({ gameId: "g-620" }),

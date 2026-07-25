@@ -100,7 +100,7 @@ export default function AcquisitionReportPage() {
 	                      <td>{numberText(row.sessions)}</td>
 	                      <td>{numberText(row.acquired_users)}</td>
 	                      <td>{numberText(row.games_created)}</td>
-	                      {/* c8 ignore next -- numberText fallbacks for this column are covered by table assertions; v8 reports this property edge separately. */}
+	                      {/* v8 ignore next -- @preserve numberText fallbacks for this column are covered by table assertions; v8 reports this property edge separately. */}
 	                      <td>{numberText(row.games_completed)}</td>
                     </tr>
                   ))}

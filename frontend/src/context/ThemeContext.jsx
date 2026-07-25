@@ -6,7 +6,7 @@ const ThemeContext = createContext(null)
 const THEMES = new Set(["light", "dark"])
 
 function readStoredTheme() {
-  /* c8 ignore next 3 -- browserless guard; jsdom coverage exercises storage success and failure paths. */
+  /* v8 ignore next 3 -- @preserve browserless guard; jsdom coverage exercises storage success and failure paths. */
   if (typeof window === "undefined") {
     return null
   }
@@ -24,7 +24,7 @@ function getSystemTheme() {
 }
 
 function applyTheme(theme) {
-  /* c8 ignore next 3 -- browserless guard; jsdom coverage exercises document mutation paths. */
+  /* v8 ignore next 3 -- @preserve browserless guard; jsdom coverage exercises document mutation paths. */
   if (typeof document === "undefined") {
     return
   }
@@ -44,7 +44,7 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     applyTheme(theme)
-    /* c8 ignore next 3 -- browserless guard; jsdom coverage exercises storage success and failure paths. */
+    /* v8 ignore next 3 -- @preserve browserless guard; jsdom coverage exercises storage success and failure paths. */
     if (typeof window === "undefined") {
       return
     }

@@ -5,7 +5,7 @@ import {
   matchRoutes,
   useLocation,
   useNavigationType,
-} from "react-router-dom"
+} from "react-router"
 import { FRONTEND_VERSION } from "./version"
 
 const SENSITIVE_REQUEST_HEADERS = new Set([

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Link } from "react-router-dom"
+import { Link } from "react-router"
 import EloChart from "../components/EloChart"
 import { ELO_TRACKS } from "../components/eloChartConstants"
 import VersionStamp from "../components/VersionStamp"
@@ -69,9 +69,9 @@ function formatUpdatedAt(isoDate) {
 function sortRecentGames(games) {
   return games
     .sort((left, right) => {
-      /* c8 ignore next -- rendered date fallback cases are covered; v8 reports the nullish edge separately. */
+      /* v8 ignore next -- @preserve rendered date fallback cases are covered; v8 reports the nullish edge separately. */
       const leftTime = Date.parse(left?.updated_at ?? left?.created_at ?? "")
-      /* c8 ignore next -- rendered date fallback cases are covered; v8 reports the nullish edge separately. */
+      /* v8 ignore next -- @preserve rendered date fallback cases are covered; v8 reports the nullish edge separately. */
       const rightTime = Date.parse(right?.updated_at ?? right?.created_at ?? "")
       return (Number.isFinite(rightTime) ? rightTime : 0) - (Number.isFinite(leftTime) ? leftTime : 0)
     })
@@ -79,7 +79,7 @@ function sortRecentGames(games) {
 }
 
 function getActiveGame(games) {
-  /* c8 ignore next -- active-game payloads in the render path always include state. */
+  /* v8 ignore next -- @preserve active-game payloads in the render path always include state. */
   return games.find((game) => ACTIVE_STATES.has(String(game?.state ?? "").toLowerCase())) ?? null
 }
 
@@ -175,7 +175,7 @@ export default function HomePage() {
       results,
     }
   }, [profile?.stats, user?.stats])
-  /* c8 ignore next -- ratingTrack is controlled exclusively by ELO_TRACKS buttons. */
+  /* v8 ignore next -- @preserve ratingTrack is controlled exclusively by ELO_TRACKS buttons. */
   const selectedTrack = ELO_TRACKS.find((track) => track.key === ratingTrack) ?? ELO_TRACKS[0]
   const selectedRating = ratingTrack === "vs_humans" ? stats.ratings.vsHumans : ratingTrack === "vs_bots" ? stats.ratings.vsBots : stats.ratings.overall
   const selectedResults = ratingTrack === "vs_humans" ? stats.results.vsHumans : ratingTrack === "vs_bots" ? stats.results.vsBots : stats.results.overall
@@ -243,7 +243,7 @@ export default function HomePage() {
               <>
                 <ul className="lobby-list">
 	                  {recentGames.map((game) => {
-	                    /* c8 ignore next -- recent game payloads in the render path always include state. */
+	                    /* v8 ignore next -- @preserve recent game payloads in the render path always include state. */
 	                    const isActive = ACTIVE_STATES.has(String(game?.state ?? "").toLowerCase())
                     return (
                       <li key={`home-${game.game_id ?? game.game_code}`}>
@@ -258,7 +258,7 @@ export default function HomePage() {
                           <div className="lobby-meta">Rules: {formatRuleVariant(game.rule_variant)}</div>
                           <div className="lobby-meta">Updated {formatUpdatedAt(game.updated_at ?? game.created_at)}</div>
                         </div>
-	                        {/* c8 ignore next -- game-code and game-id link fallbacks are both asserted; v8 reports this nullish edge separately. */}
+	                        {/* v8 ignore next -- @preserve game-code and game-id link fallbacks are both asserted; v8 reports this nullish edge separately. */}
 	                        <Link to={`/game/${game.game_code ?? game.game_id}`}>Open</Link>
                       </li>
                     )

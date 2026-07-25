@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router"
 import {
   botAvailableForViewer,
   botPickerLimitLabel,
@@ -43,7 +43,7 @@ function readPreferredRuleVariant() {
   try {
     return normalizeRuleVariant(window.localStorage?.getItem(LAST_RULE_VARIANT_STORAGE_KEY))
   } catch {
-    /* c8 ignore next -- storage failure is defensive; jsdom and browser flows exercise successful reads. */
+    /* v8 ignore next -- @preserve storage failure is defensive; jsdom and browser flows exercise successful reads. */
     return DEFAULT_RULE_VARIANT
   }
 }
@@ -53,14 +53,14 @@ function storePreferredRuleVariant(value) {
   try {
     window.localStorage?.setItem(LAST_RULE_VARIANT_STORAGE_KEY, normalized)
   } catch {
-    /* c8 ignore next -- storage failure is defensive; the in-memory selection still works. */
+    /* v8 ignore next -- @preserve storage failure is defensive; the in-memory selection still works. */
     // Storage can be unavailable in private windows; the in-memory selection still works.
   }
   return normalized
 }
 
 function normalizeBotDescription(bot) {
-  /* c8 ignore next 3 -- selectedBot is only produced from normalized bot arrays. */
+  /* v8 ignore next 3 -- @preserve selectedBot is only produced from normalized bot arrays. */
   if (!bot || typeof bot !== "object") {
     return ""
   }
@@ -104,7 +104,7 @@ function preferredBotId(bots) {
 }
 
 function safeDomId(value) {
-  /* c8 ignore next -- picker options are created from concrete bot ids; fallback keeps malformed API rows safe. */
+  /* v8 ignore next -- @preserve picker options are created from concrete bot ids; fallback keeps malformed API rows safe. */
   return String(value || "bot").replace(/[^a-zA-Z0-9_-]/g, "_")
 }
 
@@ -138,7 +138,7 @@ function BotPickerOptionContent({ bot, unavailable = false }) {
   )
 }
 
-/* c8 ignore start -- picker behavior is covered by RTL interactions; remaining branches are empty/disabled defensive exits. */
+/* v8 ignore start -- @preserve picker behavior is covered by RTL interactions; remaining branches are empty/disabled defensive exits. */
 function BotTierPicker({ bots, selectedBotId, isBotAvailable, onChange, onUnavailable }) {
   const labelId = useId()
   const buttonId = useId()
@@ -338,7 +338,7 @@ function BotTierPicker({ bots, selectedBotId, isBotAvailable, onChange, onUnavai
     </div>
   )
 }
-/* c8 ignore stop */
+/* v8 ignore stop -- @preserve */
 
 function renderCreatorLink(game, botUsernames) {
   const username = String(game?.created_by || "").trim()
@@ -375,16 +375,16 @@ function isBotTierJoinError(error) {
 }
 
 async function writeClipboardText(text) {
-  /* c8 ignore next 4 -- browsers without Clipboard API are covered by the defensive fallback below. */
+  /* v8 ignore next 4 -- @preserve browsers without Clipboard API are covered by the defensive fallback below. */
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(text)
     return
   }
 
-  /* c8 ignore start -- browsers without Clipboard API surface a defensive copy error path. */
+  /* v8 ignore start -- @preserve browsers without Clipboard API surface a defensive copy error path. */
   throw new Error("Clipboard API is not available.")
 }
-/* c8 ignore stop */
+/* v8 ignore stop -- @preserve */
 
 function getActiveGame(games) {
   return games.find((game) => ACTIVE_STATES.has(String(game?.state ?? "").toLowerCase())) ?? null
@@ -415,7 +415,7 @@ export const __lobbyPageInternals = Object.freeze({
   preferredBotId,
 })
 
-/* c8 ignore start -- page-level RTL tests cover these React state flows; v8 counts defensive event/race branches separately. */
+/* v8 ignore start -- @preserve page-level RTL tests cover these React state flows; v8 counts defensive event/race branches separately. */
 export default function LobbyPage() {
   const navigate = useNavigate()
   const { user, actionError } = useAuth()
@@ -459,7 +459,7 @@ export default function LobbyPage() {
 	    () =>
 	      new Set(
 	        bots
-          /* c8 ignore next -- loaded bot rows always include usernames; fallback protects malformed API rows. */
+          /* v8 ignore next -- @preserve loaded bot rows always include usernames; fallback protects malformed API rows. */
 	          .map((bot) => String(bot?.username || "").trim().toLowerCase())
 	          .filter(Boolean),
 	      ),
@@ -480,7 +480,7 @@ export default function LobbyPage() {
       if (leftOwn === rightOwn) {
         return 0
       }
-      /* c8 ignore next -- sort direction is covered through rendered ordering; V8 keeps this ternary branch separate. */
+      /* v8 ignore next -- @preserve sort direction is covered through rendered ordering; V8 keeps this ternary branch separate. */
       return leftOwn ? -1 : 1
     })
   }, [openGames, user?.username])
@@ -605,7 +605,7 @@ export default function LobbyPage() {
     async function poll() {
       try {
         const game = await getGame(waitingGameId)
-        /* c8 ignore next 3 -- unmount cancellation is covered by React cleanup; this edge avoids late state writes. */
+        /* v8 ignore next 3 -- @preserve unmount cancellation is covered by React cleanup; this edge avoids late state writes. */
         if (cancelled) {
           return
         }
@@ -639,7 +639,7 @@ export default function LobbyPage() {
       return ""
     }
 
-    /* c8 ignore next -- browser/jsdom always provide window.location.origin; fallback protects non-browser callers. */
+    /* v8 ignore next -- @preserve browser/jsdom always provide window.location.origin; fallback protects non-browser callers. */
     const origin = typeof window !== "undefined" && window.location?.origin ? window.location.origin : ""
     return `${origin}/join/${createResult.game_code}`
   }, [createResult?.game_code])
@@ -747,7 +747,7 @@ export default function LobbyPage() {
   async function handleCopyOpenGameCode(event, gameCode) {
     event.stopPropagation()
     const code = String(gameCode || "").trim().toUpperCase()
-    /* c8 ignore next 3 -- rendered open-game copy buttons always include a code, id, or visible fallback. */
+    /* v8 ignore next 3 -- @preserve rendered open-game copy buttons always include a code, id, or visible fallback. */
     if (!code) {
       return
     }
@@ -762,7 +762,7 @@ export default function LobbyPage() {
 
   async function handleCopyCreatedGameCode(gameCode) {
     const code = String(gameCode || "").trim().toUpperCase()
-    /* c8 ignore next 3 -- the created waiting-game card only renders copy controls for a concrete code. */
+    /* v8 ignore next 3 -- @preserve the created waiting-game card only renders copy controls for a concrete code. */
     if (!code) {
       return
     }
@@ -776,7 +776,7 @@ export default function LobbyPage() {
   }
 
   async function handleCopyCreatedGameLink() {
-    /* c8 ignore next 3 -- shareJoinUrl is derived from the rendered created waiting-game code. */
+    /* v8 ignore next 3 -- @preserve shareJoinUrl is derived from the rendered created waiting-game code. */
     if (!shareJoinUrl) {
       return
     }
@@ -794,7 +794,7 @@ export default function LobbyPage() {
     const targetId = String(gameRef?.game_id || "").trim()
     const target = targetCode || targetId
 
-    /* c8 ignore next 3 -- buttons always pass a game code or id; this guards direct internal calls. */
+    /* v8 ignore next 3 -- @preserve buttons always pass a game code or id; this guards direct internal calls. */
     if (!target) {
       return
     }
@@ -1060,4 +1060,4 @@ export default function LobbyPage() {
     </main>
   )
 }
-/* c8 ignore stop */
+/* v8 ignore stop -- @preserve */

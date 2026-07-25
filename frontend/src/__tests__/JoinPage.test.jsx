@@ -1,7 +1,7 @@
 import { StrictMode } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, render, screen, waitFor } from "@testing-library/react"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { MemoryRouter, Route, Routes } from "react-router"
 import JoinPage from "../pages/JoinPage"
 
 const mockNavigate = vi.hoisted(() => vi.fn())
@@ -9,8 +9,8 @@ const mockApi = vi.hoisted(() => ({
   joinGame: vi.fn(),
 }))
 
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual("react-router-dom")
+vi.mock("react-router", async () => {
+  const actual = await vi.importActual("react-router")
   return {
     ...actual,
     useNavigate: () => mockNavigate,

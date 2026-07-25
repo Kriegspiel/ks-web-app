@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, render, screen } from "@testing-library/react"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter } from "react-router"
 import ReviewPage from "../pages/Review"
 
 const mockApi = vi.hoisted(() => ({
@@ -9,8 +9,8 @@ const mockApi = vi.hoisted(() => ({
   getGameTranscript: vi.fn(),
 }))
 
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual("react-router-dom")
+vi.mock("react-router", async () => {
+  const actual = await vi.importActual("react-router")
   return {
     ...actual,
     Link: ({ to, children, ...props }) => (
