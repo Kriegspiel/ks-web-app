@@ -154,8 +154,6 @@ export function viewerBotAccessTier(user) {
 function botRequiredAccessTier(bot) {
   return normalizeBotAccessTier(bot?.required_tier)
     || BOT_ACCESS_TIER_BY_CODE[botTierCode(bot)]
-    /* v8 ignore next -- @preserve botTierCode currently only returns mapped public tier codes. */
-    || "guest"
 }
 
 function tierAllowsBot(viewerTier, requiredTier) {
@@ -233,6 +231,5 @@ export function groupBotsByTier(bots) {
 
   return Array.from(groups.entries())
     .filter(([, tierBots]) => tierBots.length > 0)
-    /* v8 ignore next -- @preserve fallback is for future tier codes that are not in BOT_TIER_LABELS yet. */
-    .map(([code, tierBots]) => ({ code, label: BOT_TIER_LABELS[code] ?? `${code} bots`, bots: tierBots }))
+    .map(([code, tierBots]) => ({ code, label: BOT_TIER_LABELS[code], bots: tierBots }))
 }

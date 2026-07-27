@@ -49,6 +49,18 @@ describe("chessboard move helpers", () => {
       fromSquare: "d7",
       color: "black",
     }).sort()).toEqual(["c6", "d5", "d6"].sort())
+
+    expect(getVisibleMoveTargets({
+      fen: "P7/8/8/8/8/8/8/8 w - - 0 1",
+      fromSquare: "a8",
+      color: "white",
+    })).toEqual([])
+
+    expect(getVisibleMoveTargets({
+      fen: "8/8/8/8/8/4P3/8/8 w - - 0 1",
+      fromSquare: "e3",
+      color: "white",
+    })).toEqual(["e4"])
   })
 
   it("ignores_off_board_pawn_captures_and_knight_steps", () => {

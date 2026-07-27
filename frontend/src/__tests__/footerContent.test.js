@@ -25,6 +25,15 @@ describe("footer content helpers", () => {
     ])
   })
 
+  it("ignores_non_link_lines_and_allows_footers_without_a_rules_group", () => {
+    expect(parseFooterMarkdown([
+      "# Contact",
+      "This is not a Markdown link.",
+    ].join("\n"))).toEqual([
+      { title: "Contact", links: [] },
+    ])
+  })
+
   it("adds_or_repositions_the_feed_link_for_communication_groups", () => {
     expect(withFeedFooterLink([{ title: "Social", links: [] }])).toEqual([
       { title: "Social", links: [] },

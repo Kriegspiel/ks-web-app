@@ -231,6 +231,8 @@ describe("BotMatrixReportPage", () => {
   })
 
   it("renders_total_metric_helper_variants", () => {
+    expect(h.TotalMetric({ value: 0.0123, kind: "cost", usageStartDate: "2026-07-04" }).props.children).toBe("$0.012300")
+    expect(h.TotalMetric({ value: null, kind: "unknown" })).toBe("—")
     const { rerender } = render(<h.TotalMetric value={1234} kind="number" />)
     expect(screen.getByText("1,234")).toBeInTheDocument()
 
@@ -239,6 +241,9 @@ describe("BotMatrixReportPage", () => {
 
     rerender(<h.TotalMetric value={{ input: 1000, cache: 0, output: null }} kind="tokenSplit" usageStartDate="2026-07-04" />)
     expect(screen.getByText("1k/0/—")).toHaveAttribute("title", expect.stringContaining("2026-07-04"))
+
+    rerender(<h.TotalMetric value={0.0123} kind="cost" usageStartDate="2026-07-04" />)
+    expect(screen.getByText("$0.012300")).toHaveAttribute("title", expect.stringContaining("2026-07-04"))
 
     rerender(<h.TotalMetric value={0.125} kind="share" />)
     expect(screen.getByText("13%")).toBeInTheDocument()

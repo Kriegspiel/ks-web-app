@@ -110,6 +110,16 @@ describe("usePhantoms", () => {
     expect(result.current.placements).toEqual({})
   })
 
+  it("filters_real_piece_squares_when_replacing_all_phantoms", () => {
+    const { result } = renderHook(() => usePhantoms({ gameId: "g-occupied", occupiedSquares: ["e4"] }))
+
+    act(() => {
+      result.current.replaceAll({ d4: "q", e4: "r" })
+    })
+
+    expect(result.current.placements).toEqual({ d4: "q" })
+  })
+
   it("ignores_invalid_persisted_state", () => {
     window.localStorage.setItem("phantoms_g-535", "{oops")
 

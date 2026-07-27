@@ -97,6 +97,10 @@ describe("Nav", () => {
     await waitFor(() => expect(menu).toHaveAttribute("open"))
     expect(screen.getByRole("link", { name: "User" })).toBeInTheDocument()
 
+    fireEvent.pointerDown(screen.getByRole("link", { name: "User" }))
+    fireEvent.keyDown(document, { key: "Enter" })
+    expect(menu).toHaveAttribute("open")
+
     fireEvent.pointerDown(document.body)
     await waitFor(() => expect(menu).not.toHaveAttribute("open"))
 

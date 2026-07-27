@@ -59,6 +59,10 @@ describe("GamePage helper functions", () => {
     })).toEqual(["Pawn captured at D5", "Pawn try from E4", "Knight dropped", "Promotion", "Check on file"])
     expect(h.getLogEntryTexts({ next_turn_pawn_tries: 1 })).toEqual(["1 pawn try"])
     expect(h.getLogEntryTexts({ answer: { main: "REGULAR_MOVE", next_turn_has_pawn_capture: null } })).toEqual(["Move complete"])
+    const collected = []
+    h.collectLogText("   ", collected)
+    h.collectLogText(42, collected)
+    expect(collected).toEqual([])
     expect(h.getLogEntryColor(null, 0)).toBe("white")
     expect(h.getLogEntryColor(null, 1)).toBe("black")
     expect(h.getLogEntryColor({ text: "white moved" }, 1)).toBe("white")
@@ -88,6 +92,7 @@ describe("GamePage helper functions", () => {
     expect(h.summarizeCurrentMessageSideEntries([{}])).toEqual([])
     expect(h.summarizeCurrentMessageSideEntries(["Illegal move"])).toEqual(["illegal move"])
     expect(h.summarizeCurrentMessageSideEntries(["Move complete", "check on file", "custom note"])).toEqual(["move complete", "check on file", "custom note"])
+    expect(h.summarizeCurrentMessageSideEntries([{ messages: ["custom note", "custom note"] }])).toEqual(["custom note"])
     expect(h.summarizeCurrentMessageSideEntries([{ text: "Has pawn captures" }, "Move complete", { messages: ["Queen captured at h8"] }])).toEqual(["move complete", "capture h8"])
     expect(h.buildCurrentMessageHistorySegments(null)).toEqual([])
     expect(h.buildCurrentMessageHistorySegments([{ white: ["Move complete"], black: ["Illegal move"] }])).toHaveLength(2)
@@ -229,6 +234,8 @@ describe("GamePage helper functions", () => {
     expect(h.pieceAtSquare("bad", "e7")).toBe("")
     expect(h.pieceAtSquare(fen, "z9")).toBe("")
     expect(h.pieceAtSquare(fen, "e7")).toBe("P")
+    expect(h.pieceAtSquare("P3K3/8/8/8/8/8/8/8 w - - 0 1", "e8")).toBe("K")
+    expect(h.pieceAtSquare("x3K3/8/8/8/8/8/8/8 w - - 0 1", "e8")).toBe("")
     expect(h.isPromotionCandidate({ fen, fromSquare: "", toSquare: "e8", color: "white" })).toBe(false)
     expect(h.isPromotionCandidate({ fen, fromSquare: "a1", toSquare: "a8", color: "white" })).toBe(false)
     expect(h.isPromotionCandidate({ fen: "8/8/8/8/8/8/8/4K3 w - - 0 1", fromSquare: "e1", toSquare: "e8", color: "white" })).toBe(false)
@@ -331,7 +338,15 @@ describe("GamePage helper functions", () => {
     expect(document.documentElement.scrollLeft).toBe(7)
     scrollTo.mockRestore()
 
+    const originalScrollTo = window.scrollTo
+    Object.defineProperty(window, "scrollTo", { configurable: true, writable: true, value: undefined })
+    h.restoreViewportPosition({ x: 1, y: 2 })
+    Object.defineProperty(window, "scrollTo", { configurable: true, writable: true, value: originalScrollTo })
+
     h.blurActiveInteractiveElement()
+    const activeElementSpy = vi.spyOn(document, "activeElement", "get").mockReturnValue({ blur: null })
+    h.blurActiveInteractiveElement()
+    activeElementSpy.mockRestore()
     const activeButton = document.createElement("button")
     document.body.append(activeButton)
     activeButton.focus()
@@ -339,6 +354,9 @@ describe("GamePage helper functions", () => {
     h.blurActiveInteractiveElement()
     expect(document.activeElement).not.toBe(activeButton)
     activeButton.remove()
+
+    render(<h.RefereeLogColumn color="white" turn={1} entries={["Legacy referee response"]} />)
+    expect(screen.getByText("Legacy referee response")).toBeInTheDocument()
 
     const onSelectDropPiece = vi.fn()
     render(

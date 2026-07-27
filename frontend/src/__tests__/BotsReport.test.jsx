@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, render, screen } from "@testing-library/react"
+import { act, cleanup, render, screen } from "@testing-library/react"
 import { MemoryRouter } from "react-router"
 import BotsReportPage from "../pages/BotsReport"
 
@@ -14,6 +14,16 @@ vi.mock("../components/VersionStamp", () => ({
 }))
 
 const { techApi } = await import("../services/api")
+
+function deferredRequest() {
+  let resolve
+  let reject
+  const promise = new Promise((resolveRequest, rejectRequest) => {
+    resolve = resolveRequest
+    reject = rejectRequest
+  })
+  return { promise, resolve, reject }
+}
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -127,5 +137,20 @@ describe("BotsReportPage", () => {
     expect(screen.getByText("Request failed after 1.3 s.")).toBeInTheDocument()
 
     nowSpy.mockRestore()
+  })
+
+  it.each(["resolve", "reject"])("ignores_a_late_%s_after_unmount", async (outcome) => {
+    const request = deferredRequest()
+    techApi.getBotsReport.mockReturnValueOnce(request.promise)
+    const { unmount } = render(<MemoryRouter><BotsReportPage /></MemoryRouter>)
+
+    unmount()
+    await act(async () => {
+      if (outcome === "resolve") request.resolve({ bots: [] })
+      else request.reject(new Error("offline"))
+      await request.promise.catch(() => undefined)
+    })
+
+    expect(techApi.getBotsReport).toHaveBeenCalledWith(10)
   })
 })

@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router"
+import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from "react-router"
 import AppHeader from "./components/AppHeader"
 import AppFooter from "./components/AppFooter"
 import AttributionCapture from "./components/AttributionCapture"
@@ -11,6 +11,7 @@ import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
 import GamePage from "./pages/GamePage"
 import ReviewPage from "./pages/Review"
+import TutorReviewPage from "./pages/TutorReview"
 import ProfilePage from "./pages/Profile"
 import GameHistoryPage from "./pages/GameHistory"
 import LeaderboardPage from "./pages/Leaderboard"
@@ -118,6 +119,47 @@ function RequireTechAccess({ children }) {
   return children
 }
 
+function TutorNotFoundPage() {
+  return (
+    <main className="page-shell tutor-not-found-page">
+      <h1>Page not found</h1>
+      <p>This private page is not available for your account.</p>
+      <Link className="button-link button-link--primary" to="/lobby">Return to lobby</Link>
+    </main>
+  )
+}
+
+function RequireTutorAccess({ children }) {
+  const { isAuthenticated, bootstrapping, user } = useAuth()
+  const location = useLocation()
+
+  if (bootstrapping) {
+    return <LoadingPage />
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Navigate
+        to="/auth/login"
+        replace
+        state={{
+          from: {
+            pathname: location.pathname,
+            search: location.search,
+            hash: location.hash,
+          },
+        }}
+      />
+    )
+  }
+
+  if (user?.can_use_tutor !== true) {
+    return <TutorNotFoundPage />
+  }
+
+  return children
+}
+
 function RedirectIfAuthenticated({ children }) {
   const { isAuthenticated, bootstrapping } = useAuth()
   const location = useLocation()
@@ -187,6 +229,14 @@ export function AppRoutes() {
               <RequireAuth>
                 <ReviewPage />
               </RequireAuth>
+            )}
+          />
+          <Route
+            path="/game/:gameCode/review/tutor"
+            element={(
+              <RequireTutorAccess>
+                <TutorReviewPage />
+              </RequireTutorAccess>
             )}
           />
           <Route path="/user/:username" element={<ProfilePage />} />

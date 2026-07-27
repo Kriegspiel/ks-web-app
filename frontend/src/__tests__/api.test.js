@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import api, { askAny, billingApi, convertGuest, createGame, createGameEventsSource, deleteWaitingGame, gameEventsUrl, getBots, getGame, getGamePublicStatus, getGameReview, getGameState, getGameTranscript, getLobbyStats, getMyActiveGames, getMyArchivedGames, getOpenGames, joinGame, login, logout, me, playAsGuest, recordCampaignVisit, register, resignGame, submitMove, techApi, userApi } from "../services/api"
+import api, { askAny, billingApi, convertGuest, createGame, createGameEventsSource, deleteWaitingGame, gameEventsUrl, generateTutorGameAnalysis, getBots, getGame, getGamePublicStatus, getGameReview, getGameState, getGameTranscript, getLobbyStats, getMyActiveGames, getMyArchivedGames, getOpenGames, getTutorGame, getTutorProfile, joinGame, login, logout, me, playAsGuest, recordCampaignVisit, register, resignGame, submitMove, submitTutorFeedback, techApi, userApi } from "../services/api"
 
 describe("api client", () => {
   it("api_client_uses_relative_base_url", () => { expect(api.defaults.baseURL ?? "").toBe("") })
@@ -200,6 +200,37 @@ describe("game helpers", () => {
   })
 })
 
+describe("Tutor helpers", () => {
+  beforeEach(() => { vi.restoreAllMocks() })
+
+  it("uses_private_tutor_endpoints_and_encodes_game_codes", async () => {
+    const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: { eligible: true } })
+    const postSpy = vi.spyOn(api, "post")
+      .mockResolvedValueOnce({ data: { analysis: {} } })
+      .mockResolvedValueOnce({ data: { rating: "helpful" } })
+
+    expect(await getTutorGame("AB C/23")).toEqual({ eligible: true })
+    expect(await generateTutorGameAnalysis("AB C/23")).toEqual({ analysis: {} })
+    expect(await submitTutorFeedback("AB C/23", { rating: "helpful" })).toEqual({ rating: "helpful" })
+    expect(await getTutorProfile()).toEqual({ eligible: true })
+
+    expect(getSpy).toHaveBeenNthCalledWith(1, "/api/tutor/games/AB%20C%2F23")
+    expect(postSpy).toHaveBeenNthCalledWith(1, "/api/tutor/games/AB%20C%2F23/analysis")
+    expect(postSpy).toHaveBeenNthCalledWith(2, "/api/tutor/games/AB%20C%2F23/feedback", { rating: "helpful" })
+    expect(getSpy).toHaveBeenNthCalledWith(2, "/api/tutor/profile")
+  })
+
+  it.each([
+    ["getTutorGame", "get", () => getTutorGame("ABC234"), "Unable to load Tutor review right now."],
+    ["generateTutorGameAnalysis", "post", () => generateTutorGameAnalysis("ABC234"), "Unable to generate Tutor review right now."],
+    ["submitTutorFeedback", "post", () => submitTutorFeedback("ABC234", { rating: "incorrect" }), "Unable to save Tutor feedback right now."],
+    ["getTutorProfile", "get", () => getTutorProfile(), "Unable to load Tutor progress right now."],
+  ])("%s_uses_a_stable_fallback_error", async (_name, method, invoke, message) => {
+    vi.spyOn(api, method).mockRejectedValue({})
+    await expect(invoke()).rejects.toEqual({ status: undefined, code: undefined, message })
+  })
+})
+
 describe("user helpers", () => {
   beforeEach(() => { vi.restoreAllMocks() })
   it("profile_history_and_leaderboard_use_expected_endpoints", async () => { const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: {} }); await userApi.getProfile("fil"); await userApi.getGameHistory("fil", 2, 30); await userApi.getRatingHistory("fil", "vs_bots", 100); await userApi.getLeaderboard(3, 10); expect(getSpy).toHaveBeenNthCalledWith(1, "/api/user/fil"); expect(getSpy).toHaveBeenNthCalledWith(2, "/api/user/fil/games", { params: { page: 2, per_page: 30 } }); expect(getSpy).toHaveBeenNthCalledWith(3, "/api/user/fil/rating-history", { params: { track: "vs_bots", limit: 100 } }); expect(getSpy).toHaveBeenNthCalledWith(4, "/api/leaderboard", { params: { page: 3, per_page: 10 } }) })
@@ -293,6 +324,29 @@ describe("user helpers", () => {
         include_filter_options: false,
         opponent: "bot:*",
       },
+    })
+  })
+  it("omits_optional_sort_directions_and_non_array_filters", async () => {
+    const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: {} })
+
+    await userApi.getGameHistory("fil", 1, 20, {
+      sort: { key: "turns" },
+      filters: { result: "win" },
+    })
+    await userApi.getLeaderboard(1, 20, {
+      sort: { key: "games" },
+      filters: { type: "bot" },
+    })
+    await techApi.getBotMatrixReport("week", null)
+
+    expect(getSpy).toHaveBeenNthCalledWith(1, "/api/user/fil/games", {
+      params: { page: 1, per_page: 20, sort: "turns" },
+    })
+    expect(getSpy).toHaveBeenNthCalledWith(2, "/api/leaderboard", {
+      params: { page: 1, per_page: 20, sort: "games" },
+    })
+    expect(getSpy).toHaveBeenNthCalledWith(3, "/api/tech/bot-matrix-report", {
+      params: { period: "week" },
     })
   })
   it("tech_reports_use_expected_endpoints", async () => { const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: {} }); await techApi.getBotsReport(10); await techApi.getBotMatrixReport("week", ["checkmate", "insufficient"]); await techApi.getGuestsReport(); await techApi.getUsersReport(); await techApi.getAcquisitionReport(7); expect(getSpy).toHaveBeenNthCalledWith(1, "/api/tech/bots-report", { params: { days: 10 } }); expect(getSpy).toHaveBeenNthCalledWith(2, "/api/tech/bot-matrix-report", { params: { period: "week", outcomes: "checkmate,insufficient" } }); expect(getSpy).toHaveBeenNthCalledWith(3, "/api/tech/guests-report"); expect(getSpy).toHaveBeenNthCalledWith(4, "/api/tech/users-report"); expect(getSpy).toHaveBeenNthCalledWith(5, "/api/tech/acquisition-report", { params: { days: 7 } }) })

@@ -7,6 +7,9 @@ const mockApi = vi.hoisted(() => ({
   getGameReview: vi.fn(),
   getGameTranscript: vi.fn(),
 }))
+const mockAuth = vi.hoisted(() => ({
+  user: { username: "notifil", can_use_tutor: false },
+}))
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router")
@@ -18,9 +21,7 @@ vi.mock("react-router", async () => {
 
 vi.mock("../services/api", () => mockApi)
 vi.mock("../hooks/useAuth", () => ({
-  useAuth: () => ({
-    user: { username: "notifil" },
-  }),
+  useAuth: () => mockAuth,
 }))
 
 const transcript = {
@@ -60,6 +61,7 @@ const transcript = {
 }
 
 beforeEach(() => {
+  mockAuth.user = { username: "notifil", can_use_tutor: false }
   mockApi.getGame.mockReset()
   mockApi.getGameReview.mockReset()
   mockApi.getGameTranscript.mockReset()
@@ -128,6 +130,19 @@ describe("ReviewPage", () => {
 
     expect(await screen.findByText(/signed in as notifil\./i)).toBeInTheDocument()
     expect(mockApi.getGameReview).toHaveBeenCalledWith("g-620")
+  })
+
+  it("shows_the_private_tutor_entry_only_when_the_server_grants_capability", async () => {
+    renderReviewPage()
+    await screen.findByRole("heading", { name: "Game review" })
+    expect(screen.queryByRole("link", { name: /Tutor review/i })).not.toBeInTheDocument()
+    cleanup()
+
+    mockAuth.user = { username: "fil", can_use_tutor: true }
+    renderReviewPage()
+
+    const link = await screen.findByRole("link", { name: /Tutor review Private beta/i })
+    expect(link).toHaveAttribute("href", "/game/g-620/review/tutor")
   })
 
   it("loads_transcript_and_navigates_moves", async () => {

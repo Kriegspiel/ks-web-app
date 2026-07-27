@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router"
 import HomePage from "../pages/HomePage"
 import { TEST_VERSION_STAMP } from "../version"
@@ -24,6 +24,14 @@ vi.mock("../hooks/useAuth", () => ({
 }))
 
 vi.mock("../services/api", () => mockApi)
+
+function deferredRequest() {
+  let reject
+  const promise = new Promise((resolveRequest, rejectRequest) => {
+    reject = rejectRequest
+  })
+  return { promise, reject }
+}
 
 beforeEach(() => {
   cleanup()
@@ -214,7 +222,7 @@ describe("HomePage", () => {
     })
     mockApi.getMyArchivedGames.mockResolvedValue({
       games: [
-        { game_id: "game-old", game_code: "OLD001", state: "completed", updated_at: "2026-03-20T15:00:00Z", white: { username: "fil" }, black: { username: "amy" } },
+        { game_code: "OLD001", state: "completed", updated_at: "2026-03-20T15:00:00Z", white: { username: "fil" }, black: { username: "amy" } },
         { game_id: "game-new", game_code: "NEW001", state: "completed", updated_at: "2026-03-28T15:00:00Z", white: { username: "fil" }, black: { username: "botty", role: "bot" } },
         { game_id: "game-invalid", game_code: "BAD001", state: "completed", updated_at: "not-a-date", white: { username: "fil" }, black: { username: "sam" } },
         { game_id: "game-mid", game_code: "MID001", state: "completed", updated_at: "2026-03-25T15:00:00Z", white: { username: "fil" }, black: { username: "zoe" } },
@@ -340,5 +348,25 @@ describe("HomePage", () => {
     expect(screen.getByText("3")).toBeInTheDocument()
     expect(screen.getAllByText("1 (33.3%)").length).toBe(3)
     expect(screen.getByText(/Updated/)).toBeInTheDocument()
+  })
+
+  it("ignores_a_late_loading_error_after_unmount", async () => {
+    mockAuth.isAuthenticated = true
+    mockAuth.user = { username: "fil", stats: {} }
+    const request = deferredRequest()
+    mockApi.getMyActiveGames.mockReturnValueOnce(request.promise)
+    const { unmount } = render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    )
+
+    unmount()
+    await act(async () => {
+      request.reject(new Error("offline"))
+      await request.promise.catch(() => undefined)
+    })
+
+    expect(mockApi.getMyActiveGames).toHaveBeenCalledTimes(1)
   })
 })

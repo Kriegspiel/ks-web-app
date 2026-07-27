@@ -72,9 +72,7 @@ function computeTrayCounts(placements) {
   const counts = { ...STARTING_TRAY }
 
   for (const piece of Object.values(placements)) {
-    if (Object.prototype.hasOwnProperty.call(counts, piece)) {
-      counts[piece] -= 1
-    }
+    counts[piece] -= 1
   }
 
   return counts
