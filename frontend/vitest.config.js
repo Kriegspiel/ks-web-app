@@ -22,9 +22,7 @@ export default mergeConfig(viteConfig, defineConfig({
       thresholds: {
         lines: 100,
         functions: 100,
-        // Vitest 4's AST-aware remapping reports defensive fallback branches
-        // that Vitest 2 counted as covered. Keep this at the upgraded baseline.
-        branches: 98.3,
+        branches: 100,
         statements: 100,
       },
     },

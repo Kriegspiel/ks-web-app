@@ -698,12 +698,19 @@ function TotalColumnHeader({
 
 function TotalMetric({ value, kind, usageStartDate }) {
   let text = "—"
-  if (kind === "number") text = value.toLocaleString("en-US")
-  else if (kind === "plies" || kind === "calls") text = formatAverage(value)
-  else if (kind === "tokens") text = formatTokens(value)
-  else if (kind === "tokenSplit") text = formatTokenSplit(value?.input, value?.cache, value?.output)
-  else if (kind === "cost") text = formatSpend(value)
-  else if (kind === "share") text = formatShare(value)
+  if (kind === "number") {
+    text = value.toLocaleString("en-US")
+  } else if (kind === "plies" || kind === "calls") {
+    text = formatAverage(value)
+  } else if (kind === "tokens") {
+    text = formatTokens(value)
+  } else if (kind === "tokenSplit") {
+    text = formatTokenSplit(value?.input, value?.cache, value?.output)
+  } else if (kind === "cost") {
+    text = formatSpend(value)
+  } else if (kind === "share") {
+    text = formatShare(value)
+  }
 
   if (kind === "calls" || kind === "tokens" || kind === "tokenSplit" || kind === "cost") {
     return <span title={usageTooltip(usageStartDate)}>{text}</span>

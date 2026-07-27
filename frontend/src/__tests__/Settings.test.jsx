@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import SettingsPage from "../pages/Settings"
 
 const mockApi = vi.hoisted(() => ({
@@ -10,6 +10,16 @@ const mockApi = vi.hoisted(() => ({
 }))
 
 vi.mock("../services/api", () => mockApi)
+
+function deferredRequest() {
+  let resolve
+  let reject
+  const promise = new Promise((resolveRequest, rejectRequest) => {
+    resolve = resolveRequest
+    reject = rejectRequest
+  })
+  return { promise, resolve, reject }
+}
 
 afterEach(() => cleanup())
 
@@ -94,5 +104,20 @@ describe("SettingsPage", () => {
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("Unable to save settings.")
     })
+  })
+
+  it.each(["resolve", "reject"])("ignores_a_late_load_%s_after_unmount", async (outcome) => {
+    const request = deferredRequest()
+    mockApi.me.mockReturnValueOnce(request.promise)
+    const { unmount } = render(<SettingsPage />)
+
+    unmount()
+    await act(async () => {
+      if (outcome === "resolve") request.resolve({ settings: {} })
+      else request.reject(new Error("offline"))
+      await request.promise.catch(() => undefined)
+    })
+
+    expect(mockApi.me).toHaveBeenCalledTimes(1)
   })
 })

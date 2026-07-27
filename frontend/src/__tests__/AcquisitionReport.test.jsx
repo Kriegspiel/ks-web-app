@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import AcquisitionReportPage from "../pages/AcquisitionReport"
 
 vi.mock("../services/api", () => ({
@@ -13,6 +13,16 @@ vi.mock("../components/VersionStamp", () => ({
 }))
 
 const { techApi } = await import("../services/api")
+
+function deferredRequest() {
+  let resolve
+  let reject
+  const promise = new Promise((resolveRequest, rejectRequest) => {
+    resolve = resolveRequest
+    reject = rejectRequest
+  })
+  return { promise, resolve, reject }
+}
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -40,7 +50,7 @@ describe("AcquisitionReportPage", () => {
           games_completed: 2,
         },
         {
-          source: "",
+          source: null,
           medium: null,
           campaign: "   ",
           visits: "not-a-number",
@@ -117,5 +127,20 @@ describe("AcquisitionReportPage", () => {
     expect(screen.getByText("Request failed after 444 ms.")).toBeInTheDocument()
 
     nowSpy.mockRestore()
+  })
+
+  it.each(["resolve", "reject"])("ignores_a_late_%s_after_unmount", async (outcome) => {
+    const request = deferredRequest()
+    techApi.getAcquisitionReport.mockReturnValueOnce(request.promise)
+    const { unmount } = render(<AcquisitionReportPage />)
+
+    unmount()
+    await act(async () => {
+      if (outcome === "resolve") request.resolve({ rows: [] })
+      else request.reject(new Error("offline"))
+      await request.promise.catch(() => undefined)
+    })
+
+    expect(techApi.getAcquisitionReport).toHaveBeenCalledWith(30)
   })
 })

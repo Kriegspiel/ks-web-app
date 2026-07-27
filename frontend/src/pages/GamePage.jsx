@@ -361,9 +361,7 @@ function collectLogText(value, output) {
         index === 0 ? capturedPieceAnnouncement : "",
         index === 0 && enPassantAnnounced,
       )
-      if (formatted) {
-        output.push(formatted)
-      }
+      output.push(formatted)
     })
     if (nextTurnMessage) {
       output.push(nextTurnMessage)
@@ -640,12 +638,10 @@ function normalizeCurrentMessagePart(message) {
   const pawnTryMatch = normalized.match(/^(\d+) pawn tr(?:y|ies)$/i)
   if (pawnTryMatch) {
     const count = Number.parseInt(pawnTryMatch[1], 10)
-    if (Number.isFinite(count)) {
-      return {
-        key: `pawn-tries-${count}`,
-        text: count === 1 ? "1 pawn try" : `${count} pawn tries`,
-        priority: CURRENT_MESSAGE_PART_PRIORITY.has_any,
-      }
+    return {
+      key: `pawn-tries-${count}`,
+      text: count === 1 ? "1 pawn try" : `${count} pawn tries`,
+      priority: CURRENT_MESSAGE_PART_PRIORITY.has_any,
     }
   }
 
@@ -2006,6 +2002,7 @@ export const __gamePageInternals = Object.freeze({
   buildScoresheetRefereeLog,
   buildVisibleRefereeLog,
   blurActiveInteractiveElement,
+  collectLogText,
   countRemainingPieces,
   currentTurnStatusText,
   flattenGroupedRefereeEntries,
@@ -2071,6 +2068,7 @@ export const __gamePageInternals = Object.freeze({
   countRefereeTurnEntries,
   reserveCountForPiece,
   refereeEntryCompletesTurn,
+  RefereeLogColumn,
   resultFromMoveResponse,
   ReservePieces,
   restoreViewportPosition,

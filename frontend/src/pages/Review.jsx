@@ -502,9 +502,7 @@ function replayReserveStatus({ moves, selectedPlyGroup, ruleVariant }) {
     const dropMove = normalizeDropMove(move.uci)
     if (dropMove) {
       const reserveKey = reserveKeyForPiece(dropMove.piece)
-      if (reserveKey) {
-        reserves[color][reserveKey] = Math.max(0, reserves[color][reserveKey] - 1)
-      }
+      reserves[color][reserveKey] = Math.max(0, reserves[color][reserveKey] - 1)
       return
     }
 
@@ -1364,6 +1362,12 @@ export default function ReviewPage() {
       <div className="review-page__header">
         <div className="review-page__header-main">
           <h1>Game review</h1>
+          {user?.can_use_tutor === true ? (
+            <Link className="button-link button-link--primary review-page__tutor-link" to={`/game/${encodeURIComponent(gameRef)}/review/tutor`}>
+              Tutor review
+              <span>Private beta</span>
+            </Link>
+          ) : null}
         </div>
         <p className="review-page__signed-in">Signed in as {signedInAs}.</p>
       </div>

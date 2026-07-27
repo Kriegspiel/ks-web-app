@@ -59,12 +59,10 @@ export function ThemeProvider({ children }) {
   const setExplicitTheme = useCallback((nextTheme) => {
     setTheme((currentTheme) => {
       const resolvedTheme = THEMES.has(nextTheme) ? nextTheme : currentTheme
-      if (typeof window !== "undefined") {
-        try {
-          window.localStorage.setItem(THEME_STORAGE_KEY, resolvedTheme)
-        } catch {
-          // ignore storage failures
-        }
+      try {
+        window.localStorage.setItem(THEME_STORAGE_KEY, resolvedTheme)
+      } catch {
+        // ignore storage failures
       }
       return resolvedTheme
     })
@@ -73,12 +71,10 @@ export function ThemeProvider({ children }) {
   const toggleTheme = useCallback(() => {
     setTheme((currentTheme) => {
       const nextTheme = currentTheme === "dark" ? "light" : "dark"
-      if (typeof window !== "undefined") {
-        try {
-          window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
-        } catch {
-          // ignore storage failures
-        }
+      try {
+        window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
+      } catch {
+        // ignore storage failures
       }
       return nextTheme
     })

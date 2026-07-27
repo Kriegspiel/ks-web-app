@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, render, screen, within } from "@testing-library/react"
+import { act, cleanup, render, screen, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router"
 import UsersReportPage from "../pages/UsersReport"
 
@@ -14,6 +14,16 @@ vi.mock("../components/VersionStamp", () => ({
 }))
 
 const { techApi } = await import("../services/api")
+
+function deferredRequest() {
+  let resolve
+  let reject
+  const promise = new Promise((resolveRequest, rejectRequest) => {
+    resolve = resolveRequest
+    reject = rejectRequest
+  })
+  return { promise, resolve, reject }
+}
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -180,5 +190,20 @@ describe("UsersReportPage", () => {
     expect(screen.getByText("Request failed after 333 ms.")).toBeInTheDocument()
 
     nowSpy.mockRestore()
+  })
+
+  it.each(["resolve", "reject"])("ignores_a_late_%s_after_unmount", async (outcome) => {
+    const request = deferredRequest()
+    techApi.getUsersReport.mockReturnValueOnce(request.promise)
+    const { unmount } = render(<MemoryRouter><UsersReportPage /></MemoryRouter>)
+
+    unmount()
+    await act(async () => {
+      if (outcome === "resolve") request.resolve({ sections: [], last_games: [] })
+      else request.reject(new Error("offline"))
+      await request.promise.catch(() => undefined)
+    })
+
+    expect(techApi.getUsersReport).toHaveBeenCalledTimes(1)
   })
 })

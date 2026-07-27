@@ -517,7 +517,7 @@ describe("LobbyPage", () => {
     await waitFor(() => {
       expect(mockClipboardWriteText).toHaveBeenLastCalledWith(shareLink.href)
     })
-    expect(screen.getByText("Share link copied.").closest(".lobby-toast")).toHaveClass("lobby-toast")
+    expect((await screen.findByText("Share link copied.")).closest(".lobby-toast")).toHaveClass("lobby-toast")
   })
 
   it("surfaces_copy_failures_for_created_and_open_game_links", async () => {

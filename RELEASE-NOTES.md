@@ -5,6 +5,17 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.4.19
+
+- **Tutor private beta**: add a completed-game coaching route for the exact
+  backend-entitled account, with explicit analysis, player-safe evidence copy,
+  cached reviews, key moments, strengths, improvement areas, a next-game drill,
+  cumulative five-review progress, `$5` monthly usage visibility, and feedback.
+- **Private access**: hide the review action from all other accounts and render
+  a generic not-found page for direct non-entitled navigation.
+- **Quality gate**: raise and satisfy the complete frontend branch-coverage gate
+  at 100%, alongside existing 100% statements, functions, and lines.
+
 ## ks-web-app frontend v. 1.4.17
 
 - **Game History**: remove the false gap between the sticky column headings

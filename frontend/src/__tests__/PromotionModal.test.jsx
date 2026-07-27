@@ -49,6 +49,8 @@ describe("PromotionModal", () => {
     const onCancel = vi.fn()
     render(<PromotionModal open onSelect={() => {}} onCancel={onCancel} />)
 
+    fireEvent.keyDown(window, { key: "Enter" })
+    expect(onCancel).not.toHaveBeenCalled()
     fireEvent.keyDown(window, { key: "Escape" })
     fireEvent.click(screen.getByRole("presentation"))
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }))

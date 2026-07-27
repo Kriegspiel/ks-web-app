@@ -19,6 +19,10 @@ const mockApi = vi.hoisted(() => ({
   getGame: vi.fn(),
   getGameState: vi.fn(),
   getGameReview: vi.fn(),
+  getTutorGame: vi.fn(),
+  generateTutorGameAnalysis: vi.fn(),
+  submitTutorFeedback: vi.fn(),
+  getTutorProfile: vi.fn(),
   getBots: vi.fn(),
   deleteWaitingGame: vi.fn(),
   submitMove: vi.fn(),
@@ -72,6 +76,28 @@ beforeEach(() => {
   window.sessionStorage.clear()
   mockApi.getGame.mockResolvedValue({ state: "waiting" })
   mockApi.getGameReview.mockResolvedValue({ game: { state: "completed" }, transcript: { moves: [] } })
+  mockApi.getTutorGame.mockResolvedValue({
+    game_code: "ABC234",
+    eligible: true,
+    eligibility_reason: null,
+    analysis: null,
+    profile: {
+      reviewed_games: 0,
+      ready: false,
+      games_until_ready: 5,
+      summary: "Tutor is learning from your reviewed games.",
+      strengths: [],
+      focus_areas: [],
+      updated_at: null,
+    },
+    usage: {
+      month: "2026-07",
+      limit_usd: 5,
+      spent_usd: 0,
+      reserved_usd: 0,
+      remaining_usd: 5,
+    },
+  })
   mockApi.userApi.getGameHistory.mockReset()
   mockApi.userApi.getGameHistory.mockResolvedValue({ games: [] })
   mockApi.techApi.getAcquisitionReport.mockReset()
@@ -250,6 +276,35 @@ describe("App routes", () => {
     } finally {
       warnSpy.mockRestore()
     }
+  })
+
+  it("redirects_the_private_tutor_route_to_login_when_unauthenticated", async () => {
+    mockApi.me.mockRejectedValueOnce({ status: 401, message: "Unauthorized" })
+
+    renderRoute("/game/ABC234/review/tutor")
+
+    await screen.findByRole("heading", { name: "Login" })
+    expect(mockApi.getTutorGame).not.toHaveBeenCalled()
+  })
+
+  it("hides_the_private_tutor_route_from_authenticated_outsiders_without_an_api_call", async () => {
+    mockApi.me.mockResolvedValueOnce({ username: "playerone", can_use_tutor: false })
+
+    renderRoute("/game/ABC234/review/tutor")
+
+    await screen.findByRole("heading", { name: "Page not found" })
+    expect(screen.getByRole("link", { name: "Return to lobby" })).toHaveAttribute("href", "/lobby")
+    expect(mockApi.getTutorGame).not.toHaveBeenCalled()
+  })
+
+  it("renders_the_private_tutor_route_only_for_fil_capability", async () => {
+    mockApi.me.mockResolvedValueOnce({ username: "fil", can_use_tutor: true })
+
+    renderRoute("/game/ABC234/review/tutor")
+
+    await screen.findByRole("heading", { name: "Tutor review · ABC234" })
+    expect(await screen.findByRole("button", { name: "Analyze this game" })).toBeInTheDocument()
+    expect(mockApi.getTutorGame).toHaveBeenCalledWith("ABC234")
   })
 
   it("renders_subscription_route_and_subcription_alias_for_authenticated_users", async () => {
