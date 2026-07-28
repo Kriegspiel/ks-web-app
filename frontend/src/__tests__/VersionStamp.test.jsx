@@ -18,6 +18,11 @@ afterEach(() => {
 })
 
 describe("VersionStamp", () => {
+  it("uses_the_coordinated_1_5_0_release_versions", () => {
+    expect(FRONTEND_VERSION).toBe("1.5.0")
+    expect(BACKEND_VERSION_FALLBACK).toBe("1.5.0")
+  })
+
   it("keeps_the_fallback_backend_version_visible_in_test_mode", () => {
     render(<VersionStamp className="custom-stamp" />)
 
