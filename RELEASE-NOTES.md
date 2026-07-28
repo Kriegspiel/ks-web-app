@@ -5,6 +5,12 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.5.0
+
+- **Coordinated Tutor release**: promote the private Tutor experience to the
+  shared `1.5.0` backend/frontend release line and use `1.5.0` as the visible
+  backend fallback while the live health version loads.
+
 ## ks-web-app frontend v. 1.4.19
 
 - **Tutor private beta**: add a completed-game coaching route for the exact
