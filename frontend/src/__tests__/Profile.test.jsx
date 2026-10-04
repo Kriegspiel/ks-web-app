@@ -61,7 +61,7 @@ describe("ProfilePage", () => {
     ["llm_opus48", "llm_opus"], ["llm_gpt56_sol", "llm_gpt_sol"], ["llm_grok45", "llm_grok"],
   ])("renders_legacy_%s_with_canonical_%s_and_retained_reviews", async (legacy, canonical) => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({ username: canonical, role: "bot", status: "active", stats: {} })
-    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [{ game_code: "OLD123", opponent: "amy", result: "win" }] })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [{ game_id: "archive-1", game_code: "OLD123", opponent: "amy", result: "win" }] })
     mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
     renderProfile(`/user/${legacy}`)
 
@@ -81,7 +81,7 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("region", { name: "Bot tier" })).toHaveTextContent(`reasoning: ${level === "none" ? "no" : level}`)
   })
 
-  it.each(["llm_gptnano", "llm_gpt56_terra", "llm_grok45", "llm_kimi_k25", "custom_bot"])("keeps_inactive_%s_history_reviewable_without_offering_a_challenge", async (username) => {
+  it.each(["llm_gptnano", "llm_gpt56_terra", "llm_grok45", "llm_kimi_k25", "custom_bot", "llm_nemotron_super", "llm_nemotron_nano", "llm_qwen_plus", "llm_qwen37_plus", "llm_minimax_m3", "llm_phi4", "llm_mistral_large3", "llm_mistral_medium35", "llm_nemotron_ultra", "llm_qwen_flash", "llm_hermes3_70b", "llm_hermes4_405b"])("keeps_inactive_%s_history_reviewable_without_offering_a_challenge", async (username) => {
     mockAuthState.value.user = { username: "playerone", llm_bot_tier: "tier5" }
     mockApi.userApi.getProfile.mockResolvedValueOnce({ username, role: "bot", status: "inactive", stats: {} })
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [
@@ -98,6 +98,7 @@ describe("ProfilePage", () => {
     expect(within(challengeCard).queryByRole("button", { name: "Play game" })).not.toBeInTheDocument()
     expect(within(challengeCard).queryByRole("link", { name: "View tiers" })).not.toBeInTheDocument()
     expect(await screen.findByRole("link", { name: "Review" })).toHaveAttribute("href", "/game/OLD123/review")
+    expect(screen.getByRole("link", { name: "View all games" })).toHaveAttribute("href", `/user/${username}/games`)
     expect(mockApi.getBots).not.toHaveBeenCalled()
     expect(mockApi.createGame).not.toHaveBeenCalled()
   })

@@ -5,6 +5,13 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.5.3
+
+- **Additional bot retirements**: remove Nemotron, Qwen, MiniMax M3, Phi 4,
+  Mistral Large 3/Medium 3.5, and Hermes offerings from the anonymous
+  subscription catalog. Inactive accounts retain their profiles, ratings,
+  game history, and completed-game reviews.
+
 ## ks-web-app frontend v. 1.5.2
 
 - **Stable bot identities**: link GPT Luna, GPT Sol, Claude Sonnet, Claude

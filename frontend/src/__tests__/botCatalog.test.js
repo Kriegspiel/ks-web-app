@@ -102,6 +102,13 @@ describe("botCatalog", () => {
     expect(botAvailableForViewer(bot, "tier6")).toBe(false)
   })
 
+  it.each(["llm_nemotron_super", "llm_nemotron_nano", "llm_qwen_plus", "llm_qwen37_plus", "llm_minimax_m3", "llm_phi4", "llm_mistral_large3", "llm_mistral_medium35", "llm_nemotron_ultra", "llm_qwen_flash", "llm_hermes3_70b", "llm_hermes4_405b"])("respects_newly_inactive_%s_without_offering_stale_available_rows", (username) => {
+    const bot = { username, status: "inactive", available_for_viewer: true }
+    expect(isInactiveBot(bot)).toBe(true)
+    expect(isCatalogHiddenBot(bot)).toBe(true)
+    expect(botAvailableForViewer(bot, "tier6")).toBe(false)
+  })
+
   it("respects_server_deactivation_for_other_accounts", () => {
     const bot = { username: "custom_bot", status: " Inactive ", available_for_viewer: true }
     expect(isCatalogHiddenBot(bot)).toBe(true)
