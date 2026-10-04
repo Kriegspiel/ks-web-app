@@ -5,6 +5,14 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.5.4
+
+- **T5 model replacement**: offer Claude Fable and GPT Astra with max reasoning
+  alongside Grok. Retired GPT-5.5 and GPT-5.5 Pro accounts retain historical
+  profile badges, game history, and completed-game review access.
+- **Coordinated backend release**: use backend 1.5.3 as the fallback version
+  while live health metadata loads.
+
 ## ks-web-app frontend v. 1.5.3
 
 - **Additional bot retirements**: remove Nemotron, Qwen, MiniMax M3, Phi 4,

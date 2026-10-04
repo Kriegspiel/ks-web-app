@@ -81,7 +81,7 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("region", { name: "Bot tier" })).toHaveTextContent(`reasoning: ${level === "none" ? "no" : level}`)
   })
 
-  it.each(["llm_gptnano", "llm_gpt56_terra", "llm_grok45", "llm_kimi_k25", "custom_bot", "llm_nemotron_super", "llm_nemotron_nano", "llm_qwen_plus", "llm_qwen37_plus", "llm_minimax_m3", "llm_phi4", "llm_mistral_large3", "llm_mistral_medium35", "llm_nemotron_ultra", "llm_qwen_flash", "llm_hermes3_70b", "llm_hermes4_405b"])("keeps_inactive_%s_history_reviewable_without_offering_a_challenge", async (username) => {
+  it.each(["llm_gptnano", "llm_gpt56_terra", "llm_grok45", "llm_kimi_k25", "custom_bot", "llm_nemotron_super", "llm_nemotron_nano", "llm_qwen_plus", "llm_qwen37_plus", "llm_minimax_m3", "llm_phi4", "llm_mistral_large3", "llm_mistral_medium35", "llm_nemotron_ultra", "llm_qwen_flash", "llm_hermes3_70b", "llm_hermes4_405b", "llm_gpt55", "llm_gpt55_pro"])("keeps_inactive_%s_history_reviewable_without_offering_a_challenge", async (username) => {
     mockAuthState.value.user = { username: "playerone", llm_bot_tier: "tier5" }
     mockApi.userApi.getProfile.mockResolvedValueOnce({ username, role: "bot", status: "inactive", stats: {} })
     mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [
@@ -518,9 +518,9 @@ describe("ProfilePage", () => {
 
   it("points_to_subscription_when_a_bot_is_above_the_current_tier", async () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
-      username: "llm_gpt55",
+      username: "llm_fable",
       role: "bot",
-      owner_email: "bot-gpt55@kriegspiel.org",
+      owner_email: "bot-fable@kriegspiel.org",
       member_since: "2026-04-03T01:10:41Z",
       stats: {},
       user_metrics: { completed_games: 0 },
@@ -529,14 +529,14 @@ describe("ProfilePage", () => {
     mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
     mockApi.getBots.mockResolvedValueOnce({ bots: [] })
 
-    renderProfile("/user/llm_gpt55")
+    renderProfile("/user/llm_fable")
 
-    await screen.findByRole("heading", { name: "llm_gpt55" })
+    await screen.findByRole("heading", { name: "llm_fable" })
     const challengeCard = await screen.findByRole("region", { name: "Challenge this bot" })
 
-    await within(challengeCard).findByText("llm_gpt55")
-    expect(challengeCard).toHaveTextContent(/llm_gpt55 is available from T5Master\. Upgrade your tier to challenge this bot\./)
-    expect(within(challengeCard).getByText("llm_gpt55")).toHaveClass("profile-challenge-upgrade__bot-name")
+    await within(challengeCard).findByText("llm_fable")
+    expect(challengeCard).toHaveTextContent(/llm_fable is available from T5Master\. Upgrade your tier to challenge this bot\./)
+    expect(within(challengeCard).getByText("llm_fable")).toHaveClass("profile-challenge-upgrade__bot-name")
     const tierLink = within(challengeCard).getByRole("link", { name: "View Tier T5 Master subscription tier" })
     expect(tierLink).toHaveAttribute("href", "/subscription?tier=tier5")
     expect(within(tierLink).getByText("T5")).toHaveClass("tier-badge", "tier-badge--t5", "profile-challenge-upgrade__tier-code")
@@ -902,6 +902,8 @@ describe("ProfilePage", () => {
     ["llm_grok", "Tier T5 Master", "T5", "tier-badge--t5", "Grok model bot for T5 Master (reasoning: xhigh)."],
     ["llm_gpt_luna", "Tier T2 Club", "T2", "tier-badge--t2", "GPT Luna model bot for T2 Club (reasoning: max)."],
     ["llm_gpt56_terra", "Tier T4 Expert", "T4", "tier-badge--t4", "GPT-5.6 Terra model bot for T4 Expert (reasoning: no)."],
+    ["llm_fable", "Tier T5 Master", "T5", "tier-badge--t5", "Claude Fable model bot for T5 Master (reasoning: max)."],
+    ["llm_gpt_astra", "Tier T5 Master", "T5", "tier-badge--t5", "GPT Astra model bot for T5 Master (reasoning: max)."],
     ["llm_gpt55", "Tier T5 Master", "T5", "tier-badge--t5", "GPT-5.5 model bot for T5 Master (reasoning: xhigh)."],
     ["llm_gpt_sol", "Tier T4 Expert", "T4", "tier-badge--t4", "GPT Sol model bot for T4 Expert (reasoning: max)."],
     ["llm_gpt55_pro", "Tier T5 Master", "T5", "tier-badge--t5", "GPT-5.5 Pro model bot for T5 Master (reasoning: xhigh)."],

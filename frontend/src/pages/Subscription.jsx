@@ -65,13 +65,8 @@ const T4_BOTS = [
 
 const T5_BOTS = [
   ["xAI", [subscriptionBot("llm_grok", "Grok", "xhigh")]],
-  [
-    "OpenAI",
-    [
-      subscriptionBot("llm_gpt55", "GPT-5.5", "xhigh"),
-      subscriptionBot("llm_gpt55_pro", "GPT-5.5 Pro", "xhigh"),
-    ],
-  ],
+  ["Anthropic", [subscriptionBot("llm_fable", "Claude Fable", "max")]],
+  ["OpenAI", [subscriptionBot("llm_gpt_astra", "GPT Astra", "max")]],
 ]
 
 const SUBSCRIPTION_BOT_CATALOG_GROUPS = [T0_BOTS, T1_BOTS, T2_BOTS, T3_BOTS, T4_BOTS, T5_BOTS]

@@ -99,6 +99,8 @@ const BOT_TIER_BY_USERNAME = {
   llm_glm52: "T4",
   llm_kimi_k27_code: "T4",
   llm_hermes4_405b: "T4",
+  llm_fable: "T5",
+  llm_gpt_astra: "T5",
   llm_gpt55: "T5",
   llm_gpt56_sol: "T4",
   llm_grok45: "T5",
