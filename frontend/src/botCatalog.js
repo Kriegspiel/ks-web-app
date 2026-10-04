@@ -77,6 +77,13 @@ const BOT_TIER_BY_USERNAME = {
   openrouter_qwen36_flash: "T3",
   llm_qwen36_flash: "T3",
   llm_gpt56_luna: "T2",
+  llm_gpt_luna: "T2",
+  llm_sonnet: "T3",
+  llm_gemini_flash: "T3",
+  llm_qwen_flash: "T3",
+  llm_opus: "T4",
+  llm_gpt_sol: "T4",
+  llm_grok: "T5",
   llm_sonnet5: "T3",
   llm_gemini25_flash: "T3",
   llm_gemini35_flash: "T3",
@@ -129,9 +136,30 @@ const INACTIVE_BOT_USERNAMES = new Set([
   "openrouter_llama31_8b",
 ])
 
+const LEGACY_MODEL_BOT_USERNAMES = new Set([
+  "llm_gpt56_luna",
+  "llm_sonnet5",
+  "llm_gemini35_flash",
+  "llm_qwen36_flash",
+  "llm_opus48",
+  "llm_gpt56_sol",
+  "openrouter_qwen36_flash",
+])
+
 const CATALOG_HIDDEN_BOT_USERNAMES = new Set([
   "openrouter_gemini31_lite",
+  ...LEGACY_MODEL_BOT_USERNAMES,
 ])
+
+export function botReasoningLevel(bot) {
+  return [
+    bot?.llm_reasoning_level,
+    bot?.llm_reasoning_effort,
+    bot?.reasoning_level,
+    bot?.reasoning_effort,
+    bot?.default_reasoning_level,
+  ].map((value) => String(value || "").trim().toLowerCase()).find(Boolean) || ""
+}
 
 export function botRating(bot) {
   const elo = Number(bot?.elo)
@@ -193,7 +221,7 @@ function tierAllowsBot(viewerTier, requiredTier) {
 }
 
 export function botAvailableForViewer(bot, viewerTier) {
-  if (isInactiveBot(bot)) return false
+  if (isInactiveBot(bot) || LEGACY_MODEL_BOT_USERNAMES.has(String(bot?.username || "").trim().toLowerCase())) return false
   if (typeof bot?.available_for_viewer === "boolean") {
     return bot.available_for_viewer
   }

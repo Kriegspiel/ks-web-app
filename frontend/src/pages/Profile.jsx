@@ -4,7 +4,7 @@ import EloChart from "../components/EloChart"
 import { ELO_TRACKS } from "../components/eloChartConstants"
 import TierBadge from "../components/TierBadge"
 import VersionStamp from "../components/VersionStamp"
-import { botAvailableForViewer, isInactiveBot, subscriptionPathForTierCode, viewerBotAccessTier } from "../botCatalog"
+import { botAvailableForViewer, botReasoningLevel, isInactiveBot, subscriptionPathForTierCode, viewerBotAccessTier } from "../botCatalog"
 import { useAuth } from "../hooks/useAuth"
 import { createGame, getBots, userApi } from "../services/api"
 import { formatUtcDate } from "../utils/dateTime"
@@ -288,21 +288,29 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     code: "T5",
     model: "GPT-5.5",
     tierName: "Master",
-    reasoningLevel: "none",
+    reasoningLevel: "xhigh",
     className: "profile-tier-card--tier5",
   },
-  llm_gpt56_luna: {
+  llm_gpt_luna: {
     code: "T2",
     model: "GPT Luna",
     tierName: "Club",
-    reasoningLevel: "none",
+    reasoningLevel: "max",
     className: "profile-tier-card--tier2",
   },
-  llm_sonnet5: {
+  llm_sonnet: {
     code: "T3",
     model: "Claude Sonnet",
+    reasoningLevel: "max",
     tierName: "Strong",
     className: "profile-tier-card--tier3",
+  },
+  llm_grok: {
+    code: "T5",
+    model: "Grok",
+    tierName: "Master",
+    reasoningLevel: "xhigh",
+    className: "profile-tier-card--tier5",
   },
   llm_grok45: {
     code: "T5",
@@ -316,9 +324,10 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
-  llm_gemini35_flash: {
+  llm_gemini_flash: {
     code: "T3",
     model: "Gemini Flash",
+    reasoningLevel: "high",
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
@@ -328,9 +337,10 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
-  llm_qwen36_flash: {
+  llm_qwen_flash: {
     code: "T3",
     model: "Qwen Flash",
+    reasoningLevel: "xhigh",
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
@@ -358,9 +368,10 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
-  llm_opus48: {
+  llm_opus: {
     code: "T4",
     model: "Claude Opus",
+    reasoningLevel: "max",
     tierName: "Expert",
     className: "profile-tier-card--tier4",
   },
@@ -407,18 +418,18 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     tierName: "Expert",
     className: "profile-tier-card--tier4",
   },
-  llm_gpt56_sol: {
+  llm_gpt_sol: {
     code: "T4",
     model: "GPT Sol",
     tierName: "Expert",
-    reasoningLevel: "low",
+    reasoningLevel: "max",
     className: "profile-tier-card--tier4",
   },
   llm_gpt55_pro: {
     code: "T5",
     model: "GPT-5.5 Pro",
     tierName: "Master",
-    reasoningLevel: "medium",
+    reasoningLevel: "xhigh",
     className: "profile-tier-card--tier5",
   },
   llm_qwen37_max: {
@@ -600,7 +611,7 @@ function tierDetailsForProfile(profile) {
     const username = String(profile?.username || "").trim().toLowerCase()
     const tier = BOT_TIER_DETAILS_BY_USERNAME[username] ?? BOT_LLM_TIER_DETAILS_BY_USERNAME[username]
     if (!tier) return null
-    const reasoningLabel = formatReasoningLabel(tier.reasoningLevel)
+    const reasoningLabel = formatReasoningLabel(botReasoningLevel(profile) || tier.reasoningLevel)
     return {
       code: tier.code,
       name: tier.tierName ?? tier.name ?? "Bot",

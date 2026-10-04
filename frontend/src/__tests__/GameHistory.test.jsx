@@ -7,6 +7,7 @@ import GameHistoryPage, { __gameHistoryInternals as h } from "../pages/GameHisto
 
 const mockApi = vi.hoisted(() => ({
   userApi: {
+    getProfile: vi.fn(),
     getGameHistory: vi.fn(),
     getGameHistoryFilterOptions: vi.fn(),
   },
@@ -20,6 +21,8 @@ vi.mock("../components/VersionStamp", () => ({
 afterEach(() => cleanup())
 
 beforeEach(() => {
+  mockApi.userApi.getProfile.mockReset()
+  mockApi.userApi.getProfile.mockResolvedValue({})
   mockApi.userApi.getGameHistory.mockReset()
   mockApi.userApi.getGameHistoryFilterOptions.mockReset()
   mockApi.userApi.getGameHistoryFilterOptions.mockResolvedValue({ filter_options: {} })
@@ -66,6 +69,35 @@ function expectedHistoryOptions({ sort = DEFAULT_SORT, filters = {} } = {}) {
 }
 
 describe("GameHistoryPage", () => {
+  it("canonicalizes_a_legacy_history_heading_and_back_link_without_losing_filters_or_reviews", async () => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({ username: "llm_gpt_sol" })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({
+      games: [{ game_code: "OLD123", opponent: "amy", result: "win" }],
+      pagination: { page: 1, pages: 1, total: 1 },
+    })
+    renderHistory("/user/llm_gpt56_sol/games?result=win")
+
+    await screen.findByRole("heading", { name: "llm_gpt_sol's game history" })
+    expect(screen.getByRole("link", { name: "Back to user" })).toHaveAttribute("href", "/user/llm_gpt_sol")
+    expect(mockApi.userApi.getProfile).toHaveBeenCalledWith("llm_gpt56_sol")
+    expect(mockApi.userApi.getGameHistory).toHaveBeenCalledWith("llm_gpt56_sol", 1, 100, expectedHistoryOptions({ filters: { result: ["win"] } }))
+    expect(screen.getByTestId("location")).toHaveTextContent("/user/llm_gpt56_sol/games?result=win")
+    fireEvent.click((await screen.findByRole("link", { name: "amy" })).closest("tr"))
+    expect(await screen.findByText("Review opened")).toBeInTheDocument()
+    expect(screen.getByTestId("location")).toHaveTextContent("/game/OLD123/review")
+  })
+
+  it("keeps_history_available_if_optional_profile_metadata_fails", async () => {
+    mockApi.userApi.getProfile.mockRejectedValueOnce(new Error("Profile lookup unavailable"))
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [], pagination: { page: 1, pages: 0, total: 0 } })
+    renderHistory("/user/legacy_bot/games")
+
+    await screen.findByText("No games found on this page.")
+    expect(screen.getByRole("heading", { name: "legacy_bot's game history" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Back to user" })).toHaveAttribute("href", "/user/legacy_bot")
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
   it("covers_game_history_helper_fallbacks", () => {
     const params = new URLSearchParams("sort=unknown&dir=sideways&opponent=bot%3Arandobot,human%3Aamy")
 

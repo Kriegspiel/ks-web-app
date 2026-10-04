@@ -4,6 +4,7 @@ import {
   botPickerLimitLabel,
   botPickerName,
   botRating,
+  botReasoningLevel,
   botRequiredTierCode,
   botTierCode,
   compareBotPickerBots,
@@ -17,6 +18,33 @@ import {
 } from "../botCatalog"
 
 describe("botCatalog", () => {
+  it.each([
+    ["llm_gpt_luna", "T2"], ["llm_sonnet", "T3"], ["llm_gemini_flash", "T3"],
+    ["llm_qwen_flash", "T3"], ["llm_opus", "T4"], ["llm_gpt_sol", "T4"], ["llm_grok", "T5"],
+  ])("offers_canonical_%s_at_%s", (username, tier) => {
+    expect(botTierCode({ username })).toBe(tier)
+    expect(isCatalogHiddenBot({ username, status: "active" })).toBe(false)
+    expect(botAvailableForViewer({ username }, "tier5")).toBe(true)
+  })
+
+  it.each([
+    "llm_gpt56_luna", "llm_sonnet5", "llm_gemini35_flash", "llm_qwen36_flash",
+    "llm_opus48", "llm_gpt56_sol", "openrouter_qwen36_flash",
+  ])("keeps_legacy_%s_out_of_catalog_offerings", (username) => {
+    expect(isCatalogHiddenBot({ username, status: "active" })).toBe(true)
+    expect(botAvailableForViewer({ username, available_for_viewer: true }, "tier5")).toBe(false)
+  })
+
+  it("prefers_live_reasoning_and_normalizes_compatibility_fields", () => {
+    for (const key of ["llm_reasoning_level", "llm_reasoning_effort", "reasoning_level", "reasoning_effort", "default_reasoning_level"]) {
+      expect(botReasoningLevel({ [key]: " XHIGH " })).toBe("xhigh")
+    }
+    expect(botReasoningLevel({ llm_reasoning_level: " none ", reasoning_effort: "max" })).toBe("none")
+    expect(botReasoningLevel({ llm_reasoning_level: " ", reasoning_effort: "enabled" })).toBe("enabled")
+    expect(botReasoningLevel({ llm_reasoning_level: null })).toBe("")
+    expect(botReasoningLevel(null)).toBe("")
+  })
+
   it("normalizes_bot_tiers_and_viewer_access", () => {
     expect(botTierCode({ username: " LLM_GPT55 " })).toBe("T5")
     expect(botTierCode({ username: "mystery_bot" })).toBe("T0")
@@ -49,12 +77,12 @@ describe("botCatalog", () => {
   })
 
   it("moves_upgraded_openai_accounts_to_the_requested_tiers", () => {
-    expect(botTierCode({ username: "llm_gpt56_luna" })).toBe("T2")
-    expect(botAvailableForViewer({ username: "llm_gpt56_luna" }, "tier2")).toBe(true)
-    expect(botTierCode({ username: "llm_gpt56_sol" })).toBe("T4")
-    expect(botAvailableForViewer({ username: "llm_gpt56_sol" }, "tier3")).toBe(false)
-    expect(botAvailableForViewer({ username: "llm_gpt56_sol" }, "tier4")).toBe(true)
-    expect(subscriptionPathForBot({ username: "llm_gpt56_sol" })).toBe("/subscription?tier=tier4")
+    expect(botTierCode({ username: "llm_gpt_luna" })).toBe("T2")
+    expect(botAvailableForViewer({ username: "llm_gpt_luna" }, "tier2")).toBe(true)
+    expect(botTierCode({ username: "llm_gpt_sol" })).toBe("T4")
+    expect(botAvailableForViewer({ username: "llm_gpt_sol" }, "tier3")).toBe(false)
+    expect(botAvailableForViewer({ username: "llm_gpt_sol" }, "tier4")).toBe(true)
+    expect(subscriptionPathForBot({ username: "llm_gpt_sol" })).toBe("/subscription?tier=tier4")
   })
 
   it.each([
@@ -77,7 +105,7 @@ describe("botCatalog", () => {
     const bot = { username: "custom_bot", status: " Inactive ", available_for_viewer: true }
     expect(isCatalogHiddenBot(bot)).toBe(true)
     expect(botAvailableForViewer(bot, "tier6")).toBe(false)
-    expect(isInactiveBot({ username: "llm_sonnet5", status: "active" })).toBe(false)
+    expect(isInactiveBot({ username: "llm_sonnet", status: "active" })).toBe(false)
   })
 
   it("formats_and_sorts_bot_picker_entries", () => {
