@@ -107,6 +107,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_haiku: {
     code: "T2",
     model: "Claude Haiku 4.5",
+    reasoningLevel: "enabled",
     tierName: "Club",
     className: "profile-tier-card--tier2",
   },
@@ -137,6 +138,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_gemini31_lite: {
     code: "T3",
     model: "Gemini 3.1 Flash-Lite",
+    reasoningLevel: "high",
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
@@ -149,6 +151,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_gptoss120b: {
     code: "T2",
     model: "GPT-OSS 120B",
+    reasoningLevel: "high",
     tierName: "Club",
     className: "profile-tier-card--tier2",
   },
@@ -203,6 +206,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_mistral_medium35: {
     code: "T3",
     model: "Mistral Medium 3.5",
+    reasoningLevel: "high",
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
@@ -221,6 +225,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_gemma4_31b: {
     code: "T2",
     model: "Gemma 4 31B",
+    reasoningLevel: "enabled",
     tierName: "Club",
     className: "profile-tier-card--tier2",
   },
@@ -239,12 +244,14 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_nemotron_nano: {
     code: "T2",
     model: "Nemotron Nano",
+    reasoningLevel: "enabled",
     tierName: "Club",
     className: "profile-tier-card--tier2",
   },
   llm_nemotron_super: {
     code: "T2",
     model: "Nemotron Super",
+    reasoningLevel: "medium",
     tierName: "Club",
     className: "profile-tier-card--tier2",
   },
@@ -269,6 +276,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_qwen37_plus: {
     code: "T2",
     model: "Qwen 3.7 Plus",
+    reasoningLevel: "enabled",
     tierName: "Club",
     className: "profile-tier-card--tier2",
   },
@@ -281,6 +289,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_minimax_m3: {
     code: "T2",
     model: "MiniMax M3",
+    reasoningLevel: "enabled",
     tierName: "Club",
     className: "profile-tier-card--tier2",
   },
@@ -334,6 +343,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_nemotron_ultra: {
     code: "T3",
     model: "Nemotron Ultra",
+    reasoningLevel: "high",
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
@@ -397,6 +407,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_gemini31_pro_preview: {
     code: "T4",
     model: "Gemini 3.1 Pro Preview",
+    reasoningLevel: "high",
     tierName: "Expert",
     className: "profile-tier-card--tier4",
   },
@@ -415,6 +426,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_hermes4_405b: {
     code: "T4",
     model: "Hermes 4 405B",
+    reasoningLevel: "enabled",
     tierName: "Expert",
     className: "profile-tier-card--tier4",
   },

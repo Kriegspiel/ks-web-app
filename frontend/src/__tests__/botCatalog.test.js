@@ -68,6 +68,7 @@ describe("botCatalog", () => {
     expect(botAvailableForViewer({ username: "llm_gpt55" }, "tier4")).toBe(false)
     expect(botAvailableForViewer({ username: "llm_gpt55" }, "tier5")).toBe(true)
     expect(botAvailableForViewer({ username: "randobot" }, "")).toBe(false)
+    expect(botAvailableForViewer(null, "guest")).toBe(true)
 
     expect(botRequiredTierCode({ required_tier: "tier3", username: "randobot" })).toBe("T3")
     expect(botRequiredTierCode({ required_tier: "unknown", username: "llm_gpt55" })).toBe("T5")

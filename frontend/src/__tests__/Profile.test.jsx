@@ -340,7 +340,7 @@ describe("ProfilePage", () => {
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByRole("link", { name: "Bot tier: Tier T2 Club. View subscription options" })).toHaveAttribute("href", "/subscription")
     expect(screen.getByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T2")).toHaveClass("tier-badge", "tier-badge--t2", "profile-tier-card__code")
-    expect(screen.getByText("GPT-OSS 120B model bot for T2 Club.")).toBeInTheDocument()
+    expect(screen.getByText("GPT-OSS 120B model bot for T2 Club (reasoning: high).")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "This user is bot" })).toBeInTheDocument()
     expect(screen.getByText(/On Kriegspiel\.org we allow bots\./i)).toBeInTheDocument()
     expect(screen.getByText(/You also can create your own bot – more bots, more fun\./i)).toBeInTheDocument()
@@ -894,7 +894,7 @@ describe("ProfilePage", () => {
   })
 
   it.each([
-    ["llm_qwen37_plus", "Tier T2 Club", "T2", "tier-badge--t2", "Qwen 3.7 Plus model bot for T2 Club."],
+    ["llm_qwen37_plus", "Tier T2 Club", "T2", "tier-badge--t2", "Qwen 3.7 Plus model bot for T2 Club (reasoning: enabled)."],
     ["llm_sonnet", "Tier T3 Strong", "T3", "tier-badge--t3", "Claude Sonnet model bot for T3 Strong (reasoning: max)."],
     ["llm_opus", "Tier T4 Expert", "T4", "tier-badge--t4", "Claude Opus model bot for T4 Expert (reasoning: max)."],
     ["llm_gemini_flash", "Tier T3 Strong", "T3", "tier-badge--t3", "Gemini Flash model bot for T3 Strong (reasoning: high)."],
@@ -940,7 +940,7 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Tier T3 Strong" })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T3")).toHaveClass("tier-badge", "tier-badge--t3", "profile-tier-card__code")
-    expect(screen.getByText("Nemotron Ultra model bot for T3 Strong.")).toBeInTheDocument()
+    expect(screen.getByText("Nemotron Ultra model bot for T3 Strong (reasoning: high).")).toBeInTheDocument()
   })
 
   it("marks_mistral_large3_bot_as_tier_three", async () => {
@@ -1099,7 +1099,7 @@ describe("ProfilePage", () => {
     await screen.findByRole("heading", { name: "llm_haiku" })
     expect(screen.getByText("Member since Unknown.")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
-    expect(screen.getByText("Claude Haiku 4.5 model bot for T2 Club.")).toBeInTheDocument()
+    expect(screen.getByText("Claude Haiku 4.5 model bot for T2 Club (reasoning: enabled).")).toBeInTheDocument()
     expect(screen.getByText(/Email address of this bot owner is unknown\./i)).toBeInTheDocument()
     expect(screen.getByText("No completed games yet.")).toBeInTheDocument()
     expect(screen.getByText(/draw vs unknown/i)).toBeInTheDocument()

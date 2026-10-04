@@ -13,7 +13,8 @@ need version entries unless they ship a user-visible change.
   account and show its canonical name.
 - **Configured reasoning**: show the highest supported reasoning level for
   upgraded bots and prefer the live persisted level for all active models,
-  including providers that report reasoning as enabled.
+  including providers that report reasoning as enabled. The anonymous catalog
+  carries the confirmed defaults for all published models.
 
 ## ks-web-app frontend v. 1.5.1
 

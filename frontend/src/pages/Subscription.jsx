@@ -46,21 +46,21 @@ const T1_BOTS = [
 ]
 
 const T2_BOTS = [
-  ["OpenAI", [subscriptionBot("llm_gpt_luna", "GPT Luna", "max"), subscriptionBot("llm_gptoss120b", "GPT-OSS 120B")]],
-  ["Anthropic", [subscriptionBot("llm_haiku", "Claude Haiku")]],
+  ["OpenAI", [subscriptionBot("llm_gpt_luna", "GPT Luna", "max"), subscriptionBot("llm_gptoss120b", "GPT-OSS 120B", "high")]],
+  ["Anthropic", [subscriptionBot("llm_haiku", "Claude Haiku", "enabled")]],
   ["Meta", [subscriptionBot("llm_llama4_maverick", "Llama 4 Maverick")]],
-  ["Google", [subscriptionBot("llm_gemma4_31b", "Gemma 4 31B")]],
-  ["Nvidia", [subscriptionBot("llm_nemotron_super", "Nemotron Super")]],
-  ["Alibaba", [subscriptionBot("llm_qwen_plus", "Qwen Plus"), subscriptionBot("llm_qwen37_plus", "Qwen 3.7 Plus")]],
-  ["MiniMax", [subscriptionBot("llm_minimax_m3", "MiniMax M3")]],
+  ["Google", [subscriptionBot("llm_gemma4_31b", "Gemma 4 31B", "enabled")]],
+  ["Nvidia", [subscriptionBot("llm_nemotron_super", "Nemotron Super", "medium")]],
+  ["Alibaba", [subscriptionBot("llm_qwen_plus", "Qwen Plus"), subscriptionBot("llm_qwen37_plus", "Qwen 3.7 Plus", "enabled")]],
+  ["MiniMax", [subscriptionBot("llm_minimax_m3", "MiniMax M3", "enabled")]],
   ["Microsoft", [subscriptionBot("llm_phi4", "Phi 4")]],
 ]
 
 const T3_BOTS = [
   ["Anthropic", [subscriptionBot("llm_sonnet", "Claude Sonnet", "max")]],
-  ["Google", [subscriptionBot("llm_gemini31_lite", "Gemini 3.1 Flash-Lite"), subscriptionBot("llm_gemini_flash", "Gemini Flash", "high")]],
-  ["Mistral AI", [subscriptionBot("llm_mistral_large3", "Mistral Large 3"), subscriptionBot("llm_mistral_medium35", "Mistral Medium 3.5")]],
-  ["Nvidia", [subscriptionBot("llm_nemotron_ultra", "Nemotron Ultra")]],
+  ["Google", [subscriptionBot("llm_gemini31_lite", "Gemini 3.1 Flash-Lite", "high"), subscriptionBot("llm_gemini_flash", "Gemini Flash", "high")]],
+  ["Mistral AI", [subscriptionBot("llm_mistral_large3", "Mistral Large 3"), subscriptionBot("llm_mistral_medium35", "Mistral Medium 3.5", "high")]],
+  ["Nvidia", [subscriptionBot("llm_nemotron_ultra", "Nemotron Ultra", "high")]],
   ["Alibaba", [subscriptionBot("llm_qwen_flash", "Qwen Flash", "xhigh")]],
   ["Nous Research", [subscriptionBot("llm_hermes3_70b", "Hermes 3 70B")]],
 ]
@@ -68,8 +68,8 @@ const T3_BOTS = [
 const T4_BOTS = [
   ["Anthropic", [subscriptionBot("llm_opus", "Claude Opus", "max")]],
   ["OpenAI", [subscriptionBot("llm_gpt_sol", "GPT Sol", "max")]],
-  ["Google", [subscriptionBot("llm_gemini31_pro_preview", "Gemini 3.1 Pro Preview")]],
-  ["Nous Research", [subscriptionBot("llm_hermes4_405b", "Hermes 4 405B")]],
+  ["Google", [subscriptionBot("llm_gemini31_pro_preview", "Gemini 3.1 Pro Preview", "high")]],
+  ["Nous Research", [subscriptionBot("llm_hermes4_405b", "Hermes 4 405B", "enabled")]],
 ]
 
 const T5_BOTS = [
