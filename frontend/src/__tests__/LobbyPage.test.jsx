@@ -95,6 +95,21 @@ function botOptionLabels() {
 }
 
 describe("LobbyPage", () => {
+  it("does_not_offer_newly_inactive_bots_even_when_the_response_marks_them_available", async () => {
+    const retired = ["llm_nemotron_super", "llm_nemotron_nano", "llm_qwen_plus", "llm_qwen37_plus", "llm_minimax_m3", "llm_phi4", "llm_mistral_large3", "llm_mistral_medium35", "llm_nemotron_ultra", "llm_qwen_flash", "llm_hermes3_70b", "llm_hermes4_405b"]
+    mockApi.getBots.mockResolvedValue({ bots: [
+      ...retired.map((username) => ({ username, bot_id: username, display_name: username, status: "inactive", available_for_viewer: true, llm_backed: true })),
+      { username: "randobot", bot_id: "bot-1", display_name: "Random Bot", elo: 1201 },
+    ] })
+    renderPage()
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    await openBotPicker()
+
+    expect(botOptionLabels()).toEqual(["1201 - Random Bot"])
+    for (const username of retired) expect(screen.queryByRole("option", { name: new RegExp(username) })).not.toBeInTheDocument()
+    expect(mockApi.createGame).not.toHaveBeenCalled()
+  })
+
   it("covers_lobby_helper_fallbacks", () => {
     expect(h.normalizeRuleVariant(" mystery ")).toBe("berkeley_any")
     expect(h.normalizeBotDescription(null)).toBe("")
