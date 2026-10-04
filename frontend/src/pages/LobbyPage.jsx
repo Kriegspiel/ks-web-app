@@ -70,15 +70,6 @@ function normalizeBotDescription(bot) {
   const description = String(bot.description || "").trim()
 
   if (
-    username === "llm_gpt45nano" ||
-    username === "llm_gptnano" ||
-    displayName === "llm gpt-4.5 nano (bot)" ||
-    displayName === "llm gpt-nano (bot)"
-  ) {
-    return "LLM GPT-Nano (bot) Kriegspiel model bot."
-  }
-
-  if (
     username === "randobot" ||
     displayName === "random bot" ||
     description === "Plays random legal-looking moves"

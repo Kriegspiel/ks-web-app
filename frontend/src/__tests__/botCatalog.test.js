@@ -10,6 +10,7 @@ import {
   formatBotPickerLabel,
   groupBotsByTier,
   isCatalogHiddenBot,
+  isInactiveBot,
   subscriptionPathForBot,
   subscriptionPathForTierCode,
   viewerBotAccessTier,
@@ -45,6 +46,38 @@ describe("botCatalog", () => {
     expect(subscriptionPathForTierCode("T1")).toBe("/subscription")
     expect(subscriptionPathForTierCode("T5")).toBe("/subscription?tier=tier5")
     expect(subscriptionPathForBot({ required_tier: "tier4" })).toBe("/subscription?tier=tier4")
+  })
+
+  it("moves_upgraded_openai_accounts_to_the_requested_tiers", () => {
+    expect(botTierCode({ username: "llm_gpt56_luna" })).toBe("T2")
+    expect(botAvailableForViewer({ username: "llm_gpt56_luna" }, "tier2")).toBe(true)
+    expect(botTierCode({ username: "llm_gpt56_sol" })).toBe("T4")
+    expect(botAvailableForViewer({ username: "llm_gpt56_sol" }, "tier3")).toBe(false)
+    expect(botAvailableForViewer({ username: "llm_gpt56_sol" }, "tier4")).toBe(true)
+    expect(subscriptionPathForBot({ username: "llm_gpt56_sol" })).toBe("/subscription?tier=tier4")
+  })
+
+  it.each([
+    "llm_gpt45nano", "llm_gptnano", "llm_gpt56_terra",
+    "llm_gemini25_flash", "llm_gemini25_lite", "openrouter_gemini25_lite",
+    "llm_gemma3_4b", "llm_gemma3_27b", "llm_llama31_8b", "openrouter_llama31_8b",
+    "llm_llama4_scout", "llm_mistral_nemo", "llm_hermes4_70b", "llm_mistral_small32",
+    "llm_glm45_air", "llm_glm47_flash", "llm_glm52", "llm_grok45", "llm_qwen37_max",
+    "llm_deepseek_v32", "llm_deepseekv4_flash", "bot_deepseekv4_pro",
+    "openrouter_deepseekv4_flash", "openrouter_deepseekv4_pro",
+    "llm_kimi_k25", "llm_kimi_k2_thinking", "llm_kimi_k27_code",
+  ])("hides_retired_%s_even_if_an_old_response_marks_it_available", (username) => {
+    const bot = { username, available_for_viewer: true }
+    expect(isInactiveBot(bot)).toBe(true)
+    expect(isCatalogHiddenBot(bot)).toBe(true)
+    expect(botAvailableForViewer(bot, "tier6")).toBe(false)
+  })
+
+  it("respects_server_deactivation_for_other_accounts", () => {
+    const bot = { username: "custom_bot", status: " Inactive ", available_for_viewer: true }
+    expect(isCatalogHiddenBot(bot)).toBe(true)
+    expect(botAvailableForViewer(bot, "tier6")).toBe(false)
+    expect(isInactiveBot({ username: "llm_sonnet5", status: "active" })).toBe(false)
   })
 
   it("formats_and_sorts_bot_picker_entries", () => {

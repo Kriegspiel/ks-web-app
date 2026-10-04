@@ -55,6 +55,27 @@ function renderProfile(path = "/user/fil") {
 }
 
 describe("ProfilePage", () => {
+  it.each(["llm_gptnano", "llm_gpt56_terra", "llm_grok45", "llm_kimi_k25", "custom_bot"])("keeps_inactive_%s_history_reviewable_without_offering_a_challenge", async (username) => {
+    mockAuthState.value.user = { username: "playerone", llm_bot_tier: "tier5" }
+    mockApi.userApi.getProfile.mockResolvedValueOnce({ username, role: "bot", status: "inactive", stats: {} })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [
+      { game_id: "archive-1", game_code: "OLD123", result: "win", opponent: "playerone", rule_variant: "berkeley" },
+    ] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+    mockApi.getBots.mockResolvedValue({ bots: [{ username, bot_id: "old-id", available_for_viewer: true }] })
+
+    renderProfile(`/user/${username}`)
+
+    await screen.findByRole("heading", { name: username })
+    const challengeCard = screen.getByRole("region", { name: "Challenge this bot" })
+    expect(within(challengeCard).getByText("This bot is inactive. Its profile, game history, and completed-game reviews remain available.")).toBeInTheDocument()
+    expect(within(challengeCard).queryByRole("button", { name: "Play game" })).not.toBeInTheDocument()
+    expect(within(challengeCard).queryByRole("link", { name: "View tiers" })).not.toBeInTheDocument()
+    expect(await screen.findByRole("link", { name: "Review" })).toHaveAttribute("href", "/game/OLD123/review")
+    expect(mockApi.getBots).not.toHaveBeenCalled()
+    expect(mockApi.createGame).not.toHaveBeenCalled()
+  })
+
   it("covers_profile_helper_fallbacks", () => {
     expect(h.formatDuration(3_600)).toBe("1h")
     expect(h.formatDuration(3_900)).toBe("1h 5m")
@@ -427,9 +448,9 @@ describe("ProfilePage", () => {
     expect(await within(challengeCard).findByRole("alert")).toHaveTextContent("Create failed")
   })
 
-  it("lets_catalog_hidden_mistral_nemo_be_challenged_from_the_profile", async () => {
+  it("lets_a_catalog_hidden_active_alias_be_challenged_from_the_profile", async () => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({
-      username: "llm_mistral_nemo",
+      username: "openrouter_gemini31_lite",
       role: "bot",
       owner_email: "bots@kriegspiel.org",
       member_since: "2026-07-11T00:00:00Z",
@@ -441,20 +462,20 @@ describe("ProfilePage", () => {
     mockApi.getBots.mockResolvedValueOnce({
       bots: [
         {
-          bot_id: "bot-mistral-nemo",
-          username: "llm_mistral_nemo",
-          display_name: "LLM Mistral Nemo (bot)",
+          bot_id: "bot-gemini-lite-alias",
+          username: "openrouter_gemini31_lite",
+          display_name: "OpenRouter Gemini 3.1 Flash-Lite (bot)",
           supported_rule_variants: ["berkeley", "berkeley_any"],
           available_for_viewer: true,
         },
       ],
     })
-    mockApi.createGame.mockResolvedValueOnce({ game_code: "NEMO12", state: "active" })
+    mockApi.createGame.mockResolvedValueOnce({ game_code: "FLASH1", state: "active" })
 
-    renderProfile("/user/llm_mistral_nemo")
+    renderProfile("/user/openrouter_gemini31_lite")
 
-    await screen.findByRole("heading", { name: "llm_mistral_nemo" })
-    await waitFor(() => expect(mockApi.getBots).toHaveBeenCalledWith({ profileUsername: "llm_mistral_nemo" }))
+    await screen.findByRole("heading", { name: "openrouter_gemini31_lite" })
+    await waitFor(() => expect(mockApi.getBots).toHaveBeenCalledWith({ profileUsername: "openrouter_gemini31_lite" }))
     const challengeCard = await screen.findByRole("region", { name: "Challenge this bot" })
     await within(challengeCard).findByRole("option", { name: "Berkeley" })
 
@@ -463,7 +484,7 @@ describe("ProfilePage", () => {
     await waitFor(() => {
       expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({
         opponent_type: "bot",
-        bot_id: "bot-mistral-nemo",
+        bot_id: "bot-gemini-lite-alias",
       }))
     })
   })
@@ -824,7 +845,7 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Tier T3 Strong" })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T3")).toHaveClass("tier-badge", "tier-badge--t3", "profile-tier-card__code")
-    expect(screen.getByText("Qwen3.6 Flash model bot for T3 Strong.")).toBeInTheDocument()
+    expect(screen.getByText("Qwen Flash model bot for T3 Strong.")).toBeInTheDocument()
   })
 
   it("marks_qwen_plus_bot_as_tier_two", async () => {
@@ -848,10 +869,10 @@ describe("ProfilePage", () => {
 
   it.each([
     ["llm_qwen37_plus", "Tier T2 Club", "T2", "tier-badge--t2", "Qwen 3.7 Plus model bot for T2 Club."],
-    ["llm_gpt56_luna", "Tier T3 Strong", "T3", "tier-badge--t3", "GPT-5.6 Luna model bot for T3 Strong (reasoning: no)."],
+    ["llm_gpt56_luna", "Tier T2 Club", "T2", "tier-badge--t2", "GPT Luna model bot for T2 Club (reasoning: no)."],
     ["llm_gpt56_terra", "Tier T4 Expert", "T4", "tier-badge--t4", "GPT-5.6 Terra model bot for T4 Expert (reasoning: no)."],
     ["llm_gpt55", "Tier T5 Master", "T5", "tier-badge--t5", "GPT-5.5 model bot for T5 Master (reasoning: no)."],
-    ["llm_gpt56_sol", "Tier T5 Master", "T5", "tier-badge--t5", "GPT-5.6 Sol model bot for T5 Master (reasoning: no)."],
+    ["llm_gpt56_sol", "Tier T4 Expert", "T4", "tier-badge--t4", "GPT Sol model bot for T4 Expert (reasoning: low)."],
     ["llm_gpt55_pro", "Tier T5 Master", "T5", "tier-badge--t5", "GPT-5.5 Pro model bot for T5 Master (reasoning: medium)."],
   ])("marks_%s_with_the_configured_llm_tier", async (username, heading, code, badgeClass, description) => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({

@@ -4,7 +4,7 @@ import EloChart from "../components/EloChart"
 import { ELO_TRACKS } from "../components/eloChartConstants"
 import TierBadge from "../components/TierBadge"
 import VersionStamp from "../components/VersionStamp"
-import { botAvailableForViewer, subscriptionPathForTierCode, viewerBotAccessTier } from "../botCatalog"
+import { botAvailableForViewer, isInactiveBot, subscriptionPathForTierCode, viewerBotAccessTier } from "../botCatalog"
 import { useAuth } from "../hooks/useAuth"
 import { createGame, getBots, userApi } from "../services/api"
 import { formatUtcDate } from "../utils/dateTime"
@@ -292,15 +292,15 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     className: "profile-tier-card--tier5",
   },
   llm_gpt56_luna: {
-    code: "T3",
-    model: "GPT-5.6 Luna",
-    tierName: "Strong",
+    code: "T2",
+    model: "GPT Luna",
+    tierName: "Club",
     reasoningLevel: "none",
-    className: "profile-tier-card--tier3",
+    className: "profile-tier-card--tier2",
   },
   llm_sonnet5: {
     code: "T3",
-    model: "Claude Sonnet 5",
+    model: "Claude Sonnet",
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
@@ -318,7 +318,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   },
   llm_gemini35_flash: {
     code: "T3",
-    model: "Gemini 3.5 Flash",
+    model: "Gemini Flash",
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
@@ -330,13 +330,13 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   },
   llm_qwen36_flash: {
     code: "T3",
-    model: "Qwen3.6 Flash",
+    model: "Qwen Flash",
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
   openrouter_qwen36_flash: {
     code: "T3",
-    model: "Qwen3.6 Flash",
+    model: "Qwen Flash",
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
@@ -360,7 +360,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   },
   llm_opus48: {
     code: "T4",
-    model: "Claude Opus 4.8",
+    model: "Claude Opus",
     tierName: "Expert",
     className: "profile-tier-card--tier4",
   },
@@ -408,11 +408,11 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     className: "profile-tier-card--tier4",
   },
   llm_gpt56_sol: {
-    code: "T5",
-    model: "GPT-5.6 Sol",
-    tierName: "Master",
-    reasoningLevel: "none",
-    className: "profile-tier-card--tier5",
+    code: "T4",
+    model: "GPT Sol",
+    tierName: "Expert",
+    reasoningLevel: "low",
+    className: "profile-tier-card--tier4",
   },
   llm_gpt55_pro: {
     code: "T5",
@@ -702,7 +702,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const botProfile = profile?.role === "bot" || profile?.is_bot
-    if (!botProfile) {
+    if (!botProfile || isInactiveBot(profile)) {
       setChallengeBots([])
       setChallengeBotsProfileUsername("")
       setChallengeBotsError("")
@@ -743,7 +743,7 @@ export default function ProfilePage() {
     return () => {
       cancelled = true
     }
-  }, [profile?.is_bot, profile?.role, profile?.username, username])
+  }, [profile, username])
 
   const stats = useMemo(() => {
     const source = profile?.stats ?? {}
@@ -767,6 +767,7 @@ export default function ProfilePage() {
   const isOwnGuestProfile = user?.is_guest === true && profile?.role === "guest" && user?.username === profile?.username
   const convertedUsername = regularNameFromGuest(profile?.username)
   const profileTier = tierDetailsForProfile(profile)
+  const inactiveBotProfile = isBotProfile && (isInactiveBot(profile) || profileTier?.code === "TD")
   const profileTierLabel = profileTier?.ariaLabel || "Player tier"
   const profileTierSubscriptionPath = profileTier ? subscriptionPathForTierCode(profileTier.code) : "/subscription"
   const viewerTier = viewerBotAccessTier(user)
@@ -775,7 +776,7 @@ export default function ProfilePage() {
     const targetUsername = normalizeUsername(profileUsername)
     return challengeBots.find((bot) => normalizeUsername(bot?.username) === targetUsername) ?? null
   }, [challengeBots, isBotProfile, profileUsername])
-  const challengeBotAvailable = Boolean(challengeBot && botAvailableForViewer(challengeBot, viewerTier))
+  const challengeBotAvailable = Boolean(!inactiveBotProfile && challengeBot && botAvailableForViewer(challengeBot, viewerTier))
   const challengeRuleVariants = useMemo(
     () => (challengeBotAvailable ? botSupportedRuleVariants(challengeBot) : []),
     [challengeBot, challengeBotAvailable],
@@ -1023,7 +1024,9 @@ export default function ProfilePage() {
       {isBotProfile ? (
         <section className="profile-card profile-challenge-card" aria-label="Challenge this bot">
           <h2>Challenge this bot</h2>
-          {challengeBotsLoading || !challengeAvailabilityReady ? (
+          {inactiveBotProfile ? (
+            <p>This bot is inactive. Its profile, game history, and completed-game reviews remain available.</p>
+          ) : challengeBotsLoading || !challengeAvailabilityReady ? (
             <p>Checking challenge availability…</p>
           ) : challengeBotsError ? (
             <p role="alert" className="auth-error">{challengeBotsError}</p>

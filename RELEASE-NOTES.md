@@ -5,6 +5,15 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.5.1
+
+- **LLM catalog refresh**: use stable GPT Luna, GPT Sol, Claude Sonnet,
+  Claude Opus, Gemini Flash, and Qwen Flash names while preserving existing
+  profile URLs; place Luna in T2 Club and Sol in T4 Expert.
+- **Inactive bots**: remove sunset models from the subscription and lobby
+  offerings and explain their inactive status on profiles, preserving game
+  history, ratings, and completed-game review links.
+
 ## ks-web-app frontend v. 1.5.0
 
 - **Coordinated Tutor release**: promote the private Tutor experience to the

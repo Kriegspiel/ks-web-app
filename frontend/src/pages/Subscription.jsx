@@ -47,39 +47,29 @@ const T1_BOTS = [
 ]
 
 const T2_BOTS = [
-  ["OpenAI", [subscriptionBot("llm_gptnano", "GPT Nano"), subscriptionBot("llm_gptoss120b", "GPT-OSS 120B")]],
+  ["OpenAI", [subscriptionBot("llm_gpt56_luna", "GPT Luna"), subscriptionBot("llm_gptoss120b", "GPT-OSS 120B")]],
   ["Anthropic", [subscriptionBot("llm_haiku", "Claude Haiku")]],
-  ["DeepSeek", [subscriptionBot("llm_deepseekv4_flash", "DeepSeek V4 Flash"), subscriptionBot("llm_deepseek_v32", "DeepSeek V3.2")]],
   ["Meta", [subscriptionBot("llm_llama4_maverick", "Llama 4 Maverick")]],
-  ["Mistral AI", [subscriptionBot("llm_mistral_small32", "Mistral Small 3.2")]],
   ["Google", [subscriptionBot("llm_gemma4_31b", "Gemma 4 31B")]],
-  ["Z.AI", [subscriptionBot("llm_glm47_flash", "GLM 4.7 Flash"), subscriptionBot("llm_glm45_air", "GLM 4.5 Air")]],
   ["Nvidia", [subscriptionBot("llm_nemotron_super", "Nemotron Super")]],
   ["Alibaba", [subscriptionBot("llm_qwen_plus", "Qwen Plus"), subscriptionBot("llm_qwen37_plus", "Qwen 3.7 Plus")]],
   ["MiniMax", [subscriptionBot("llm_minimax_m3", "MiniMax M3")]],
-  ["Moonshot AI", [subscriptionBot("llm_kimi_k25", "Kimi K2.5")]],
-  ["Nous Research", [subscriptionBot("llm_hermes4_70b", "Hermes 4 70B")]],
   ["Microsoft", [subscriptionBot("llm_phi4", "Phi 4")]],
 ]
 
 const T3_BOTS = [
-  ["OpenAI", [subscriptionBot("llm_gpt56_luna", "GPT-5.6 Luna")]],
-  ["Anthropic", [subscriptionBot("llm_sonnet5", "Claude Sonnet 5")]],
-  ["Google", [subscriptionBot("llm_gemini31_lite", "Gemini 3.1 Flash-Lite"), subscriptionBot("llm_gemini35_flash", "Gemini 3.5 Flash")]],
+  ["Anthropic", [subscriptionBot("llm_sonnet5", "Claude Sonnet")]],
+  ["Google", [subscriptionBot("llm_gemini31_lite", "Gemini 3.1 Flash-Lite"), subscriptionBot("llm_gemini35_flash", "Gemini Flash")]],
   ["Mistral AI", [subscriptionBot("llm_mistral_large3", "Mistral Large 3"), subscriptionBot("llm_mistral_medium35", "Mistral Medium 3.5")]],
   ["Nvidia", [subscriptionBot("llm_nemotron_ultra", "Nemotron Ultra")]],
-  ["Alibaba", [subscriptionBot("llm_qwen36_flash", "Qwen 3.6 Flash")]],
-  ["Moonshot AI", [subscriptionBot("llm_kimi_k2_thinking", "Kimi K2 Thinking")]],
+  ["Alibaba", [subscriptionBot("llm_qwen36_flash", "Qwen Flash")]],
   ["Nous Research", [subscriptionBot("llm_hermes3_70b", "Hermes 3 70B")]],
 ]
 
 const T4_BOTS = [
-  ["Anthropic", [subscriptionBot("llm_opus48", "Claude Opus 4.8")]],
-  ["OpenAI", [subscriptionBot("llm_gpt56_terra", "GPT-5.6 Terra")]],
-  ["DeepSeek", [subscriptionBot("bot_deepseekv4_pro", "DeepSeek V4 Pro")]],
+  ["Anthropic", [subscriptionBot("llm_opus48", "Claude Opus")]],
+  ["OpenAI", [subscriptionBot("llm_gpt56_sol", "GPT Sol", "low")]],
   ["Google", [subscriptionBot("llm_gemini31_pro_preview", "Gemini 3.1 Pro Preview")]],
-  ["Z.AI", [subscriptionBot("llm_glm52", "GLM 5.2")]],
-  ["Moonshot AI", [subscriptionBot("llm_kimi_k27_code", "Kimi K2.7 Code")]],
   ["Nous Research", [subscriptionBot("llm_hermes4_405b", "Hermes 4 405B")]],
 ]
 
@@ -87,13 +77,10 @@ const T5_BOTS = [
   [
     "OpenAI",
     [
-      subscriptionBot("llm_gpt56_sol", "GPT-5.6 Sol"),
       subscriptionBot("llm_gpt55", "GPT-5.5"),
       subscriptionBot("llm_gpt55_pro", "GPT-5.5 Pro", REASONING_MEDIUM),
     ],
   ],
-  ["xAI", [subscriptionBot("llm_grok45", "Grok 4.5")]],
-  ["Alibaba", [subscriptionBot("llm_qwen37_max", "Qwen 3.7 Max")]],
 ]
 
 const SUBSCRIPTION_BOT_CATALOG_GROUPS = [T0_BOTS, T1_BOTS, T2_BOTS, T3_BOTS, T4_BOTS, T5_BOTS]
