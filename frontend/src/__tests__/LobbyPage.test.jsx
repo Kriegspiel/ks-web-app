@@ -64,9 +64,9 @@ beforeEach(() => {
       { bot_id: "bot-24", username: "openrouter_gemini31_lite", display_name: "OpenRouter Gemini 3.1 Flash-Lite (bot)", description: "Legacy Gemini 3.1 Flash-Lite model bot.", elo: 1467, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier3", llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-25", username: "llm_qwen_plus", display_name: "LLM Qwen Plus (bot)", description: "Qwen Plus model bot.", elo: 1390, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier2", llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-26", username: "llm_qwen37_plus", display_name: "LLM Qwen 3.7 Plus (bot)", description: "Qwen 3.7 Plus model bot.", elo: 1395, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
-      { bot_id: "bot-27", username: "llm_gpt56_luna", display_name: "GPT Luna (bot)", description: "GPT Luna model bot.", elo: 1510, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-27", username: "llm_gpt_luna", display_name: "GPT Luna (bot)", description: "GPT Luna model bot.", elo: 1510, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-28", username: "llm_gpt56_terra", display_name: "LLM GPT-5.6 Terra (bot)", description: "GPT-5.6 Terra model bot.", elo: 1610, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
-      { bot_id: "bot-29", username: "llm_gpt56_sol", display_name: "GPT Sol (bot)", description: "GPT Sol model bot.", elo: 1700, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-29", username: "llm_gpt_sol", display_name: "GPT Sol (bot)", description: "GPT Sol model bot.", elo: 1700, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-30", username: "llm_qwen37_max", display_name: "LLM Qwen 3.7 Max (bot)", description: "Qwen 3.7 Max model bot.", elo: 1710, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-31", username: "llm_gpt55_pro", display_name: "LLM GPT-5.5 Pro (bot)", description: "GPT-5.5 Pro model bot.", elo: 1720, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
     ],
@@ -789,7 +789,7 @@ describe("LobbyPage", () => {
       bots: [
         {
           bot_id: "limited-gpt",
-          username: "llm_gpt56_luna",
+          username: "llm_gpt_luna",
           display_name: "GPT Luna (bot)",
           description: "Limited test bot.",
           elo: 1342,
@@ -956,7 +956,7 @@ describe("LobbyPage", () => {
       bots: [
         {
           bot_id: "bot-legacy",
-          username: "llm_gpt56_luna",
+          username: "llm_gpt_luna",
           display_name: "GPT Luna (bot)",
           description: "Legacy metadata.",
           elo: 1229,

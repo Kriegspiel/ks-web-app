@@ -548,6 +548,8 @@ export default function GameHistoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [profileIdentity, setProfileIdentity] = useState(null)
+  const canonicalUsername = profileIdentity?.routeUsername === username ? profileIdentity.username : username
   const [history, setHistory] = useState({ games: [], pagination: { page: 1, pages: 0, total: 0 } })
   const [filterOptionsState, setFilterOptionsState] = useState({
     options: {},
@@ -575,6 +577,22 @@ export default function GameHistoryPage() {
       setSearchParams(new URLSearchParams(canonicalSearchString), { replace: true })
     }
   }, [canonicalSearchString, isSearchCanonical, setSearchParams])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadProfileIdentity() {
+      try {
+        const profile = await userApi.getProfile(username)
+        if (!cancelled) {
+          setProfileIdentity({ routeUsername: username, username: profile?.username || username })
+        }
+      } catch {
+        // Profile metadata is optional; a lookup failure must not hide game history.
+      }
+    }
+    loadProfileIdentity()
+    return () => { cancelled = true }
+  }, [username])
 
   useEffect(() => {
     filterOptionsUsernameRef.current = username
@@ -821,9 +839,9 @@ export default function GameHistoryPage() {
 
   return (
     <main className="page-shell history-page">
-      <h1>{username}&apos;s game history</h1>
+      <h1>{canonicalUsername}&apos;s game history</h1>
       <p className="history-page__back-link-wrap">
-        <Link className="history-page__back-link" to={`/user/${username}`}>Back to user</Link>
+        <Link className="history-page__back-link" to={`/user/${encodeURIComponent(canonicalUsername)}`}>Back to user</Link>
       </p>
       {loading ? <p>Loading history…</p> : null}
       {error ? <p className="auth-error" role="alert">{error}</p> : null}

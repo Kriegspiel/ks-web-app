@@ -5,6 +5,17 @@ history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
 need version entries unless they ship a user-visible change.
 
+## ks-web-app frontend v. 1.5.2
+
+- **Stable bot identities**: link GPT Luna, GPT Sol, Claude Sonnet, Claude
+  Opus, Gemini Flash, Qwen Flash, and the upgraded T5 Grok account through
+  version-free usernames. Legacy profile and history URLs retain the same
+  account and show its canonical name.
+- **Configured reasoning**: show the highest supported reasoning level for
+  upgraded bots and prefer the live persisted level for all active models,
+  including providers that report reasoning as enabled. The anonymous catalog
+  carries the confirmed defaults for all published models.
+
 ## ks-web-app frontend v. 1.5.1
 
 - **LLM catalog refresh**: use stable GPT Luna, GPT Sol, Claude Sonnet,

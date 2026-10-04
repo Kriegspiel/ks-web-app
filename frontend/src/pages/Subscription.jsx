@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router"
 import { loadStripe } from "@stripe/stripe-js"
 import {
   botPickerName,
+  botReasoningLevel,
   botTierCode,
   compareBotPickerBots,
   isCatalogHiddenBot,
@@ -25,8 +26,6 @@ const TIERS = [
 const SUBSCRIPTION_BOT_TIER_ORDER = TIERS.map((tier) => tier.code)
 const REQUESTED_TIER_KEYS = new Set(TIERS.map((tier) => tier.apiTier).filter(Boolean))
 
-const REASONING_MEDIUM = "medium"
-
 function subscriptionBot(username, model, reasoning = "") {
   return { username, model, path: `/user/${username}`, reasoning }
 }
@@ -47,38 +46,39 @@ const T1_BOTS = [
 ]
 
 const T2_BOTS = [
-  ["OpenAI", [subscriptionBot("llm_gpt56_luna", "GPT Luna"), subscriptionBot("llm_gptoss120b", "GPT-OSS 120B")]],
-  ["Anthropic", [subscriptionBot("llm_haiku", "Claude Haiku")]],
+  ["OpenAI", [subscriptionBot("llm_gpt_luna", "GPT Luna", "max"), subscriptionBot("llm_gptoss120b", "GPT-OSS 120B", "high")]],
+  ["Anthropic", [subscriptionBot("llm_haiku", "Claude Haiku", "enabled")]],
   ["Meta", [subscriptionBot("llm_llama4_maverick", "Llama 4 Maverick")]],
-  ["Google", [subscriptionBot("llm_gemma4_31b", "Gemma 4 31B")]],
-  ["Nvidia", [subscriptionBot("llm_nemotron_super", "Nemotron Super")]],
-  ["Alibaba", [subscriptionBot("llm_qwen_plus", "Qwen Plus"), subscriptionBot("llm_qwen37_plus", "Qwen 3.7 Plus")]],
-  ["MiniMax", [subscriptionBot("llm_minimax_m3", "MiniMax M3")]],
+  ["Google", [subscriptionBot("llm_gemma4_31b", "Gemma 4 31B", "enabled")]],
+  ["Nvidia", [subscriptionBot("llm_nemotron_super", "Nemotron Super", "medium")]],
+  ["Alibaba", [subscriptionBot("llm_qwen_plus", "Qwen Plus"), subscriptionBot("llm_qwen37_plus", "Qwen 3.7 Plus", "enabled")]],
+  ["MiniMax", [subscriptionBot("llm_minimax_m3", "MiniMax M3", "enabled")]],
   ["Microsoft", [subscriptionBot("llm_phi4", "Phi 4")]],
 ]
 
 const T3_BOTS = [
-  ["Anthropic", [subscriptionBot("llm_sonnet5", "Claude Sonnet")]],
-  ["Google", [subscriptionBot("llm_gemini31_lite", "Gemini 3.1 Flash-Lite"), subscriptionBot("llm_gemini35_flash", "Gemini Flash")]],
-  ["Mistral AI", [subscriptionBot("llm_mistral_large3", "Mistral Large 3"), subscriptionBot("llm_mistral_medium35", "Mistral Medium 3.5")]],
-  ["Nvidia", [subscriptionBot("llm_nemotron_ultra", "Nemotron Ultra")]],
-  ["Alibaba", [subscriptionBot("llm_qwen36_flash", "Qwen Flash")]],
+  ["Anthropic", [subscriptionBot("llm_sonnet", "Claude Sonnet", "max")]],
+  ["Google", [subscriptionBot("llm_gemini31_lite", "Gemini 3.1 Flash-Lite", "high"), subscriptionBot("llm_gemini_flash", "Gemini Flash", "high")]],
+  ["Mistral AI", [subscriptionBot("llm_mistral_large3", "Mistral Large 3"), subscriptionBot("llm_mistral_medium35", "Mistral Medium 3.5", "high")]],
+  ["Nvidia", [subscriptionBot("llm_nemotron_ultra", "Nemotron Ultra", "high")]],
+  ["Alibaba", [subscriptionBot("llm_qwen_flash", "Qwen Flash", "xhigh")]],
   ["Nous Research", [subscriptionBot("llm_hermes3_70b", "Hermes 3 70B")]],
 ]
 
 const T4_BOTS = [
-  ["Anthropic", [subscriptionBot("llm_opus48", "Claude Opus")]],
-  ["OpenAI", [subscriptionBot("llm_gpt56_sol", "GPT Sol", "low")]],
-  ["Google", [subscriptionBot("llm_gemini31_pro_preview", "Gemini 3.1 Pro Preview")]],
-  ["Nous Research", [subscriptionBot("llm_hermes4_405b", "Hermes 4 405B")]],
+  ["Anthropic", [subscriptionBot("llm_opus", "Claude Opus", "max")]],
+  ["OpenAI", [subscriptionBot("llm_gpt_sol", "GPT Sol", "max")]],
+  ["Google", [subscriptionBot("llm_gemini31_pro_preview", "Gemini 3.1 Pro Preview", "high")]],
+  ["Nous Research", [subscriptionBot("llm_hermes4_405b", "Hermes 4 405B", "enabled")]],
 ]
 
 const T5_BOTS = [
+  ["xAI", [subscriptionBot("llm_grok", "Grok", "xhigh")]],
   [
     "OpenAI",
     [
-      subscriptionBot("llm_gpt55", "GPT-5.5"),
-      subscriptionBot("llm_gpt55_pro", "GPT-5.5 Pro", REASONING_MEDIUM),
+      subscriptionBot("llm_gpt55", "GPT-5.5", "xhigh"),
+      subscriptionBot("llm_gpt55_pro", "GPT-5.5 Pro", "xhigh"),
     ],
   ],
 ]
@@ -156,14 +156,7 @@ function visibleReasoningLevel(value) {
 
 function subscriptionBotReasoning(bot) {
   const known = knownSubscriptionBot(bot)
-  return visibleReasoningLevel(
-    known?.reasoning
-      || bot?.llm_reasoning_level
-      || bot?.llm_reasoning_effort
-      || bot?.reasoning_level
-      || bot?.reasoning_effort
-      || bot?.default_reasoning_level,
-  )
+  return visibleReasoningLevel(botReasoningLevel(bot) || known?.reasoning)
 }
 
 function inferSubscriptionProvider(bot) {

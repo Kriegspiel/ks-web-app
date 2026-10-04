@@ -93,10 +93,49 @@ afterEach(() => {
 })
 
 describe("SubscriptionPage", () => {
+  it.each([
+    ["llm_haiku", "Claude Haiku", "enabled" ],
+    ["llm_gptoss120b", "GPT-OSS 120B", "high" ],
+    ["llm_gemma4_31b", "Gemma 4 31B", "enabled" ],
+    ["llm_nemotron_super", "Nemotron Super", "medium" ],
+    ["llm_qwen37_plus", "Qwen 3.7 Plus", "enabled" ],
+    ["llm_minimax_m3", "MiniMax M3", "enabled" ],
+    ["llm_gemini31_lite", "Gemini 3.1 Flash-Lite", "high" ],
+    ["llm_mistral_medium35", "Mistral Medium 3.5", "high" ],
+    ["llm_nemotron_ultra", "Nemotron Ultra", "high" ],
+    ["llm_gemini31_pro_preview", "Gemini 3.1 Pro Preview", "high" ],
+    ["llm_hermes4_405b", "Hermes 4 405B", "enabled" ],
+  ])("shows_confirmed_anonymous_reasoning_for_%s", async (username, model, level) => {
+    mockAuth.isAuthenticated = false
+    mockAuth.user = null
+    renderPage()
+    expect(await screen.findByRole("link", { name: `${model} (reasoning: ${level})` })).toHaveAttribute("href", `/user/${username}`)
+    expect(mockGetBots).not.toHaveBeenCalled()
+  })
+
+  it("uses_persisted_reasoning_for_known_and_remaining_active_models", async () => {
+    mockGetBots.mockResolvedValue({ bots: [
+      { username: "llm_gpt_sol", llm_reasoning_level: "high" },
+      { username: "llm_sonnet", llm_reasoning_level: "none" },
+      { username: "llm_haiku", llm_reasoning_level: "enabled" },
+      { username: "llm_grok", llm_reasoning_level: "xhigh" },
+      { username: "llm_gpt56_sol", display_name: "Stale Sol alias" },
+      { username: "llm_sonnet5", display_name: "Stale Sonnet alias" },
+    ] })
+    renderPage()
+
+    expect(await screen.findByRole("link", { name: "GPT Sol (reasoning: high)" })).toHaveAttribute("href", "/user/llm_gpt_sol")
+    expect(screen.getByRole("link", { name: "Claude Sonnet" })).toHaveAttribute("href", "/user/llm_sonnet")
+    expect(screen.queryByRole("link", { name: "Claude Sonnet (reasoning: max)" })).not.toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Claude Haiku (reasoning: enabled)" })).toHaveAttribute("href", "/user/llm_haiku")
+    expect(screen.getByRole("link", { name: "Grok (reasoning: xhigh)" })).toHaveAttribute("href", "/user/llm_grok")
+    expect(screen.queryByRole("link", { name: /Stale/ })).not.toBeInTheDocument()
+  })
+
   it("hides_sunset_and_inactive_bots_from_the_live_catalog", async () => {
     mockGetBots.mockResolvedValue({ bots: [
-      { username: "llm_gpt56_luna", display_name: "GPT Luna" },
-      { username: "llm_gpt56_sol", display_name: "GPT Sol" },
+      { username: "llm_gpt_luna", display_name: "GPT Luna" },
+      { username: "llm_gpt_sol", display_name: "GPT Sol" },
       { username: "llm_gptnano", display_name: "GPT Nano", available_for_viewer: true },
       { username: "llm_glm52", display_name: "GLM 5.2", available_for_viewer: true },
       { username: "custom_bot", display_name: "Custom bot", status: "inactive" },
@@ -106,8 +145,8 @@ describe("SubscriptionPage", () => {
     await waitFor(() => expect(mockGetBots).toHaveBeenCalled())
     const row = screen.getByRole("rowheader", { name: "Play bots" }).closest("tr")
     const cells = within(row).getAllByRole("cell")
-    expect(await within(cells[2]).findByRole("link", { name: "GPT Luna" })).toHaveAttribute("href", "/user/llm_gpt56_luna")
-    expect(within(cells[4]).getByRole("link", { name: "GPT Sol (reasoning: low)" })).toHaveAttribute("href", "/user/llm_gpt56_sol")
+    expect(await within(cells[2]).findByRole("link", { name: "GPT Luna (reasoning: max)" })).toHaveAttribute("href", "/user/llm_gpt_luna")
+    expect(within(cells[4]).getByRole("link", { name: "GPT Sol (reasoning: max)" })).toHaveAttribute("href", "/user/llm_gpt_sol")
     expect(within(row).queryByRole("link", { name: "GPT Nano" })).not.toBeInTheDocument()
     expect(within(row).queryByRole("link", { name: "GLM 5.2" })).not.toBeInTheDocument()
     expect(within(row).queryByRole("link", { name: "Custom bot" })).not.toBeInTheDocument()
@@ -222,72 +261,74 @@ describe("SubscriptionPage", () => {
     expect(within(botCells[2]).getByText("Lower-tier bots included.")).toBeInTheDocument()
     expect(within(botCells[2]).getByText("OpenAI:")).toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "GPT Nano" })).not.toBeInTheDocument()
-    expect(within(botCells[2]).getByRole("link", { name: "GPT-OSS 120B" })).toHaveAttribute("href", "/user/llm_gptoss120b")
+    expect(within(botCells[2]).getByRole("link", { name: "GPT-OSS 120B (reasoning: high)" })).toHaveAttribute("href", "/user/llm_gptoss120b")
     expect(within(botCells[2]).getByText("Anthropic:")).toBeInTheDocument()
-    expect(within(botCells[2]).getByRole("link", { name: "Claude Haiku" })).toHaveAttribute("href", "/user/llm_haiku")
+    expect(within(botCells[2]).getByRole("link", { name: "Claude Haiku (reasoning: enabled)" })).toHaveAttribute("href", "/user/llm_haiku")
     expect(screen.queryByText("DeepSeek:")).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "DeepSeek V3.2" })).not.toBeInTheDocument()
     expect(within(botCells[2]).queryByText("Mistral AI:")).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Mistral Small 3.2" })).not.toBeInTheDocument()
     expect(within(botCells[2]).queryByRole("link", { name: "Mistral Nemo" })).not.toBeInTheDocument()
     expect(within(botCells[2]).queryByRole("link", { name: "Mistral Large 3" })).not.toBeInTheDocument()
-    expect(within(botCells[2]).queryByRole("link", { name: "Nemotron Ultra" })).not.toBeInTheDocument()
+    expect(within(botCells[2]).queryByRole("link", { name: "Nemotron Ultra (reasoning: high)" })).not.toBeInTheDocument()
     expect(within(botCells[2]).getByText("Meta:")).toBeInTheDocument()
     expect(within(botCells[2]).getByRole("link", { name: "Llama 4 Maverick" })).toHaveAttribute("href", "/user/llm_llama4_maverick")
     expect(within(botCells[2]).queryByRole("link", { name: "Llama 3.1 8B" })).not.toBeInTheDocument()
     expect(within(botCells[2]).queryByRole("link", { name: "Llama 4 Scout" })).not.toBeInTheDocument()
     expect(within(botCells[2]).getByText("Google:")).toBeInTheDocument()
-    expect(within(botCells[2]).getByRole("link", { name: "Gemma 4 31B" })).toHaveAttribute("href", "/user/llm_gemma4_31b")
+    expect(within(botCells[2]).getByRole("link", { name: "Gemma 4 31B (reasoning: enabled)" })).toHaveAttribute("href", "/user/llm_gemma4_31b")
     expect(within(botCells[2]).queryByRole("link", { name: "Gemma 3 4B" })).not.toBeInTheDocument()
     expect(within(botCells[2]).queryByRole("link", { name: "Gemma 3 27B" })).not.toBeInTheDocument()
     expect(within(botCells[2]).queryByRole("link", { name: "Gemini 2.5 Flash-Lite" })).not.toBeInTheDocument()
-    expect(within(botCells[2]).queryByRole("link", { name: "Gemini 3.1 Flash-Lite" })).not.toBeInTheDocument()
+    expect(within(botCells[2]).queryByRole("link", { name: "Gemini 3.1 Flash-Lite (reasoning: high)" })).not.toBeInTheDocument()
     expect(within(botCells[2]).queryByRole("link", { name: "Nano" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: /Nemotron Nano/ })).not.toBeInTheDocument()
     expect(within(botCells[2]).getByText("Nvidia:")).toBeInTheDocument()
-    expect(within(botCells[2]).getByRole("link", { name: "Nemotron Super" })).toHaveAttribute("href", "/user/llm_nemotron_super")
+    expect(within(botCells[2]).getByRole("link", { name: "Nemotron Super (reasoning: medium)" })).toHaveAttribute("href", "/user/llm_nemotron_super")
     expect(within(botCells[2]).getByText("Alibaba:")).toBeInTheDocument()
     expect(within(botCells[2]).getByRole("link", { name: "Qwen Plus" })).toHaveAttribute("href", "/user/llm_qwen_plus")
-    expect(within(botCells[2]).getByRole("link", { name: "Qwen 3.7 Plus" })).toHaveAttribute("href", "/user/llm_qwen37_plus")
+    expect(within(botCells[2]).getByRole("link", { name: "Qwen 3.7 Plus (reasoning: enabled)" })).toHaveAttribute("href", "/user/llm_qwen37_plus")
     expect(within(botCells[2]).getByText("MiniMax:")).toBeInTheDocument()
-    expect(within(botCells[2]).getByRole("link", { name: "MiniMax M3" })).toHaveAttribute("href", "/user/llm_minimax_m3")
+    expect(within(botCells[2]).getByRole("link", { name: "MiniMax M3 (reasoning: enabled)" })).toHaveAttribute("href", "/user/llm_minimax_m3")
     expect(within(botCells[2]).queryByRole("link", { name: "Simple Heuristics Bot" })).not.toBeInTheDocument()
     expect(within(botCells[2]).queryByText(/Default reasoning level:/)).not.toBeInTheDocument()
     expect(within(botCells[3]).getByText("Lower-tier bots included.")).toBeInTheDocument()
-    expect(within(botCells[2]).getByRole("link", { name: "GPT Luna" })).toHaveAttribute("href", "/user/llm_gpt56_luna")
+    expect(within(botCells[2]).getByRole("link", { name: "GPT Luna (reasoning: max)" })).toHaveAttribute("href", "/user/llm_gpt_luna")
     expect(within(botCells[3]).queryByText(/reasoning: no/i)).not.toBeInTheDocument()
     expect(within(botCells[3]).queryByText(/Default reasoning level:/)).not.toBeInTheDocument()
-    expect(within(botCells[3]).getByRole("link", { name: "Claude Sonnet" })).toHaveAttribute("href", "/user/llm_sonnet5")
-    expect(within(botCells[3]).queryByRole("link", { name: "GPT-5.5" })).not.toBeInTheDocument()
+    expect(within(botCells[3]).getByRole("link", { name: "Claude Sonnet (reasoning: max)" })).toHaveAttribute("href", "/user/llm_sonnet")
+    expect(within(botCells[3]).queryByRole("link", { name: "GPT-5.5 (reasoning: xhigh)" })).not.toBeInTheDocument()
     expect(within(botCells[3]).queryByText("xAI:")).not.toBeInTheDocument()
     expect(within(botCells[3]).queryByRole("link", { name: "Grok 4.5" })).not.toBeInTheDocument()
-    expect(within(botCells[3]).getByRole("link", { name: "Gemini 3.1 Flash-Lite" })).toHaveAttribute("href", "/user/llm_gemini31_lite")
-    expect(within(botCells[3]).getByRole("link", { name: "Gemini Flash" })).toHaveAttribute("href", "/user/llm_gemini35_flash")
+    expect(within(botCells[3]).getByRole("link", { name: "Gemini 3.1 Flash-Lite (reasoning: high)" })).toHaveAttribute("href", "/user/llm_gemini31_lite")
+    expect(within(botCells[3]).getByRole("link", { name: "Gemini Flash (reasoning: high)" })).toHaveAttribute("href", "/user/llm_gemini_flash")
     expect(within(botCells[3]).queryByRole("link", { name: "Gemini 2.5 Flash" })).not.toBeInTheDocument()
     expect(within(botCells[3]).getByText("Mistral AI:")).toBeInTheDocument()
     expect(within(botCells[3]).getByRole("link", { name: "Mistral Large 3" })).toHaveAttribute("href", "/user/llm_mistral_large3")
-    expect(within(botCells[3]).getByRole("link", { name: "Mistral Medium 3.5" })).toHaveAttribute("href", "/user/llm_mistral_medium35")
+    expect(within(botCells[3]).getByRole("link", { name: "Mistral Medium 3.5 (reasoning: high)" })).toHaveAttribute("href", "/user/llm_mistral_medium35")
     expect(within(botCells[3]).queryByRole("link", { name: "Mistral Nemo" })).not.toBeInTheDocument()
-    expect(within(botCells[3]).getByRole("link", { name: "Nemotron Ultra" })).toHaveAttribute("href", "/user/llm_nemotron_ultra")
-    expect(within(botCells[3]).getByRole("link", { name: "Qwen Flash" })).toHaveAttribute("href", "/user/llm_qwen36_flash")
+    expect(within(botCells[3]).getByRole("link", { name: "Nemotron Ultra (reasoning: high)" })).toHaveAttribute("href", "/user/llm_nemotron_ultra")
+    expect(within(botCells[3]).getByRole("link", { name: "Qwen Flash (reasoning: xhigh)" })).toHaveAttribute("href", "/user/llm_qwen_flash")
     expect(within(botCells[3]).queryByRole("link", { name: "Qwen Plus" })).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Kimi K2 Thinking" })).not.toBeInTheDocument()
     expect(within(botCells[3]).getByRole("link", { name: "Hermes 3 70B" })).toHaveAttribute("href", "/user/llm_hermes3_70b")
     expect(within(botCells[4]).getByText("Lower-tier bots included.")).toBeInTheDocument()
-    expect(within(botCells[4]).getByRole("link", { name: "Claude Opus" })).toHaveAttribute("href", "/user/llm_opus48")
+    expect(within(botCells[4]).getByRole("link", { name: "Claude Opus (reasoning: max)" })).toHaveAttribute("href", "/user/llm_opus")
     expect(screen.queryByRole("link", { name: "GPT-5.6 Terra" })).not.toBeInTheDocument()
     expect(within(botCells[4]).queryByText(/Default reasoning level:/)).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "DeepSeek V4 Pro" })).not.toBeInTheDocument()
-    expect(within(botCells[4]).getByRole("link", { name: "Gemini 3.1 Pro Preview" })).toHaveAttribute("href", "/user/llm_gemini31_pro_preview")
+    expect(within(botCells[4]).getByRole("link", { name: "Gemini 3.1 Pro Preview (reasoning: high)" })).toHaveAttribute("href", "/user/llm_gemini31_pro_preview")
     expect(screen.queryByRole("link", { name: "GLM 5.2" })).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Kimi K2.7 Code" })).not.toBeInTheDocument()
-    expect(within(botCells[4]).getByRole("link", { name: "Hermes 4 405B" })).toHaveAttribute("href", "/user/llm_hermes4_405b")
+    expect(within(botCells[4]).getByRole("link", { name: "Hermes 4 405B (reasoning: enabled)" })).toHaveAttribute("href", "/user/llm_hermes4_405b")
     expect(within(botCells[5]).getByText("Lower-tier bots included.")).toBeInTheDocument()
-    expect(within(botCells[4]).getByRole("link", { name: "GPT Sol (reasoning: low)" })).toHaveAttribute("href", "/user/llm_gpt56_sol")
-    expect(within(botCells[5]).getByRole("link", { name: "GPT-5.5" })).toHaveAttribute("href", "/user/llm_gpt55")
-    expect(within(botCells[5]).getByRole("link", { name: "GPT-5.5 Pro (reasoning: medium)" })).toHaveAttribute("href", "/user/llm_gpt55_pro")
+    expect(within(botCells[4]).getByRole("link", { name: "GPT Sol (reasoning: max)" })).toHaveAttribute("href", "/user/llm_gpt_sol")
+    expect(within(botCells[5]).getByRole("link", { name: "GPT-5.5 (reasoning: xhigh)" })).toHaveAttribute("href", "/user/llm_gpt55")
+    expect(within(botCells[5]).getByRole("link", { name: "GPT-5.5 Pro (reasoning: xhigh)" })).toHaveAttribute("href", "/user/llm_gpt55_pro")
     expect(within(botCells[5]).queryByText(/Default reasoning level:/)).not.toBeInTheDocument()
     expect(within(botCells[5]).queryByText(/reasoning: no/i)).not.toBeInTheDocument()
-    expect(screen.queryByText("xAI:")).not.toBeInTheDocument()
+    expect(within(botCells[5]).getByText("xAI:")).toBeInTheDocument()
+    expect(within(botCells[5]).getByRole("link", { name: "Grok (reasoning: xhigh)" })).toHaveAttribute("href", "/user/llm_grok")
     expect(screen.queryByRole("link", { name: "Grok 4.5" })).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Qwen 3.7 Max" })).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "GPTNano T2" })).not.toBeInTheDocument()
@@ -362,7 +403,7 @@ describe("SubscriptionPage", () => {
     expect(within(botCells[5]).queryByRole("link", { name: "1201 - LLM Grok 4.5" })).not.toBeInTheDocument()
     expect(within(botCells[5]).queryByRole("link", { name: "1227 - LLM Qwen 3.7 Max" })).not.toBeInTheDocument()
     expect(within(botCells[5]).queryByText("T5 Master bots:")).not.toBeInTheDocument()
-    expect(within(botCells[5]).queryByRole("link", { name: "GPT-5.5" })).not.toBeInTheDocument()
+    expect(within(botCells[5]).queryByRole("link", { name: "GPT-5.5 (reasoning: xhigh)" })).not.toBeInTheDocument()
     expect(within(botCells[5]).queryByText(/No LLM bots/i)).not.toBeInTheDocument()
     expect(within(botCells[6]).getByText("Lower-tier bots included.")).toBeInTheDocument()
     expect(mockGetBots).toHaveBeenCalledTimes(1)
@@ -441,7 +482,7 @@ describe("SubscriptionPage", () => {
 
     const playBotsRow = await screen.findByRole("rowheader", { name: "Play bots" }).then((row) => row.closest("tr"))
     const botCells = within(playBotsRow).getAllByRole("cell")
-    const sonnetLink = within(botCells[3]).getByRole("link", { name: "Claude Sonnet" })
+    const sonnetLink = within(botCells[3]).getByRole("link", { name: "Claude Sonnet (reasoning: max)" })
     sonnetLink.addEventListener("click", (event) => event.preventDefault(), { once: true })
     fireEvent.click(sonnetLink)
 
