@@ -76,7 +76,7 @@ const BOT_TIER_BY_USERNAME = {
   llm_minimax_m3: "T2",
   openrouter_qwen36_flash: "T3",
   llm_qwen36_flash: "T3",
-  llm_gpt56_luna: "T3",
+  llm_gpt56_luna: "T2",
   llm_sonnet5: "T3",
   llm_gemini25_flash: "T3",
   llm_gemini35_flash: "T3",
@@ -93,13 +93,16 @@ const BOT_TIER_BY_USERNAME = {
   llm_kimi_k27_code: "T4",
   llm_hermes4_405b: "T4",
   llm_gpt55: "T5",
-  llm_gpt56_sol: "T5",
+  llm_gpt56_sol: "T4",
   llm_grok45: "T5",
   llm_gpt55_pro: "T5",
   llm_qwen37_max: "T5",
 }
 
-const CATALOG_HIDDEN_BOT_USERNAMES = new Set([
+const INACTIVE_BOT_USERNAMES = new Set([
+  "llm_gpt45nano",
+  "llm_gptnano",
+  "llm_gpt56_terra",
   "llm_gemma3_4b",
   "llm_gemma3_27b",
   "llm_gemini25_flash",
@@ -107,9 +110,27 @@ const CATALOG_HIDDEN_BOT_USERNAMES = new Set([
   "llm_llama31_8b",
   "llm_llama4_scout",
   "llm_mistral_nemo",
+  "llm_mistral_small32",
+  "llm_glm45_air",
+  "llm_glm47_flash",
+  "llm_glm52",
+  "llm_grok45",
+  "llm_qwen37_max",
+  "llm_deepseek_v32",
+  "llm_deepseekv4_flash",
+  "bot_deepseekv4_pro",
+  "openrouter_deepseekv4_flash",
+  "openrouter_deepseekv4_pro",
+  "llm_kimi_k25",
+  "llm_kimi_k2_thinking",
+  "llm_kimi_k27_code",
+  "llm_hermes4_70b",
   "openrouter_gemini25_lite",
-  "openrouter_gemini31_lite",
   "openrouter_llama31_8b",
+])
+
+const CATALOG_HIDDEN_BOT_USERNAMES = new Set([
+  "openrouter_gemini31_lite",
 ])
 
 export function botRating(bot) {
@@ -118,7 +139,13 @@ export function botRating(bot) {
 }
 
 export function isCatalogHiddenBot(bot) {
-  return CATALOG_HIDDEN_BOT_USERNAMES.has(String(bot?.username || "").trim().toLowerCase())
+  return isInactiveBot(bot)
+    || CATALOG_HIDDEN_BOT_USERNAMES.has(String(bot?.username || "").trim().toLowerCase())
+}
+
+export function isInactiveBot(bot) {
+  return String(bot?.status || "").trim().toLowerCase() === "inactive"
+    || INACTIVE_BOT_USERNAMES.has(String(bot?.username || "").trim().toLowerCase())
 }
 
 export function botTierCode(bot) {
@@ -166,6 +193,7 @@ function tierAllowsBot(viewerTier, requiredTier) {
 }
 
 export function botAvailableForViewer(bot, viewerTier) {
+  if (isInactiveBot(bot)) return false
   if (typeof bot?.available_for_viewer === "boolean") {
     return bot.available_for_viewer
   }
