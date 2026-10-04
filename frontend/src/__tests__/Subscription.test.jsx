@@ -94,12 +94,12 @@ afterEach(() => {
 
 describe("SubscriptionPage", () => {
   it.each([false, true])("keeps_all_newly_inactive_accounts_out_of_subscription_for_signed_in_%s", async (signedIn) => {
-    const retired = ["llm_nemotron_super", "llm_nemotron_nano", "llm_qwen_plus", "llm_qwen37_plus", "llm_minimax_m3", "llm_phi4", "llm_mistral_large3", "llm_mistral_medium35", "llm_nemotron_ultra", "llm_qwen_flash", "llm_hermes3_70b", "llm_hermes4_405b"]
+    const retired = ["llm_nemotron_super", "llm_nemotron_nano", "llm_qwen_plus", "llm_qwen37_plus", "llm_minimax_m3", "llm_phi4", "llm_mistral_large3", "llm_mistral_medium35", "llm_nemotron_ultra", "llm_qwen_flash", "llm_hermes3_70b", "llm_hermes4_405b", "llm_gpt55", "llm_gpt55_pro"]
     const retained = [
       ["llm_gpt_luna", 2], ["llm_gptoss120b", 2], ["llm_haiku", 2], ["llm_llama4_maverick", 2], ["llm_gemma4_31b", 2],
       ["llm_sonnet", 3], ["llm_gemini31_lite", 3], ["llm_gemini_flash", 3],
       ["llm_opus", 4], ["llm_gpt_sol", 4], ["llm_gemini31_pro_preview", 4],
-      ["llm_grok", 5], ["llm_gpt55", 5], ["llm_gpt55_pro", 5],
+      ["llm_grok", 5], ["llm_fable", 5], ["llm_gpt_astra", 5],
     ]
     mockAuth.isAuthenticated = signedIn
     mockAuth.user = signedIn ? { username: "playerone", is_guest: false } : null
@@ -115,6 +115,11 @@ describe("SubscriptionPage", () => {
     if (signedIn) await waitFor(() => expect(row.querySelector('a[href="/user/randobot"]')).toBeNull())
     for (const username of retired) expect(row.querySelector(`a[href="/user/${username}"]`)).toBeNull()
     for (const [username, tier] of retained) expect(cells[tier].querySelector(`a[href="/user/${username}"]`)).not.toBeNull()
+    expect(within(cells[5]).getByText("Anthropic:")).toBeInTheDocument()
+    expect(within(cells[5]).getByRole("link", { name: "Claude Fable (reasoning: max)" })).toHaveAttribute("href", "/user/llm_fable")
+    expect(within(cells[5]).getByText("OpenAI:")).toBeInTheDocument()
+    expect(within(cells[5]).getByRole("link", { name: "GPT Astra (reasoning: max)" })).toHaveAttribute("href", "/user/llm_gpt_astra")
+    expect(within(cells[5]).getByRole("link", { name: "Grok (reasoning: xhigh)" })).toHaveAttribute("href", "/user/llm_grok")
     if (!signedIn) expect(mockGetBots).not.toHaveBeenCalled()
   })
 
@@ -342,8 +347,10 @@ describe("SubscriptionPage", () => {
     expect(screen.queryByRole("link", { name: "Hermes 4 405B (reasoning: enabled)" })).not.toBeInTheDocument()
     expect(within(botCells[5]).getByText("Lower-tier bots included.")).toBeInTheDocument()
     expect(within(botCells[4]).getByRole("link", { name: "GPT Sol (reasoning: max)" })).toHaveAttribute("href", "/user/llm_gpt_sol")
-    expect(within(botCells[5]).getByRole("link", { name: "GPT-5.5 (reasoning: xhigh)" })).toHaveAttribute("href", "/user/llm_gpt55")
-    expect(within(botCells[5]).getByRole("link", { name: "GPT-5.5 Pro (reasoning: xhigh)" })).toHaveAttribute("href", "/user/llm_gpt55_pro")
+    expect(within(botCells[5]).getByRole("link", { name: "Claude Fable (reasoning: max)" })).toHaveAttribute("href", "/user/llm_fable")
+    expect(screen.queryByRole("link", { name: "GPT-5.5 (reasoning: xhigh)" })).not.toBeInTheDocument()
+    expect(within(botCells[5]).getByRole("link", { name: "GPT Astra (reasoning: max)" })).toHaveAttribute("href", "/user/llm_gpt_astra")
+    expect(screen.queryByRole("link", { name: "GPT-5.5 Pro (reasoning: xhigh)" })).not.toBeInTheDocument()
     expect(within(botCells[5]).queryByText(/Default reasoning level:/)).not.toBeInTheDocument()
     expect(within(botCells[5]).queryByText(/reasoning: no/i)).not.toBeInTheDocument()
     expect(within(botCells[5]).getByText("xAI:")).toBeInTheDocument()

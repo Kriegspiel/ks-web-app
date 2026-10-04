@@ -293,6 +293,20 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     tierName: "Club",
     className: "profile-tier-card--tier2",
   },
+  llm_fable: {
+    code: "T5",
+    model: "Claude Fable",
+    tierName: "Master",
+    reasoningLevel: "max",
+    className: "profile-tier-card--tier5",
+  },
+  llm_gpt_astra: {
+    code: "T5",
+    model: "GPT Astra",
+    tierName: "Master",
+    reasoningLevel: "max",
+    className: "profile-tier-card--tier5",
+  },
   llm_gpt55: {
     code: "T5",
     model: "GPT-5.5",

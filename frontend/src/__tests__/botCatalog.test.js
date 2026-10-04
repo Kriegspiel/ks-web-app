@@ -20,11 +20,12 @@ import {
 describe("botCatalog", () => {
   it.each([
     ["llm_gpt_luna", "T2"], ["llm_sonnet", "T3"], ["llm_gemini_flash", "T3"],
-    ["llm_qwen_flash", "T3"], ["llm_opus", "T4"], ["llm_gpt_sol", "T4"], ["llm_grok", "T5"],
+    ["llm_qwen_flash", "T3"], ["llm_opus", "T4"], ["llm_gpt_sol", "T4"], ["llm_grok", "T5"], ["llm_fable", "T5"], ["llm_gpt_astra", "T5"],
   ])("offers_canonical_%s_at_%s", (username, tier) => {
     expect(botTierCode({ username })).toBe(tier)
     expect(isCatalogHiddenBot({ username, status: "active" })).toBe(false)
     expect(botAvailableForViewer({ username }, "tier5")).toBe(true)
+    if (tier === "T5") expect(botAvailableForViewer({ username }, "tier4")).toBe(false)
   })
 
   it.each([
@@ -102,7 +103,7 @@ describe("botCatalog", () => {
     expect(botAvailableForViewer(bot, "tier6")).toBe(false)
   })
 
-  it.each(["llm_nemotron_super", "llm_nemotron_nano", "llm_qwen_plus", "llm_qwen37_plus", "llm_minimax_m3", "llm_phi4", "llm_mistral_large3", "llm_mistral_medium35", "llm_nemotron_ultra", "llm_qwen_flash", "llm_hermes3_70b", "llm_hermes4_405b"])("respects_newly_inactive_%s_without_offering_stale_available_rows", (username) => {
+  it.each(["llm_nemotron_super", "llm_nemotron_nano", "llm_qwen_plus", "llm_qwen37_plus", "llm_minimax_m3", "llm_phi4", "llm_mistral_large3", "llm_mistral_medium35", "llm_nemotron_ultra", "llm_qwen_flash", "llm_hermes3_70b", "llm_hermes4_405b", "llm_gpt55", "llm_gpt55_pro"])("respects_newly_inactive_%s_without_offering_stale_available_rows", (username) => {
     const bot = { username, status: "inactive", available_for_viewer: true }
     expect(isInactiveBot(bot)).toBe(true)
     expect(isCatalogHiddenBot(bot)).toBe(true)

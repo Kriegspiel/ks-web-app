@@ -95,6 +95,25 @@ function botOptionLabels() {
 }
 
 describe("LobbyPage", () => {
+  it("offers_new_t5_identities_without_offering_inactive_gpt55_accounts", async () => {
+    mockAuth.user = { username: "playerone", llm_bot_tier: "tier5" }
+    mockApi.getBots.mockResolvedValue({ bots: [
+      { bot_id: "new-fable-id", username: "llm_fable", display_name: "Claude Fable", elo: 1200, status: "active", llm_backed: true, required_tier: "tier5" },
+      { bot_id: "new-astra-id", username: "llm_gpt_astra", display_name: "GPT Astra", elo: 1200, status: "active", llm_backed: true, required_tier: "tier5" },
+      { bot_id: "old-gpt55-id", username: "llm_gpt55", display_name: "GPT-5.5", status: "inactive", available_for_viewer: true },
+      { bot_id: "old-gpt55-pro-id", username: "llm_gpt55_pro", display_name: "GPT-5.5 Pro", status: "inactive", available_for_viewer: true },
+    ] })
+    renderPage()
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    await openBotPicker()
+
+    expect(botOptionLabels()).toEqual(["1200 - Claude Fable", "1200 - GPT Astra"])
+    expect(screen.getByRole("group", { name: "T5 Master bots" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1200 - Claude Fable" })).not.toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByRole("option", { name: "1200 - GPT Astra" })).not.toHaveAttribute("aria-disabled", "true")
+    expect(mockApi.createGame).not.toHaveBeenCalled()
+  })
+
   it("does_not_offer_newly_inactive_bots_even_when_the_response_marks_them_available", async () => {
     const retired = ["llm_nemotron_super", "llm_nemotron_nano", "llm_qwen_plus", "llm_qwen37_plus", "llm_minimax_m3", "llm_phi4", "llm_mistral_large3", "llm_mistral_medium35", "llm_nemotron_ultra", "llm_qwen_flash", "llm_hermes3_70b", "llm_hermes4_405b"]
     mockApi.getBots.mockResolvedValue({ bots: [
