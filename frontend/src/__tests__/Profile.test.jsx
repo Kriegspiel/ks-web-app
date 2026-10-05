@@ -341,7 +341,7 @@ describe("ProfilePage", () => {
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByRole("link", { name: "Bot tier: Tier T2 Club. View subscription options" })).toHaveAttribute("href", "/subscription")
     expect(screen.getByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T2")).toHaveClass("tier-badge", "tier-badge--t2", "profile-tier-card__code")
-    expect(screen.getByText("GPT-OSS 120B model bot for T2 Club (reasoning: high).")).toBeInTheDocument()
+    expect(screen.getByText("GPT-OSS 120B model bot for T2 Club (reasoning: medium).")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "This user is bot" })).toBeInTheDocument()
     expect(screen.getByText(/On Kriegspiel\.org we allow bots\./i)).toBeInTheDocument()
     expect(screen.getByText(/You also can create your own bot – more bots, more fun\./i)).toBeInTheDocument()
@@ -896,16 +896,16 @@ describe("ProfilePage", () => {
 
   it.each([
     ["llm_qwen37_plus", "Tier T2 Club", "T2", "tier-badge--t2", "Qwen 3.7 Plus model bot for T2 Club (reasoning: enabled)."],
-    ["llm_sonnet", "Tier T3 Strong", "T3", "tier-badge--t3", "Claude Sonnet model bot for T3 Strong (reasoning: max)."],
-    ["llm_opus", "Tier T4 Expert", "T4", "tier-badge--t4", "Claude Opus model bot for T4 Expert (reasoning: max)."],
-    ["llm_gemini_flash", "Tier T3 Strong", "T3", "tier-badge--t3", "Gemini Flash model bot for T3 Strong (reasoning: high)."],
+    ["llm_sonnet", "Tier T3 Strong", "T3", "tier-badge--t3", "Claude Sonnet model bot for T3 Strong (reasoning: xhigh)."],
+    ["llm_opus", "Tier T4 Expert", "T4", "tier-badge--t4", "Claude Opus model bot for T4 Expert (reasoning: xhigh)."],
+    ["llm_gemini_flash", "Tier T3 Strong", "T3", "tier-badge--t3", "Gemini Flash model bot for T3 Strong (reasoning: medium)."],
     ["llm_grok", "Tier T5 Master", "T5", "tier-badge--t5", "Grok model bot for T5 Master (reasoning: xhigh)."],
-    ["llm_gpt_luna", "Tier T2 Club", "T2", "tier-badge--t2", "GPT Luna model bot for T2 Club (reasoning: max)."],
+    ["llm_gpt_luna", "Tier T2 Club", "T2", "tier-badge--t2", "GPT Luna model bot for T2 Club (reasoning: xhigh)."],
     ["llm_gpt56_terra", "Tier T4 Expert", "T4", "tier-badge--t4", "GPT-5.6 Terra model bot for T4 Expert (reasoning: no)."],
-    ["llm_fable", "Tier T5 Master", "T5", "tier-badge--t5", "Claude Fable model bot for T5 Master (reasoning: max)."],
-    ["llm_gpt_astra", "Tier T5 Master", "T5", "tier-badge--t5", "GPT Astra model bot for T5 Master (reasoning: max)."],
+    ["llm_fable", "Tier T5 Master", "T5", "tier-badge--t5", "Claude Fable model bot for T5 Master (reasoning: xhigh)."],
+    ["llm_gpt_astra", "Tier T5 Master", "T5", "tier-badge--t5", "GPT Astra model bot for T5 Master (reasoning: xhigh)."],
     ["llm_gpt55", "Tier T5 Master", "T5", "tier-badge--t5", "GPT-5.5 model bot for T5 Master (reasoning: xhigh)."],
-    ["llm_gpt_sol", "Tier T4 Expert", "T4", "tier-badge--t4", "GPT Sol model bot for T4 Expert (reasoning: max)."],
+    ["llm_gpt_sol", "Tier T4 Expert", "T4", "tier-badge--t4", "GPT Sol model bot for T4 Expert (reasoning: xhigh)."],
     ["llm_gpt55_pro", "Tier T5 Master", "T5", "tier-badge--t5", "GPT-5.5 Pro model bot for T5 Master (reasoning: xhigh)."],
   ])("marks_%s_with_the_configured_llm_tier", async (username, heading, code, badgeClass, description) => {
     mockApi.userApi.getProfile.mockResolvedValueOnce({

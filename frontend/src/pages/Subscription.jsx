@@ -46,27 +46,27 @@ const T1_BOTS = [
 ]
 
 const T2_BOTS = [
-  ["OpenAI", [subscriptionBot("llm_gpt_luna", "GPT Luna", "max"), subscriptionBot("llm_gptoss120b", "GPT-OSS 120B", "high")]],
+  ["OpenAI", [subscriptionBot("llm_gpt_luna", "GPT Luna", "xhigh"), subscriptionBot("llm_gptoss120b", "GPT-OSS 120B", "medium")]],
   ["Anthropic", [subscriptionBot("llm_haiku", "Claude Haiku", "enabled")]],
   ["Meta", [subscriptionBot("llm_llama4_maverick", "Llama 4 Maverick")]],
   ["Google", [subscriptionBot("llm_gemma4_31b", "Gemma 4 31B", "enabled")]],
 ]
 
 const T3_BOTS = [
-  ["Anthropic", [subscriptionBot("llm_sonnet", "Claude Sonnet", "max")]],
-  ["Google", [subscriptionBot("llm_gemini31_lite", "Gemini 3.1 Flash-Lite", "high"), subscriptionBot("llm_gemini_flash", "Gemini Flash", "high")]],
+  ["Anthropic", [subscriptionBot("llm_sonnet", "Claude Sonnet", "xhigh")]],
+  ["Google", [subscriptionBot("llm_gemini31_lite", "Gemini 3.1 Flash-Lite", "medium"), subscriptionBot("llm_gemini_flash", "Gemini Flash", "medium")]],
 ]
 
 const T4_BOTS = [
-  ["Anthropic", [subscriptionBot("llm_opus", "Claude Opus", "max")]],
-  ["OpenAI", [subscriptionBot("llm_gpt_sol", "GPT Sol", "max")]],
-  ["Google", [subscriptionBot("llm_gemini31_pro_preview", "Gemini 3.1 Pro Preview", "high")]],
+  ["Anthropic", [subscriptionBot("llm_opus", "Claude Opus", "xhigh")]],
+  ["OpenAI", [subscriptionBot("llm_gpt_sol", "GPT Sol", "xhigh")]],
+  ["Google", [subscriptionBot("llm_gemini31_pro_preview", "Gemini 3.1 Pro Preview", "medium")]],
 ]
 
 const T5_BOTS = [
   ["xAI", [subscriptionBot("llm_grok", "Grok", "xhigh")]],
-  ["Anthropic", [subscriptionBot("llm_fable", "Claude Fable", "max")]],
-  ["OpenAI", [subscriptionBot("llm_gpt_astra", "GPT Astra", "max")]],
+  ["Anthropic", [subscriptionBot("llm_fable", "Claude Fable", "xhigh")]],
+  ["OpenAI", [subscriptionBot("llm_gpt_astra", "GPT Astra", "xhigh")]],
 ]
 
 const SUBSCRIPTION_BOT_CATALOG_GROUPS = [T0_BOTS, T1_BOTS, T2_BOTS, T3_BOTS, T4_BOTS, T5_BOTS]
