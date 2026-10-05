@@ -138,7 +138,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_gemini31_lite: {
     code: "T3",
     model: "Gemini 3.1 Flash-Lite",
-    reasoningLevel: "high",
+    reasoningLevel: "medium",
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
@@ -151,7 +151,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_gptoss120b: {
     code: "T2",
     model: "GPT-OSS 120B",
-    reasoningLevel: "high",
+    reasoningLevel: "medium",
     tierName: "Club",
     className: "profile-tier-card--tier2",
   },
@@ -297,14 +297,14 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     code: "T5",
     model: "Claude Fable",
     tierName: "Master",
-    reasoningLevel: "max",
+    reasoningLevel: "xhigh",
     className: "profile-tier-card--tier5",
   },
   llm_gpt_astra: {
     code: "T5",
     model: "GPT Astra",
     tierName: "Master",
-    reasoningLevel: "max",
+    reasoningLevel: "xhigh",
     className: "profile-tier-card--tier5",
   },
   llm_gpt55: {
@@ -318,13 +318,13 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     code: "T2",
     model: "GPT Luna",
     tierName: "Club",
-    reasoningLevel: "max",
+    reasoningLevel: "xhigh",
     className: "profile-tier-card--tier2",
   },
   llm_sonnet: {
     code: "T3",
     model: "Claude Sonnet",
-    reasoningLevel: "max",
+    reasoningLevel: "xhigh",
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
@@ -350,7 +350,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_gemini_flash: {
     code: "T3",
     model: "Gemini Flash",
-    reasoningLevel: "high",
+    reasoningLevel: "medium",
     tierName: "Strong",
     className: "profile-tier-card--tier3",
   },
@@ -395,7 +395,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_opus: {
     code: "T4",
     model: "Claude Opus",
-    reasoningLevel: "max",
+    reasoningLevel: "xhigh",
     tierName: "Expert",
     className: "profile-tier-card--tier4",
   },
@@ -421,7 +421,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
   llm_gemini31_pro_preview: {
     code: "T4",
     model: "Gemini 3.1 Pro Preview",
-    reasoningLevel: "high",
+    reasoningLevel: "medium",
     tierName: "Expert",
     className: "profile-tier-card--tier4",
   },
@@ -448,7 +448,7 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     code: "T4",
     model: "GPT Sol",
     tierName: "Expert",
-    reasoningLevel: "max",
+    reasoningLevel: "xhigh",
     className: "profile-tier-card--tier4",
   },
   llm_gpt55_pro: {
