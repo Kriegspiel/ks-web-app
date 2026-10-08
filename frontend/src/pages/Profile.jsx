@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router"
 import EloChart from "../components/EloChart"
+import BotAuthorNote from "../components/BotAuthorNote"
 import { ELO_TRACKS } from "../components/eloChartConstants"
 import TierBadge from "../components/TierBadge"
 import VersionStamp from "../components/VersionStamp"
@@ -908,6 +909,7 @@ export default function ProfilePage() {
           </div>
         </section>
       ) : null}
+      {isBotProfile && profile?.author_note?.trim() ? <BotAuthorNote note={profile.author_note} /> : null}
       {isOwnGuestProfile ? (
         <section className="profile-card profile-card--guest-conversion" aria-label="Convert guest account">
           <h2>Keep this account.</h2>
