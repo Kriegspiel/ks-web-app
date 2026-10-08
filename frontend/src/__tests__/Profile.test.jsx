@@ -56,6 +56,23 @@ function renderProfile(path = "/user/fil") {
 
 describe("ProfilePage", () => {
   it.each([
+    ["bot", "Model: exact-model\nSource: https://github.com/Kriegspiel/bot-openai-compatible", true],
+    ["bot", "", false],
+    ["bot", "   ", false],
+    ["bot", undefined, false],
+    ["user", "A human note", false],
+  ])("shows an author note only for bots with text (%s, %s)", async (role, author_note, visible) => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({
+      username: "example", role, author_note, stats: {}, user_metrics: { completed_games: 0 },
+    })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+    renderProfile("/user/example")
+    await screen.findByRole("heading", { name: "example" })
+    expect(Boolean(screen.queryByRole("heading", { name: "About this bot" }))).toBe(visible)
+  })
+
+  it.each([
     ["llm_gpt56_luna", "llm_gpt_luna"], ["llm_sonnet5", "llm_sonnet"],
     ["llm_gemini35_flash", "llm_gemini_flash"], ["llm_qwen36_flash", "llm_qwen_flash"],
     ["llm_opus48", "llm_opus"], ["llm_gpt56_sol", "llm_gpt_sol"], ["llm_grok45", "llm_grok"],

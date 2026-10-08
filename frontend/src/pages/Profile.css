@@ -2,6 +2,16 @@
   max-width: var(--content-width);
 }
 
+.profile-author-note__attribution {
+  color: var(--muted-soft);
+  font-size: 0.9rem;
+}
+
+.profile-author-note__text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .profile-tier-card {
   --profile-tier-color: #2a231d;
   position: relative;
