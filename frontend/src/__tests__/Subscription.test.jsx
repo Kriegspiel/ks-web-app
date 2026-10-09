@@ -94,12 +94,12 @@ afterEach(() => {
 
 describe("SubscriptionPage", () => {
   it.each([false, true])("keeps_all_newly_inactive_accounts_out_of_subscription_for_signed_in_%s", async (signedIn) => {
-    const retired = ["llm_nemotron_super", "llm_nemotron_nano", "llm_qwen_plus", "llm_qwen37_plus", "llm_minimax_m3", "llm_phi4", "llm_mistral_large3", "llm_mistral_medium35", "llm_nemotron_ultra", "llm_qwen_flash", "llm_hermes3_70b", "llm_hermes4_405b", "llm_gpt55", "llm_gpt55_pro"]
+    const retired = ["llm_nemotron_super", "llm_nemotron_nano", "llm_qwen_plus", "llm_qwen37_plus", "llm_minimax_m3", "llm_phi4", "llm_mistral_large3", "llm_mistral_medium35", "llm_nemotron_ultra", "llm_qwen_flash", "llm_hermes3_70b", "llm_hermes4_405b", "llm_gpt55", "llm_gpt55_pro", "llm_gemini31_lite"]
     const retained = [
       ["llm_gpt_luna", 2], ["llm_gptoss120b", 2], ["llm_haiku", 2], ["llm_llama4_maverick", 2], ["llm_gemma4_31b", 2],
-      ["llm_sonnet", 3], ["llm_gemini31_lite", 3], ["llm_gemini_flash", 3],
+      ["llm_sonnet", 3], ["llm_muse_glimmer", 2], ["llm_muse_spark", 3], ["llm_gemini_flash", 3],
       ["llm_opus", 4], ["llm_gpt_sol", 4], ["llm_gemini31_pro_preview", 4],
-      ["llm_grok", 5], ["llm_fable", 5], ["llm_gpt_astra", 5],
+      ["llm_grok", 4], ["llm_fable", 5], ["llm_gpt_astra", 5],
     ]
     mockAuth.isAuthenticated = signedIn
     mockAuth.user = signedIn ? { username: "playerone", is_guest: false } : null
@@ -119,7 +119,7 @@ describe("SubscriptionPage", () => {
     expect(within(cells[5]).getByRole("link", { name: "Claude Fable (reasoning: xhigh)" })).toHaveAttribute("href", "/user/llm_fable")
     expect(within(cells[5]).getByText("OpenAI:")).toBeInTheDocument()
     expect(within(cells[5]).getByRole("link", { name: "GPT Astra (reasoning: xhigh)" })).toHaveAttribute("href", "/user/llm_gpt_astra")
-    expect(within(cells[5]).getByRole("link", { name: "Grok (reasoning: xhigh)" })).toHaveAttribute("href", "/user/llm_grok")
+    expect(within(cells[4]).getByRole("link", { name: "Grok (reasoning: xhigh)" })).toHaveAttribute("href", "/user/llm_grok")
     if (!signedIn) expect(mockGetBots).not.toHaveBeenCalled()
   })
 
@@ -127,7 +127,8 @@ describe("SubscriptionPage", () => {
     ["llm_haiku", "Claude Haiku", "enabled" ],
     ["llm_gptoss120b", "GPT-OSS 120B", "medium" ],
     ["llm_gemma4_31b", "Gemma 4 31B", "enabled" ],
-    ["llm_gemini31_lite", "Gemini 3.1 Flash-Lite", "medium" ],
+    ["llm_muse_glimmer", "Muse Glimmer", "xhigh" ],
+    ["llm_muse_spark", "Muse Spark", "xhigh" ],
     ["llm_gemini31_pro_preview", "Gemini 3.1 Pro Preview", "medium" ],
   ])("shows_confirmed_anonymous_reasoning_for_%s", async (username, model, level) => {
     mockAuth.isAuthenticated = false
@@ -324,7 +325,9 @@ describe("SubscriptionPage", () => {
     expect(within(botCells[3]).queryByRole("link", { name: "GPT-5.5 (reasoning: xhigh)" })).not.toBeInTheDocument()
     expect(within(botCells[3]).queryByText("xAI:")).not.toBeInTheDocument()
     expect(within(botCells[3]).queryByRole("link", { name: "Grok 4.5" })).not.toBeInTheDocument()
-    expect(within(botCells[3]).getByRole("link", { name: "Gemini 3.1 Flash-Lite (reasoning: medium)" })).toHaveAttribute("href", "/user/llm_gemini31_lite")
+    expect(screen.queryByRole("link", { name: /Gemini 3.1 Flash-Lite/ })).not.toBeInTheDocument()
+    expect(within(botCells[2]).getByRole("link", { name: "Muse Glimmer (reasoning: xhigh)" })).toHaveAttribute("href", "/user/llm_muse_glimmer")
+    expect(within(botCells[3]).getByRole("link", { name: "Muse Spark (reasoning: xhigh)" })).toHaveAttribute("href", "/user/llm_muse_spark")
     expect(within(botCells[3]).getByRole("link", { name: "Gemini Flash (reasoning: medium)" })).toHaveAttribute("href", "/user/llm_gemini_flash")
     expect(within(botCells[3]).queryByRole("link", { name: "Gemini 2.5 Flash" })).not.toBeInTheDocument()
     expect(screen.queryByText("Mistral AI:")).not.toBeInTheDocument()
@@ -353,8 +356,8 @@ describe("SubscriptionPage", () => {
     expect(screen.queryByRole("link", { name: "GPT-5.5 Pro (reasoning: xhigh)" })).not.toBeInTheDocument()
     expect(within(botCells[5]).queryByText(/Default reasoning level:/)).not.toBeInTheDocument()
     expect(within(botCells[5]).queryByText(/reasoning: no/i)).not.toBeInTheDocument()
-    expect(within(botCells[5]).getByText("xAI:")).toBeInTheDocument()
-    expect(within(botCells[5]).getByRole("link", { name: "Grok (reasoning: xhigh)" })).toHaveAttribute("href", "/user/llm_grok")
+    expect(within(botCells[4]).getByText("xAI:")).toBeInTheDocument()
+    expect(within(botCells[4]).getByRole("link", { name: "Grok (reasoning: xhigh)" })).toHaveAttribute("href", "/user/llm_grok")
     expect(screen.queryByRole("link", { name: "Grok 4.5" })).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Qwen 3.7 Max" })).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "GPTNano T2" })).not.toBeInTheDocument()

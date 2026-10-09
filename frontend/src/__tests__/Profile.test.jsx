@@ -918,10 +918,12 @@ describe("ProfilePage", () => {
 
   it.each([
     ["llm_qwen37_plus", "Tier T2 Club", "T2", "tier-badge--t2", "Qwen 3.7 Plus model bot for T2 Club (reasoning: enabled)."],
+    ["llm_muse_glimmer", "Tier T2 Club", "T2", "tier-badge--t2", "Muse Glimmer model bot for T2 Club (reasoning: xhigh)."],
+    ["llm_muse_spark", "Tier T3 Strong", "T3", "tier-badge--t3", "Muse Spark model bot for T3 Strong (reasoning: xhigh)."],
     ["llm_sonnet", "Tier T3 Strong", "T3", "tier-badge--t3", "Claude Sonnet model bot for T3 Strong (reasoning: xhigh)."],
     ["llm_opus", "Tier T4 Expert", "T4", "tier-badge--t4", "Claude Opus model bot for T4 Expert (reasoning: xhigh)."],
     ["llm_gemini_flash", "Tier T3 Strong", "T3", "tier-badge--t3", "Gemini Flash model bot for T3 Strong (reasoning: medium)."],
-    ["llm_grok", "Tier T5 Master", "T5", "tier-badge--t5", "Grok model bot for T5 Master (reasoning: xhigh)."],
+    ["llm_grok", "Tier T4 Expert", "T4", "tier-badge--t4", "Grok model bot for T4 Expert (reasoning: xhigh)."],
     ["llm_gpt_luna", "Tier T2 Club", "T2", "tier-badge--t2", "GPT Luna model bot for T2 Club (reasoning: xhigh)."],
     ["llm_gpt56_terra", "Tier T4 Expert", "T4", "tier-badge--t4", "GPT-5.6 Terra model bot for T4 Expert (reasoning: no)."],
     ["llm_fable", "Tier T5 Master", "T5", "tier-badge--t5", "Claude Fable model bot for T5 Master (reasoning: xhigh)."],

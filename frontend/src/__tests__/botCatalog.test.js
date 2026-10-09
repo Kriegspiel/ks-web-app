@@ -20,7 +20,7 @@ import {
 describe("botCatalog", () => {
   it.each([
     ["llm_gpt_luna", "T2"], ["llm_sonnet", "T3"], ["llm_gemini_flash", "T3"],
-    ["llm_qwen_flash", "T3"], ["llm_opus", "T4"], ["llm_gpt_sol", "T4"], ["llm_grok", "T5"], ["llm_fable", "T5"], ["llm_gpt_astra", "T5"],
+    ["llm_qwen_flash", "T3"], ["llm_opus", "T4"], ["llm_gpt_sol", "T4"], ["llm_grok", "T4"], ["llm_muse_glimmer", "T2"], ["llm_muse_spark", "T3"], ["llm_fable", "T5"], ["llm_gpt_astra", "T5"],
   ])("offers_canonical_%s_at_%s", (username, tier) => {
     expect(botTierCode({ username })).toBe(tier)
     expect(isCatalogHiddenBot({ username, status: "active" })).toBe(false)
@@ -145,3 +145,11 @@ describe("botCatalog", () => {
     ])
   })
 })
+
+ it("hides retired Flash-Lite even when stale API data says active", () => {
+   expect(isCatalogHiddenBot({ username: "llm_gemini31_lite", status: "active" })).toBe(true)
+   expect(botAvailableForViewer({ username: "llm_grok" }, "tier4")).toBe(true)
+   expect(botAvailableForViewer({ username: "llm_grok" }, "tier3")).toBe(false)
+   expect(botAvailableForViewer({ username: "llm_muse_spark" }, "tier2")).toBe(false)
+   expect(botAvailableForViewer({ username: "llm_muse_spark" }, "tier3")).toBe(true)
+ })
