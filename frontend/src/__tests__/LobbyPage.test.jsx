@@ -57,7 +57,8 @@ beforeEach(() => {
       { bot_id: "bot-17", username: "llm_gemma3_27b", display_name: "LLM Gemma 3 27B (bot)", description: "Gemma 3 27B model bot.", elo: 1315, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-18", username: "llm_gemma4_31b", display_name: "LLM Gemma 4 31B (bot)", description: "Gemma 4 31B model bot.", elo: 1316, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-19", username: "openrouter_llama31_8b", display_name: "OpenRouter Llama 3.1 8B (bot)", description: "Legacy Llama 3.1 8B model bot.", elo: 1317, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, llm_bot_limit_label: "No ply limit" },
-      { bot_id: "bot-20", username: "llm_gemini31_lite", display_name: "LLM Gemini 3.1 Flash-Lite (bot)", description: "Gemini 3.1 Flash-Lite model bot.", elo: 1468, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier3", llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-20", username: "llm_muse_spark", display_name: "Muse Spark", description: "Muse Spark model bot.", elo: 1468, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier3", llm_bot_limit_label: "No ply limit" },
+      { bot_id: "bot-lite-retired", username: "llm_gemini31_lite", display_name: "Retired Flash-Lite", status: "inactive", supported_rule_variants: ["berkeley_any"], llm_backed: true, required_tier: "tier3" },
       { bot_id: "bot-21", username: "llm_gemini25_lite", display_name: "LLM Gemini 2.5 Flash-Lite (bot)", description: "Gemini 2.5 Flash-Lite model bot.", elo: 1318, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier2", llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-22", username: "llm_gemini25_flash", display_name: "LLM Gemini 2.5 Flash (bot)", description: "Gemini 2.5 Flash model bot.", elo: 1469, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier3", llm_bot_limit_label: "No ply limit" },
       { bot_id: "bot-23", username: "openrouter_gemini25_lite", display_name: "OpenRouter Gemini 2.5 Flash-Lite (bot)", description: "Legacy Gemini 2.5 Flash-Lite model bot.", elo: 1319, supported_rule_variants: ["berkeley", "berkeley_any"], llm_backed: true, required_tier: "tier2", llm_bot_limit_label: "No ply limit" },
@@ -667,7 +668,7 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1510 - GPT Luna" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1460 - LLM Nemotron Ultra" })).toBeInTheDocument()
-    expect(screen.getByRole("option", { name: "1468 - LLM Gemini 3.1 Flash-Lite" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1468 - Muse Spark" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1700 - GPT Sol" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1720 - LLM GPT-5.5 Pro" })).toBeInTheDocument()
@@ -681,6 +682,7 @@ describe("LobbyPage", () => {
     expect(screen.queryByRole("option", { name: "1314 - LLM Gemma 3 4B" })).not.toBeInTheDocument()
     expect(screen.queryByRole("option", { name: "1315 - LLM Gemma 3 27B" })).not.toBeInTheDocument()
     expect(screen.queryByRole("option", { name: "1317 - OpenRouter Llama 3.1 8B" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: /Retired Flash-Lite/ })).not.toBeInTheDocument()
     expect(screen.queryByRole("option", { name: "1318 - LLM Gemini 2.5 Flash-Lite" })).not.toBeInTheDocument()
     expect(screen.queryByRole("option", { name: "1319 - OpenRouter Gemini 2.5 Flash-Lite" })).not.toBeInTheDocument()
     expect(screen.queryByRole("option", { name: "1467 - OpenRouter Gemini 3.1 Flash-Lite" })).not.toBeInTheDocument()
@@ -694,7 +696,7 @@ describe("LobbyPage", () => {
     expect(screen.getByRole("option", { name: "1475 - LLM Mistral Large 3" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1510 - GPT Luna" })).toHaveAttribute("aria-disabled", "true")
-    expect(screen.getByRole("option", { name: "1468 - LLM Gemini 3.1 Flash-Lite" })).toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByRole("option", { name: "1468 - Muse Spark" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1700 - GPT Sol" })).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("option", { name: "1720 - LLM GPT-5.5 Pro" })).toHaveAttribute("aria-disabled", "true")
@@ -705,7 +707,7 @@ describe("LobbyPage", () => {
     expect(within(screen.getByRole("option", { name: "1475 - LLM Mistral Large 3" })).getByText("Requires T3")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1505 - LLM GPT-5.5" })).getByText("Requires T5")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1510 - GPT Luna" })).getByText("Requires T2")).toBeInTheDocument()
-    expect(within(screen.getByRole("option", { name: "1468 - LLM Gemini 3.1 Flash-Lite" })).getByText("Requires T3")).toBeInTheDocument()
+    expect(within(screen.getByRole("option", { name: "1468 - Muse Spark" })).getByText("Requires T3")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1600 - LLM Gemini 3.1 Pro Preview" })).getByText("Requires T4")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1700 - GPT Sol" })).getByText("Requires T4")).toBeInTheDocument()
     expect(within(screen.getByRole("option", { name: "1720 - LLM GPT-5.5 Pro" })).getByText("Requires T5")).toBeInTheDocument()
@@ -720,7 +722,7 @@ describe("LobbyPage", () => {
       "1395 - LLM Qwen 3.7 Plus",
       "1510 - GPT Luna",
       "1460 - LLM Nemotron Ultra",
-      "1468 - LLM Gemini 3.1 Flash-Lite",
+      "1468 - Muse Spark",
       "1475 - LLM Mistral Large 3",
       "1600 - LLM Gemini 3.1 Pro Preview",
       "1700 - GPT Sol",

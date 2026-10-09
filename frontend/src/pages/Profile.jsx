@@ -93,6 +93,8 @@ const BOT_TIER_DETAILS_BY_USERNAME = {
   randobot_e2euvbdsb: DEACTIVATED_BOT_TIER_DETAILS,
 }
 const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
+  llm_muse_glimmer: { code: "T2", model: "Muse Glimmer", reasoningLevel: "xhigh", tierName: "Club", className: "profile-tier-card--tier2" },
+  llm_muse_spark: { code: "T3", model: "Muse Spark", reasoningLevel: "xhigh", tierName: "Strong", className: "profile-tier-card--tier3" },
   llm_gpt45nano: {
     code: "T2",
     model: "GPT-5.4 Nano",
@@ -330,11 +332,11 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     className: "profile-tier-card--tier3",
   },
   llm_grok: {
-    code: "T5",
+    code: "T4",
     model: "Grok",
-    tierName: "Master",
+    tierName: "Expert",
     reasoningLevel: "xhigh",
-    className: "profile-tier-card--tier5",
+    className: "profile-tier-card--tier4",
   },
   llm_grok45: {
     code: "T5",

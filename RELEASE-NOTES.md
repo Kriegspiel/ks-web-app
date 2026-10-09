@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.5.8
+
+- Add Muse Glimmer to T2 and Muse Spark to T3, move Grok to T4, and remove retired Flash-Lite from catalogue offers while preserving historical profiles.
+
 These notes summarize the frontend release history reconstructed from git
 history. New runtime releases should add a section at the top when
 `frontend/package.json` changes version. Test-only and docs-only changes do not
