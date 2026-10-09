@@ -909,7 +909,6 @@ export default function ProfilePage() {
           </div>
         </section>
       ) : null}
-      {isBotProfile && profile?.author_note?.trim() ? <BotAuthorNote note={profile.author_note} /> : null}
       {isOwnGuestProfile ? (
         <section className="profile-card profile-card--guest-conversion" aria-label="Convert guest account">
           <h2>Keep this account.</h2>
@@ -961,6 +960,7 @@ export default function ProfilePage() {
           <p>Email address of this bot owner is {profile?.owner_email ?? "unknown"}.</p>
         </section>
       ) : null}
+      {isBotProfile && profile?.author_note?.trim() ? <BotAuthorNote note={profile.author_note} /> : null}
       {userMetrics ? (
         <section className="profile-card profile-card--user-metrics profile-card--bot-metrics" aria-label="User metrics">
           <h2>User metrics</h2>
