@@ -70,6 +70,11 @@ describe("ProfilePage", () => {
     renderProfile("/user/example")
     await screen.findByRole("heading", { name: "example" })
     expect(Boolean(screen.queryByRole("heading", { name: "About this bot" }))).toBe(visible)
+    if (visible) {
+      const botInformation = screen.getByRole("region", { name: "Bot information" })
+      const authorNote = screen.getByRole("region", { name: "About this bot" })
+      expect(botInformation.compareDocumentPosition(authorNote)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    }
   })
 
   it.each([
