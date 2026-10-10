@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.5.9
+
+- List providers alphabetically in every subscription-tier bot box for public and signed-in visitors.
+
 ## 1.5.8
 
 - Add Muse Glimmer to T2 and Muse Spark to T3, move Grok to T4, and remove retired Flash-Lite from catalogue offers while preserving historical profiles.

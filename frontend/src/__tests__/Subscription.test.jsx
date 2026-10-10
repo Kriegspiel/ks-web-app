@@ -93,6 +93,50 @@ afterEach(() => {
 })
 
 describe("SubscriptionPage", () => {
+  it.each(["public", "failed bot request"])("orders_providers_alphabetically_in_every_%s_tier_box", async (mode) => {
+    if (mode === "public") {
+      mockAuth.user = null
+      mockAuth.isAuthenticated = false
+    }
+    renderPage()
+    if (mode === "failed bot request") {
+      await waitFor(() => expect(mockGetBots).toHaveBeenCalledTimes(1))
+    }
+
+    const row = screen.getByRole("rowheader", { name: "Play bots" }).closest("tr")
+    const cells = within(row).getAllByRole("cell")
+    expect(cells.map((cell) => Array.from(cell.querySelectorAll(".subscription-bot-list__label"), (label) => label.textContent))).toEqual([
+      ["Kriegspiel:"],
+      ["Kriegspiel:"],
+      ["Anthropic:", "Google:", "Meta:", "OpenAI:"],
+      ["Anthropic:", "Google:", "Meta:"],
+      ["Anthropic:", "Google:", "OpenAI:", "xAI:"],
+      ["Anthropic:", "OpenAI:"],
+      [],
+    ])
+    cells.slice(1).forEach((cell) => {
+      expect(cell.querySelector(".subscription-bot-list").firstElementChild).toHaveTextContent("Lower-tier bots included.")
+    })
+  })
+
+  it("orders_live_catalogue_providers_alphabetically_independent_of_bot_order", async () => {
+    mockGetBots.mockResolvedValueOnce({ bots: [
+      { username: "llm_gpt_luna", required_tier: "tier2" },
+      { username: "llm_muse_glimmer", required_tier: "tier2" },
+      { username: "llm_gemma4_31b", required_tier: "tier2" },
+      { username: "llm_haiku", required_tier: "tier2" },
+    ] })
+    renderPage()
+    const row = screen.getByRole("rowheader", { name: "Play bots" }).closest("tr")
+    const cell = within(row).getAllByRole("cell")[2]
+    await waitFor(() => expect(within(cell).queryByRole("link", { name: /GPT-OSS/ })).not.toBeInTheDocument())
+    expect(Array.from(cell.querySelectorAll(".subscription-bot-list__label"), (label) => label.textContent)).toEqual([
+      "Anthropic:", "Google:", "Meta:", "OpenAI:",
+    ])
+    expect(cell.querySelector(".subscription-bot-list").firstElementChild).toHaveTextContent("Lower-tier bots included.")
+    expect(within(cell).getByRole("link", { name: /GPT Luna/ })).toHaveAttribute("href", "/user/llm_gpt_luna")
+  })
+
   it.each([false, true])("keeps_all_newly_inactive_accounts_out_of_subscription_for_signed_in_%s", async (signedIn) => {
     const retired = ["llm_nemotron_super", "llm_nemotron_nano", "llm_qwen_plus", "llm_qwen37_plus", "llm_minimax_m3", "llm_phi4", "llm_mistral_large3", "llm_mistral_medium35", "llm_nemotron_ultra", "llm_qwen_flash", "llm_hermes3_70b", "llm_hermes4_405b", "llm_gpt55", "llm_gpt55_pro", "llm_gemini31_lite"]
     const retained = [
@@ -466,6 +510,11 @@ describe("SubscriptionPage", () => {
     const simpleBotCell = within(playBotsRow).getAllByRole("cell")[0]
 
     await waitFor(() => expect(within(simpleBotCell).getByText("OpenAI:")).toBeInTheDocument())
+    expect(Array.from(simpleBotCell.querySelectorAll(".subscription-bot-list__label"), (label) => label.textContent)).toEqual([
+      "Alibaba:", "Anthropic:", "DeepSeek:", "Google:", "Kriegspiel:", "Meta:",
+      "Microsoft:", "MiniMax:", "Mistral AI:", "Moonshot AI:", "Nous Research:",
+      "Nvidia:", "OpenAI:", "Other LLM:", "xAI:", "Z.AI:",
+    ])
     ;[
       "Anthropic:",
       "Google:",
