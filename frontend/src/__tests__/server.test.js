@@ -1,7 +1,8 @@
 import fs from "node:fs"
 import http from "node:http"
+import os from "node:os"
 import path from "node:path"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import {
   buildHttpsRedirectLocation,
   createServer,
@@ -22,7 +23,7 @@ function req({ url = "/", host = "app.kriegspiel.org", headers = {} } = {}) {
   }
 }
 
-const distRoot = path.resolve(process.cwd(), "dist")
+let distRoot
 const servers = new Set()
 
 function resetDist(files = { "index.html": "<main>app shell</main>" }) {
@@ -76,6 +77,10 @@ async function unusedPort() {
   await close(server)
   return port
 }
+
+beforeEach(() => {
+  distRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ks-web-app-server-test-"))
+})
 
 afterEach(async () => {
   await Promise.all([...servers].map((server) => close(server)))
@@ -137,7 +142,7 @@ describe("production server routing", () => {
   })
 
   it("resolves_static_files_and_bad_uri_fallbacks", () => {
-    const tempDist = fs.mkdtempSync(path.join(process.cwd(), "server-dist-"))
+    const tempDist = fs.mkdtempSync(path.join(os.tmpdir(), "server-dist-"))
     try {
       fs.writeFileSync(path.join(tempDist, "index.html"), "fallback")
       fs.writeFileSync(path.join(tempDist, "asset.txt"), "asset")
@@ -161,7 +166,7 @@ describe("production server routing", () => {
       "assets/app.js": "console.log('ok')",
       "assets/data.bin": "raw",
     })
-    const server = createServer()
+    const server = createServer({ distRoot })
     const port = await listen(server)
 
     const redirect = await requestServer(port, {
@@ -213,6 +218,21 @@ describe("production server routing", () => {
     expect(missing.body).toBe("Not found")
   })
 
+  it("serves_checkout_returns_from_an_isolated_asset_root", async () => {
+    resetDist()
+    const server = createServer({ distRoot })
+    const port = await listen(server)
+    const checkoutReturn = await requestServer(port, {
+      path: "/subscription?checkout_session_id=cs_live_return_fixture",
+      headers: { host: "app.kriegspiel.org", "x-forwarded-proto": "https" },
+    })
+
+    expect(checkoutReturn.response.statusCode).toBe(200)
+    expect(checkoutReturn.response.headers["content-type"]).toBe("text/html; charset=utf-8")
+    expect(checkoutReturn.response.headers["cache-control"]).toBe("no-cache")
+    expect(checkoutReturn.body).toBe("<main>app shell</main>")
+  })
+
   it("proxies_app_api_requests_to_the_backend_and_filters_hop_by_hop_headers", async () => {
     const backendRequests = []
     const backend = http.createServer((backendReq, backendRes) => {
@@ -228,7 +248,7 @@ describe("production server routing", () => {
       backendRes.end(JSON.stringify({ ok: true }))
     })
     const backendPort = await listen(backend)
-    const server = createServer({ backendOrigin: `http://127.0.0.1:${backendPort}` })
+    const server = createServer({ distRoot, backendOrigin: `http://127.0.0.1:${backendPort}` })
     const port = await listen(server)
 
     const proxied = await requestServer(port, {
@@ -253,7 +273,7 @@ describe("production server routing", () => {
 
   it("returns_bad_gateway_when_the_backend_proxy_fails", async () => {
     const portWithoutServer = await unusedPort()
-    const server = createServer({ backendOrigin: `http://127.0.0.1:${portWithoutServer}` })
+    const server = createServer({ distRoot, backendOrigin: `http://127.0.0.1:${portWithoutServer}` })
     const port = await listen(server)
 
     const failed = await requestServer(port, {
