@@ -235,9 +235,14 @@ function featuresWithBotList(playBotsByTier) {
 }
 
 function BotList({ groups }) {
+  const orderedGroups = [
+    ...groups.filter((group) => group?.type === "note"),
+    ...groups.filter((group) => group?.type !== "note")
+      .sort(([left], [right]) => left.localeCompare(right, "en", { sensitivity: "base" })),
+  ]
   return (
     <div className="subscription-bot-list">
-      {groups.map((group) => {
+      {orderedGroups.map((group) => {
         if (group?.type === "note") {
           return <div key={group.text} className="subscription-bot-list__note">{group.text}</div>
         }
