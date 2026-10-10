@@ -187,9 +187,9 @@ export function resolveStaticFile(requestPathname, distRoot = DIST_ROOT) {
   return { filePath: path.join(distRoot, "index.html"), fallback: true }
 }
 
-function serveStatic(req, res) {
+function serveStatic(req, res, distRoot) {
   const requestUrl = new URL(req.url, "http://localhost")
-  const { filePath, fallback } = resolveStaticFile(requestUrl.pathname)
+  const { filePath, fallback } = resolveStaticFile(requestUrl.pathname, distRoot)
   const extension = path.extname(filePath)
   const contentType = MIME_TYPES.get(extension) || "application/octet-stream"
 
@@ -218,6 +218,7 @@ function serveStatic(req, res) {
 
 export function createServer({
   backendOrigin = process.env.KS_BACKEND_ORIGIN || DEFAULT_BACKEND_ORIGIN,
+  distRoot = DIST_ROOT,
 } = {}) {
   return http.createServer((req, res) => {
     if (shouldRedirectToHttps(req)) {
@@ -235,7 +236,7 @@ export function createServer({
       return
     }
 
-    serveStatic(req, res)
+    serveStatic(req, res, distRoot)
   })
 }
 

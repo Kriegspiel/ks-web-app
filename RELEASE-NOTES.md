@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.5.10
+
+- Keep production server test fixtures in temporary directories so deployment validation cannot delete live app assets or interrupt payment return pages.
+
 ## 1.5.9
 
 - List providers alphabetically in every subscription-tier bot box for public and signed-in visitors.
