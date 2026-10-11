@@ -248,7 +248,11 @@ export function subscriptionPathForBot(bot) {
 }
 
 export function botPickerName(bot) {
-  return String(bot?.display_name ?? "Unknown bot").replace(/\s*\(bot\)\s*$/i, "").trim() || "Unknown bot"
+  const name = String(bot?.display_name ?? "Unknown bot")
+    .replace(/\s*\(bot\)\s*$/i, "")
+    .trim()
+    .replace(/^LLM(?:\s+|$)/i, "")
+  return /^haiku$/i.test(name) ? "Claude Haiku" : name || "Unknown bot"
 }
 
 export function botPickerLimitLabel(bot) {
