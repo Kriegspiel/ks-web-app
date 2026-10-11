@@ -46,6 +46,7 @@ function billingStatus(overrides = {}) {
       tier2: { monthly: true, yearly: true },
       tier3: { monthly: true, yearly: true },
       tier4: { monthly: true, yearly: true },
+      tier5: { monthly: true, yearly: true },
     },
     billing: { has_customer: false, subscription_status: null, tier: null, interval: null },
     ...overrides,
@@ -606,19 +607,70 @@ describe("SubscriptionPage", () => {
     expect(window.scrollTo).toHaveBeenCalledWith({ left: 0, top: 0, behavior: "auto" })
   })
 
-  it("uses_a_t5_tier_query_param_as_the_initial_unavailable_selection", async () => {
-    renderPage("/subscription?tier=tier5")
-
+  it.each(["monthly", "yearly"])("opens_t5_checkout_with_the_%s_price", async (interval) => {
+    renderPage()
     const controls = await screen.findByRole("region", { name: "Subscription controls" })
-    expect(await within(controls).findByRole("heading", { name: "Tier T5 Master" })).toBeInTheDocument()
-    expect(within(controls).getByText("Not available yet")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Open payment form" })).toBeDisabled()
-    expect(screen.queryByRole("button", { name: "Choose Tier T5 Master" })).not.toBeInTheDocument()
-
+    await within(controls).findByRole("heading", { name: "Tier T2 Club" })
     const tier5Header = screen.getByRole("columnheader", { name: /Tier\s+T5\s+Master/i })
+    fireEvent.click(tier5Header)
+    expect(await within(controls).findByRole("heading", { name: "Tier T5 Master" })).toBeInTheDocument()
+    expect(within(controls).getByText("$100/mo")).toBeInTheDocument()
+    expect(within(controls).getByText("$1,000/yr")).toBeInTheDocument()
     expect(tier5Header).toHaveClass("subscription-tier-table__selected-column")
-    expect(tier5Header).toHaveClass("subscription-tier-table__unavailable-column")
+    expect(tier5Header).not.toHaveClass("subscription-tier-table__unavailable-column")
+    if (interval === "yearly") fireEvent.click(screen.getByRole("button", { name: "Yearly" }))
+    fireEvent.click(screen.getByRole("button", { name: "Open payment form" }))
+    await waitFor(() => expect(mockBillingApi.createCheckoutSession).toHaveBeenCalledWith({ tier: "tier5", interval }))
+    expect(stripeMount).toHaveBeenCalledTimes(1)
+  })
+
+  it.each(["monthly", "yearly"])("opens_a_prorated_upgrade_to_t5_%s", async (interval) => {
+    mockBillingApi.getSubscription.mockResolvedValueOnce(billingStatus({
+      current_tier: "tier4",
+      billing: { has_customer: true, subscription_status: "active", tier: "tier4", interval: "monthly" },
+    }))
+    renderPage("/subscription?tier=tier5")
+    const controls = await screen.findByRole("region", { name: "Subscription controls" })
+    await within(controls).findByRole("heading", { name: "Tier T5 Master" })
+    if (interval === "yearly") fireEvent.click(screen.getByRole("button", { name: "Yearly" }))
+    fireEvent.click(screen.getByRole("button", { name: "Review prorated change" }))
+    await waitFor(() => expect(mockBillingApi.createSubscriptionChangeSession).toHaveBeenCalledWith({ tier: "tier5", interval }))
     expect(mockBillingApi.createCheckoutSession).not.toHaveBeenCalled()
+  })
+
+  it("disables_t5_purchase_until_its_server_prices_are_configured", async () => {
+    const status = billingStatus()
+    status.available_prices.tier5 = { monthly: false, yearly: false }
+    mockBillingApi.getSubscription.mockResolvedValueOnce(status)
+    renderPage("/subscription?tier=tier5")
+    const controls = await screen.findByRole("region", { name: "Subscription controls" })
+    await within(controls).findByRole("heading", { name: "Tier T5 Master" })
+    expect(screen.getByRole("button", { name: "Open payment form" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Monthly" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Yearly" })).toBeDisabled()
+    expect(mockBillingApi.createCheckoutSession).not.toHaveBeenCalled()
+  })
+
+  it("shows_public_t5_prices_and_keeps_t6_unavailable", () => {
+    mockAuth.user = null
+    mockAuth.isAuthenticated = false
+    renderPage()
+    const tier5 = screen.getByRole("columnheader", { name: /Tier\s+T5\s+Master/i })
+    expect(within(tier5).getByText("$100/mo")).toBeInTheDocument()
+    expect(within(tier5).getByText("$1,000/yr")).toBeInTheDocument()
+    const tier6 = screen.getByRole("columnheader", { name: /Tier\s+T6\s+Elite/i })
+    expect(within(tier6).getByText("Not available yet")).toBeInTheDocument()
+  })
+
+  it("selects_the_current_t5_subscription_on_return", async () => {
+    mockBillingApi.getSubscription.mockResolvedValueOnce(billingStatus({
+      current_tier: "tier5",
+      billing: { has_customer: true, subscription_status: "active", tier: "tier5", interval: "monthly" },
+    }))
+    renderPage("/subscription?checkout_session_id=cs_return")
+    const controls = await screen.findByRole("region", { name: "Subscription controls" })
+    await within(controls).findByRole("heading", { name: "Tier T5 Master" })
+    expect(screen.getByRole("button", { name: "Current subscription" })).toBeDisabled()
   })
 
   it("uses_the_current_paid_tier_as_the_initial_selection", async () => {
