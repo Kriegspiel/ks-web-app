@@ -20,7 +20,7 @@ const TIERS = [
   { key: "tier2", apiTier: "tier2", code: "T2", name: "Club", price: { monthly: "$10/mo", yearly: "$100/yr" }, selectable: true },
   { key: "tier3", apiTier: "tier3", code: "T3", name: "Strong", price: { monthly: "$20/mo", yearly: "$200/yr" }, selectable: true },
   { key: "tier4", apiTier: "tier4", code: "T4", name: "Expert", price: { monthly: "$50/mo", yearly: "$500/yr" }, selectable: true },
-  { key: "tier5", apiTier: "tier5", code: "T5", name: "Master", price: "Not available yet", selectable: false, future: true },
+  { key: "tier5", apiTier: "tier5", code: "T5", name: "Master", price: { monthly: "$100/mo", yearly: "$1,000/yr" }, selectable: true },
   { key: "tier6", apiTier: null, code: "T6", name: "Elite", price: "Not available yet", selectable: false, future: true },
 ]
 const SUBSCRIPTION_BOT_TIER_ORDER = TIERS.map((tier) => tier.code)
@@ -302,8 +302,8 @@ function selectedPlanMatchesBilling(status, tier, interval) {
 }
 
 function firstAvailablePlan(status) {
-  const currentTier = ["tier2", "tier3", "tier4"].includes(status?.current_tier) ? status.current_tier : null
-  const preferredTiers = currentTier ? [currentTier, ...["tier2", "tier3", "tier4"].filter((tier) => tier !== currentTier)] : ["tier2", "tier3", "tier4"]
+  const currentTier = ["tier2", "tier3", "tier4", "tier5"].includes(status?.current_tier) ? status.current_tier : null
+  const preferredTiers = currentTier ? [currentTier, ...["tier2", "tier3", "tier4", "tier5"].filter((tier) => tier !== currentTier)] : ["tier2", "tier3", "tier4", "tier5"]
   for (const tier of preferredTiers) {
     const interval = firstAvailableInterval(status, tier)
     if (interval) return { tier, interval }
