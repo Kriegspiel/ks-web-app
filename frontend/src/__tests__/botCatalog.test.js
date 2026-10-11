@@ -117,15 +117,34 @@ describe("botCatalog", () => {
     expect(isInactiveBot({ username: "llm_sonnet", status: "active" })).toBe(false)
   })
 
+  it.each([
+    ["LLM Haiku (bot)", "Claude Haiku"],
+    ["Haiku", "Claude Haiku"],
+    ["Claude Haiku (bot)", "Claude Haiku"],
+    ["LLM Gemma 4 31B (bot)", "Gemma 4 31B"],
+    ["LLM GPT-OSS 120B (bot)", "GPT-OSS 120B"],
+    ["LLM Llama 4 Maverick (bot)", "Llama 4 Maverick"],
+    ["LLM Gemini 3.1 Pro Preview (bot)", "Gemini 3.1 Pro Preview"],
+    ["  llm   haiku (BOT)  ", "Claude Haiku"],
+    ["GPT Luna", "GPT Luna"],
+    ["Muse Glimmer", "Muse Glimmer"],
+    ["Random Bot (bot)", "Random Bot"],
+    ["Custom LLM Bot", "Custom LLM Bot"],
+    ["LLMbot", "LLMbot"],
+    ["LLM (bot)", "Unknown bot"],
+  ])("shows the bot picker name %s as %s", (display_name, expected) => {
+    expect(botPickerName({ display_name })).toBe(expected)
+  })
+
   it("formats_and_sorts_bot_picker_entries", () => {
     expect(botRating({ elo: "bad" })).toBe(1200)
-    expect(botPickerName({ display_name: "LLM Haiku (bot)" })).toBe("LLM Haiku")
+    expect(botPickerName({ display_name: "LLM Haiku (bot)" })).toBe("Claude Haiku")
     expect(botPickerName({ display_name: "   " })).toBe("Unknown bot")
     expect(botPickerName(null)).toBe("Unknown bot")
     expect(botPickerLimitLabel({ llm_backed: false, llm_bot_limit_label: "10 plies" })).toBe("")
     expect(botPickerLimitLabel({ llm_backed: true, llm_bot_limit_label: " No ply limit " })).toBe("")
     expect(botPickerLimitLabel({ llm_backed: true, llm_bot_limit_label: "12 plies" })).toBe("12 plies")
-    expect(formatBotPickerLabel({ elo: 1300, display_name: "LLM Haiku (bot)", llm_backed: true, llm_bot_limit_label: "12 plies" })).toBe("1300 - LLM Haiku (12 plies)")
+    expect(formatBotPickerLabel({ elo: 1300, display_name: "LLM Haiku (bot)", llm_backed: true, llm_bot_limit_label: "12 plies" })).toBe("1300 - Claude Haiku (12 plies)")
 
     expect(compareBotPickerBots({ username: "llm_gpt55", elo: 1000 }, { username: "llm_haiku", elo: 2000 })).toBeGreaterThan(0)
     expect(compareBotPickerBots({ username: "randobot", elo: 1000 }, { username: "simpleheuristics", elo: 900 })).toBeLessThan(0)
