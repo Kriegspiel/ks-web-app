@@ -1,5 +1,6 @@
+import { Component } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import GamePage from "../pages/GamePage"
 import { TEST_VERSION_STAMP } from "../version"
 
@@ -2890,5 +2891,67 @@ describe("GamePage", () => {
     await sleep(650)
 
     expect(mockApi.getGameState).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("GamePage browser translation", () => {
+  it("keeps_the_opponent_row_usable_when_translated_before_metadata_arrives", async () => {
+    const capturedErrors = []
+    class TranslationErrorBoundary extends Component {
+      state = { failed: false }
+
+      static getDerivedStateFromError() {
+        return { failed: true }
+      }
+
+      componentDidCatch(error) {
+        capturedErrors.push(error)
+      }
+
+      render() {
+        return this.state.failed ? <p>Game rendering failed</p> : this.props.children
+      }
+    }
+
+    let resolveMetadata
+    mockApi.getGame.mockImplementationOnce(() => new Promise((resolve) => {
+      resolveMetadata = resolve
+    }))
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
+
+    try {
+      render(<TranslationErrorBoundary><GamePage /></TranslationErrorBoundary>)
+      const row = (await screen.findByText("Against:")).closest("li")
+      expect(row).toHaveTextContent("Waiting…")
+
+      // Translators replace text nodes while state and metadata load independently.
+      const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT)
+      let placeholder = walker.nextNode()
+      while (placeholder && !placeholder.textContent.includes("Waiting")) {
+        placeholder = walker.nextNode()
+      }
+      expect(placeholder).toBeTruthy()
+      const translated = document.createElement("font")
+      translated.textContent = "Ожидание…"
+      placeholder.parentNode.replaceChild(translated, placeholder)
+
+      await act(async () => resolveMetadata({
+        game_id: "g-123",
+        game_code: "ABC123",
+        state: "active",
+        rule_variant: "berkeley_any",
+        opponent_type: "bot",
+        white: { username: "notifil", role: "user" },
+        black: { username: "llm_gptnano", role: "bot", elo: 1342 },
+      }))
+
+      expect(capturedErrors).toEqual([])
+      expect(screen.queryByText("Ожидание…")).not.toBeInTheDocument()
+      expect(screen.getByRole("link", { name: "llm_gptnano (bot)" }))
+        .toHaveAttribute("href", "/user/llm_gptnano")
+      expect(screen.getByRole("button", { name: "Square e2" })).toBeInTheDocument()
+    } finally {
+      consoleError.mockRestore()
+    }
   })
 })

@@ -4098,7 +4098,8 @@ export default function GamePage() {
                         {opponentLabel}
                       </a>
                     ) : (
-                      opponentLabel
+                      // Replace the wrapper safely if a translator has replaced its text node.
+                      <span>{opponentLabel}</span>
                     )}
                   </li>
                   <li><strong>Opponent rating:</strong> {ratingValue(opponentRating)}</li>

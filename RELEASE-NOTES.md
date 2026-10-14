@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.5.13
+
+- Prevent a game-page rendering crash when browser translation replaces the opponent placeholder before game metadata arrives.
+
 ## 1.5.11
 
 - Activate T5 Master at $100 monthly or $1,000 annually, including new subscriptions and prorated changes from existing paid plans.
