@@ -48,6 +48,18 @@
   vertical-align: top;
 }
 
+.leaderboard-table--interactive thead th:first-child {
+  border-top-left-radius: calc(var(--radius) - 1px);
+}
+
+.leaderboard-table--interactive thead th:last-child {
+  border-top-right-radius: calc(var(--radius) - 1px);
+}
+
+.leaderboard-table--interactive tbody tr:last-child td {
+  border-bottom: 0;
+}
+
 .leaderboard-column-filter {
   position: relative;
 }
