@@ -1,6 +1,6 @@
 # Release Notes
 
-## 1.5.18
+## 1.5.19
 
 - Restore immediate route delivery while retaining Stripe initialization only when the payment form is requested.
 
