@@ -116,16 +116,27 @@ describe("Subscription CSS", () => {
     const disabledPaymentButtonRule = blockFor(subscriptionCss, ".subscription-payment-button:disabled")
     expect(disabledPaymentButtonRule).toMatch(/background:\s*var\(--surface-strong\);/)
     expect(disabledPaymentButtonRule).toMatch(/color:\s*var\(--muted\);/)
+  })
 
-    const selectedColumnRule = blockFor(subscriptionCss, ".subscription-tier-table th.subscription-tier-table__selected-column")
+  it("draws the selected tier outline over cell borders without blocking clicks", () => {
+    const selectedBodyCellRule = blockFor(subscriptionCss, ".subscription-tier-table td.subscription-tier-table__selected-column {")
+    expect(selectedBodyCellRule).toMatch(/position:\s*relative;/)
+
+    const selectedColumnRule = blockFor(subscriptionCss, ".subscription-tier-table th.subscription-tier-table__selected-column::after")
+    expect(selectedColumnRule).toMatch(/content:\s*"";/)
+    expect(selectedColumnRule).toMatch(/position:\s*absolute;/)
+    expect(selectedColumnRule).toMatch(/inset:\s*0 -1px -1px 0;/)
+    expect(selectedColumnRule).toMatch(/z-index:\s*1;/)
+    expect(selectedColumnRule).toMatch(/pointer-events:\s*none;/)
     expect(selectedColumnRule).toMatch(/inset 2px 0 0 var\(--accent\)/)
     expect(selectedColumnRule).toMatch(/inset -2px 0 0 var\(--accent\)/)
     expect(selectedColumnRule).not.toMatch(/inset 0 0 0 2px var\(--accent\)/)
 
-    const selectedHeaderRule = blockFor(subscriptionCss, ".subscription-tier-table thead th.subscription-tier-table__selected-column")
+    const selectedHeaderRule = blockFor(subscriptionCss, ".subscription-tier-table thead th.subscription-tier-table__selected-column::after")
     expect(selectedHeaderRule).toMatch(/inset 0 2px 0 var\(--accent\)/)
 
-    const selectedLastCellRule = blockFor(subscriptionCss, ".subscription-tier-table tbody tr:last-child td.subscription-tier-table__selected-column")
+    const selectedLastCellRule = blockFor(subscriptionCss, ".subscription-tier-table tbody tr:last-child td.subscription-tier-table__selected-column::after")
+    expect(selectedLastCellRule).toMatch(/bottom:\s*0;/)
     expect(selectedLastCellRule).toMatch(/inset 0 -2px 0 var\(--accent\)/)
 
     const selectableColumnRule = blockFor(subscriptionCss, ".subscription-tier-table th.subscription-tier-table__selectable-column")
