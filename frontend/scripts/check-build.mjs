@@ -15,10 +15,8 @@ visit("index.html")
 const initialBytes = [...initial].reduce((total, key) => (
   total + gzipSync(fs.readFileSync(path.join(dist, manifest[key].file))).length
 ), 0)
-assert.ok(initialBytes < 170000, `Initial JavaScript exceeds 170,000 gzip bytes: ${initialBytes}`)
-for (const name of ["LobbyPage", "GamePage", "Review", "TutorReview", "Profile", "GameHistory", "Leaderboard", "AcquisitionReport", "BotMatrixReport", "BotsReport", "GuestsReport", "TechIndex", "UsersReport", "Settings", "Subscription"]) {
-  const key = `src/pages/${name}.jsx`
-  assert.ok(manifest[key]?.isDynamicEntry, `${name} must remain a separate route chunk`)
-  assert.ok(!initial.has(key), `${name} must not be required by the initial entry`)
-}
-console.log(`Build checks passed: ${initialBytes.toLocaleString()} initial gzip JS bytes; heavy routes load on demand.`)
+// Full route delivery avoids a network/React boundary during the game journey.
+assert.ok(initialBytes < 230000, `Initial JavaScript exceeds 230,000 gzip bytes: ${initialBytes}`)
+assert.equal(Object.values(manifest).filter((entry) => entry.isDynamicEntry).length, 0,
+  "Stripe-only delivery must not defer route chunks")
+console.log(`Build checks passed: ${initialBytes.toLocaleString()} initial gzip JS bytes; routes are available at entry.`)

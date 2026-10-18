@@ -1,13 +1,8 @@
 import { afterEach, expect, it, vi } from "vitest"
-import { act, cleanup, render, screen } from "@testing-library/react"
+import { cleanup, render, screen } from "@testing-library/react"
 import { MemoryRouter } from "react-router"
 import { AppRoutes } from "../App"
 
-const lobbyLoad = vi.hoisted(() => {
-  let release
-  const promise = new Promise((resolve) => { release = resolve })
-  return { promise, release }
-})
 vi.mock("../hooks/useAuth", () => ({ useAuth: () => ({
   isAuthenticated: true, bootstrapping: false,
   user: { username: "player", can_view_tech_reports: true, can_use_tutor: true },
@@ -15,10 +10,7 @@ vi.mock("../hooks/useAuth", () => ({ useAuth: () => ({
 vi.mock("../components/AppHeader", () => ({ default: () => <header>Persistent header</header> }))
 vi.mock("../components/AppFooter", () => ({ default: () => <footer>Persistent footer</footer> }))
 vi.mock("../components/AttributionCapture", () => ({ default: () => null }))
-vi.mock("../pages/LobbyPage", async () => {
-  await lobbyLoad.promise
-  return { default: () => "Lobby view" }
-})
+vi.mock("../pages/LobbyPage", () => ({ default: () => "Lobby view" }))
 vi.mock("../pages/GamePage", () => ({ default: () => "Game view" }))
 vi.mock("../pages/Review", () => ({ default: () => "Review view" }))
 vi.mock("../pages/TutorReview", () => ({ default: () => "Tutor view" }))
@@ -39,13 +31,11 @@ function open(path) {
   render(<MemoryRouter initialEntries={[path]}><AppRoutes /></MemoryRouter>)
 }
 
-it("keeps the shell visible while a route chunk is loading", async () => {
+it("opens the initial protected route synchronously with the persistent shell", () => {
   open("/lobby")
-  expect(screen.getByRole("status")).toHaveTextContent("Loading page…")
+  expect(screen.getByText("Lobby view")).toBeVisible()
   expect(screen.getByText("Persistent header")).toBeVisible()
   expect(screen.getByText("Persistent footer")).toBeVisible()
-  await act(async () => { lobbyLoad.release() })
-  expect(await screen.findByText("Lobby view")).toBeVisible()
   expect(screen.queryByRole("status")).not.toBeInTheDocument()
 })
 
@@ -66,7 +56,7 @@ it.each([
   ["/settings", "Settings view"],
   ["/subscription", "Subscription view"],
   ["/subcription", "Subscription view"],
-])("opens the correct lazy view at %s", async (path, text) => {
+])("opens the correct view without a chunk-loading boundary at %s", (path, text) => {
   open(path)
-  expect(await screen.findByText(text)).toBeVisible()
+  expect(screen.getByText(text)).toBeVisible()
 })
