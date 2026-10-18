@@ -11,7 +11,7 @@ export default function ThemeToggle() {
       aria-label="Toggle color theme"
       aria-pressed={isDark}
     >
-      <img className="theme-toggle__logo" src="/logo-theme-toggle.png" alt="" />
+      <img className="theme-toggle__logo" src="/logo-theme-toggle-96.webp" width="96" height="96" alt="" />
     </button>
   )
 }
