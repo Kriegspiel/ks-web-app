@@ -9,6 +9,11 @@ const sharedFooterRealDirectory = fs.realpathSync(sharedFooterDirectory)
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    manifest: true,
+    // Open tabs may request older route chunks after the next deployment.
+    emptyOutDir: false,
+  },
   server: {
     allowedHosts: ['app.kriegspiel.org'],
     fs: {

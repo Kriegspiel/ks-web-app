@@ -1,11 +1,11 @@
 {
   "name": "frontend",
   "private": true,
-  "version": "1.5.16",
+  "version": "1.5.17",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/check-build.mjs",
     "lint": "eslint .",
     "serve:prod": "node server.mjs",
     "test": "vitest",

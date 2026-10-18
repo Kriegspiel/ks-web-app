@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router"
 import SubscriptionPage, { __subscriptionPageInternals as h } from "../pages/Subscription"
 import { TEST_VERSION_STAMP } from "../version"
+import { loadStripe } from "@stripe/stripe-js/pure"
 
 const mockAuth = vi.hoisted(() => ({
   user: { username: "playerone", is_guest: false },
@@ -33,7 +34,7 @@ vi.mock("../services/api", () => ({
   getBots: mockGetBots,
 }))
 
-vi.mock("@stripe/stripe-js", () => ({
+vi.mock("@stripe/stripe-js/pure", () => ({
   loadStripe: vi.fn(() => Promise.resolve(mockStripeRuntime.current)),
 }))
 
@@ -54,7 +55,7 @@ function billingStatus(overrides = {}) {
 }
 
 function renderPage(initialEntry = "/subscription") {
-  render(
+  return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <SubscriptionPage />
     </MemoryRouter>,
@@ -72,6 +73,7 @@ beforeEach(() => {
   mockBillingApi.createSubscriptionChangeSession.mockReset()
   mockBillingApi.createPortalSession.mockReset()
   mockGetBots.mockReset()
+  loadStripe.mockClear()
   stripeMount.mockReset()
   stripeDestroy.mockReset()
   createEmbeddedCheckoutPage.mockReset()
@@ -94,6 +96,40 @@ afterEach(() => {
 })
 
 describe("SubscriptionPage", () => {
+  it("defers Stripe until the payment form is requested", async () => {
+    renderPage()
+    const button = await screen.findByRole("button", { name: "Open payment form" })
+    expect(button).toBeEnabled()
+    expect(loadStripe).not.toHaveBeenCalled()
+    fireEvent.click(button)
+    await waitFor(() => expect(stripeMount).toHaveBeenCalledOnce())
+    expect(loadStripe).toHaveBeenCalledExactlyOnceWith("pk_test_123")
+  })
+
+  it("does not create checkout after leaving while Stripe is loading", async () => {
+    let resolveStripe
+    loadStripe.mockReturnValueOnce(new Promise((resolve) => { resolveStripe = resolve }))
+    const view = renderPage()
+    fireEvent.click(await screen.findByRole("button", { name: "Open payment form" }))
+    expect(loadStripe).toHaveBeenCalledOnce()
+    view.unmount()
+    await act(async () => resolveStripe(mockStripeRuntime.current))
+    expect(mockBillingApi.createCheckoutSession).not.toHaveBeenCalled()
+    expect(stripeMount).not.toHaveBeenCalled()
+  })
+
+  it("retries loading Stripe after a failed SDK request", async () => {
+    loadStripe.mockRejectedValueOnce(new Error("Payment SDK unavailable"))
+    renderPage()
+    const button = await screen.findByRole("button", { name: "Open payment form" })
+    fireEvent.click(button)
+    expect(await screen.findByText("Payment SDK unavailable")).toBeInTheDocument()
+    expect(mockBillingApi.createCheckoutSession).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "Open payment form" }))
+    await waitFor(() => expect(stripeMount).toHaveBeenCalledOnce())
+    expect(loadStripe).toHaveBeenCalledTimes(2)
+  })
+
   it.each(["public", "failed bot request"])("orders_providers_alphabetically_in_every_%s_tier_box", async (mode) => {
     if (mode === "public") {
       mockAuth.user = null
@@ -714,6 +750,7 @@ describe("SubscriptionPage", () => {
       expect(mockBillingApi.createSubscriptionChangeSession).toHaveBeenCalledWith({ tier: "tier3", interval: "monthly" })
     })
     expect(mockBillingApi.createCheckoutSession).not.toHaveBeenCalled()
+    expect(loadStripe).not.toHaveBeenCalled()
     expect(stripeMount).not.toHaveBeenCalled()
     expect(window.location.hash).toBe("#stripe-subscription-change")
   })

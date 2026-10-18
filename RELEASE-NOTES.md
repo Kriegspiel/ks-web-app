@@ -1,5 +1,11 @@
 # Release Notes
 
+## 1.5.17
+
+- Load gameplay, replay, profiles, reports and billing views on demand while keeping login, registration and join entry pages immediate.
+- Load Stripe.js only when opening the embedded payment form; retain existing subscription, proration and portal flows.
+- Preserve older fingerprinted assets across builds so open tabs can still load their route chunks after deployment.
+
 ## 1.5.16
 
 - Match kriegspiel.org by using regular font weight for every app footer navigation link.
