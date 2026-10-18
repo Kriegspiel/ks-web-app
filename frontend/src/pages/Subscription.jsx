@@ -558,6 +558,7 @@ export default function SubscriptionPage() {
       }
       if (!status?.publishable_key || !checkoutContainerRef.current) return
       const stripe = await loadStripe(status.publishable_key)
+      if (!checkoutContainerRef.current) return
       if (!stripe) throw new Error("Stripe is not ready.")
       const checkout = await createEmbeddedCheckout(stripe, {
         fetchClientSecret: async () => {

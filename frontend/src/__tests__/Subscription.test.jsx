@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router"
 import SubscriptionPage, { __subscriptionPageInternals as h } from "../pages/Subscription"
 import { TEST_VERSION_STAMP } from "../version"
@@ -55,7 +55,7 @@ function billingStatus(overrides = {}) {
 }
 
 function renderPage(initialEntry = "/subscription") {
-  render(
+  return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <SubscriptionPage />
     </MemoryRouter>,
@@ -104,6 +104,18 @@ describe("SubscriptionPage", () => {
     fireEvent.click(button)
     await waitFor(() => expect(stripeMount).toHaveBeenCalledOnce())
     expect(loadStripe).toHaveBeenCalledExactlyOnceWith("pk_test_123")
+  })
+
+  it("does not create checkout after leaving while Stripe is loading", async () => {
+    let resolveStripe
+    loadStripe.mockReturnValueOnce(new Promise((resolve) => { resolveStripe = resolve }))
+    const view = renderPage()
+    fireEvent.click(await screen.findByRole("button", { name: "Open payment form" }))
+    expect(loadStripe).toHaveBeenCalledOnce()
+    view.unmount()
+    await act(async () => resolveStripe(mockStripeRuntime.current))
+    expect(mockBillingApi.createCheckoutSession).not.toHaveBeenCalled()
+    expect(stripeMount).not.toHaveBeenCalled()
   })
 
   it("retries loading Stripe after a failed SDK request", async () => {
