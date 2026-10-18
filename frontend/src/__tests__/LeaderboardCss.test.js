@@ -5,6 +5,14 @@ import { describe, expect, it } from "vitest"
 
 const css = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "../pages/Leaderboard.css"), "utf8")
 
+describe("Leaderboard page-size dropdown", () => {
+  it("insets the arrow and reserves room without intercepting select clicks", () => {
+    expect(css).toMatch(/\.leaderboard-page-size-input\s*\{[^}]*position:\s*relative;/)
+    expect(css).toMatch(/\.leaderboard-page-size-input::after\s*\{[^}]*right:\s*0\.85rem;[^}]*pointer-events:\s*none;/)
+    expect(css).toMatch(/\.leaderboard-page-size-control select\s*\{[^}]*appearance:\s*none;[^}]*padding:\s*0\.48rem 2\.3rem 0\.48rem 0\.72rem;/)
+  })
+})
+
 describe("Leaderboard table corners", () => {
   it("rounds both outer header backgrounds inside the table border", () => {
     expect(css).toMatch(/\.leaderboard-table--interactive thead th:first-child\s*\{\s*border-top-left-radius:\s*calc\(var\(--radius\) - 1px\);\s*\}/)
