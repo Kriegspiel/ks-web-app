@@ -1,4 +1,3 @@
-import { lazy, Suspense } from "react"
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from "react-router"
 import AppHeader from "./components/AppHeader"
 import AppFooter from "./components/AppFooter"
@@ -6,26 +5,25 @@ import AttributionCapture from "./components/AttributionCapture"
 import { AuthProvider } from "./context/AuthContext"
 import { ThemeProvider } from "./context/ThemeContext"
 import { useAuth } from "./hooks/useAuth"
+import LobbyPage from "./pages/LobbyPage"
 import JoinPage from "./pages/JoinPage"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
+import GamePage from "./pages/GamePage"
+import ReviewPage from "./pages/Review"
+import TutorReviewPage from "./pages/TutorReview"
+import ProfilePage from "./pages/Profile"
+import GameHistoryPage from "./pages/GameHistory"
+import LeaderboardPage from "./pages/Leaderboard"
+import AcquisitionReportPage from "./pages/AcquisitionReport"
+import BotMatrixReportPage from "./pages/BotMatrixReport"
+import BotsReportPage from "./pages/BotsReport"
+import GuestsReportPage from "./pages/GuestsReport"
+import TechIndexPage from "./pages/TechIndex"
+import UsersReportPage from "./pages/UsersReport"
+import SettingsPage from "./pages/Settings"
+import SubscriptionPage from "./pages/Subscription"
 import "./App.css"
-
-const LobbyPage = lazy(() => import("./pages/LobbyPage"))
-const GamePage = lazy(() => import("./pages/GamePage"))
-const ReviewPage = lazy(() => import("./pages/Review"))
-const TutorReviewPage = lazy(() => import("./pages/TutorReview"))
-const ProfilePage = lazy(() => import("./pages/Profile"))
-const GameHistoryPage = lazy(() => import("./pages/GameHistory"))
-const LeaderboardPage = lazy(() => import("./pages/Leaderboard"))
-const AcquisitionReportPage = lazy(() => import("./pages/AcquisitionReport"))
-const BotMatrixReportPage = lazy(() => import("./pages/BotMatrixReport"))
-const BotsReportPage = lazy(() => import("./pages/BotsReport"))
-const GuestsReportPage = lazy(() => import("./pages/GuestsReport"))
-const TechIndexPage = lazy(() => import("./pages/TechIndex"))
-const UsersReportPage = lazy(() => import("./pages/UsersReport"))
-const SettingsPage = lazy(() => import("./pages/Settings"))
-const SubscriptionPage = lazy(() => import("./pages/Subscription"))
 
 function LoadingPage() {
   return (
@@ -40,13 +38,7 @@ function AppLayout() {
   return (
     <div className="app-layout">
       <AppHeader />
-      <Suspense fallback={(
-        <main className="page-shell" role="status" aria-live="polite">
-          <h1>Loading page…</h1>
-        </main>
-      )}>
-        <Outlet />
-      </Suspense>
+      <Outlet />
       <AppFooter />
     </div>
   )

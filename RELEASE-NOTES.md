@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.5.19
+
+- Restore immediate route delivery while retaining Stripe initialization only when the payment form is requested.
+
 ## 1.5.17
 
 - Load gameplay, replay, profiles, reports and billing views on demand while keeping login, registration and join entry pages immediate.
