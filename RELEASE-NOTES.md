@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.5.15
+
+- Load a 3.8 KB header logo instead of the full 1.45 MB image, preserving the existing appearance and improving first-page loads.
+
 ## 1.5.13
 
 - Prevent a game-page rendering crash when browser translation replaces the opponent placeholder before game metadata arrives.

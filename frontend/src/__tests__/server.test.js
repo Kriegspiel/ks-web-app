@@ -165,6 +165,7 @@ describe("production server routing", () => {
       "index.html": "<main>app shell</main>",
       "assets/app.js": "console.log('ok')",
       "assets/data.bin": "raw",
+      "logo-theme-toggle-96.webp": "webp bytes",
     })
     const server = createServer({ distRoot })
     const port = await listen(server)
@@ -193,6 +194,14 @@ describe("production server routing", () => {
     expect(staticAsset.response.headers["cache-control"]).toBe("public, max-age=3600")
     expect(staticAsset.response.headers["content-type"]).toBe("text/javascript; charset=utf-8")
     expect(staticAsset.body).toBe("console.log('ok')")
+
+    const logo = await requestServer(port, {
+      path: "/logo-theme-toggle-96.webp",
+      headers: { host: "app.kriegspiel.org", "x-forwarded-proto": "https" },
+    })
+    expect(logo.response.statusCode).toBe(200)
+    expect(logo.response.headers["content-type"]).toBe("image/webp")
+    expect(logo.body).toBe("webp bytes")
 
     const binaryAsset = await requestServer(port, {
       path: "/assets/data.bin",
