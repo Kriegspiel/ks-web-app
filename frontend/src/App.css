@@ -54,10 +54,7 @@
   align-items: center;
   text-decoration: none;
   color: var(--muted);
-}
-
-.app-footer__link--external {
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .app-footer__group a:hover,
