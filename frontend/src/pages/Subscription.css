@@ -489,21 +489,32 @@
   background: color-mix(in srgb, var(--surface-alt) 88%, #8a8580 12%) !important;
 }
 
-.subscription-tier-table th.subscription-tier-table__selected-column,
 .subscription-tier-table td.subscription-tier-table__selected-column {
+  position: relative;
+}
+
+/* Include the cell borders so row dividers cannot interrupt the outline. */
+.subscription-tier-table th.subscription-tier-table__selected-column::after,
+.subscription-tier-table td.subscription-tier-table__selected-column::after {
+  content: "";
+  position: absolute;
+  inset: 0 -1px -1px 0;
+  z-index: 1;
+  pointer-events: none;
   box-shadow:
     inset 2px 0 0 var(--accent),
     inset -2px 0 0 var(--accent);
 }
 
-.subscription-tier-table thead th.subscription-tier-table__selected-column {
+.subscription-tier-table thead th.subscription-tier-table__selected-column::after {
   box-shadow:
     inset 2px 0 0 var(--accent),
     inset -2px 0 0 var(--accent),
     inset 0 2px 0 var(--accent);
 }
 
-.subscription-tier-table tbody tr:last-child td.subscription-tier-table__selected-column {
+.subscription-tier-table tbody tr:last-child td.subscription-tier-table__selected-column::after {
+  bottom: 0;
   box-shadow:
     inset 2px 0 0 var(--accent),
     inset -2px 0 0 var(--accent),
