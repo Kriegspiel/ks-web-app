@@ -642,11 +642,13 @@ export default function LeaderboardPage() {
                 <button className="leaderboard-clear-filters" type="button" onClick={clearAllFilters} disabled={!activeFilterCount}>Clear filters</button>
                 <label className="leaderboard-page-size-control">
                   <span>Players per page</span>
-                  <select value={pageSize} onChange={handlePageSizeChange}>
-                    {PAGE_SIZE_OPTIONS.map((option) => (
-                      <option key={option} value={option}>{option.toLocaleString("en-US")}</option>
-                    ))}
-                  </select>
+                  <span className="leaderboard-page-size-input">
+                    <select value={pageSize} onChange={handlePageSizeChange}>
+                      {PAGE_SIZE_OPTIONS.map((option) => (
+                        <option key={option} value={option}>{option.toLocaleString("en-US")}</option>
+                      ))}
+                    </select>
+                  </span>
                 </label>
               </div>
               <div className="leaderboard-table-wrap leaderboard-table-wrap--interactive">
