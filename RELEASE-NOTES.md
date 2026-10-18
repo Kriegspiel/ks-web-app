@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.5.16
+
+- Match kriegspiel.org by using regular font weight for every app footer navigation link.
+
 ## 1.5.15
 
 - Load a 3.8 KB header logo instead of the full 1.45 MB image, preserving the existing appearance and improving first-page loads.

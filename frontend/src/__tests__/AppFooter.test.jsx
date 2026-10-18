@@ -1,10 +1,34 @@
+import { readFileSync } from "node:fs"
+import { dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
 import { afterEach, describe, expect, it } from "vitest"
 import { cleanup, render, screen, within } from "@testing-library/react"
 import AppFooter from "../components/AppFooter"
 
+const appCss = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "../App.css"), "utf8")
+
 afterEach(() => cleanup())
 
 describe("AppFooter", () => {
+  it("uses_regular_weight_for_all_navigation_links_like_the_public_site", () => {
+    const style = document.createElement("style")
+    style.textContent = appCss
+    document.head.append(style)
+
+    try {
+      const { container } = render(<AppFooter />)
+      const links = container.querySelectorAll(".app-footer__group a")
+
+      expect(links.length).toBeGreaterThan(0)
+      for (const link of links) {
+        expect(window.getComputedStyle(link).fontWeight, link.textContent).toBe("400")
+      }
+      expect(window.getComputedStyle(screen.getByRole("link", { name: "Kriegspiel.org" })).fontWeight).toBe("700")
+    } finally {
+      style.remove()
+    }
+  })
+
   it("matches_the_public_site_communication_footer_order", () => {
     render(<AppFooter />)
 
