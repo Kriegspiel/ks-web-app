@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { Link, useSearchParams } from "react-router"
-import { loadStripe } from "@stripe/stripe-js"
+import { loadStripe } from "@stripe/stripe-js/pure"
 import {
   botPickerName,
   botReasoningLevel,
@@ -498,11 +498,6 @@ export default function SubscriptionPage() {
     }
   }, [bootstrapping, desiredTier, hasSignedInUser])
 
-  const stripePromise = useMemo(() => {
-    if (!status?.publishable_key) return null
-    return loadStripe(status.publishable_key)
-  }, [status?.publishable_key])
-
   const selectedTierDetails = tierByApiTier(selectedTier)
   const selectedAvailable = isPlanAvailable(status, selectedTier, interval)
   const activeSubscription = ["active", "trialing"].includes(status?.billing?.subscription_status)
@@ -561,8 +556,8 @@ export default function SubscriptionPage() {
         window.location.assign(response.url)
         return
       }
-      if (!stripePromise || !checkoutContainerRef.current) return
-      const stripe = await stripePromise
+      if (!status?.publishable_key || !checkoutContainerRef.current) return
+      const stripe = await loadStripe(status.publishable_key)
       if (!stripe) throw new Error("Stripe is not ready.")
       const checkout = await createEmbeddedCheckout(stripe, {
         fetchClientSecret: async () => {
