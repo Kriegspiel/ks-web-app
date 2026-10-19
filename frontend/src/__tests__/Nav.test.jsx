@@ -36,9 +36,71 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
 })
 
 describe("Nav", () => {
+  it("keeps_the_table_offset_in_sync_with_the_rendered_header_height", () => {
+    let height = 65.8
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(() => ({ height }))
+    let notifyResize
+    const observe = vi.fn()
+    const disconnect = vi.fn()
+    vi.stubGlobal("ResizeObserver", class {
+      constructor(callback) {
+        notifyResize = callback
+      }
+      observe = observe
+      disconnect = disconnect
+    })
+
+    const { container, unmount } = render(
+      <ThemeProvider>
+        <MemoryRouter>
+          <AppHeader />
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    expect(container.style.getPropertyValue("--app-header-height")).toBe("65.8px")
+    expect(observe).toHaveBeenCalledWith(screen.getByRole("banner"), { box: "border-box" })
+
+    // Wrapping, font changes and sign-in can resize navigation without a window resize.
+    height = 118.5
+    notifyResize()
+    expect(container.style.getPropertyValue("--app-header-height")).toBe("118.5px")
+    height = 65.8
+    notifyResize()
+    expect(container.style.getPropertyValue("--app-header-height")).toBe("65.8px")
+
+    unmount()
+    expect(disconnect).toHaveBeenCalledOnce()
+    expect(container.style.getPropertyValue("--app-header-height")).toBe("")
+    fireEvent(window, new Event("resize"))
+    expect(container.style.getPropertyValue("--app-header-height")).toBe("")
+  })
+
+  it("measures_on_window_resize_when_resize_observer_is_unavailable", () => {
+    vi.stubGlobal("ResizeObserver", undefined)
+    let height = 65
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(() => ({ height }))
+    const { container, unmount } = render(
+      <ThemeProvider>
+        <MemoryRouter>
+          <AppHeader />
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    expect(container.style.getPropertyValue("--app-header-height")).toBe("65px")
+    height = 120
+    fireEvent(window, new Event("resize"))
+    expect(container.style.getPropertyValue("--app-header-height")).toBe("120px")
+    unmount()
+    expect(container.style.getPropertyValue("--app-header-height")).toBe("")
+  })
+
   it("shows_guest_nav_links", () => {
     render(
       <ThemeProvider>
