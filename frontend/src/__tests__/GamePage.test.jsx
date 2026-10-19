@@ -2560,7 +2560,7 @@ describe("GamePage", () => {
   })
 
   it("renders_all_backend_allowed_moves_even_when_referee_log_says_no_any", async () => {
-    mockApi.getGameState.mockResolvedValueOnce({
+    mockApi.getGameState.mockResolvedValue({
       ...activeState,
       your_fen: "8/8/8/8/8/8/8/4K3",
       allowed_moves: ["e4d5", "e4e5", "e4f5"],
