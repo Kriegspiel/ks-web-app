@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.5.21
+
+- Keep guest report, leaderboard and game history table headings directly beneath the navigation bar on mobile and desktop, including when navigation wraps or changes height.
+
 ## 1.5.19
 
 - Restore immediate route delivery while retaining Stripe initialization only when the payment form is requested.

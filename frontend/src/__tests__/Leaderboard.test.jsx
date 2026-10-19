@@ -55,8 +55,8 @@ describe("LeaderboardPage", () => {
 
     expect(css).toContain(".leaderboard-table-wrap--interactive {\n  overflow: visible;\n  max-height: none;\n}")
     expect(css).toContain(".leaderboard-table--interactive {\n  min-width: 64rem;\n  border-collapse: separate;\n  border-spacing: 0;\n  overflow: visible;\n}")
-    expect(css).toContain(".leaderboard-table--interactive thead th {\n  position: sticky;\n  top: 4.1rem;")
-    expect(css).toContain("@media (max-width: 720px) {\n  .leaderboard-table--interactive thead th {\n    top: 7.2rem;")
+    expect(css).toContain(".leaderboard-table--interactive thead th {\n  position: sticky;\n  top: var(--app-header-height, 4.1rem);")
+    expect(css).not.toContain("top: 7.2rem;")
     expect(css).not.toContain(".leaderboard-table-wrap--interactive {\n  overflow-y: auto;")
     expect(css).not.toContain(".leaderboard-table-wrap--interactive {\n  overflow-x: auto;")
     expect(css).not.toContain("max-height: min(72vh, 46rem);")

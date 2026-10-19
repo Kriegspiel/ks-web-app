@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { Link, useLocation } from "react-router"
 import { useAuth } from "../hooks/useAuth"
 import ThemeToggle from "./ThemeToggle"
@@ -100,9 +100,29 @@ function AuthLinks() {
 
 export default function AppHeader() {
   const location = useLocation()
+  const headerRef = useRef(null)
+
+  useLayoutEffect(() => {
+    const header = headerRef.current
+    const layout = header.parentElement
+    const updateHeight = () => {
+      layout.style.setProperty("--app-header-height", `${header.getBoundingClientRect().height}px`)
+    }
+
+    updateHeight()
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updateHeight)
+    observer?.observe(header, { box: "border-box" })
+    window.addEventListener("resize", updateHeight)
+
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener("resize", updateHeight)
+      layout.style.removeProperty("--app-header-height")
+    }
+  }, [])
 
   return (
-    <header className="app-header">
+    <header className="app-header" ref={headerRef}>
       <div className="app-header__inner">
         <div className="app-header__brand-group">
           <Link className="app-header__brand" to="/" aria-current={location.pathname === "/" ? "page" : undefined}>

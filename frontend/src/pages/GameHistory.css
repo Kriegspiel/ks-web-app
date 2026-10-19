@@ -18,7 +18,6 @@ body:has(.history-page) .app-header {
 }
 
 .history-table-wrap {
-  --history-sticky-header-offset: 4.1rem;
   overflow: visible;
   margin-top: 1rem;
   max-height: none;
@@ -42,7 +41,7 @@ body:has(.history-page) .app-header {
 
 .history-table thead th {
   position: sticky;
-  top: var(--history-sticky-header-offset);
+  top: var(--app-header-height, 4.1rem);
   z-index: 3;
 }
 
@@ -292,10 +291,6 @@ body:has(.history-page) .app-header {
 }
 
 @media (max-width: 720px) {
-  .history-table-wrap {
-    --history-sticky-header-offset: 7.2rem;
-  }
-
   .history-controls {
     align-items: flex-start;
     flex-direction: column;
