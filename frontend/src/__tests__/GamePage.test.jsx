@@ -1282,6 +1282,18 @@ describe("GamePage", () => {
     })
   })
 
+  it.each(["pointerdown", "pointerup", "touchend", "click", "keydown"])("unlocks_audio_on_%s_and_removes_the_listener_on_unmount", async (eventType) => {
+    const { unmount } = render(<GamePage />)
+    await screen.findByRole("button", { name: "Mute sounds" })
+
+    fireEvent(window, new Event(eventType))
+    expect(mockSoundPlayer.prime).toHaveBeenCalledTimes(1)
+
+    unmount()
+    fireEvent(window, new Event(eventType))
+    expect(mockSoundPlayer.prime).toHaveBeenCalledTimes(1)
+  })
+
   it("plays_sounds_only_for_new_referee_announcements", async () => {
     const firstState = {
       ...activeState,

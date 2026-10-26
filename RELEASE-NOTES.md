@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.5.22
+
+- Unlock game sounds on completed mobile taps and resume interrupted iPhone Safari audio on the next interaction.
+
 ## 1.5.21
 
 - Keep guest report, leaderboard and game history table headings directly beneath the navigation bar on mobile and desktop, including when navigation wraps or changes height.

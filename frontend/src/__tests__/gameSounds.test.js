@@ -165,6 +165,37 @@ describe("createGameSoundPlayer", () => {
     expect(instances[0].resume).toHaveBeenCalledTimes(1)
   })
 
+  it.each(["suspended", "interrupted"])("recovers_%s_audio_on_a_later_user_gesture", async (state) => {
+    const instances = installAudioContext({ state, resumeError: new Error("blocked") })
+    const player = createGameSoundPlayer()
+
+    await player.prime()
+    player.playCategories(["move"])
+    expect(instances[0].createOscillator).not.toHaveBeenCalled()
+
+    instances[0].resume.mockImplementationOnce(async () => {
+      instances[0].state = "running"
+    })
+    await player.prime()
+    player.playCategories(["move"])
+
+    expect(instances[0].resume).toHaveBeenCalledTimes(2)
+    expect(instances[0].createOscillator).toHaveBeenCalledTimes(1)
+    expect(instances).toHaveLength(1)
+  })
+
+  it.each(["running", "closed"])("does_not_resume_%s_audio", async (state) => {
+    const instances = installAudioContext({ state })
+    const player = createGameSoundPlayer()
+
+    await player.prime()
+    expect(instances[0].resume).not.toHaveBeenCalled()
+    if (state === "closed") {
+      player.playCategories(["move"])
+      expect(instances[0].createOscillator).not.toHaveBeenCalled()
+    }
+  })
+
   it("schedules_tones_for_each_supported_category_and_reuses_one_context_instance", () => {
     const instances = installAudioContext({}, { useWebkit: true })
     const player = createGameSoundPlayer()

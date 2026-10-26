@@ -2373,11 +2373,11 @@ export default function GamePage() {
       soundPlayerRef.current?.prime()
     }
 
-    window.addEventListener("pointerdown", primeAudio, { passive: true })
-    window.addEventListener("keydown", primeAudio)
+    // Touch/pen activation happens on release; Safari also needs the completed tap.
+    const events = ["pointerdown", "pointerup", "touchend", "click", "keydown"]
+    events.forEach((event) => window.addEventListener(event, primeAudio, { passive: true, capture: true }))
     return () => {
-      window.removeEventListener("pointerdown", primeAudio)
-      window.removeEventListener("keydown", primeAudio)
+      events.forEach((event) => window.removeEventListener(event, primeAudio, { capture: true }))
     }
   }, [])
 
