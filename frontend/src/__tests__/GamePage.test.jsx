@@ -166,9 +166,44 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     const currentMessage = await screen.findByLabelText("Current message")
-    expect(within(currentMessage).getByText("White")).toBeInTheDocument()
+    expect(within(currentMessage).getByLabelText(/^White move \d+$/)).toBeInTheDocument()
     expect(within(currentMessage).getByText("your move")).toBeInTheDocument()
     expect(within(currentMessage).queryByText("White to move")).not.toBeInTheDocument()
+    expect(within(currentMessage).queryByText("White")).not.toBeInTheDocument()
+    expect(within(currentMessage).getByLabelText("White move 1")).toHaveTextContent("1")
+    expect(currentMessage.querySelector(".game-referee-latest__separator")).toBeEmptyDOMElement()
+  })
+
+  it("shows_the_last_three_messages_in_numbered_rows_with_arrows_after_the_opening_move", async () => {
+    mockApi.getGameState.mockResolvedValue({
+      ...activeState,
+      move_number: 29,
+      referee_turns: [
+        { turn: 13, white: [{ messages: ["Move complete"] }], black: [{ messages: ["Move complete"] }] },
+        { turn: 14, white: [{ messages: ["Capture at G5"] }], black: [{ messages: ["Capture at G4"] }] },
+      ],
+    })
+
+    render(<GamePage />)
+
+    const currentMessage = await screen.findByLabelText("Current message")
+    const rows = currentMessage.querySelectorAll(".game-referee-latest__timeline-piece")
+    expect(rows).toHaveLength(3)
+    for (const [index, label] of ["White move 14", "Black move 14", "White move 15"].entries()) {
+      const circle = within(rows[index]).getByLabelText(label)
+      expect(circle).toHaveTextContent(index === 2 ? "15" : "14")
+      expect(circle).toHaveClass(`game-referee-latest__actor--${index === 1 ? "black" : "white"}`)
+      expect(rows[index].querySelector(".game-referee-latest__separator")).toHaveTextContent("→")
+    }
+    expect(within(rows[0]).getByText("capture g5")).toBeInTheDocument()
+    expect(within(rows[1]).getByText("capture g4")).toBeInTheDocument()
+    expect(within(rows[2]).getByText("your move")).toBeInTheDocument()
+    expect(within(currentMessage).queryByText("move complete")).not.toBeInTheDocument()
+    expect(within(currentMessage).queryByText(/^(White|Black)$/)).not.toBeInTheDocument()
+    expect(currentMessage.querySelector(".game-referee-latest__value--timeline")).toHaveAttribute(
+      "aria-label",
+      "White move 14: capture g5 → Black move 14: capture g4 → White move 15: your move",
+    )
   })
 
   it("copies_the_game_code_from_the_status_card", async () => {
@@ -192,8 +227,10 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     const currentMessage = await screen.findByLabelText("Current message")
-    expect(within(currentMessage).getByText("Black")).toBeInTheDocument()
+    expect(within(currentMessage).getByLabelText(/^Black move \d+$/)).toBeInTheDocument()
     expect(within(currentMessage).getByText("opponent's move")).toBeInTheDocument()
+    expect(within(currentMessage).getByLabelText("Black move 1")).toHaveTextContent("1")
+    expect(currentMessage.querySelector(".game-referee-latest__separator")).toHaveTextContent("→")
   })
 
   it("highlights_the_board_shell_when_it_is_your_turn", async () => {
@@ -218,6 +255,7 @@ describe("GamePage", () => {
   it("adds_your_turn_when_the_latest_opponent_announcement_passes_control_to_you", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
+      move_number: 3,
       referee_log: [
         { turn: 1, color: "white", announcement: "Move complete" },
         { turn: 1, color: "black", announcement: "Capture at F5" },
@@ -230,13 +268,14 @@ describe("GamePage", () => {
     expect(within(currentMessage).getByText("move complete")).toBeInTheDocument()
     expect(within(currentMessage).getByText("capture f5")).toBeInTheDocument()
     expect(within(currentMessage).getByText("your move")).toBeInTheDocument()
-    expect(within(currentMessage).getAllByText("White")).toHaveLength(2)
-    expect(within(currentMessage).getByText("Black")).toBeInTheDocument()
+    expect(within(currentMessage).getAllByLabelText(/^White move \d+$/)).toHaveLength(2)
+    expect(within(currentMessage).getByLabelText(/^Black move \d+$/)).toBeInTheDocument()
   })
 
   it("keeps_wild16_pawn_capture_status_with_the_player_to_move", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
+      move_number: 4,
       turn: "black",
       your_color: "black",
       possible_actions: ["move"],
@@ -270,13 +309,13 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     const currentMessage = await screen.findByLabelText("Current message")
-    expect(within(currentMessage).getByText("White")).toBeInTheDocument()
+    expect(within(currentMessage).getByLabelText(/^White move \d+$/)).toBeInTheDocument()
     expect(within(currentMessage).getByText("capture f2")).toBeInTheDocument()
-    expect(within(currentMessage).getByText("Black")).toBeInTheDocument()
+    expect(within(currentMessage).getByLabelText(/^Black move \d+$/)).toBeInTheDocument()
     expect(within(currentMessage).getByText("no pawn captures, your move")).toBeInTheDocument()
     expect(currentMessage.querySelector(".game-referee-latest__value--timeline")).toHaveAttribute(
       "aria-label",
-      "White: capture f2 \u2192 Black: no pawn captures, your move",
+      "White move 2: capture f2 \u2192 Black move 2: no pawn captures, your move",
     )
   })
 
@@ -685,7 +724,7 @@ describe("GamePage", () => {
       expect(screen.getByRole("button", { name: "Square e4" })).toHaveClass("square--illegal")
     })
     const currentMessage = screen.getByLabelText("Current message")
-    expect(within(currentMessage).getByText("White")).toBeInTheDocument()
+    expect(within(currentMessage).getByLabelText(/^White move \d+$/)).toBeInTheDocument()
     expect(within(currentMessage).getByText("illegal move")).toBeInTheDocument()
     expect(within(currentMessage).queryByText("Illegal move. Try a different move.")).not.toBeInTheDocument()
   })
@@ -879,6 +918,7 @@ describe("GamePage", () => {
   it("keeps_only_the_last_meaningful_statement_per_side_in_the_timeline", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
+      move_number: 4,
       turn: "black",
       your_color: "white",
       possible_actions: [],
@@ -908,7 +948,7 @@ describe("GamePage", () => {
     const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
     expect(timeline).toHaveAttribute(
       "aria-label",
-      "Black: move complete, check on long diagonal → White: move complete → Black: opponent's move"
+      "Black move 1: move complete, check on long diagonal → White move 2: move complete → Black move 2: opponent's move"
     )
     expect(within(currentMessage).queryByText("illegal move")).not.toBeInTheDocument()
     expect(within(currentMessage).queryByText("move attempt")).not.toBeInTheDocument()
@@ -918,6 +958,7 @@ describe("GamePage", () => {
   it("strips_compound_referee_strings_down_to_the_clean_last_announcements", async () => {
     mockApi.getGameState.mockResolvedValueOnce({
       ...activeState,
+      move_number: 4,
       turn: "black",
       your_color: "white",
       possible_actions: [],
@@ -941,7 +982,7 @@ describe("GamePage", () => {
     const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
     expect(timeline).toHaveAttribute(
       "aria-label",
-      "Black: move complete, check on rank → White: move complete → Black: opponent's move"
+      "Black move 1: move complete, check on rank → White move 2: move complete → Black move 2: opponent's move"
     )
     expect(within(currentMessage).queryByText("move attempt")).not.toBeInTheDocument()
     expect(within(currentMessage).queryByText("opponent move")).not.toBeInTheDocument()
@@ -969,7 +1010,7 @@ describe("GamePage", () => {
     const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
     expect(timeline).toHaveAttribute(
       "aria-label",
-      "Black: move complete, check on file"
+      "Black move 1: move complete, check on file"
     )
     expect(within(currentMessage).queryByText(/^file check$/i)).not.toBeInTheDocument()
   })
@@ -990,7 +1031,7 @@ describe("GamePage", () => {
 
     const currentMessage = await screen.findByLabelText("Current message")
     const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
-    expect(timeline).toHaveAttribute("aria-label", "White: illegal move")
+    expect(timeline).toHaveAttribute("aria-label", "White move 1: illegal move")
     expect(within(currentMessage).queryByText("1 pawn try")).not.toBeInTheDocument()
     expect(within(currentMessage).queryByText("your move")).not.toBeInTheDocument()
   })
@@ -1014,7 +1055,7 @@ describe("GamePage", () => {
     const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
     expect(timeline).toHaveAttribute(
       "aria-label",
-      "White: move complete, capture d4, check on long diagonal"
+      "White move 1: move complete, capture d4, check on long diagonal"
     )
     expect(within(currentMessage).queryByText(/capture done at/i)).not.toBeInTheDocument()
     expect(within(currentMessage).queryByText(/long-diagonal check/i)).not.toBeInTheDocument()
@@ -1041,7 +1082,7 @@ describe("GamePage", () => {
     const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
     expect(timeline).toHaveAttribute(
       "aria-label",
-      "Black: capture d4"
+      "Black move 1: capture d4"
     )
   })
 
@@ -1071,7 +1112,7 @@ describe("GamePage", () => {
     await waitFor(() => {
       const currentMessage = screen.getByLabelText("Current message")
       const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
-      expect(timeline).toHaveAttribute("aria-label", "White: no pawn captures, your move")
+      expect(timeline).toHaveAttribute("aria-label", "White move 1: no pawn captures, your move")
     })
     fireEvent.click(screen.getByRole("button", { name: "Square e2" }))
     fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
@@ -1082,7 +1123,7 @@ describe("GamePage", () => {
 
     const currentMessage = screen.getByLabelText("Current message")
     const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
-    expect(timeline).toHaveAttribute("aria-label", "White: no pawn captures, submitting move")
+    expect(timeline).toHaveAttribute("aria-label", "White move 1: no pawn captures, submitting move")
     expect(within(currentMessage).queryByText("Submitting action…")).not.toBeInTheDocument()
 
     resolveSubmit({ move_done: true })
@@ -1116,7 +1157,7 @@ describe("GamePage", () => {
     const currentMessage = screen.getByLabelText("Current message")
     await waitFor(() => {
       const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
-      expect(timeline).toHaveAttribute("aria-label", "White: no pawn captures, submitting move")
+      expect(timeline).toHaveAttribute("aria-label", "White move 1: no pawn captures, submitting move")
     })
 
     authoritativeState = {
