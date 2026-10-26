@@ -726,28 +726,16 @@
 }
 
 .game-referee-latest__value--timeline {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 0.45rem 0.35rem;
+  display: grid;
+  gap: 0.45rem;
   max-width: 100%;
 }
 
 .game-referee-latest__timeline-piece {
-  display: inline-flex;
-  flex: 1 1 11rem;
-  align-items: flex-start;
-  gap: 0.3rem;
-  min-width: min(100%, 9.75rem);
-  max-width: 100%;
-}
-
-.game-referee-latest__segment {
-  display: inline-flex;
-  flex: 1 1 auto;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.22rem 0.45rem;
+  display: grid;
+  grid-template-columns: 1rem 1.75rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.45rem;
   min-width: 0;
 }
 
@@ -756,25 +744,28 @@
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  padding: 0.16rem 0.5rem;
-  border-radius: 999px;
-  font-size: 0.74rem;
+  box-sizing: border-box;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  font-size: 0.7rem;
   font-weight: 800;
-  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
   border: 1px solid color-mix(in srgb, var(--border) 88%, var(--surface));
 }
 
 .game-referee-latest__actor--white {
-  background: color-mix(in srgb, var(--surface) 74%, white 26%);
-  color: color-mix(in srgb, var(--text) 88%, black 12%);
+  background: #fff;
+  color: #000;
 }
 
 .game-referee-latest__actor--black {
-  background: color-mix(in srgb, var(--text) 88%, black 12%);
-  color: color-mix(in srgb, var(--surface) 88%, white 12%);
+  background: #000;
+  color: #fff;
 }
 
 .game-referee-latest__segment-text {
+  padding-top: 0.24rem;
   font-weight: 600;
   min-width: 0;
   overflow-wrap: anywhere;
@@ -784,7 +775,7 @@
   flex: 0 0 auto;
   color: var(--muted-soft);
   font-weight: 700;
-  line-height: 1.7;
+  line-height: 1.75rem;
 }
 
 .game-referee-log {

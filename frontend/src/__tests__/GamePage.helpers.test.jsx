@@ -7,6 +7,33 @@ afterEach(() => {
 })
 
 describe("GamePage helper functions", () => {
+  it.each([
+    [1, "white", 1],
+    [2, "black", 1],
+    [27, "white", 14],
+    [28, "black", 14],
+    [29, "white", 15],
+    [199, "white", 100],
+  ])("numbers_live_messages_from_API_ply_%i", (moveNumber, turnColor, turnNumber) => {
+    const segments = h.buildCurrentMessageSegments({
+      turns: [], moveNumber, turnColor, yourColor: turnColor, canMove: true,
+    })
+    expect(segments).toHaveLength(1)
+    expect(segments[0]).toMatchObject({ color: turnColor, turnNumber, text: "your move" })
+  })
+
+  it("keeps_historical_move_numbers_and_the_last_three_messages_without_a_live_turn", () => {
+    const segments = h.buildCurrentMessageSegments({
+      turns: [
+        { turn: 13, white: ["Move complete"], black: ["Move complete"] },
+        { turn: 14, white: ["Capture at G5"], black: ["Capture at G4"] },
+      ],
+    })
+    expect(segments.map(({ color, turnNumber }) => [color, turnNumber])).toEqual([
+      ["black", 13], ["white", 14], ["black", 14],
+    ])
+  })
+
   it("normalizes referee messages and current-message summaries", () => {
     expect(h.normalizeLogColor(null)).toBeNull()
     expect(h.normalizeLogColor(" white ")).toBe("white")
@@ -112,7 +139,7 @@ describe("GamePage helper functions", () => {
       actionError: "Illegal move. Try again.",
     }).at(-1).text).toBe("illegal move")
     expect(h.formatCurrentMessageAccessibleText(null)).toBe("")
-    expect(h.formatCurrentMessageAccessibleText([{ color: "black", text: "move complete" }])).toBe("Black: move complete")
+    expect(h.formatCurrentMessageAccessibleText([{ color: "black", turnNumber: 14, text: "move complete" }])).toBe("Black move 14: move complete")
   })
 
   it("normalizes referee-log structures and capture tracking", () => {

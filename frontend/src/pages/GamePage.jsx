@@ -831,6 +831,7 @@ function buildCurrentMessageHistorySegments(turns) {
       segments.push({
         key: `${turnNumber}-${color}-${parts.join("|")}`,
         color,
+        turnNumber,
         parts,
         text: parts.join(", "),
       })
@@ -868,7 +869,7 @@ function currentTurnStatusText({ turnColor, yourColor, canMove, waitingForOppone
   return ""
 }
 
-function buildCurrentMessageSegments({ turns, turnColor, yourColor, canMove, waitingForOpponent, actionError, submittingAction }) {
+function buildCurrentMessageSegments({ turns, turnColor, moveNumber = 1, yourColor, canMove, waitingForOpponent, actionError, submittingAction }) {
   const historySegments = buildCurrentMessageHistorySegments(turns)
   const currentColor = normalizeLogColor(turnColor)
   const illegalMoveActive = isIllegalMoveActionError(actionError)
@@ -911,6 +912,8 @@ function buildCurrentMessageSegments({ turns, turnColor, yourColor, canMove, wai
   nextSegments.push({
     key: `live-${currentColor}-${liveText}`,
     color: currentColor,
+    // The API counter advances each ply; referee turns use full move numbers.
+    turnNumber: Math.ceil(moveNumber / 2),
     parts: [liveText],
     text: liveText,
   })
@@ -923,7 +926,7 @@ function formatCurrentMessageAccessibleText(segments) {
   }
 
   return segments
-    .map((segment) => `${formatCurrentMessageActor(segment.color)}: ${segment.text}`)
+    .map((segment) => `${formatCurrentMessageActor(segment.color)} move ${segment.turnNumber}: ${segment.text}`)
     .join(" \u2192 ")
 }
 
@@ -2743,13 +2746,14 @@ export default function GamePage() {
     () => buildCurrentMessageSegments({
       turns: groupedRefereeLog,
       turnColor: gameState?.turn,
+      moveNumber: gameState?.move_number,
       yourColor: gameState?.your_color,
       canMove,
       waitingForOpponent,
       actionError,
       submittingAction,
     }),
-    [actionError, canMove, gameState?.turn, gameState?.your_color, groupedRefereeLog, submittingAction, waitingForOpponent]
+    [actionError, canMove, gameState?.move_number, gameState?.turn, gameState?.your_color, groupedRefereeLog, submittingAction, waitingForOpponent]
   )
   const currentMessageAccessibleText = useMemo(
     () => formatCurrentMessageAccessibleText(currentMessageSegments),
@@ -4024,20 +4028,18 @@ export default function GamePage() {
                     role={actionError ? "alert" : undefined}
                     aria-label={currentMessageText}
                   >
-                    {currentMessageSegments.map((segment, index) => (
+                    {currentMessageSegments.map((segment) => (
                       <span key={segment.key} className="game-referee-latest__timeline-piece">
-                        {index > 0 ? (
-                          <span className="game-referee-latest__separator" aria-hidden="true">
-                            {" "}
-                            →{" "}
-                            </span>
-                        ) : null}
-                        <span className="game-referee-latest__segment">
-                          <span className={`game-referee-latest__actor game-referee-latest__actor--${segment.color}`.trim()}>
-                            {formatCurrentMessageActor(segment.color)}
-                          </span>
-                          <span className="game-referee-latest__segment-text">{segment.text}</span>
+                        <span className="game-referee-latest__separator" aria-hidden="true">
+                          {segment.turnNumber === 1 && segment.color === "white" ? "" : "→"}
                         </span>
+                        <span
+                          className={`game-referee-latest__actor game-referee-latest__actor--${segment.color}`}
+                          aria-label={`${formatCurrentMessageActor(segment.color)} move ${segment.turnNumber}`}
+                        >
+                          {segment.turnNumber}
+                        </span>
+                        <span className="game-referee-latest__segment-text">{segment.text}</span>
                       </span>
                     ))}
                   </p>
