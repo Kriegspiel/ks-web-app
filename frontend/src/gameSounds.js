@@ -128,7 +128,7 @@ export function createGameSoundPlayer() {
 
   async function prime() {
     const ctx = getAudioContext()
-    if (!ctx || ctx.state !== "suspended") {
+    if (!ctx || (ctx.state !== "suspended" && ctx.state !== "interrupted")) {
       return
     }
     try {
@@ -143,7 +143,7 @@ export function createGameSoundPlayer() {
       return
     }
     const ctx = getAudioContext()
-    if (!ctx || ctx.state === "suspended") {
+    if (!ctx || ctx.state !== "running") {
       return
     }
 
