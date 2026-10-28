@@ -97,7 +97,7 @@ const BOT_TIER_BY_USERNAME = {
   bot_deepseekv4_pro: "T4",
   llm_opus48: "T4",
   llm_gpt56_terra: "T4",
-  llm_gpt_terra: "T4",
+  llm_gpt_terra: "T3",
   llm_gemini31_pro_preview: "T4",
   llm_glm52: "T4",
   llm_kimi_k27_code: "T4",

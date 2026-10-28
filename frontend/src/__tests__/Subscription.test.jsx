@@ -151,7 +151,7 @@ describe("SubscriptionPage", () => {
       ["Kriegspiel:"],
       ["Kriegspiel:"],
       ["Anthropic:", "Google:", "Meta:", "OpenAI:"],
-      ["Anthropic:", "Google:", "Meta:"],
+      ["Anthropic:", "Google:", "Meta:", "OpenAI:"],
       ["Anthropic:", "Google:", "OpenAI:", "xAI:"],
       ["Anthropic:", "OpenAI:"],
       [],
@@ -184,7 +184,7 @@ describe("SubscriptionPage", () => {
     const retained = [
       ["llm_gpt_luna", 2], ["llm_gptoss120b", 2], ["llm_haiku", 2], ["llm_llama4_maverick", 2], ["llm_gemma4_31b", 2],
       ["llm_sonnet", 3], ["llm_muse_glimmer", 2], ["llm_muse_spark", 3], ["llm_gemini_flash", 3],
-      ["llm_opus", 4], ["llm_gpt_sol", 4], ["llm_gpt_terra", 4], ["llm_gemini31_pro_preview", 4],
+      ["llm_opus", 4], ["llm_gpt_sol", 4], ["llm_gpt_terra", 3], ["llm_gemini31_pro_preview", 4],
       ["llm_grok", 4], ["llm_fable", 5], ["llm_gpt_astra", 5],
     ]
     mockAuth.isAuthenticated = signedIn
