@@ -1115,10 +1115,46 @@ describe("GamePage", () => {
 
     const currentMessage = await screen.findByLabelText("Current message")
     expect(within(currentMessage).getByText(`${category} captured on c5`)).toBeInTheDocument()
-    expect(within(currentMessage).getByText("pawn tries from b7, d7")).toBeInTheDocument()
+    expect(within(currentMessage).getByText("pawn tries from b7, d7, opponent's move")).toBeInTheDocument()
     expect(currentMessage.querySelector(".game-referee-latest__value--timeline")).toHaveAttribute(
       "aria-label",
-      `Black move 2: move complete → White move 3: ${category} captured on c5 → Black move 3: pawn tries from b7, d7`
+      `Black move 2: move complete → White move 3: ${category} captured on c5 → Black move 3: pawn tries from b7, d7, opponent's move`
+    )
+  })
+
+  it("does_not_append_an_old_pawn_try_square_to_a_later_capture", async () => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      rule_variant: "rand",
+      your_color: "white",
+      turn: "black",
+      move_number: 8,
+      possible_actions: [],
+      referee_turns: [
+        {
+          turn: 3,
+          white: [{ messages: ["Pawn captured at C5"] }],
+          black: [
+            { messages: ["Pawn tries from B7, D7"] },
+            { messages: ["Pawn captured at C6"] },
+          ],
+        },
+        {
+          turn: 4,
+          white: [{ messages: ["No pawn captures"] }, { messages: ["Move complete"] }],
+          black: [{ messages: ["No pawn captures"] }],
+        },
+      ],
+    })
+
+    render(<GamePage />)
+
+    const currentMessage = await screen.findByLabelText("Current message")
+    expect(within(currentMessage).getByText("pawn captured on c6")).toBeInTheDocument()
+    expect(currentMessage).not.toHaveTextContent(/d7/i)
+    expect(currentMessage.querySelector(".game-referee-latest__value--timeline")).toHaveAttribute(
+      "aria-label",
+      "Black move 3: pawn captured on c6 → White move 4: move complete → Black move 4: no pawn captures, opponent's move"
     )
   })
 
