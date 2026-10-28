@@ -52,6 +52,7 @@ const T2_BOTS = [
 ]
 
 const T3_BOTS = [
+  ["OpenAI", [subscriptionBot("llm_gpt_terra", "GPT Terra")]],
   ["Meta", [subscriptionBot("llm_muse_spark", "Muse Spark")]],
   ["Anthropic", [subscriptionBot("llm_sonnet", "Claude Sonnet")]],
   ["Google", [subscriptionBot("llm_gemini_flash", "Gemini Flash")]],
@@ -60,7 +61,7 @@ const T3_BOTS = [
 const T4_BOTS = [
   ["xAI", [subscriptionBot("llm_grok", "Grok")]],
   ["Anthropic", [subscriptionBot("llm_opus", "Claude Opus")]],
-  ["OpenAI", [subscriptionBot("llm_gpt_sol", "GPT Sol"), subscriptionBot("llm_gpt_terra", "GPT Terra")]],
+  ["OpenAI", [subscriptionBot("llm_gpt_sol", "GPT Sol")]],
   ["Google", [subscriptionBot("llm_gemini31_pro_preview", "Gemini 3.1 Pro Preview")]],
 ]
 

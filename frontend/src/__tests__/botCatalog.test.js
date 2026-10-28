@@ -18,9 +18,17 @@ import {
 } from "../botCatalog"
 
 describe("botCatalog", () => {
+  it("allows_T3_Terra_from_T3_and_above_and_blocks_T2", () => {
+    expect(botAvailableForViewer({ username: "llm_gpt_terra" }, "tier2")).toBe(false)
+    for (const tier of ["tier3", "tier4", "tier5"]) {
+      expect(botAvailableForViewer({ username: "llm_gpt_terra" }, tier)).toBe(true)
+    }
+    expect(subscriptionPathForBot({ username: "llm_gpt_terra" })).toBe("/subscription?tier=tier3")
+  })
+
   it.each([
     ["llm_gpt_luna", "T2"], ["llm_sonnet", "T3"], ["llm_gemini_flash", "T3"],
-    ["llm_qwen_flash", "T3"], ["llm_opus", "T4"], ["llm_gpt_sol", "T4"], ["llm_gpt_terra", "T4"], ["llm_grok", "T4"], ["llm_muse_glimmer", "T2"], ["llm_muse_spark", "T3"], ["llm_fable", "T5"], ["llm_gpt_astra", "T5"],
+    ["llm_qwen_flash", "T3"], ["llm_opus", "T4"], ["llm_gpt_sol", "T4"], ["llm_gpt_terra", "T3"], ["llm_grok", "T4"], ["llm_muse_glimmer", "T2"], ["llm_muse_spark", "T3"], ["llm_fable", "T5"], ["llm_gpt_astra", "T5"],
   ])("offers_canonical_%s_at_%s", (username, tier) => {
     expect(botTierCode({ username })).toBe(tier)
     expect(isCatalogHiddenBot({ username, status: "active" })).toBe(false)
