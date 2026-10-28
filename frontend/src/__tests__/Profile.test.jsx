@@ -78,6 +78,7 @@ describe("ProfilePage", () => {
   })
 
   it.each([
+    ["llm_gpt56_terra", "llm_gpt_terra"],
     ["llm_gpt56_luna", "llm_gpt_luna"], ["llm_sonnet5", "llm_sonnet"],
     ["llm_gemini35_flash", "llm_gemini_flash"], ["llm_qwen36_flash", "llm_qwen_flash"],
     ["llm_opus48", "llm_opus"], ["llm_gpt56_sol", "llm_gpt_sol"], ["llm_grok45", "llm_grok"],
@@ -929,6 +930,7 @@ describe("ProfilePage", () => {
     ["llm_fable", "Tier T5 Master", "T5", "tier-badge--t5", "Claude Fable model bot for T5 Master (reasoning: xhigh)."],
     ["llm_gpt_astra", "Tier T5 Master", "T5", "tier-badge--t5", "GPT Astra model bot for T5 Master (reasoning: xhigh)."],
     ["llm_gpt55", "Tier T5 Master", "T5", "tier-badge--t5", "GPT-5.5 model bot for T5 Master (reasoning: xhigh)."],
+    ["llm_gpt_terra", "Tier T4 Expert", "T4", "tier-badge--t4", "GPT Terra model bot for T4 Expert (reasoning: xhigh)."],
     ["llm_gpt_sol", "Tier T4 Expert", "T4", "tier-badge--t4", "GPT Sol model bot for T4 Expert (reasoning: xhigh)."],
     ["llm_gpt55_pro", "Tier T5 Master", "T5", "tier-badge--t5", "GPT-5.5 Pro model bot for T5 Master (reasoning: xhigh)."],
   ])("marks_%s_with_the_configured_llm_tier", async (username, heading, code, badgeClass, description) => {

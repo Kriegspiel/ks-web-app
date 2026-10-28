@@ -402,6 +402,13 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     tierName: "Expert",
     className: "profile-tier-card--tier4",
   },
+  llm_gpt_terra: {
+    code: "T4",
+    model: "GPT Terra",
+    reasoningLevel: "xhigh",
+    tierName: "Expert",
+    className: "profile-tier-card--tier4",
+  },
   llm_gpt56_terra: {
     code: "T4",
     model: "GPT-5.6 Terra",
