@@ -580,7 +580,8 @@ function splitCurrentMessageParts(value) {
 
   return value
     .split("·")
-    .flatMap((part) => part.split(","))
+    // Keep comma-separated pawn-try source squares in the same announcement.
+    .flatMap((part) => part.split(/,(?!\s*[a-h][1-8]\s*(?:,|$))/i))
     .map((part) => part.trim())
     .filter(Boolean)
     .map((part) => part.replace(/^(Move attempt|Opponent move|Ask any pawn captures|Opponent asked any pawn captures)\s*[—-]\s*/i, "").trim())

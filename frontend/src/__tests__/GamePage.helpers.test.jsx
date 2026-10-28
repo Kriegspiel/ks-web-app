@@ -8,6 +8,25 @@ afterEach(() => {
 
 describe("GamePage helper functions", () => {
   it.each([
+    ["Pawn tries from B7, D7", ["Pawn tries from B7, D7"]],
+    ["Pawn tries from b7, d7, f7, Move complete", ["Pawn tries from b7, d7, f7", "Move complete"]],
+    ["Move complete, Pawn tries from B7, D7, Check on file", ["Move complete", "Pawn tries from B7, D7", "Check on file"]],
+    ["Pawn tries from B7, D7 · Move attempt — Pawn captured at C6", ["Pawn tries from B7, D7", "Pawn captured at C6"]],
+  ])("keeps_pawn_try_square_lists_together_in_%s", (message, parts) => {
+    expect(h.splitCurrentMessageParts(message)).toEqual(parts)
+  })
+
+  it.each(["Pawn captured at C6", "Move complete", "Illegal move"])(
+    "discards_the_entire_previous_pawn_try_list_after_%s", (outcome) => {
+      const summary = h.summarizeCurrentMessageSideEntries([
+        { messages: ["Pawn tries from B7, D7"] },
+        { messages: [outcome] },
+      ])
+      expect(summary).toEqual([outcome === "Pawn captured at C6" ? "pawn captured on c6" : outcome.toLowerCase()])
+    }
+  )
+
+  it.each([
     [1, "white", 1],
     [2, "black", 1],
     [27, "white", 14],
