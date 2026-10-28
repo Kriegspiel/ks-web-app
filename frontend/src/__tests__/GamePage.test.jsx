@@ -310,12 +310,12 @@ describe("GamePage", () => {
 
     const currentMessage = await screen.findByLabelText("Current message")
     expect(within(currentMessage).getByLabelText(/^White move \d+$/)).toBeInTheDocument()
-    expect(within(currentMessage).getByText("capture f2")).toBeInTheDocument()
+    expect(within(currentMessage).getByText("piece captured on f2")).toBeInTheDocument()
     expect(within(currentMessage).getByLabelText(/^Black move \d+$/)).toBeInTheDocument()
     expect(within(currentMessage).getByText("no pawn captures, your move")).toBeInTheDocument()
     expect(currentMessage.querySelector(".game-referee-latest__value--timeline")).toHaveAttribute(
       "aria-label",
-      "White move 2: capture f2 \u2192 Black move 2: no pawn captures, your move",
+      "White move 2: piece captured on f2 \u2192 Black move 2: no pawn captures, your move",
     )
   })
 
@@ -1082,7 +1082,43 @@ describe("GamePage", () => {
     const timeline = currentMessage.querySelector(".game-referee-latest__value--timeline")
     expect(timeline).toHaveAttribute(
       "aria-label",
-      "Black move 1: capture d4"
+      "Black move 1: piece captured on d4"
+    )
+  })
+
+  it.each(["pawn", "piece"])("preserves_the_rand_%s_capture_in_current_message", async (category) => {
+    mockApi.getGameState.mockResolvedValueOnce({
+      ...activeState,
+      rule_variant: "rand",
+      turn: "black",
+      move_number: 6,
+      possible_actions: [],
+      referee_turns: [
+        {
+          turn: 2,
+          white: [],
+          black: [{ messages: ["Move complete"] }],
+        },
+        {
+          turn: 3,
+          white: [{ answer: {
+            main: "CAPTURE_DONE",
+            capture_square: "c5",
+            captured_piece_announcement: category,
+          } }],
+          black: [{ messages: ["Pawn tries from B7, D7"] }],
+        },
+      ],
+    })
+
+    render(<GamePage />)
+
+    const currentMessage = await screen.findByLabelText("Current message")
+    expect(within(currentMessage).getByText(`${category} captured on c5`)).toBeInTheDocument()
+    expect(within(currentMessage).getByText("pawn tries from b7, d7")).toBeInTheDocument()
+    expect(currentMessage.querySelector(".game-referee-latest__value--timeline")).toHaveAttribute(
+      "aria-label",
+      `Black move 2: move complete → White move 3: ${category} captured on c5 → Black move 3: pawn tries from b7, d7`
     )
   })
 

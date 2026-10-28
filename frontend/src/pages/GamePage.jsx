@@ -658,13 +658,15 @@ function normalizeCurrentMessagePart(message) {
   if (captureMatch) {
     return {
       key: `capture-${captureMatch[2].toLowerCase()}`,
-      text: `capture ${captureMatch[2].toLowerCase()}`,
+      text: captureMatch[1].endsWith(" captured")
+        ? `${captureMatch[1]} on ${captureMatch[2]}`
+        : `capture ${captureMatch[2]}`,
       priority: CURRENT_MESSAGE_PART_PRIORITY.capture,
     }
   }
 
   if (/^(pawn|piece|knight|bishop|rook|queen) captured$/i.test(normalized)) {
-    return { key: "capture", text: "capture", priority: CURRENT_MESSAGE_PART_PRIORITY.capture }
+    return { key: "capture", text: normalized, priority: CURRENT_MESSAGE_PART_PRIORITY.capture }
   }
 
   if (normalized === "capture" || normalized === "capture done") {
