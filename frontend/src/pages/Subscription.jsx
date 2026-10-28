@@ -3,7 +3,6 @@ import { Link, useSearchParams } from "react-router"
 import { loadStripe } from "@stripe/stripe-js/pure"
 import {
   botPickerName,
-  botReasoningLevel,
   botTierCode,
   compareBotPickerBots,
   isCatalogHiddenBot,
@@ -26,8 +25,8 @@ const TIERS = [
 const SUBSCRIPTION_BOT_TIER_ORDER = TIERS.map((tier) => tier.code)
 const REQUESTED_TIER_KEYS = new Set(TIERS.map((tier) => tier.apiTier).filter(Boolean))
 
-function subscriptionBot(username, model, reasoning = "") {
-  return { username, model, path: `/user/${username}`, reasoning }
+function subscriptionBot(username, model) {
+  return { username, model, path: `/user/${username}` }
 }
 
 const T0_BOTS = [
@@ -46,28 +45,28 @@ const T1_BOTS = [
 ]
 
 const T2_BOTS = [
-  ["OpenAI", [subscriptionBot("llm_gpt_luna", "GPT Luna", "xhigh"), subscriptionBot("llm_gptoss120b", "GPT-OSS 120B", "medium")]],
-  ["Anthropic", [subscriptionBot("llm_haiku", "Claude Haiku", "enabled")]],
-  ["Meta", [subscriptionBot("llm_llama4_maverick", "Llama 4 Maverick"), subscriptionBot("llm_muse_glimmer", "Muse Glimmer", "xhigh")]],
-  ["Google", [subscriptionBot("llm_gemma4_31b", "Gemma 4 31B", "enabled")]],
+  ["OpenAI", [subscriptionBot("llm_gpt_luna", "GPT Luna"), subscriptionBot("llm_gptoss120b", "GPT-OSS 120B")]],
+  ["Anthropic", [subscriptionBot("llm_haiku", "Claude Haiku")]],
+  ["Meta", [subscriptionBot("llm_llama4_maverick", "Llama 4 Maverick"), subscriptionBot("llm_muse_glimmer", "Muse Glimmer")]],
+  ["Google", [subscriptionBot("llm_gemma4_31b", "Gemma 4 31B")]],
 ]
 
 const T3_BOTS = [
-  ["Meta", [subscriptionBot("llm_muse_spark", "Muse Spark", "xhigh")]],
-  ["Anthropic", [subscriptionBot("llm_sonnet", "Claude Sonnet", "xhigh")]],
-  ["Google", [subscriptionBot("llm_gemini_flash", "Gemini Flash", "medium")]],
+  ["Meta", [subscriptionBot("llm_muse_spark", "Muse Spark")]],
+  ["Anthropic", [subscriptionBot("llm_sonnet", "Claude Sonnet")]],
+  ["Google", [subscriptionBot("llm_gemini_flash", "Gemini Flash")]],
 ]
 
 const T4_BOTS = [
-  ["xAI", [subscriptionBot("llm_grok", "Grok", "xhigh")]],
-  ["Anthropic", [subscriptionBot("llm_opus", "Claude Opus", "xhigh")]],
-  ["OpenAI", [subscriptionBot("llm_gpt_sol", "GPT Sol", "xhigh"), subscriptionBot("llm_gpt_terra", "GPT Terra", "xhigh")]],
-  ["Google", [subscriptionBot("llm_gemini31_pro_preview", "Gemini 3.1 Pro Preview", "medium")]],
+  ["xAI", [subscriptionBot("llm_grok", "Grok")]],
+  ["Anthropic", [subscriptionBot("llm_opus", "Claude Opus")]],
+  ["OpenAI", [subscriptionBot("llm_gpt_sol", "GPT Sol"), subscriptionBot("llm_gpt_terra", "GPT Terra")]],
+  ["Google", [subscriptionBot("llm_gemini31_pro_preview", "Gemini 3.1 Pro Preview")]],
 ]
 
 const T5_BOTS = [
-  ["Anthropic", [subscriptionBot("llm_fable", "Claude Fable", "xhigh")]],
-  ["OpenAI", [subscriptionBot("llm_gpt_astra", "GPT Astra", "xhigh")]],
+  ["Anthropic", [subscriptionBot("llm_fable", "Claude Fable")]],
+  ["OpenAI", [subscriptionBot("llm_gpt_astra", "GPT Astra")]],
 ]
 
 const SUBSCRIPTION_BOT_CATALOG_GROUPS = [T0_BOTS, T1_BOTS, T2_BOTS, T3_BOTS, T4_BOTS, T5_BOTS]
@@ -136,16 +135,6 @@ function knownSubscriptionBot(bot) {
   return SUBSCRIPTION_BOT_DISPLAY_BY_USERNAME.get(normalizedBotUsername(bot)) ?? null
 }
 
-function visibleReasoningLevel(value) {
-  const reasoning = String(value || "").trim().toLowerCase()
-  return reasoning && reasoning !== "none" && reasoning !== "no" ? reasoning : ""
-}
-
-function subscriptionBotReasoning(bot) {
-  const known = knownSubscriptionBot(bot)
-  return visibleReasoningLevel(botReasoningLevel(bot) || known?.reasoning)
-}
-
 function inferSubscriptionProvider(bot) {
   const known = knownSubscriptionBot(bot)
   if (known) return known.provider
@@ -187,7 +176,6 @@ function liveSubscriptionBotItem(bot) {
     model: inferSubscriptionModelName(bot),
     path: profilePathForBot(bot),
     provider: inferSubscriptionProvider(bot),
-    reasoning: subscriptionBotReasoning(bot),
     order: known?.order ?? Number.POSITIVE_INFINITY,
   }
 }
@@ -199,11 +187,6 @@ function compareSubscriptionBots(left, right) {
     return leftOrder - rightOrder
   }
   return compareBotPickerBots(left, right)
-}
-
-function subscriptionBotDisplayText(item) {
-  const reasoning = visibleReasoningLevel(item?.reasoning)
-  return reasoning ? `${item.model} (reasoning: ${reasoning})` : item.model
 }
 
 function livePlayBotsByTier(bots) {
@@ -254,10 +237,9 @@ function BotList({ groups }) {
               {items.map((item) => {
                 const model = typeof item === "string" ? item : item.model
                 const path = typeof item === "string" ? null : item.path
-                const displayText = subscriptionBotDisplayText({ model, reasoning: item?.reasoning })
                 return (
                   <li key={`${label}-${path || model}`}>
-                    {path ? <Link to={path}>{displayText}</Link> : displayText}
+                    {path ? <Link to={path}>{model}</Link> : model}
                   </li>
                 )
               })}
