@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import api, { askAny, billingApi, convertGuest, createGame, createGameEventsSource, deleteWaitingGame, gameEventsUrl, generateTutorGameAnalysis, getBots, getGame, getGamePublicStatus, getGameReview, getGameState, getGameTranscript, getLobbyStats, getMyActiveGames, getMyArchivedGames, getOpenGames, getTutorGame, getTutorProfile, joinGame, login, logout, me, playAsGuest, recordCampaignVisit, register, resignGame, submitMove, submitTutorFeedback, techApi, userApi } from "../services/api"
+import api, { askAny, billingApi, convertGuest, createGame, createGameEventsSource, deleteWaitingGame, gameEventsUrl, getBots, getGame, getGamePublicStatus, getGameReview, getGameState, getGameTranscript, getLobbyStats, getMyActiveGames, getMyArchivedGames, getOpenGames, joinGame, login, logout, me, playAsGuest, recordCampaignVisit, register, resignGame, submitMove, techApi, userApi, getTutorWorkspace, createTutorSession, getTutorSession, sendTutorMessage, stopTutorSession, getTutorExercise, actTutorExercise, removeTutorMemory } from "../services/api"
 
 describe("api client", () => {
   it("api_client_uses_relative_base_url", () => { expect(api.defaults.baseURL ?? "").toBe("") })
@@ -203,31 +203,33 @@ describe("game helpers", () => {
 describe("Tutor helpers", () => {
   beforeEach(() => { vi.restoreAllMocks() })
 
-  it("uses_private_tutor_endpoints_and_encodes_game_codes", async () => {
-    const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: { eligible: true } })
-    const postSpy = vi.spyOn(api, "post")
-      .mockResolvedValueOnce({ data: { analysis: {} } })
-      .mockResolvedValueOnce({ data: { rating: "helpful" } })
-
-    expect(await getTutorGame("AB C/23")).toEqual({ eligible: true })
-    expect(await generateTutorGameAnalysis("AB C/23")).toEqual({ analysis: {} })
-    expect(await submitTutorFeedback("AB C/23", { rating: "helpful" })).toEqual({ rating: "helpful" })
-    expect(await getTutorProfile()).toEqual({ eligible: true })
-
-    expect(getSpy).toHaveBeenNthCalledWith(1, "/api/tutor/games/AB%20C%2F23")
-    expect(postSpy).toHaveBeenNthCalledWith(1, "/api/tutor/games/AB%20C%2F23/analysis")
-    expect(postSpy).toHaveBeenNthCalledWith(2, "/api/tutor/games/AB%20C%2F23/feedback", { rating: "helpful" })
-    expect(getSpy).toHaveBeenNthCalledWith(2, "/api/tutor/profile")
+  it("uses_scoped_session_and_practice_endpoints", async () => {
+    const getSpy = vi.spyOn(api, "get").mockResolvedValue({ data: { saved: true } })
+    const postSpy = vi.spyOn(api, "post").mockResolvedValue({ data: { saved: true } })
+    expect(await getTutorWorkspace()).toEqual({ saved: true })
+    await createTutorSession({ game_code: null })
+    await getTutorSession("id /1")
+    await sendTutorMessage("id /1", { text: "hello" })
+    await stopTutorSession("id /1")
+    await getTutorExercise("id /1")
+    await actTutorExercise("id /1", { action: "hint" })
+    await removeTutorMemory({ kind: "note", key: "skill" })
+    expect(getSpy).toHaveBeenNthCalledWith(1, "/api/tutor/workspace", undefined)
+    expect(getSpy).toHaveBeenNthCalledWith(2, "/api/tutor/sessions/id%20%2F1", undefined)
+    expect(getSpy).toHaveBeenNthCalledWith(3, "/api/tutor/exercises/id%20%2F1", undefined)
+    expect(postSpy).toHaveBeenNthCalledWith(1, "/api/tutor/sessions", { game_code: null })
+    expect(postSpy).toHaveBeenNthCalledWith(2, "/api/tutor/sessions/id%20%2F1/messages", { text: "hello" })
+    expect(postSpy).toHaveBeenNthCalledWith(3, "/api/tutor/sessions/id%20%2F1/stop", undefined)
+    expect(postSpy).toHaveBeenNthCalledWith(4, "/api/tutor/exercises/id%20%2F1/actions", { action: "hint" })
+    expect(postSpy).toHaveBeenNthCalledWith(5, "/api/tutor/memory/remove", { kind: "note", key: "skill" })
   })
 
   it.each([
-    ["getTutorGame", "get", () => getTutorGame("ABC234"), "Unable to load Tutor review right now."],
-    ["generateTutorGameAnalysis", "post", () => generateTutorGameAnalysis("ABC234"), "Unable to generate Tutor review right now."],
-    ["submitTutorFeedback", "post", () => submitTutorFeedback("ABC234", { rating: "incorrect" }), "Unable to save Tutor feedback right now."],
-    ["getTutorProfile", "get", () => getTutorProfile(), "Unable to load Tutor progress right now."],
-  ])("%s_uses_a_stable_fallback_error", async (_name, method, invoke, message) => {
+    ["workspace", "get", () => getTutorWorkspace()],
+    ["message", "post", () => sendTutorMessage("id", { text: "hello" })],
+  ])("%s_uses_a_stable_fallback_error", async (_name, method, invoke) => {
     vi.spyOn(api, method).mockRejectedValue({})
-    await expect(invoke()).rejects.toEqual({ status: undefined, code: undefined, message })
+    await expect(invoke()).rejects.toEqual({ status: undefined, code: undefined, message: "Unable to complete this coaching action. Your session is saved." })
   })
 })
 

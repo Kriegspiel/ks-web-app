@@ -19,8 +19,8 @@ afterEach(() => {
 
 describe("VersionStamp", () => {
   it("uses_the_current_frontend_and_backend_release_versions", () => {
-    expect(FRONTEND_VERSION).toBe("1.5.28")
-    expect(BACKEND_VERSION_FALLBACK).toBe("1.5.11")
+    expect(FRONTEND_VERSION).toBe("1.6.0")
+    expect(BACKEND_VERSION_FALLBACK).toBe("1.6.0")
   })
 
   it("keeps_the_fallback_backend_version_visible_in_test_mode", () => {
@@ -39,7 +39,7 @@ describe("VersionStamp", () => {
     await waitFor(() => {
       expect(mockApiGet).toHaveBeenCalledWith("/api/health")
     })
-    expect(screen.getByText(`v. ${FRONTEND_VERSION} / v. 9.9.9`)).toBeInTheDocument()
+    expect(await screen.findByText(`v. ${FRONTEND_VERSION} / v. 9.9.9`)).toBeInTheDocument()
   })
 
   it("keeps_the_fallback_when_the_backend_health_check_fails_or_returns_blank", async () => {

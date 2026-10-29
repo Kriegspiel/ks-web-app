@@ -135,13 +135,13 @@ describe("ReviewPage", () => {
   it("shows_the_private_tutor_entry_only_when_the_server_grants_capability", async () => {
     renderReviewPage()
     await screen.findByRole("heading", { name: "Game review" })
-    expect(screen.queryByRole("link", { name: /Tutor review/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: /Discuss with Tutor/i })).not.toBeInTheDocument()
     cleanup()
 
     mockAuth.user = { username: "fil", can_use_tutor: true }
     renderReviewPage()
 
-    const link = await screen.findByRole("link", { name: /Tutor review Private beta/i })
+    const link = await screen.findByRole("link", { name: /Discuss with Tutor Personal alpha/i })
     expect(link).toHaveAttribute("href", "/game/g-620/review/tutor")
   })
 

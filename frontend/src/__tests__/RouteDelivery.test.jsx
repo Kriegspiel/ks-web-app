@@ -13,7 +13,7 @@ vi.mock("../components/AttributionCapture", () => ({ default: () => null }))
 vi.mock("../pages/LobbyPage", () => ({ default: () => "Lobby view" }))
 vi.mock("../pages/GamePage", () => ({ default: () => "Game view" }))
 vi.mock("../pages/Review", () => ({ default: () => "Review view" }))
-vi.mock("../pages/TutorReview", () => ({ default: () => "Tutor view" }))
+vi.mock("../pages/Tutor", () => ({ default: () => "Tutor view" }))
 vi.mock("../pages/Profile", () => ({ default: () => "Profile view" }))
 vi.mock("../pages/GameHistory", () => ({ default: () => "History view" }))
 vi.mock("../pages/Leaderboard", () => ({ default: () => "Leaderboard view" }))
@@ -44,6 +44,7 @@ it.each([
   ["/game/ABC123", "Game view"],
   ["/game/ABC123/review", "Review view"],
   ["/game/ABC123/review/tutor", "Tutor view"],
+  ["/tutor", "Tutor view"],
   ["/user/player", "Profile view"],
   ["/user/player/games", "History view"],
   ["/leaderboard", "Leaderboard view"],

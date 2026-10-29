@@ -112,10 +112,15 @@ export async function getMyArchivedGames() { try { const response = await api.ge
 export async function getGame(gameId) { try { const response = await api.get(`/api/game/${encodeURIComponent(gameId)}`); return response.data } catch (error) { throw normalizeError(error, 'Unable to load game details right now.') } }
 export async function getGameTranscript(gameId) { try { const response = await api.get(`/api/game/${encodeURIComponent(gameId)}/moves`); return response.data } catch (error) { throw normalizeError(error, 'Unable to load game transcript right now.') } }
 export async function getGameReview(gameId) { try { const response = await api.get(`/api/game/${encodeURIComponent(gameId)}/review`); return response.data } catch (error) { throw normalizeError(error, 'Unable to load game review right now.') } }
-export async function getTutorGame(gameCode) { try { const response = await api.get(`/api/tutor/games/${encodeURIComponent(gameCode)}`); return response.data } catch (error) { throw normalizeError(error, 'Unable to load Tutor review right now.') } }
-export async function generateTutorGameAnalysis(gameCode) { try { const response = await api.post(`/api/tutor/games/${encodeURIComponent(gameCode)}/analysis`); return response.data } catch (error) { throw normalizeError(error, 'Unable to generate Tutor review right now.') } }
-export async function submitTutorFeedback(gameCode, payload) { try { const response = await api.post(`/api/tutor/games/${encodeURIComponent(gameCode)}/feedback`, payload); return response.data } catch (error) { throw normalizeError(error, 'Unable to save Tutor feedback right now.') } }
-export async function getTutorProfile() { try { const response = await api.get('/api/tutor/profile'); return response.data } catch (error) { throw normalizeError(error, 'Unable to load Tutor progress right now.') } }
+async function tutorRequest(method, path, payload) { try { const response = await api[method](`/api/tutor${path}`, payload); return response.data } catch (error) { throw normalizeError(error, 'Unable to complete this coaching action. Your session is saved.') } }
+export function getTutorWorkspace() { return tutorRequest('get', '/workspace') }
+export function createTutorSession(payload) { return tutorRequest('post', '/sessions', payload) }
+export function getTutorSession(id) { return tutorRequest('get', `/sessions/${encodeURIComponent(id)}`) }
+export function sendTutorMessage(id, payload) { return tutorRequest('post', `/sessions/${encodeURIComponent(id)}/messages`, payload) }
+export function stopTutorSession(id) { return tutorRequest('post', `/sessions/${encodeURIComponent(id)}/stop`) }
+export function getTutorExercise(id) { return tutorRequest('get', `/exercises/${encodeURIComponent(id)}`) }
+export function actTutorExercise(id, payload) { return tutorRequest('post', `/exercises/${encodeURIComponent(id)}/actions`, payload) }
+export function removeTutorMemory(payload) { return tutorRequest('post', '/memory/remove', payload) }
 export async function getGamePublicStatus(gameId) { try { const response = await api.get(`/api/game/${encodeURIComponent(gameId)}/public-status`); return response.data } catch (error) { throw normalizeError(error, 'Unable to load game status right now.') } }
 export async function getGameState(gameId) { try { const response = await api.get(`/api/game/${encodeURIComponent(gameId)}/state`); return response.data } catch (error) { throw normalizeError(error, 'Unable to load game state right now.') } }
 export function gameEventsUrl(gameId) { return `/api/game/${encodeURIComponent(gameId)}/events` }

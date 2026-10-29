@@ -1,0 +1,58 @@
+.coach-page { max-width: 1640px; margin-inline: auto; padding-bottom: 3rem; }
+.coach-heading { display: flex; justify-content: space-between; align-items: start; gap: 2rem; margin-bottom: 1.5rem; }
+.coach-heading h1 { margin: .3rem 0; }
+.coach-eyebrow { text-transform: uppercase; font-size: .75rem; font-weight: 750; letter-spacing: .12em; color: var(--color-muted, #77644f); }
+.coach-plan { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font-size: .85rem; padding: .75rem 1rem; border: 1px solid currentColor; border-radius: 12px; }
+.coach-plan a { width: 100%; }
+.coach-dot { width: 8px; height: 8px; border-radius: 50%; background: #ba7651; }
+.coach-dot.is-connected { background: #4a875d; }
+.coach-tabs { display: flex; gap: .5rem; border-bottom: 1px solid #997e6033; padding-bottom: .75rem; margin-bottom: 1.25rem; }
+.coach-tabs button[aria-selected=true] { border-bottom: 3px solid #9e653b; font-weight: 750; }
+.coach-layout { display: grid; grid-template-columns: minmax(150px, .65fr) minmax(300px, 1.55fr) minmax(290px, 1.25fr); gap: 1.2rem; align-items: start; }
+.coach-layout h2, .coach-progress h2 { font-size: 1.2rem; }
+.coach-sidebar, .coach-board-area, .coach-conversation, .coach-progress > section { min-width: 0; }
+.coach-sidebar { display: grid; gap: .5rem; }
+.coach-sidebar h2 { margin-bottom: 0; }
+.coach-session, .coach-game { padding: .7rem; border: 1px solid #997e6033; border-radius: 9px; text-align: left; background: transparent; text-decoration: none; color: inherit; }
+.coach-session.is-selected { border-color: #9e653b; background: #aa784414; }
+.coach-session small, .coach-game small { display: block; font-size: .72rem; opacity: .7; padding-top: .2rem; }
+.coach-board-area, .coach-conversation { border: 1px solid #997e6033; padding: 1.15rem; border-radius: 16px; background: #fff5; }
+.coach-board-area .chess-board { width: 100%; max-width: 580px; margin-inline: auto; }
+.coach-exercise-heading { margin-bottom: 1rem; }
+.coach-exercise-heading p { line-height: 1.5; }
+.coach-board-empty { min-height: 490px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; background: repeating-conic-gradient(#aa784407 0% 25%, transparent 0% 50%) 50% / 64px 64px; border-radius: 12px; }
+.coach-board-empty > span { font-size: 4rem; }
+.coach-board-empty p { max-width: 32ch; line-height: 1.6; }
+.coach-conversation { display: flex; flex-direction: column; gap: .7rem; }
+.coach-messages { max-height: 660px; overflow-y: auto; display: grid; gap: .8rem; }
+.coach-message { padding: .85rem; border-radius: 12px; background: #aa78440a; }
+.coach-message.is-user { margin-left: 1.25rem; background: #aa78441a; }
+.coach-message > span { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 750; }
+.coach-message p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; margin-bottom: 0; }
+.coach-composer label, .coach-board-area form label { display: grid; gap: .4rem; width: 100%; }
+.coach-composer textarea, .coach-board-area textarea { box-sizing: border-box; width: 100%; min-height: 96px; resize: vertical; font: inherit; padding: .75rem; background: transparent; color: inherit; border: 1px solid #997e6070; border-radius: 10px; }
+.coach-composer button { margin-top: .5rem; }
+.coach-primary { background: #2d251d; color: #fff9f0; border: 1px solid #2d251d; border-radius: 9px; padding: .7rem 1rem; }
+.coach-starters, .coach-practice-actions, .coach-predictions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.coach-starters button { text-align: left; }
+.coach-activity, .coach-conversation > small { font-size: .8rem; opacity: .75; }
+.coach-alert, .coach-connection { border: 1px solid #b46b3f70; background: #b46b3f0d; padding: 1rem; border-radius: 10px; }
+.coach-connection { margin-bottom: 1rem; }
+.coach-mark-toggle { display: flex; align-items: center; gap: .5rem; margin-block: .75rem; }
+.coach-mark-toggle input { width: auto; flex: 0 0 auto; margin: 0; }
+.coach-move-form { display: flex; gap: .5rem; flex-wrap: wrap; align-items: end; margin-block: 1rem; }
+.coach-move-form input { padding: .6rem; font: inherit; color: inherit; background: transparent; border: 1px solid #997e6070; border-radius: 8px; }
+.coach-practice-actions { margin-block: 1rem; }
+.coach-hint { border-left: 3px solid #9e653b; padding: .5rem .75rem; }
+.coach-events { font-size: .85rem; max-height: 180px; overflow-y: auto; padding-left: 1.3rem; }
+.coach-events li { padding-block: .3rem; }
+.coach-progress { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; }
+.coach-memory-card { border: 1px solid #997e6033; border-radius: 12px; padding: 1rem; margin-bottom: .8rem; overflow-wrap: anywhere; }
+.coach-memory-card h3 { font-size: 1rem; }
+.coach-memory-card p { line-height: 1.5; }
+.coach-evidence { font-size: .8rem; }
+.coach-referee-history { font-size: .8rem; max-height: 240px; overflow-y: auto; margin-top: .7rem; padding: .7rem; border: 1px solid #997e6033; border-radius: 8px; }
+.coach-referee-history p { line-height: 1.5; }
+[data-theme=dark] .coach-board-area, [data-theme=dark] .coach-conversation { background: #ffffff04; }
+@media (max-width: 1100px) { .coach-layout { grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr); } .coach-sidebar { grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); max-height: 150px; overflow-y: auto; } .coach-sidebar h2 { grid-column: 1 / -1; } }
+@media (max-width: 700px) { .coach-heading { flex-direction: column; gap: .75rem; } .coach-layout, .coach-progress { grid-template-columns: 1fr; } .coach-board-empty { min-height: 250px; } .coach-messages { max-height: 480px; } .coach-board-area, .coach-conversation { padding: .8rem; } }
