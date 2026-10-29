@@ -20,6 +20,7 @@ const mockApi = vi.hoisted(() => ({
   getGameState: vi.fn(),
   getGameReview: vi.fn(),
   getTutorWorkspace: vi.fn(),
+  getTutorGames: vi.fn(), getTutorAttempt: vi.fn(), getTutorHistory: vi.fn(),
   createTutorSession: vi.fn(),
   getTutorSession: vi.fn(),
   sendTutorMessage: vi.fn(),
@@ -284,7 +285,7 @@ describe("App routes", () => {
 
     renderRoute("/game/ABC234/review/tutor")
 
-    await screen.findByRole("heading", { name: "Your Kriegspiel Tutor" })
+    await screen.findByRole("heading", { name: "Your kriegspiel tutor" })
     expect(await screen.findByRole("heading", { name: "Connect your ChatGPT plan" })).toBeInTheDocument()
     expect(mockApi.getTutorWorkspace).toHaveBeenCalled()
   })
@@ -292,8 +293,24 @@ describe("App routes", () => {
   it("opens_the_personal_tutor_home_from_the_entitled_navigation", async () => {
     mockApi.me.mockResolvedValueOnce({ username: "fil", can_use_tutor: true })
     renderRoute("/tutor")
-    await screen.findByRole("heading", { name: "Your Kriegspiel Tutor" })
+    await screen.findByRole("heading", { name: "Your kriegspiel tutor" })
+    await waitFor(() => expect(screen.getByRole("link", { name: "Tutor" }).closest("details")).not.toHaveAttribute("open"))
+    fireEvent.click(screen.getByText("Profile", { selector: "summary" }))
     expect(screen.getByRole("link", { name: "Tutor", current: "page" })).toHaveAttribute("href", "/tutor")
+  })
+
+  it("keeps_tutor_inside_the_profile_dropdown_and_navigates_to_the_workspace", async () => {
+    mockApi.me.mockResolvedValueOnce({ username: "fil", can_use_tutor: true })
+    renderRoute("/lobby")
+    await screen.findByRole("heading", { name: "Lobby" })
+    const tutor = screen.getByRole("link", { name: "Tutor" })
+    expect(tutor).not.toHaveAttribute("aria-current")
+    expect(tutor.closest(".header-profile-menu__panel")).not.toBeNull()
+    fireEvent.click(screen.getByText("Profile", { selector: "summary" }))
+    fireEvent(tutor.closest("details"), new Event("toggle"))
+    fireEvent.click(tutor)
+    await screen.findByRole("heading", { name: "Your kriegspiel tutor" })
+    await waitFor(() => expect(screen.getByRole("link", { name: "Tutor" }).closest("details")).not.toHaveAttribute("open"))
   })
 
   it("renders_subscription_route_and_subcription_alias_for_authenticated_users", async () => {

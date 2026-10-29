@@ -53,7 +53,6 @@ function AuthLinks() {
     return (
       <>
         <Link to="/lobby" aria-current={lobbyCurrent ? "page" : undefined}>Lobby</Link>
-        {user?.can_use_tutor === true ? <Link to="/tutor" aria-current={location.pathname === "/tutor" ? "page" : undefined}>Tutor</Link> : null}
         <details
           className="header-profile-menu"
           ref={profileMenuRef}
@@ -69,6 +68,13 @@ function AuthLinks() {
             >
               User
             </Link>
+            {user?.can_use_tutor === true ? (
+              <Link
+                className="header-profile-menu__item"
+                to="/tutor"
+                aria-current={location.pathname === "/tutor" || /^\/game\/[^/]+\/review\/tutor$/.test(location.pathname) ? "page" : undefined}
+              >Tutor</Link>
+            ) : null}
             <Link
               className="header-profile-menu__item"
               to="/subscription"

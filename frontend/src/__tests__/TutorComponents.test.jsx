@@ -1,0 +1,170 @@
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { MemoryRouter } from "react-router"
+import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import TutorMessage, { AttemptReference } from "../components/TutorMessage"
+import TutorHistory from "../components/TutorHistory"
+import TutorUsage from "../components/TutorUsage"
+import { attemptOverlays } from "../components/tutorBoard"
+
+const api = vi.hoisted(() => ({ getTutorAttempt: vi.fn(), getTutorHistory: vi.fn() }))
+vi.mock("../services/api", () => api)
+const fen = "8/8/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"
+function event(ply = 1, overrides = {}) { return { ply, turn: 1, color: "white", attempt: "e2e4", before_fen: fen, after_fen: fen,
+  answer: { announcement: "ILLEGAL_MOVE" }, messages: ["Move attempt — Illegal move"], ...overrides } }
+function mount(children) { return render(<MemoryRouter>{children}</MemoryRouter>) }
+function toggle(details, open) { details.open = open; fireEvent(details, new Event("toggle")) }
+beforeEach(() => { vi.resetAllMocks(); api.getTutorAttempt.mockResolvedValue({ color: "white", event: event() }); api.getTutorHistory.mockResolvedValue({ events: [event(), event(2, { color: "black", attempt: null })], next_start: null }) })
+afterEach(() => { cleanup(); vi.useRealTimers() })
+
+it("renders_safe_markdown_headings_bold_lists_moves_squares_and_attempt_ranges", async () => {
+  const view = mount(<TutorMessage gameCode="ABC234" text={'# Evidence\n\n**Important**: f6, e7, Bg5–d8, e2e4, Nf3, O-O, P@e4.\n\n- Compare ABC234:10–13 and attempts 11-12.\n\n`e4`\n\n```text\nABC234:99\n```\n\n[Rules](https://kriegspiel.org/rules) [Unsafe](javascript:alert) ![image](https://bad.test/a)\n\n<script>window.pwned=true</script>'} />)
+  expect(await screen.findByRole("heading", { name: "Evidence", level: 3 })).toBeInTheDocument()
+  expect(screen.getByText("Important").tagName).toBe("STRONG")
+  for (const square of ["f6", "e7", "Bg5–d8", "e2e4", "Nf3", "O-O", "P@e4", "e4"]) expect(screen.getByText(square).tagName).toBe("CODE")
+  expect(screen.getByRole("link", { name: "ABC234 · attempt 10" })).toHaveAttribute("href", "/game/ABC234/review")
+  expect(screen.getByRole("link", { name: "ABC234 · attempt 13" })).toBeInTheDocument()
+  expect(screen.getByRole("link", { name: "Rules" })).toHaveAttribute("href", "https://kriegspiel.org/rules")
+  expect(screen.getByText("Unsafe")).not.toHaveAttribute("href", expect.stringContaining("javascript:"))
+  expect(view.container.querySelector("img, script")).toBeNull()
+  view.rerender(<MemoryRouter><TutorMessage text="attempt 3 with **nothing** else." /></MemoryRouter>)
+  expect(screen.getByText(/attempt 3 with/)).toBeInTheDocument()
+  view.rerender(<MemoryRouter><TutorMessage text="[whole](https://example.com)\n\n[unsafe](javascript:alert)" /></MemoryRouter>)
+  expect(screen.getByRole("link", { name: "whole" })).toBeInTheDocument()
+  view.rerender(<MemoryRouter><TutorMessage text="e4" /></MemoryRouter>)
+  expect(screen.getByText("e4").tagName).toBe("CODE")
+})
+
+it("previews_the_player_board_on_hover_and_keyboard_focus_without_repeated_requests", async () => {
+  let resolve
+  api.getTutorAttempt.mockReturnValueOnce(new Promise((done) => { resolve = done }))
+  mount(<AttemptReference gameCode="ABC234" attempt={10}>Attempt 10</AttemptReference>)
+  const link = screen.getByRole("link")
+  fireEvent.mouseEnter(link)
+  expect(screen.getByRole("tooltip")).toHaveTextContent("Loading your view")
+  await act(async () => resolve({ color: "black", event: event() }))
+  expect(within(screen.getByRole("tooltip")).getByRole("grid", { name: "Chess board" })).toBeInTheDocument()
+  expect(document.querySelector('line[marker-end="url(#board-overlay-arrow-illegal)"]')).not.toBeNull()
+  fireEvent.mouseLeave(link)
+  expect(screen.queryByRole("tooltip")).not.toBeInTheDocument()
+  fireEvent.focus(link)
+  expect(screen.getByRole("tooltip")).toHaveTextContent("e2e4")
+  fireEvent.keyDown(link, { key: "Tab" })
+  fireEvent.keyDown(link, { key: "Escape" })
+  expect(screen.queryByRole("tooltip")).not.toBeInTheDocument()
+  fireEvent.focus(link)
+  fireEvent.blur(link)
+  expect(api.getTutorAttempt).toHaveBeenCalledTimes(1)
+  const rect = vi.spyOn(link, "getBoundingClientRect").mockReturnValue({ left: 1500, bottom: 900, top: 880 })
+  fireEvent.focus(link)
+  expect(screen.getByRole("tooltip")).toHaveStyle({ top: "442px" })
+  rect.mockRestore()
+})
+
+it("handles_unavailable_previews_and_hidden_opponent_and_Any_attempts", async () => {
+  api.getTutorAttempt.mockRejectedValueOnce(new Error("Unavailable"))
+  mount(<AttemptReference gameCode="ABC234" attempt={1}>ref</AttemptReference>)
+  fireEvent.focus(screen.getByRole("link"))
+  await screen.findByText(/Attempt preview unavailable/)
+  cleanup()
+  for (const question of [null, "ASK_ANY"]) {
+    api.getTutorAttempt.mockResolvedValueOnce({ color: "white", event: event(2, { attempt: null, question }) })
+    mount(<AttemptReference gameCode="ABC234" attempt={2}>ref</AttemptReference>)
+    fireEvent.focus(screen.getByRole("link"))
+    await screen.findByText(question ? "Any pawn captures?" : "Opponent turn — move coordinates hidden")
+    expect(document.querySelector(".board-overlay-arrow")).toBeNull()
+    cleanup()
+  }
+  expect(attemptOverlays(event(1, { attempt: "N@e4" })).badges).toEqual([{ square: "e4", label: "N", tone: "illegal" }])
+  expect(attemptOverlays(event(1, { attempt: null })).arrows).toEqual([])
+})
+
+function history(props = {}) {
+  const onSelect = vi.fn(), onReturn = vi.fn()
+  const view = render(<TutorHistory exercise={{ exercise_id: "e1", ply: 4 }} selectedPly={null} onSelect={onSelect} onReturn={onReturn} {...props} />)
+  const details = view.container.querySelector("details")
+  toggle(details, true)
+  return { ...view, onSelect, onReturn, details }
+}
+
+it("groups_referee_turn_boxes_and_supports_first_previous_next_last_and_return", async () => {
+  const view = history()
+  await screen.findByRole("heading", { name: "Turn 1" })
+  expect(screen.getByText("White")).toBeInTheDocument()
+  expect(screen.getByText("Black")).toBeInTheDocument()
+  fireEvent.click(screen.getByRole("button", { name: "First" }))
+  expect(view.onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ ply: 0, after_fen: fen, attempt: null }))
+  fireEvent.click(screen.getByRole("button", { name: "Next" }))
+  expect(view.onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ ply: 1 }))
+  fireEvent.click(screen.getByRole("button", { name: "Last" }))
+  expect(view.onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ ply: 2 }))
+  fireEvent.click(screen.getByRole("button", { name: /Attempt 1/ }))
+  expect(view.onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ ply: 1 }))
+  view.rerender(<TutorHistory exercise={{ exercise_id: "e1", ply: 4 }} selectedPly={2} onSelect={view.onSelect} onReturn={view.onReturn} />)
+  fireEvent.click(screen.getByRole("button", { name: "Prev" }))
+  expect(view.onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ ply: 1 }))
+  expect(screen.getByText(/Viewing attempt 2/)).toBeInTheDocument()
+  fireEvent.click(screen.getByRole("button", { name: "Return to practice" }))
+  expect(view.onReturn).toHaveBeenCalled()
+  view.rerender(<TutorHistory exercise={{ exercise_id: "e1", ply: 4 }} selectedPly={0} onSelect={view.onSelect} onReturn={view.onReturn} />)
+  expect(screen.getByText(/Starting position/)).toBeInTheDocument()
+  toggle(view.details, false)
+  toggle(view.details, true)
+  expect(api.getTutorHistory).toHaveBeenCalledTimes(1)
+})
+
+it("handles_history_loading_errors_retry_empty_and_paginated_deduplication", async () => {
+  api.getTutorHistory.mockRejectedValueOnce(new Error("History unavailable"))
+  history()
+  await screen.findByRole("alert")
+  api.getTutorHistory.mockResolvedValueOnce({ events: [], next_start: null })
+  fireEvent.click(screen.getByRole("button", { name: "Retry history" }))
+  await screen.findByText("No recorded attempts before this practice position.")
+  cleanup()
+  api.getTutorHistory.mockResolvedValueOnce({ events: [event()], next_start: 61 })
+  history()
+  await screen.findByRole("heading", { name: "Turn 1" })
+  api.getTutorHistory.mockRejectedValueOnce(new Error("More unavailable"))
+  fireEvent.click(screen.getByRole("button", { name: "Load more history" }))
+  await screen.findByRole("alert")
+  api.getTutorHistory.mockResolvedValueOnce({ events: [event(), event(61, { turn: 31 })], next_start: null })
+  fireEvent.click(screen.getByRole("button", { name: "Retry history" }))
+  await screen.findByRole("heading", { name: "Turn 31" })
+  expect(screen.getAllByRole("button", { name: /Attempt 1 ·/ })).toHaveLength(1)
+  expect(api.getTutorHistory).toHaveBeenLastCalledWith("e1", 61)
+})
+
+it("plays_and_pauses_history_without_model_calls_and_stops_at_the_end", async () => {
+  vi.useFakeTimers()
+  const view = history()
+  await act(async () => {})
+  fireEvent.click(screen.getByRole("button", { name: "Play replay" }))
+  await act(async () => { await vi.advanceTimersByTimeAsync(900) })
+  expect(view.onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ ply: 1 }))
+  view.rerender(<TutorHistory exercise={{ exercise_id: "e1", ply: 4 }} selectedPly={1} onSelect={view.onSelect} onReturn={view.onReturn} />)
+  await act(async () => { await vi.advanceTimersByTimeAsync(900) })
+  expect(view.onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ ply: 2 }))
+  view.rerender(<TutorHistory exercise={{ exercise_id: "e1", ply: 4 }} selectedPly={2} onSelect={view.onSelect} onReturn={view.onReturn} />)
+  await act(async () => { await vi.advanceTimersByTimeAsync(900) })
+  fireEvent.click(screen.getByRole("button", { name: "Play replay" }))
+  expect(view.onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ ply: 1 }))
+  fireEvent.click(screen.getByRole("button", { name: "Pause replay" }))
+  toggle(view.details, false)
+})
+
+it("shows_session_and_request_usage_with_honest_unknown_and_legacy_warnings", () => {
+  const usage = { total_tokens: 1100, api_equivalent_usd: .003, requests: 2, input_tokens: 1000, output_tokens: 100,
+    cached_input_tokens: 500, cache_write_tokens: 0, reasoning_tokens: 50, unknown_requests: 1, legacy_input_tokens: 20,
+    legacy_output_tokens: 10, incomplete_cache_requests: 1, incomplete_reasoning_requests: 1, pricing_source: "https://developers.openai.com/api/docs/pricing", pricing_version: "snapshot" }
+  const view = render(<TutorUsage session={{ usage, usage_events: [{ ...usage, call_id: "c1", status: "completed", reported: true, started_at: "today", duration_ms: 100,
+    api_equivalent_nanodollars: 3000000 }, { call_id: "c2", status: "interrupted", reported: false }] }} />)
+  expect(screen.getByText(/Session usage/)).toHaveTextContent("1,100 tokens · ≈$0.003000")
+  expect(screen.getByText(/unknown does not mean free/)).toBeInTheDocument()
+  expect(screen.getByText(/Earlier token totals/)).toBeInTheDocument()
+  expect(screen.getByText(/Some cache details/)).toBeInTheDocument()
+  expect(screen.getByText(/Some reasoning details/)).toBeInTheDocument()
+  expect(screen.getByText(/Input 1,000 · cached 500/)).toBeInTheDocument()
+  view.rerender(<TutorUsage session={{ usage: { ...usage, unknown_requests: 0, legacy_input_tokens: 0, legacy_output_tokens: 0, incomplete_cache_requests: 0, incomplete_reasoning_requests: 0 }, usage_events: [] }} />)
+  expect(screen.queryByText(/unknown does not mean free/)).not.toBeInTheDocument()
+  view.rerender(<TutorUsage session={{}} />)
+  expect(view.container).toBeEmptyDOMElement()
+})

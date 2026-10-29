@@ -114,11 +114,14 @@ export async function getGameTranscript(gameId) { try { const response = await a
 export async function getGameReview(gameId) { try { const response = await api.get(`/api/game/${encodeURIComponent(gameId)}/review`); return response.data } catch (error) { throw normalizeError(error, 'Unable to load game review right now.') } }
 async function tutorRequest(method, path, payload) { try { const response = await api[method](`/api/tutor${path}`, payload); return response.data } catch (error) { throw normalizeError(error, 'Unable to complete this coaching action. Your session is saved.') } }
 export function getTutorWorkspace() { return tutorRequest('get', '/workspace') }
+export function getTutorGames(offset) { return tutorRequest('get', `/games?offset=${encodeURIComponent(offset)}`) }
+export function getTutorAttempt(code, attempt) { return tutorRequest('get', `/games/${encodeURIComponent(code)}/attempts/${encodeURIComponent(attempt)}`) }
 export function createTutorSession(payload) { return tutorRequest('post', '/sessions', payload) }
 export function getTutorSession(id) { return tutorRequest('get', `/sessions/${encodeURIComponent(id)}`) }
 export function sendTutorMessage(id, payload) { return tutorRequest('post', `/sessions/${encodeURIComponent(id)}/messages`, payload) }
 export function stopTutorSession(id) { return tutorRequest('post', `/sessions/${encodeURIComponent(id)}/stop`) }
 export function getTutorExercise(id) { return tutorRequest('get', `/exercises/${encodeURIComponent(id)}`) }
+export function getTutorHistory(id, start) { return tutorRequest('get', `/exercises/${encodeURIComponent(id)}/history?start=${encodeURIComponent(start)}`) }
 export function actTutorExercise(id, payload) { return tutorRequest('post', `/exercises/${encodeURIComponent(id)}/actions`, payload) }
 export function removeTutorMemory(payload) { return tutorRequest('post', '/memory/remove', payload) }
 export async function getGamePublicStatus(gameId) { try { const response = await api.get(`/api/game/${encodeURIComponent(gameId)}/public-status`); return response.data } catch (error) { throw normalizeError(error, 'Unable to load game status right now.') } }
