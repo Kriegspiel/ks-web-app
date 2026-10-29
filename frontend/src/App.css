@@ -51,6 +51,8 @@
 
 .app-footer__group a {
   display: inline-flex;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   align-items: center;
   text-decoration: none;
   color: var(--muted);

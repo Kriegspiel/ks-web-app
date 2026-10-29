@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router"
 import TutorPage from "../pages/Tutor"
 
 const api = vi.hoisted(() => ({
+  default: { get: vi.fn() }, getTutorGames: vi.fn(), getTutorAttempt: vi.fn(), getTutorHistory: vi.fn(),
   getTutorWorkspace: vi.fn(), getTutorSession: vi.fn(), createTutorSession: vi.fn(), sendTutorMessage: vi.fn(),
   stopTutorSession: vi.fn(), actTutorExercise: vi.fn(), removeTutorMemory: vi.fn(),
 }))
@@ -19,12 +20,12 @@ function exercise(overrides = {}) { return {
 } }
 function workspace(overrides = {}) { return {
   connection: { connected: true }, sessions: [session()], learning: { notes: {}, goals: {}, practice: [] },
-  history: { total: 142, games: [{ game_code: "ABC234", variant: "berkeley_any", completed_moves: 25, color: "white" }] }, ...overrides,
+  history: { total: 142, next_offset: null, games: [{ game_code: "ABC234", opponent: "randobot", result: { winner: "white" }, variant: "berkeley_any", completed_moves: 25, color: "white" }] }, ...overrides,
 } }
 function mount(path = "/tutor") {
   return render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/tutor" element={<TutorPage />} /><Route path="/game/:gameCode/review/tutor" element={<TutorPage />} /></Routes></MemoryRouter>)
 }
-async function ready() { await screen.findByRole("heading", { name: "Your Kriegspiel Tutor" }) }
+async function ready() { await screen.findByRole("heading", { name: "Your kriegspiel tutor" }); await screen.findByRole("heading", { name: "Your games" }) }
 async function boardReady(data = exercise()) {
   api.getTutorWorkspace.mockResolvedValue(workspace({ learning: { notes: {}, goals: {}, practice: [data] } }))
   mount("/tutor?session=s1")
@@ -51,7 +52,8 @@ it("loads_subscription_status_without_starting_inference_and_shows_empty_learnin
   expect(screen.getByRole("heading", { name: "Connect your ChatGPT plan" })).toBeInTheDocument()
   expect(screen.getByRole("button", { name: "Find a teaching moment" })).toBeDisabled()
   expect(screen.getByText("142 completed games available to your coach.")).toBeInTheDocument()
-  expect(screen.getByRole("link", { name: /ABC234 berkeley_any/ })).toHaveAttribute("href", "/game/ABC234/review/tutor")
+  expect(screen.getByRole("link", { name: /randobot Win Berkeley \+ Any · 25 moves as white ABC234/ })).toHaveAttribute("href", "/game/ABC234/review/tutor")
+  expect(screen.queryByText("A learning programme built from your games and your thinking.")).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole("tab", { name: "Progress & memory" }))
   expect(screen.getByText(/Your coach will propose a focused goal/)).toBeInTheDocument()
   expect(api.sendTutorMessage).not.toHaveBeenCalled()
@@ -96,7 +98,7 @@ it("opens_saved_conversations_and_renders_clickable_evidence_safely", async () =
   await ready()
   fireEvent.click(screen.getByRole("button", { name: /Learning session/ }))
   await screen.findByText("I thought the bishop was pinned.")
-  expect(screen.getByRole("link", { name: "ABC234 · attempt 3" })).toHaveAttribute("href", "/game/ABC234/review")
+  expect(await screen.findByRole("link", { name: "ABC234 · attempt 3" })).toHaveAttribute("href", "/game/ABC234/review")
   expect(screen.getByText(/never execute/)).toBeInTheDocument()
   expect(document.querySelector("script")).toBeNull()
   expect(api.sendTutorMessage).not.toHaveBeenCalled()
@@ -290,4 +292,52 @@ it("respects_variants_without_Any_and_shows_unrevealed_practice_history", async 
   expect(screen.queryByRole("button", { name: "Any pawn captures?" })).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole("tab", { name: "Progress & memory" }))
   expect(screen.getByText(/0 hints · 0 recorded attempts/)).toBeInTheDocument()
+})
+
+it("paginates_all_games_with_opponent_outcomes_and_recovers_without_model_calls", async () => {
+  const first = workspace().history.games[0]
+  api.getTutorWorkspace.mockResolvedValue(workspace({ history: { total: 4, games: [first], next_offset: 1 } }))
+  mount("/game/ABC234/review/tutor")
+  await ready()
+  expect(screen.getByRole("region", { name: "Completed game list" })).toHaveAttribute("tabindex", "0")
+  expect(screen.getByRole("link", { name: /randobot Win/ })).toHaveAttribute("aria-current", "page")
+  let done
+  api.getTutorGames.mockReturnValueOnce(new Promise((resolve) => { done = resolve }))
+  fireEvent.click(screen.getByRole("button", { name: "Load more games" }))
+  expect(screen.getByRole("button", { name: "Loading games…" })).toBeDisabled()
+  await act(async () => done({ total: 4, next_offset: 2, games: [first, { ...first, game_code: "BCD234", opponent: "human", result: { winner: "black" } }] }))
+  expect(screen.getByRole("link", { name: /human Loss/ })).toBeInTheDocument()
+  expect(screen.getAllByRole("link", { name: /randobot Win/ })).toHaveLength(1)
+  api.getTutorGames.mockRejectedValueOnce(new Error("Games unavailable"))
+  fireEvent.click(screen.getByRole("button", { name: "Load more games" }))
+  await screen.findByText("Games unavailable")
+  api.getTutorGames.mockResolvedValueOnce({ total: 4, next_offset: null, games: [
+    { ...first, game_code: "CDE234", opponent: null, result: { winner: null } },
+    { ...first, game_code: "DEF234", result: undefined },
+  ] })
+  fireEvent.click(screen.getByRole("button", { name: "Load more games" }))
+  await screen.findByText("Draw")
+  expect(screen.getByText("Unknown opponent")).toBeInTheDocument()
+  expect(screen.getByText("Result unavailable")).toBeInTheDocument()
+  expect(api.sendTutorMessage).not.toHaveBeenCalled()
+})
+
+it("replays_archived_history_without_changing_practice_and_restores_the_board", async () => {
+  api.getTutorHistory.mockResolvedValue({ events: [{ ply: 1, turn: 1, color: "white", attempt: "e2e4", before_fen: "8/8/8/8/8/8/8/R7 w - - 0 1",
+    after_fen: "8/8/8/8/8/8/8/1R6 w - - 0 1", messages: ["Move complete"] }], next_start: null })
+  await boardReady()
+  const details = document.querySelector(".coach-referee-history")
+  details.open = true
+  fireEvent(details, new Event("toggle"))
+  fireEvent.click(await screen.findByRole("button", { name: /Attempt 1 · e2e4/ }))
+  expect(screen.getByText(/Your view after attempt 1/)).toBeInTheDocument()
+  expect(screen.getByLabelText("Move attempt")).toBeDisabled()
+  fireEvent.submit(screen.getByLabelText("Move attempt").closest("form"))
+  expect(api.actTutorExercise).not.toHaveBeenCalled()
+  fireEvent.click(screen.getAllByRole("button", { name: "Return to practice" })[0])
+  expect(screen.getByLabelText("Move attempt")).not.toBeDisabled()
+  fireEvent.click(screen.getByRole("button", { name: "First" }))
+  expect(screen.getByText("Starting position. Practice is unchanged.")).toBeInTheDocument()
+  fireEvent.click(screen.getAllByRole("button", { name: "Return to practice" })[1])
+  expect(api.sendTutorMessage).not.toHaveBeenCalled()
 })

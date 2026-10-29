@@ -17,6 +17,8 @@ const initialBytes = [...initial].reduce((total, key) => (
 ), 0)
 // Full route delivery avoids a network/React boundary during the game journey.
 assert.ok(initialBytes < 230000, `Initial JavaScript exceeds 230,000 gzip bytes: ${initialBytes}`)
-assert.equal(Object.values(manifest).filter((entry) => entry.isDynamicEntry).length, 0,
-  "Stripe-only delivery must not defer route chunks")
+// Defer only the optional Tutor message formatter, never a route/view.
+const deferred = Object.entries(manifest).filter(([, entry]) => entry.isDynamicEntry).map(([key]) => key)
+assert.deepEqual(deferred, ["node_modules/react-markdown/index.js"],
+  "Only the Tutor Markdown formatter may be deferred; route views must remain available at entry")
 console.log(`Build checks passed: ${initialBytes.toLocaleString()} initial gzip JS bytes; routes are available at entry.`)
