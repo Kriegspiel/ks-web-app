@@ -1364,8 +1364,8 @@ export default function ReviewPage() {
           <h1>Game review</h1>
           {user?.can_use_tutor === true ? (
             <Link className="button-link button-link--primary review-page__tutor-link" to={`/game/${encodeURIComponent(gameRef)}/review/tutor`}>
-              Tutor review
-              <span>Private beta</span>
+              Discuss with Tutor
+              <span>Personal alpha</span>
             </Link>
           ) : null}
         </div>

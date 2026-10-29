@@ -11,7 +11,7 @@ import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
 import GamePage from "./pages/GamePage"
 import ReviewPage from "./pages/Review"
-import TutorReviewPage from "./pages/TutorReview"
+import TutorPage from "./pages/Tutor"
 import ProfilePage from "./pages/Profile"
 import GameHistoryPage from "./pages/GameHistory"
 import LeaderboardPage from "./pages/Leaderboard"
@@ -235,10 +235,11 @@ export function AppRoutes() {
             path="/game/:gameCode/review/tutor"
             element={(
               <RequireTutorAccess>
-                <TutorReviewPage />
+                <TutorPage />
               </RequireTutorAccess>
             )}
           />
+          <Route path="/tutor" element={<RequireTutorAccess><TutorPage /></RequireTutorAccess>} />
           <Route path="/user/:username" element={<ProfilePage />} />
           <Route path="/user/:username/games" element={<GameHistoryPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />

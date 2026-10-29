@@ -222,6 +222,7 @@ lerna-debug.log*
 # Frontend build outputs
 frontend/dist/
 frontend/build/
+frontend/coverage/
 
 # Frontend development
 .DS_Store
