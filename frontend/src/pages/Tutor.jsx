@@ -8,7 +8,6 @@ import TutorUsage from "../components/TutorUsage"
 import TutorSessionTitle from "../components/TutorSessionTitle"
 import TutorIconButton from "../components/TutorIconButton"
 import TutorSidebar from "../components/TutorSidebar"
-import { attemptOverlays } from "../components/tutorBoard"
 import {
   actTutorExercise, createTutorSession, getTutorGames, getTutorSession, getTutorWorkspace,
   removeTutorMemory, sendTutorMessage, stopTutorSession,
@@ -51,7 +50,7 @@ export default function TutorPage() {
   const exercise = exerciseOverride ?? practice.find((item) => item.session_id === sessionId)
   const connected = workspace?.connection.connected === true
   const reviewing = replayEvent !== null
-  const replayOverlay = replayEvent ? attemptOverlays(replayEvent) : { arrows: [], badges: [] }
+  const replayOverlay = replayEvent ? replayEvent.overlays : { arrows: [], badges: [], captureSquares: [] }
 
   useEffect(() => { setReplayEvent(null) }, [exercise?.exercise_id])
 
@@ -189,7 +188,7 @@ export default function TutorPage() {
                 {reviewing ? <div className="coach-replay-notice"><p>{replayEvent.ply === 0 ? "Starting position" : `Your view after attempt ${replayEvent.ply}`}. Practice is unchanged.</p><TutorIconButton icon="return" label="Return to practice" onClick={() => setReplayEvent(null)} /></div> : null}
                 <ChessBoard boardFen={replayEvent ? replayEvent.after_fen : exercise.board_fen} orientation={exercise.color}
                   highlightedSquares={!reviewing && selected ? [selected] : []} phantomSquares={reviewing ? [] : marks}
-                  overlayArrows={replayOverlay.arrows} overlayBadges={replayOverlay.badges}
+                  overlayArrows={replayOverlay.arrows} overlayBadges={replayOverlay.badges} captureSquares={replayOverlay.captureSquares}
                   disabled={pending || reviewing} onSquareClick={squareClick} onSquareRightClick={mark} />
                 <TutorHistory key={exercise.exercise_id} exercise={exercise} selectedPly={replayEvent?.ply} onSelect={setReplayEvent} onReturn={() => setReplayEvent(null)} />
                 <fieldset className="coach-practice-inputs" disabled={reviewing}>

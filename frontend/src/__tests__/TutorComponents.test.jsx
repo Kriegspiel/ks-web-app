@@ -4,7 +4,8 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import TutorMessage, { AttemptReference } from "../components/TutorMessage"
 import TutorHistory from "../components/TutorHistory"
 import TutorUsage from "../components/TutorUsage"
-import { attemptOverlays } from "../components/tutorBoard"
+import { attemptOverlays, tutorReplayPositions } from "../components/tutorBoard"
+import { overlaysForPlyGroup } from "../utils/replayOverlays"
 
 const api = vi.hoisted(() => ({ getTutorAttempt: vi.fn(), getTutorHistory: vi.fn() }))
 vi.mock("../services/api", () => api)
@@ -80,7 +81,7 @@ it("handles_unavailable_previews_and_hidden_opponent_and_Any_attempts", async ()
 
 function history(props = {}) {
   const onSelect = vi.fn(), onReturn = vi.fn()
-  const view = render(<TutorHistory exercise={{ exercise_id: "e1", ply: 4 }} selectedPly={null} onSelect={onSelect} onReturn={onReturn} {...props} />)
+  const view = render(<TutorHistory exercise={{ exercise_id: "e1", ply: 4, color: "white" }} selectedPly={null} onSelect={onSelect} onReturn={onReturn} {...props} />)
   const details = view.container.querySelector("details")
   toggle(details, true)
   return { ...view, onSelect, onReturn, details }
@@ -120,11 +121,8 @@ it("handles_history_loading_errors_retry_empty_and_paginated_deduplication", asy
   fireEvent.click(screen.getByRole("button", { name: "Retry history" }))
   await screen.findByText("No recorded attempts before this practice position.")
   cleanup()
-  api.getTutorHistory.mockResolvedValueOnce({ events: [event()], next_start: 61 })
+  api.getTutorHistory.mockResolvedValueOnce({ events: [event()], next_start: 61 }).mockRejectedValueOnce(new Error("More unavailable"))
   history()
-  await screen.findByRole("heading", { name: "Turn 1" })
-  api.getTutorHistory.mockRejectedValueOnce(new Error("More unavailable"))
-  fireEvent.click(screen.getByRole("button", { name: "Load more history" }))
   await screen.findByRole("alert")
   api.getTutorHistory.mockResolvedValueOnce({ events: [event(), event(61, { turn: 31 })], next_start: null })
   fireEvent.click(screen.getByRole("button", { name: "Retry history" }))
@@ -138,17 +136,61 @@ it("plays_and_pauses_history_without_model_calls_and_stops_at_the_end", async ()
   const view = history()
   await act(async () => {})
   fireEvent.click(screen.getByRole("button", { name: "Play replay" }))
-  await act(async () => { await vi.advanceTimersByTimeAsync(900) })
+  await act(async () => { await vi.advanceTimersByTimeAsync(1000) })
   expect(view.onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ ply: 1 }))
   view.rerender(<TutorHistory exercise={{ exercise_id: "e1", ply: 4 }} selectedPly={1} onSelect={view.onSelect} onReturn={view.onReturn} />)
-  await act(async () => { await vi.advanceTimersByTimeAsync(900) })
+  await act(async () => { await vi.advanceTimersByTimeAsync(1000) })
   expect(view.onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ ply: 2 }))
   view.rerender(<TutorHistory exercise={{ exercise_id: "e1", ply: 4 }} selectedPly={2} onSelect={view.onSelect} onReturn={view.onReturn} />)
-  await act(async () => { await vi.advanceTimersByTimeAsync(900) })
+  await act(async () => { await vi.advanceTimersByTimeAsync(1000) })
   fireEvent.click(screen.getByRole("button", { name: "Play replay" }))
   expect(view.onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ ply: 1 }))
   fireEvent.click(screen.getByRole("button", { name: "Pause replay" }))
   toggle(view.details, false)
+})
+
+it("uses_identical_review_overlays_and_groups_only_the_same_player_turn", () => {
+  const attempts = [event(1), event(2, { attempt: "e2f4" }), event(3, { answer: { move_done: true, capture_square: "D5" } })]
+  const positions = tutorReplayPositions([...attempts,
+    event(4, { color: "black", attempt: "a7a5", answer: { move_done: true, capture_square: "e4" } }),
+    event(5, { turn: 2, answer: { move_done: true } }), event(7, { turn: 3, answer: { move_done: true } })], "white")
+  expect(positions).toHaveLength(4)
+  expect(positions[0]).toMatchObject({ first_ply: 1, ply: 3, before_fen: fen, after_fen: fen })
+  expect(positions[0].overlays).toEqual(overlaysForPlyGroup({ moves: attempts.map((item) => ({ uci: item.attempt, move_done: item.answer.move_done, answer: item.answer })) }, fen))
+  expect(positions[0].overlays.badges.map((badge) => badge.label)).toEqual(["1", "2"])
+  expect(positions[0].overlays.arrows.map((arrow) => arrow.tone)).toEqual(["illegal", "illegal", "success"])
+  expect(positions[1].overlays).toEqual({ arrows: [], badges: [], captureSquares: ["e4"] })
+  const black = tutorReplayPositions([event(1, { color: "black", attempt: "e8g8", before_fen: "4k2r/8/8/8/8/8/8/8 b k - 0 1", answer: { move_done: true } })], "black")
+  expect(black[0].overlays.arrows).toHaveLength(2)
+  expect(tutorReplayPositions([], "white")).toEqual([])
+})
+
+it("loads_all_pages_before_replay_and_selects_the_whole_turn_even_across_page_boundaries", async () => {
+  api.getTutorHistory.mockResolvedValueOnce({ events: [event(1)], next_start: 2 })
+    .mockResolvedValueOnce({ events: [event(1), event(2, { answer: { move_done: true } })], next_start: null })
+  const view = history()
+  const firstAttempt = await screen.findByRole("button", { name: /Attempt 1/ })
+  expect(api.getTutorHistory).toHaveBeenCalledTimes(2)
+  expect(api.getTutorHistory).toHaveBeenLastCalledWith("e1", 2)
+  fireEvent.click(firstAttempt)
+  expect(view.onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ first_ply: 1, ply: 2 }))
+  view.rerender(<TutorHistory exercise={{ exercise_id: "e1", ply: 4, color: "white" }} selectedPly={2} onSelect={view.onSelect} onReturn={view.onReturn} />)
+  expect(screen.getByText(/Viewing attempts 1–2/)).toBeInTheDocument()
+  for (const button of screen.getAllByRole("button", { name: /Attempt [12]/ })) expect(button).toHaveAttribute("aria-pressed", "true")
+  fireEvent.click(screen.getByRole("button", { name: "First" }))
+  expect(view.onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ ply: 0, overlays: { arrows: [], badges: [], captureSquares: [] } }))
+  view.rerender(<TutorHistory exercise={{ exercise_id: "e1", ply: 4, color: "white" }} selectedPly={99} onSelect={view.onSelect} onReturn={view.onReturn} />)
+  expect(screen.getByText(/Viewing attempt 99/)).toBeInTheDocument()
+})
+
+it.each(["resolve", "reject"])("stops_history_loading_after_unmount_with_late_%s", async (outcome) => {
+  let finish
+  api.getTutorHistory.mockReturnValueOnce(new Promise((resolve, reject) => { finish = outcome === "resolve" ? resolve : reject }))
+  const view = history()
+  expect(screen.getByRole("status")).toHaveTextContent("Loading referee history")
+  view.unmount()
+  await act(async () => finish(outcome === "resolve" ? { events: [event()], next_start: 61 } : new Error("Late failure")))
+  expect(api.getTutorHistory).toHaveBeenCalledTimes(1)
 })
 
 it("shows_session_and_request_usage_with_honest_unknown_and_legacy_warnings", () => {

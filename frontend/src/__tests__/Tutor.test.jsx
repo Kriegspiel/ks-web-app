@@ -53,7 +53,7 @@ it("loads_subscription_status_without_starting_inference_and_shows_empty_learnin
   expect(screen.getByRole("heading", { name: "Connect your ChatGPT plan" })).toBeInTheDocument()
   expect(screen.getByRole("button", { name: "Find a teaching moment" })).toBeDisabled()
   expect(screen.getByRole("heading", { name: "Your games 142" })).toBeInTheDocument()
-  expect(screen.getByRole("link", { name: /VS\. randobot Win Berkeley \+ Any · 25 moves as white ABC234/ })).toHaveAttribute("href", "/game/ABC234/review/tutor")
+  expect(screen.getByRole("link", { name: /vs\. randobot Win Berkeley \+ Any · 25 moves as white ABC234/ })).toHaveAttribute("href", "/game/ABC234/review/tutor")
   expect(screen.queryByText("A learning programme built from your games and your thinking.")).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole("tab", { name: "Progress & memory" }))
   expect(screen.getByText(/Your coach will propose a focused goal/)).toBeInTheDocument()
@@ -318,14 +318,14 @@ it("paginates_all_games_with_opponent_outcomes_and_recovers_without_model_calls"
   ] })
   fireEvent.click(screen.getByRole("button", { name: "Load more games" }))
   await screen.findByText("Draw")
-  expect(screen.getByText("VS. Unknown opponent")).toBeInTheDocument()
+  expect(screen.getByText("vs. Unknown opponent")).toBeInTheDocument()
   expect(screen.getByText("Result unavailable")).toBeInTheDocument()
   expect(api.sendTutorMessage).not.toHaveBeenCalled()
 })
 
 it("replays_archived_history_without_changing_practice_and_restores_the_board", async () => {
   api.getTutorHistory.mockResolvedValue({ events: [{ ply: 1, turn: 1, color: "white", attempt: "e2e4", before_fen: "8/8/8/8/8/8/8/R7 w - - 0 1",
-    after_fen: "8/8/8/8/8/8/8/1R6 w - - 0 1", messages: ["Move complete"] }], next_start: null })
+    after_fen: "8/8/8/8/8/8/8/1R6 w - - 0 1", answer: { move_done: true }, messages: ["Move complete"] }], next_start: null })
   await boardReady()
   const details = document.querySelector(".coach-referee-history")
   details.open = true
@@ -405,4 +405,38 @@ it("opens_saved_or_new_sessions_from_progress_without_inference", async () => {
   expect(screen.queryByRole("heading", { name: "Learning session" })).not.toBeInTheDocument()
   expect(api.sendTutorMessage).not.toHaveBeenCalled()
   expect(api.createTutorSession).not.toHaveBeenCalled()
+})
+
+it("replays_ordered_turn_attempts_with_green_success_and_red_capture_squares_from_only_the_player_view", async () => {
+  const before = "8/8/8/3P4/8/8/8/4K3 w - - 0 1"
+  const after = "8/8/2P5/8/8/8/8/4K3 w - - 0 1"
+  const captured = "8/8/8/8/8/8/8/4K3 w - - 0 1"
+  api.getTutorHistory.mockResolvedValue({ next_start: null, events: [
+    { ply: 1, turn: 1, color: "white", attempt: "d5d8", before_fen: before, after_fen: before, answer: { move_done: false }, messages: ["Illegal move"] },
+    { ply: 2, turn: 1, color: "white", attempt: "d5d7", before_fen: before, after_fen: before, answer: { move_done: false }, messages: ["Illegal move"] },
+    { ply: 3, turn: 1, color: "white", attempt: "d5c6", before_fen: before, after_fen: after, answer: { move_done: true, capture_square: "c5", en_passant_announced: true }, messages: ["Capture at C5"] },
+    { ply: 4, turn: 1, color: "black", attempt: null, before_fen: after, after_fen: captured, answer: { move_done: true, capture_square: "c6" }, messages: ["Capture at C6"] },
+  ] })
+  await boardReady(exercise({ ply: 5 }))
+  const details = document.querySelector(".coach-referee-history")
+  details.open = true
+  fireEvent(details, new Event("toggle"))
+  fireEvent.click(await screen.findByRole("button", { name: /Attempt 1 · d5d8/ }))
+  const board = screen.getByRole("region", { name: "Teaching board" })
+  expect(within(board).getByText(/Viewing attempts 1–3/)).toBeInTheDocument()
+  expect(board.querySelectorAll('line[marker-end="url(#board-overlay-arrow-illegal)"]')).toHaveLength(2)
+  expect(board.querySelectorAll('line[marker-end="url(#board-overlay-arrow-success)"]')).toHaveLength(1)
+  expect([...board.querySelectorAll(".board-overlay__badge-label")].map((label) => label.textContent)).toEqual(["1", "2"])
+  expect(within(board).getByRole("button", { name: "Square c5" })).toHaveClass("square--capture")
+  expect(within(board).getByRole("button", { name: "Square c6" })).not.toHaveClass("square--capture")
+  const controls = within(board).getByRole("group", { name: "History replay controls" })
+  fireEvent.click(within(controls).getByRole("button", { name: "Next" }))
+  expect(board.querySelector(".board-overlay__arrow")).toBeNull()
+  expect(within(board).getByRole("button", { name: "Square c6" })).toHaveClass("square--capture")
+  fireEvent.click(within(controls).getByRole("button", { name: "First" }))
+  expect(board.querySelector(".square--capture, .board-overlay__arrow")).toBeNull()
+  fireEvent.click(within(controls).getByRole("button", { name: "Return to practice" }))
+  expect(board.querySelector(".square--capture, .board-overlay__arrow")).toBeNull()
+  expect(api.sendTutorMessage).not.toHaveBeenCalled()
+  expect(api.actTutorExercise).not.toHaveBeenCalled()
 })

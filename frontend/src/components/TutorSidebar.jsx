@@ -51,7 +51,7 @@ export default function TutorSidebar({ sessions, sessionId, gameCode, history, h
       <h2 id={`${id}-games`}>Your games <small>{history.total}</small></h2>
       <div className="coach-games" role="region" aria-label="Completed game list" tabIndex={0}>
         {history.games.map((game) => <Link className="coach-game" key={game.game_code} to={`/game/${game.game_code}/review/tutor`} onClick={() => { if (!wide) setOpen(false) }} aria-current={game.game_code === gameCode ? "page" : undefined}>
-          <span className="coach-game-top"><strong>VS. {game.opponent || "Unknown opponent"}</strong><span className="coach-game-outcome">{gameOutcome(game)}</span></span>
+          <span className="coach-game-top"><strong>vs. {game.opponent || "Unknown opponent"}</strong><span className="coach-game-outcome">{gameOutcome(game)}</span></span>
           <small>{formatRuleVariant(game.variant)} · {game.completed_moves} moves as {game.color}</small>
           <span className="coach-game-code">{game.game_code}</span>
         </Link>)}
