@@ -407,6 +407,17 @@ it("opens_saved_or_new_sessions_from_progress_without_inference", async () => {
   expect(api.createTutorSession).not.toHaveBeenCalled()
 })
 
+it.each(["route", "session", "exercise"])("uses_the_%s_game_context_to_keep_conversation_references_concise", async (context) => {
+  api.getTutorSession.mockResolvedValue(session({ game_code: context === "session" ? "ABC234" : null,
+    messages: [{ role: "assistant", text: "Compare ABC234:53 and BCD234:4." }] }))
+  if (context === "exercise") api.getTutorWorkspace.mockResolvedValue(workspace({ learning: { notes: {}, goals: {}, practice: [exercise()] } }))
+  mount(context === "route" ? "/game/ABC234/review/tutor?session=s1" : "/tutor?session=s1")
+  const conversation = await screen.findByRole("region", { name: "Conversation with your tutor" })
+  expect(await within(conversation).findByRole("link", { name: "attempt 53" })).toHaveTextContent("attempt 53")
+  expect(within(conversation).getByRole("link", { name: "BCD234 · attempt 4" })).toHaveTextContent("BCD234 · attempt 4")
+  expect(api.sendTutorMessage).not.toHaveBeenCalled()
+})
+
 it("replays_ordered_turn_attempts_with_green_success_and_red_capture_squares_from_only_the_player_view", async () => {
   const before = "8/8/8/3P4/8/8/8/4K3 w - - 0 1"
   const after = "8/8/2P5/8/8/8/8/4K3 w - - 0 1"
