@@ -5,6 +5,8 @@ import TutorMessage, { AttemptReference } from "../components/TutorMessage"
 import VersionStamp from "../components/VersionStamp"
 import TutorHistory from "../components/TutorHistory"
 import TutorUsage from "../components/TutorUsage"
+import TutorSessionTitle from "../components/TutorSessionTitle"
+import TutorIconButton from "../components/TutorIconButton"
 import { attemptOverlays } from "../components/tutorBoard"
 import {
   actTutorExercise, createTutorSession, getTutorGames, getTutorSession, getTutorWorkspace,
@@ -179,6 +181,10 @@ export default function TutorPage() {
         <button role="tab" aria-selected={tab === "coach"} onClick={() => setTab("coach")}>Coach & board</button>
         <button role="tab" aria-selected={tab === "progress"} onClick={() => setTab("progress")}>Progress & memory</button>
       </div>
+      {session ? <TutorSessionTitle key={session.session_id} session={session} onRenamed={(updated) => {
+        setSession((current) => current?.session_id === updated.session_id ? { ...current, title: updated.title } : current)
+        setWorkspace((current) => ({ ...current, sessions: current.sessions.map((item) => item.session_id === updated.session_id ? { ...item, title: updated.title } : item) }))
+      }} /> : null}
       {tab === "coach" ? (
         <div className="coach-layout">
           <aside className="coach-sidebar">
@@ -194,7 +200,7 @@ export default function TutorPage() {
               <div className="coach-games" role="region" aria-label="Completed game list" tabIndex={0}>
                 {history.games.map((game) => (
                   <Link className="coach-game" key={game.game_code} to={`/game/${game.game_code}/review/tutor`} aria-current={game.game_code === gameCode ? "page" : undefined}>
-                    <span className="coach-game-top"><strong>{game.opponent || "Unknown opponent"}</strong><span className="coach-game-outcome">{gameOutcome(game)}</span></span>
+                    <span className="coach-game-top"><strong>VS. {game.opponent || "Unknown opponent"}</strong><span className="coach-game-outcome">{gameOutcome(game)}</span></span>
                     <small>{formatRuleVariant(game.variant)} · {game.completed_moves} moves as {game.color}</small>
                     <span className="coach-game-code">{game.game_code}</span>
                   </Link>
@@ -219,8 +225,13 @@ export default function TutorPage() {
                 {exercise.revealed ? <p className="coach-alert">Full board revealed. Further work on this position is assisted practice.</p> : null}
                 {exercise.kind === "play" ? <form className="coach-move-form" onSubmit={(event) => { event.preventDefault(); act("move", attempt) }}><label>Move attempt<input value={attempt} onChange={(event) => setAttempt(event.target.value)} placeholder="e2e4, e7e8q, or P@e4" /></label><button disabled={pending || !attempt || exercise.revealed}>Try move</button>{exercise.can_ask_any ? <button type="button" disabled={pending || exercise.revealed} onClick={() => act("ask_any")}>Any pawn captures?</button> : null}</form> : null}
                 {exercise.kind === "predict" ? <div className="coach-predictions"><p>Attempt: {exercise.target}</p>{["REGULAR_MOVE", "ILLEGAL_MOVE", "CAPTURE_DONE", "IMPOSSIBLE_TO_ASK", "NONSENSE", "HAS_ANY", "NO_ANY"].map((value) => <button key={value} disabled={pending || exercise.events.some((event) => event.action === "predict")} onClick={() => act("predict", value)}>{value.replaceAll("_", " ").toLowerCase()}</button>)}</div> : null}
-                {exercise.kind === "explain" ? <form onSubmit={(event) => { event.preventDefault(); act("explain", explanation) }}><label>Your reasoning<textarea value={explanation} onChange={(event) => setExplanation(event.target.value)} placeholder="What is certain? What is possible? What would you try, and why?" /></label><button disabled={pending || !explanation.trim()}>Save explanation & marks</button></form> : null}
-                <div className="coach-practice-actions"><button disabled={pending || exercise.hints_remaining === 0} onClick={() => act("hint")}>Give me a hint</button><button disabled={pending} onClick={() => act("reset")}>Retry position</button><button disabled={pending || exercise.revealed} onClick={() => act("reveal")}>Reveal full board</button></div>
+                {exercise.kind === "explain" ? <form id={`coach-explanation-${exercise.exercise_id}`} onSubmit={(event) => { event.preventDefault(); act("explain", explanation) }}><label>Your reasoning<textarea value={explanation} onChange={(event) => setExplanation(event.target.value)} placeholder="What is certain? What is possible? What would you try, and why?" /></label></form> : null}
+                <div className="coach-practice-actions" role="group" aria-label="Practice actions">
+                  {exercise.kind === "explain" ? <TutorIconButton icon="save" label="Save explanation & marks" type="submit" form={`coach-explanation-${exercise.exercise_id}`} disabled={pending || !explanation.trim()} /> : null}
+                  <TutorIconButton icon="hint" label="Give me a hint" disabled={pending || exercise.hints_remaining === 0} onClick={() => act("hint")} />
+                  <TutorIconButton icon="reset" label="Retry position" disabled={pending} onClick={() => act("reset")} />
+                  <TutorIconButton icon="reveal" label="Reveal full board" disabled={pending || exercise.revealed} onClick={() => act("reveal")} />
+                </div>
                 {exercise.hints.map((hint, index) => <p className="coach-hint" key={index}>Hint {index + 1}: {hint}</p>)}
                 <ol className="coach-events">{exercise.events.map((event, index) => <li key={index}><strong>{event.action}</strong>{event.value ? ` · ${event.value}` : ""}{event.answer ? ` — ${event.answer.announcement}` : ""}{event.opponent_answer ? ` · Opponent: ${event.opponent_answer.announcement}` : ""}{event.expected ? ` · Referee: ${event.expected}${event.correct ? " · Correct" : " · Compare with your prediction"}` : ""}{event.assisted ? " · assisted" : ""}</li>)}</ol>
                 <button disabled={!connected || running || pending} onClick={() => send(`Discuss my latest practice in exercise ${exercise.exercise_id}. Help me understand my reasoning and choose the next step.`)}>Discuss this practice</button>

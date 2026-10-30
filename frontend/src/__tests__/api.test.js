@@ -215,6 +215,9 @@ describe("Tutor helpers", () => {
     await actTutorExercise("id /1", { action: "hint" })
     await removeTutorMemory({ kind: "note", key: "skill" })
     const helpers = await import("../services/api")
+    const patchSpy = vi.spyOn(api, "patch").mockResolvedValue({ data: { title: "New name" } })
+    expect(await helpers.renameTutorSession("id /1", { title: "New name" })).toEqual({ title: "New name" })
+    expect(patchSpy).toHaveBeenCalledWith("/api/tutor/sessions/id%20%2F1", { title: "New name" })
     await helpers.getTutorGames(15)
     await helpers.getTutorAttempt("id /1", "1 /2")
     await helpers.getTutorHistory("id /1", 61)
@@ -233,6 +236,7 @@ describe("Tutor helpers", () => {
 
   it.each([
     ["workspace", "get", () => getTutorWorkspace()],
+    ["rename", "patch", async () => (await import("../services/api")).renameTutorSession("id", { title: "Name" })],
     ["message", "post", () => sendTutorMessage("id", { text: "hello" })],
   ])("%s_uses_a_stable_fallback_error", async (_name, method, invoke) => {
     vi.spyOn(api, method).mockRejectedValue({})

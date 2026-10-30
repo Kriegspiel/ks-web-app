@@ -23,6 +23,7 @@ const mockApi = vi.hoisted(() => ({
   getTutorGames: vi.fn(), getTutorAttempt: vi.fn(), getTutorHistory: vi.fn(),
   createTutorSession: vi.fn(),
   getTutorSession: vi.fn(),
+  renameTutorSession: vi.fn(),
   sendTutorMessage: vi.fn(),
   stopTutorSession: vi.fn(),
   actTutorExercise: vi.fn(),

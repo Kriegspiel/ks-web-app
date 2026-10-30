@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { MemoryRouter, Route, Routes } from "react-router"
 import TutorPage from "../pages/Tutor"
@@ -6,7 +6,7 @@ import TutorPage from "../pages/Tutor"
 const api = vi.hoisted(() => ({
   default: { get: vi.fn() }, getTutorGames: vi.fn(), getTutorAttempt: vi.fn(), getTutorHistory: vi.fn(),
   getTutorWorkspace: vi.fn(), getTutorSession: vi.fn(), createTutorSession: vi.fn(), sendTutorMessage: vi.fn(),
-  stopTutorSession: vi.fn(), actTutorExercise: vi.fn(), removeTutorMemory: vi.fn(),
+  stopTutorSession: vi.fn(), actTutorExercise: vi.fn(), removeTutorMemory: vi.fn(), renameTutorSession: vi.fn(),
 }))
 vi.mock("../services/api", () => api)
 
@@ -52,7 +52,7 @@ it("loads_subscription_status_without_starting_inference_and_shows_empty_learnin
   expect(screen.getByRole("heading", { name: "Connect your ChatGPT plan" })).toBeInTheDocument()
   expect(screen.getByRole("button", { name: "Find a teaching moment" })).toBeDisabled()
   expect(screen.getByText("142 completed games available to your coach.")).toBeInTheDocument()
-  expect(screen.getByRole("link", { name: /randobot Win Berkeley \+ Any · 25 moves as white ABC234/ })).toHaveAttribute("href", "/game/ABC234/review/tutor")
+  expect(screen.getByRole("link", { name: /VS\. randobot Win Berkeley \+ Any · 25 moves as white ABC234/ })).toHaveAttribute("href", "/game/ABC234/review/tutor")
   expect(screen.queryByText("A learning programme built from your games and your thinking.")).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole("tab", { name: "Progress & memory" }))
   expect(screen.getByText(/Your coach will propose a focused goal/)).toBeInTheDocument()
@@ -317,7 +317,7 @@ it("paginates_all_games_with_opponent_outcomes_and_recovers_without_model_calls"
   ] })
   fireEvent.click(screen.getByRole("button", { name: "Load more games" }))
   await screen.findByText("Draw")
-  expect(screen.getByText("Unknown opponent")).toBeInTheDocument()
+  expect(screen.getByText("VS. Unknown opponent")).toBeInTheDocument()
   expect(screen.getByText("Result unavailable")).toBeInTheDocument()
   expect(api.sendTutorMessage).not.toHaveBeenCalled()
 })
@@ -340,4 +340,50 @@ it("replays_archived_history_without_changing_practice_and_restores_the_board", 
   expect(screen.getByText("Starting position. Practice is unchanged.")).toBeInTheDocument()
   fireEvent.click(screen.getAllByRole("button", { name: "Return to practice" })[1])
   expect(api.sendTutorMessage).not.toHaveBeenCalled()
+})
+
+it("renames_the_current_session_title_and_sidebar_without_inference", async () => {
+  api.getTutorWorkspace.mockResolvedValue(workspace({ sessions: [session(), session({ session_id: "s2", title: "Other lesson" })] }))
+  api.renameTutorSession.mockResolvedValue({ session_id: "s1", title: "My renamed lesson" })
+  mount("/tutor?session=s1")
+  await screen.findByRole("button", { name: "Rename learning session: Learning session" })
+  fireEvent.click(screen.getByRole("button", { name: /Rename learning session:/ }))
+  fireEvent.change(screen.getByLabelText("Learning session name"), { target: { value: "My renamed lesson" } })
+  fireEvent.click(screen.getByRole("button", { name: "Save session name" }))
+  await screen.findByRole("heading", { name: "My renamed lesson" })
+  expect(screen.getByRole("button", { name: "My renamed lesson idle" })).toBeInTheDocument()
+  expect(screen.getByRole("button", { name: "Other lesson idle" })).toBeInTheDocument()
+  expect(api.renameTutorSession).toHaveBeenCalledWith("s1", { title: "My renamed lesson" })
+  expect(api.sendTutorMessage).not.toHaveBeenCalled()
+})
+
+it.each([null, "s2"])("does_not_replace_the_active_session_when_an_earlier_rename_finishes_after_switching_to_%s", async (target) => {
+  let resolve
+  api.getTutorWorkspace.mockResolvedValue(workspace({ sessions: [session(), session({ session_id: "s2", title: "Other lesson" })] }))
+  api.renameTutorSession.mockReturnValueOnce(new Promise((done) => { resolve = done }))
+  mount("/tutor?session=s1")
+  fireEvent.click(await screen.findByRole("button", { name: /Rename learning session:/ }))
+  fireEvent.click(screen.getByRole("button", { name: "Save session name" }))
+  if (target) {
+    api.getTutorSession.mockResolvedValue(session({ session_id: "s2", title: "Other lesson" }))
+    fireEvent.click(screen.getByRole("button", { name: "Other lesson idle" }))
+    await screen.findByRole("heading", { name: "Other lesson" })
+  } else fireEvent.click(screen.getByRole("button", { name: "New session" }))
+  await act(async () => resolve({ session_id: "s1", title: "Renamed earlier lesson" }))
+  expect(screen.getByRole("button", { name: "Renamed earlier lesson idle" })).toBeInTheDocument()
+  expect(screen.queryByRole("heading", { name: "Renamed earlier lesson" })).not.toBeInTheDocument()
+})
+
+it("renders_the_four_practice_actions_as_labeled_icon_only_controls", async () => {
+  await boardReady(exercise({ kind: "explain" }))
+  const group = screen.getByRole("group", { name: "Practice actions" })
+  const buttons = within(group).getAllByRole("button")
+  expect(buttons).toHaveLength(4)
+  for (const button of buttons) {
+    expect(button).toHaveClass("coach-icon-button")
+    expect(button).toHaveAttribute("title", button.getAttribute("aria-label"))
+    expect(button.textContent).toBe("")
+    expect(button.querySelector("svg")).toHaveAttribute("aria-hidden", "true")
+  }
+  expect(within(group).getByRole("button", { name: "Save explanation & marks" })).toBeDisabled()
 })
