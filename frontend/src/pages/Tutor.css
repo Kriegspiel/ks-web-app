@@ -8,6 +8,18 @@
 .coach-dot.is-connected { background: #4a875d; }
 .coach-tabs { display: flex; gap: .5rem; border-bottom: 1px solid #997e6033; padding-bottom: .75rem; margin-bottom: 1.25rem; }
 .coach-tabs button[aria-selected=true] { border-bottom: 3px solid #9e653b; font-weight: 750; }
+.coach-current-session { margin: 0 0 1.25rem; min-width: 0; }
+.coach-current-session > p { margin: 0 0 .25rem; }
+.coach-current-session h2 { margin: 0; }
+.coach-page .coach-session-title { display: inline-flex; align-items: center; gap: .65rem; max-width: 100%; padding: .2rem 0; border: 0; border-radius: 3px; background: transparent; box-shadow: none; color: inherit; font: inherit; font-weight: 700; text-align: left; overflow-wrap: anywhere; }
+.coach-session-title svg { flex: 0 0 auto; opacity: .6; }
+.coach-current-session form { display: flex; align-items: end; flex-wrap: wrap; gap: .5rem; }
+.coach-current-session label { display: grid; gap: .3rem; max-width: 100%; font-size: .8rem; }
+.coach-current-session input { box-sizing: border-box; width: min(32rem, 100%); min-width: 0; padding: .5rem .65rem; font: inherit; font-size: 1rem; color: inherit; background: transparent; border: 1px solid #997e6070; border-radius: 8px; }
+.coach-current-session [role=alert] { flex-basis: 100%; color: var(--danger, #a33b31); margin: .25rem 0; }
+.coach-page .coach-icon-button { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; min-width: 2.25rem; min-height: 2.25rem; padding: 0; border-radius: 8px; flex: 0 0 auto; }
+.coach-page .coach-icon-button:focus-visible, .coach-session-title:focus-visible { outline: 2px solid #9e653b; outline-offset: 3px; }
+@media (pointer: coarse) { .coach-page .coach-icon-button { width: 2.75rem; height: 2.75rem; } }
 .coach-layout { display: grid; grid-template-columns: minmax(220px, .85fr) minmax(300px, 1.55fr) minmax(290px, 1.25fr); gap: 1.2rem; align-items: start; }
 .coach-layout h2, .coach-progress h2 { font-size: 1.2rem; }
 .coach-sidebar, .coach-board-area, .coach-conversation, .coach-progress > section { min-width: 0; }

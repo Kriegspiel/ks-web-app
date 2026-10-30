@@ -118,6 +118,7 @@ export function getTutorGames(offset) { return tutorRequest('get', `/games?offse
 export function getTutorAttempt(code, attempt) { return tutorRequest('get', `/games/${encodeURIComponent(code)}/attempts/${encodeURIComponent(attempt)}`) }
 export function createTutorSession(payload) { return tutorRequest('post', '/sessions', payload) }
 export function getTutorSession(id) { return tutorRequest('get', `/sessions/${encodeURIComponent(id)}`) }
+export function renameTutorSession(id, payload) { return tutorRequest('patch', `/sessions/${encodeURIComponent(id)}`, payload) }
 export function sendTutorMessage(id, payload) { return tutorRequest('post', `/sessions/${encodeURIComponent(id)}/messages`, payload) }
 export function stopTutorSession(id) { return tutorRequest('post', `/sessions/${encodeURIComponent(id)}/stop`) }
 export function getTutorExercise(id) { return tutorRequest('get', `/exercises/${encodeURIComponent(id)}`) }
