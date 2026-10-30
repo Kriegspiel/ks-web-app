@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { getTutorHistory } from "../services/api"
+import TutorIconButton from "./TutorIconButton"
 
 export default function TutorHistory({ exercise, selectedPly, onSelect, onReturn }) {
   const initiated = useRef(false)
@@ -52,12 +53,12 @@ export default function TutorHistory({ exercise, selectedPly, onSelect, onReturn
     {error ? <p role="alert">{error}<button onClick={() => load(history.next_start ?? 1)}>Retry history</button></p> : null}
     {history.events.length ? <>
       <div className="coach-replay-controls" role="group" aria-label="History replay controls">
-        <button onClick={() => select(-1)} disabled={selectedPly === 0}>First</button>
-        <button onClick={() => select(selected - 1)} disabled={selected < 0}>Prev</button>
-        <button aria-pressed={playing} onClick={() => { if (selected === history.events.length - 1) onSelect(history.events[0]); setPlaying(!playing) }}>{playing ? "Pause replay" : "Play replay"}</button>
-        <button onClick={() => select(Math.min(history.events.length - 1, selected + 1))} disabled={selected === history.events.length - 1}>Next</button>
-        <button onClick={() => select(history.events.length - 1)} disabled={selected === history.events.length - 1}>Last</button>
-        <button onClick={() => { setPlaying(false); onReturn() }}>Return to practice</button>
+        <TutorIconButton icon="first" label="First" onClick={() => select(-1)} disabled={selectedPly === 0} />
+        <TutorIconButton icon="previous" label="Prev" onClick={() => select(selected - 1)} disabled={selected < 0} />
+        <TutorIconButton icon={playing ? "pause" : "play"} label={playing ? "Pause replay" : "Play replay"} aria-pressed={playing} onClick={() => { if (selected === history.events.length - 1) onSelect(history.events[0]); setPlaying(!playing) }} />
+        <TutorIconButton icon="next" label="Next" onClick={() => select(Math.min(history.events.length - 1, selected + 1))} disabled={selected === history.events.length - 1} />
+        <TutorIconButton icon="last" label="Last" onClick={() => select(history.events.length - 1)} disabled={selected === history.events.length - 1} />
+        <TutorIconButton icon="return" label="Return to practice" onClick={() => { setPlaying(false); onReturn() }} />
       </div>
       <p aria-live="polite">{selectedPly == null ? "Practice position" : selectedPly === 0 ? "Starting position" : `Viewing attempt ${selectedPly}`} · {history.events.length} visible entries loaded</p>
       <ol className="coach-referee-turns">{[...rows].map(([turn, sides]) => <li key={turn}>
