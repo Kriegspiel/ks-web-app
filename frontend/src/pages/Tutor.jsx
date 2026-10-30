@@ -175,7 +175,7 @@ export default function TutorPage() {
         <button role="tab" aria-selected={tab === "progress"} onClick={() => setTab("progress")}>Progress & memory</button>
       </div>
       <TutorSidebar sessions={workspace.sessions} sessionId={sessionId} gameCode={gameCode} history={history} historyLoading={historyLoading} onLoadMore={loadMoreGames}
-        onSession={(id) => setParams({ session: id })} onNew={() => { setParams({}); setSession(null); setExerciseOverride(null) }}
+        onSession={(id) => { setParams({ session: id }); setTab("coach") }} onNew={() => { setParams({}); setSession(null); setExerciseOverride(null); setTab("coach") }}
         title={session ? <TutorSessionTitle key={session.session_id} session={session} onRenamed={(updated) => {
         setSession((current) => current?.session_id === updated.session_id ? { ...current, title: updated.title } : current)
         setWorkspace((current) => ({ ...current, sessions: current.sessions.map((item) => item.session_id === updated.session_id ? { ...item, title: updated.title } : item) }))

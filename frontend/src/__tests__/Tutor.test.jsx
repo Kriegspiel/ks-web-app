@@ -391,3 +391,18 @@ it("renders_the_four_practice_actions_as_labeled_icon_only_controls", async () =
   }
   expect(within(group).getByRole("button", { name: "Save explanation & marks" })).toBeDisabled()
 })
+
+it("opens_saved_or_new_sessions_from_progress_without_inference", async () => {
+  mount()
+  await ready()
+  fireEvent.click(screen.getByRole("tab", { name: "Progress & memory" }))
+  fireEvent.click(screen.getByRole("button", { name: "Learning session idle" }))
+  await screen.findByRole("heading", { name: "Learning session" })
+  expect(screen.getByRole("tab", { name: "Coach & board" })).toHaveAttribute("aria-selected", "true")
+  fireEvent.click(screen.getByRole("tab", { name: "Progress & memory" }))
+  fireEvent.click(screen.getByRole("button", { name: "New session" }))
+  expect(screen.getByRole("tab", { name: "Coach & board" })).toHaveAttribute("aria-selected", "true")
+  expect(screen.queryByRole("heading", { name: "Learning session" })).not.toBeInTheDocument()
+  expect(api.sendTutorMessage).not.toHaveBeenCalled()
+  expect(api.createTutorSession).not.toHaveBeenCalled()
+})
