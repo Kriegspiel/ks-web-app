@@ -26,7 +26,7 @@ it("shows_the_active_title_and_saves_a_trimmed_name_with_focus_restored", async 
   fireEvent.submit(input.closest("form"))
   await waitFor(() => expect(view.onRenamed).toHaveBeenCalledWith({ session_id: "s1", title: "My endgames" }))
   expect(rename).toHaveBeenCalledWith("s1", { title: "My endgames" })
-  expect(screen.getByRole("button", { name: /Rename learning session/ })).toHaveFocus()
+  await waitFor(() => expect(screen.getByRole("button", { name: /Rename learning session/ })).toHaveFocus())
   view.rerender(<TutorSessionTitle session={{ ...session, title: "My endgames" }} onRenamed={view.onRenamed} />)
   expect(screen.getByRole("heading", { name: "My endgames" })).toBeInTheDocument()
 })
