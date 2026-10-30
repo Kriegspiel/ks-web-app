@@ -19,7 +19,7 @@ function AttemptBoard({ data }) {
   </>
 }
 
-export function AttemptReference({ gameCode, attempt, children }) {
+export function AttemptReference({ gameCode, contextGameCode, attempt, children }) {
   const id = useId()
   const anchor = useRef(null)
   const request = useRef(null)
@@ -27,6 +27,7 @@ export function AttemptReference({ gameCode, attempt, children }) {
   const [position, setPosition] = useState({ top: 12, left: 12 })
   const [data, setData] = useState(null)
   const [error, setError] = useState(false)
+  const label = gameCode === contextGameCode ? `attempt ${attempt}` : `${gameCode} · attempt ${attempt}`
   function show() {
     const rect = anchor.current.getBoundingClientRect()
     const width = Math.min(320, window.innerWidth - 24)
@@ -36,13 +37,13 @@ export function AttemptReference({ gameCode, attempt, children }) {
   }
   return <>
     <Link ref={anchor} className="coach-attempt-reference" to={`/game/${gameCode}/review`}
-      aria-label={`${gameCode} · attempt ${attempt}`} aria-describedby={open ? id : undefined}
+      aria-label={label} aria-describedby={open ? id : undefined}
       onMouseEnter={show} onFocus={show} onMouseLeave={() => setOpen(false)} onBlur={() => setOpen(false)}
       onKeyDown={(event) => { if (event.key === "Escape") setOpen(false) }}>
       {children}
     </Link>
     {open ? createPortal(<div id={id} className="coach-attempt-preview" role="tooltip" style={position}>
-      <strong>{gameCode} · attempt {attempt}</strong>
+      <strong>{label}</strong>
       {error ? <p>Attempt preview unavailable from your perspective.</p> : data ? <AttemptBoard data={data} /> : <p>Loading your view…</p>}
     </div>, document.body) : null}
   </>
@@ -62,7 +63,7 @@ function tokens(text, gameCode) {
     const last = match[3] || match[5]
     if (first && code) {
       const reference = (number, label) => ({ type: "link", url: `/game/${code}/review?attempt=${number}`, children: [{ type: "text", value: label }] })
-      result.push(reference(first, `${code} · attempt ${first}`))
+      result.push(reference(first, code === gameCode ? `attempt ${first}` : `${code} · attempt ${first}`))
       if (last) result.push({ type: "text", value: "–" }, reference(last, last))
     } else result.push({ type: first ? "text" : "inlineCode", value: match[0] })
     end = match.index + match[0].length
@@ -83,16 +84,16 @@ function remarkTutorTokens({ gameCode }) {
   return walk
 }
 
-function EvidenceAnchor({ href, children }) {
+function EvidenceAnchor({ href, children, contextGameCode }) {
   const reference = (href || "").match(/^\/game\/([2-9A-HJ-KM-NP-Z]{6})\/review\?attempt=(\d+)$/)
-  return reference ? <AttemptReference gameCode={reference[1]} attempt={Number(reference[2])}>{children}</AttemptReference>
+  return reference ? <AttemptReference gameCode={reference[1]} contextGameCode={contextGameCode} attempt={Number(reference[2])}>{children}</AttemptReference>
     : <a href={href} rel="noreferrer">{children}</a>
 }
 
 function TutorMessage({ text, gameCode }) {
   return <div className="coach-markdown"><Suspense fallback={<p>{text}</p>}><Markdown skipHtml disallowedElements={["img"]}
     remarkPlugins={[[remarkTutorTokens, { gameCode }]]}
-    components={{ a: EvidenceAnchor, h1: "h3", h2: "h3", h3: "h3" }}>{text}</Markdown></Suspense></div>
+    components={{ a: (props) => <EvidenceAnchor {...props} contextGameCode={gameCode} />, h1: "h3", h2: "h3", h3: "h3" }}>{text}</Markdown></Suspense></div>
 }
 
 export default memo(TutorMessage)

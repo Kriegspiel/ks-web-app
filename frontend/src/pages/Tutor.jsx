@@ -48,6 +48,7 @@ export default function TutorPage() {
   const running = session?.status === "running"
   const practice = workspace?.learning.practice ?? []
   const exercise = exerciseOverride ?? practice.find((item) => item.session_id === sessionId)
+  const conversationGameCode = gameCode ?? session?.game_code ?? exercise?.game_code
   const connected = workspace?.connection.connected === true
   const reviewing = replayEvent !== null
   const replayOverlay = replayEvent ? replayEvent.overlays : { arrows: [], badges: [], captureSquares: [] }
@@ -214,7 +215,7 @@ export default function TutorPage() {
           <section className="coach-conversation" aria-label="Conversation with your tutor">
             <h2>{gameCode ? `Discuss game ${gameCode}` : "Your coach"}</h2>
             {!session?.messages.length ? <div className="coach-welcome"><p>Tell me what you want to work on, or let’s find a useful starting point in your games.</p><div className="coach-starters">{["I have five minutes. What should I practise?", "Review my progress across my games.", "Help me understand the rules I play."].map((text) => <button key={text} disabled={!connected || pending || running} onClick={() => send(text)}>{text}</button>)}</div></div> : null}
-            <div className="coach-messages" aria-live="polite">{session?.messages.map((message, index) => <article className={`coach-message is-${message.role}`} key={index}><span>{message.role === "user" ? "You" : "Tutor"}</span><TutorMessage text={message.text} gameCode={gameCode ?? session.game_code} /></article>)}</div>
+            <div className="coach-messages" aria-live="polite">{session?.messages.map((message, index) => <article className={`coach-message is-${message.role}`} key={index}><span>{message.role === "user" ? "You" : "Tutor"}</span><TutorMessage text={message.text} gameCode={conversationGameCode} /></article>)}</div>
             {session ? <p className="coach-activity" role="status">{session.activity}</p> : null}
             {running ? <button onClick={() => perform(async () => { setSession(await stopTutorSession(sessionId)); setWorkspace(await getTutorWorkspace()) })} disabled={pending}>Stop thinking</button> : null}
             <form className="coach-composer" onSubmit={(event) => { event.preventDefault(); send(draft) }}><label>Message your tutor<textarea value={draft} maxLength={4000} onChange={(event) => setDraft(event.target.value)} placeholder="What were you thinking at that moment?" /></label><button className="coach-primary" disabled={!connected || running || pending || !draft.trim()}>Send</button></form>
