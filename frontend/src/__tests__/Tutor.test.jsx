@@ -25,7 +25,7 @@ function workspace(overrides = {}) { return {
 function mount(path = "/tutor") {
   return render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/tutor" element={<TutorPage />} /><Route path="/game/:gameCode/review/tutor" element={<TutorPage />} /></Routes></MemoryRouter>)
 }
-async function ready() { await screen.findByRole("heading", { name: "Your kriegspiel tutor" }); await screen.findByRole("heading", { name: "Your games" }) }
+async function ready() { await screen.findByRole("heading", { name: "Your kriegspiel tutor" }); await screen.findByRole("heading", { name: /Your games/ }) }
 async function boardReady(data = exercise()) {
   api.getTutorWorkspace.mockResolvedValue(workspace({ learning: { notes: {}, goals: {}, practice: [data] } }))
   mount("/tutor?session=s1")
@@ -34,6 +34,7 @@ async function boardReady(data = exercise()) {
 }
 beforeEach(() => {
   vi.resetAllMocks()
+  vi.spyOn(window, "matchMedia").mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })
   api.getTutorWorkspace.mockResolvedValue(workspace())
   api.getTutorSession.mockResolvedValue(session())
   api.createTutorSession.mockResolvedValue(session())
@@ -42,7 +43,7 @@ beforeEach(() => {
   api.actTutorExercise.mockResolvedValue(exercise({ revision: 1 }))
   api.removeTutorMemory.mockResolvedValue({ removed: true })
 })
-afterEach(() => { cleanup(); vi.useRealTimers() })
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks() })
 
 it("loads_subscription_status_without_starting_inference_and_shows_empty_learning_states", async () => {
   api.getTutorWorkspace.mockResolvedValue(workspace({ connection: { connected: false }, sessions: [] }))
@@ -51,7 +52,7 @@ it("loads_subscription_status_without_starting_inference_and_shows_empty_learnin
   await ready()
   expect(screen.getByRole("heading", { name: "Connect your ChatGPT plan" })).toBeInTheDocument()
   expect(screen.getByRole("button", { name: "Find a teaching moment" })).toBeDisabled()
-  expect(screen.getByText("142 completed games available to your coach.")).toBeInTheDocument()
+  expect(screen.getByRole("heading", { name: "Your games 142" })).toBeInTheDocument()
   expect(screen.getByRole("link", { name: /VS\. randobot Win Berkeley \+ Any · 25 moves as white ABC234/ })).toHaveAttribute("href", "/game/ABC234/review/tutor")
   expect(screen.queryByText("A learning programme built from your games and your thinking.")).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole("tab", { name: "Progress & memory" }))
@@ -381,9 +382,27 @@ it("renders_the_four_practice_actions_as_labeled_icon_only_controls", async () =
   expect(buttons).toHaveLength(4)
   for (const button of buttons) {
     expect(button).toHaveClass("coach-icon-button")
-    expect(button).toHaveAttribute("title", button.getAttribute("aria-label"))
+    expect(button).not.toHaveAttribute("title")
+    fireEvent.mouseEnter(button.parentElement)
+    expect(screen.getByRole("tooltip")).toHaveTextContent(button.getAttribute("aria-label"))
+    fireEvent.mouseLeave(button.parentElement)
     expect(button.textContent).toBe("")
     expect(button.querySelector("svg")).toHaveAttribute("aria-hidden", "true")
   }
   expect(within(group).getByRole("button", { name: "Save explanation & marks" })).toBeDisabled()
+})
+
+it("opens_saved_or_new_sessions_from_progress_without_inference", async () => {
+  mount()
+  await ready()
+  fireEvent.click(screen.getByRole("tab", { name: "Progress & memory" }))
+  fireEvent.click(screen.getByRole("button", { name: "Learning session idle" }))
+  await screen.findByRole("heading", { name: "Learning session" })
+  expect(screen.getByRole("tab", { name: "Coach & board" })).toHaveAttribute("aria-selected", "true")
+  fireEvent.click(screen.getByRole("tab", { name: "Progress & memory" }))
+  fireEvent.click(screen.getByRole("button", { name: "New session" }))
+  expect(screen.getByRole("tab", { name: "Coach & board" })).toHaveAttribute("aria-selected", "true")
+  expect(screen.queryByRole("heading", { name: "Learning session" })).not.toBeInTheDocument()
+  expect(api.sendTutorMessage).not.toHaveBeenCalled()
+  expect(api.createTutorSession).not.toHaveBeenCalled()
 })

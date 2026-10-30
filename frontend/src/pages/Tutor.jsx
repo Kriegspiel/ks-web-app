@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Link, useParams, useSearchParams } from "react-router"
+import { useParams, useSearchParams } from "react-router"
 import ChessBoard from "../components/ChessBoard"
 import TutorMessage, { AttemptReference } from "../components/TutorMessage"
 import VersionStamp from "../components/VersionStamp"
@@ -7,12 +7,12 @@ import TutorHistory from "../components/TutorHistory"
 import TutorUsage from "../components/TutorUsage"
 import TutorSessionTitle from "../components/TutorSessionTitle"
 import TutorIconButton from "../components/TutorIconButton"
+import TutorSidebar from "../components/TutorSidebar"
 import { attemptOverlays } from "../components/tutorBoard"
 import {
   actTutorExercise, createTutorSession, getTutorGames, getTutorSession, getTutorWorkspace,
   removeTutorMemory, sendTutorMessage, stopTutorSession,
 } from "../services/api"
-import { formatRuleVariant } from "../utils/rules"
 import "./Tutor.css"
 
 function EvidenceText({ text }) {
@@ -25,13 +25,6 @@ function EvidenceText({ text }) {
 
 function EvidenceLinks({ evidence }) {
   return <p className="coach-evidence">{evidence.map((ref) => <span key={`${ref.game_code}:${ref.ply}`}><EvidenceText text={`${ref.game_code}:${ref.ply}`} /> </span>)}</p>
-}
-
-function gameOutcome(game) {
-  const winner = game.result?.winner
-  if (!["white", "black", null].includes(winner)) return "Result unavailable"
-  if (winner === null) return "Draw"
-  return winner === game.color ? "Win" : "Loss"
 }
 
 export default function TutorPage() {
@@ -181,39 +174,19 @@ export default function TutorPage() {
         <button role="tab" aria-selected={tab === "coach"} onClick={() => setTab("coach")}>Coach & board</button>
         <button role="tab" aria-selected={tab === "progress"} onClick={() => setTab("progress")}>Progress & memory</button>
       </div>
-      {session ? <TutorSessionTitle key={session.session_id} session={session} onRenamed={(updated) => {
+      <TutorSidebar sessions={workspace.sessions} sessionId={sessionId} gameCode={gameCode} history={history} historyLoading={historyLoading} onLoadMore={loadMoreGames}
+        onSession={(id) => { setParams({ session: id }); setTab("coach") }} onNew={() => { setParams({}); setSession(null); setExerciseOverride(null); setTab("coach") }}
+        title={session ? <TutorSessionTitle key={session.session_id} session={session} onRenamed={(updated) => {
         setSession((current) => current?.session_id === updated.session_id ? { ...current, title: updated.title } : current)
         setWorkspace((current) => ({ ...current, sessions: current.sessions.map((item) => item.session_id === updated.session_id ? { ...item, title: updated.title } : item) }))
-      }} /> : null}
+      }} /> : null}>
       {tab === "coach" ? (
         <div className="coach-layout">
-          <aside className="coach-sidebar">
-            <button className="coach-primary" onClick={() => { setParams({}); setSession(null); setExerciseOverride(null) }}>New session</button>
-            <section className="coach-learning">
-              <h2>Continue learning</h2>
-              <div className="coach-sessions">
-                {workspace.sessions.length ? workspace.sessions.map((item) => <button key={item.session_id} className={item.session_id === sessionId ? "coach-session is-selected" : "coach-session"} onClick={() => setParams({ session: item.session_id })}>{item.title}<small>{item.status}</small></button>) : <p>Your conversations will be saved here.</p>}
-              </div>
-            </section>
-            <section className="coach-history" aria-labelledby="coach-history-heading">
-              <h2 id="coach-history-heading">Your games</h2><p>{history.total} completed games available to your coach.</p>
-              <div className="coach-games" role="region" aria-label="Completed game list" tabIndex={0}>
-                {history.games.map((game) => (
-                  <Link className="coach-game" key={game.game_code} to={`/game/${game.game_code}/review/tutor`} aria-current={game.game_code === gameCode ? "page" : undefined}>
-                    <span className="coach-game-top"><strong>VS. {game.opponent || "Unknown opponent"}</strong><span className="coach-game-outcome">{gameOutcome(game)}</span></span>
-                    <small>{formatRuleVariant(game.variant)} · {game.completed_moves} moves as {game.color}</small>
-                    <span className="coach-game-code">{game.game_code}</span>
-                  </Link>
-                ))}
-                {history.next_offset != null ? <button disabled={historyLoading} onClick={loadMoreGames}>{historyLoading ? "Loading games…" : "Load more games"}</button> : null}
-              </div>
-            </section>
-          </aside>
           <section className="coach-board-area" aria-label="Teaching board">
             {exercise ? (
               <>
                 <div className="coach-exercise-heading"><p className="coach-eyebrow">{exercise.kind === "play" ? "Play it through" : exercise.kind === "predict" ? "Predict the referee" : "Explain your thinking"}</p><h2>{exercise.skill}</h2><p>{exercise.prompt}</p><EvidenceText text={`${exercise.game_code}:${exercise.ply}`} /></div>
-                {reviewing ? <div className="coach-replay-notice"><p>{replayEvent.ply === 0 ? "Starting position" : `Your view after attempt ${replayEvent.ply}`}. Practice is unchanged.</p><button onClick={() => setReplayEvent(null)}>Return to practice</button></div> : null}
+                {reviewing ? <div className="coach-replay-notice"><p>{replayEvent.ply === 0 ? "Starting position" : `Your view after attempt ${replayEvent.ply}`}. Practice is unchanged.</p><TutorIconButton icon="return" label="Return to practice" onClick={() => setReplayEvent(null)} /></div> : null}
                 <ChessBoard boardFen={replayEvent ? replayEvent.after_fen : exercise.board_fen} orientation={exercise.color}
                   highlightedSquares={!reviewing && selected ? [selected] : []} phantomSquares={reviewing ? [] : marks}
                   overlayArrows={replayOverlay.arrows} overlayBadges={replayOverlay.badges}
@@ -255,6 +228,7 @@ export default function TutorPage() {
         <section><p className="coach-eyebrow">Open to correction</p><h2>What your coach remembers</h2>{notes.length ? notes.map((note) => <article className="coach-memory-card" key={note.key}><small>{note.kind} · {note.confidence} confidence</small><h3>{note.skill}</h3><p>{note.text}</p><EvidenceLinks evidence={note.evidence} /><button disabled={pending} onClick={() => forget("note", note.key)}>Forget this note</button></article>) : <p>Learning observations will appear with their supporting evidence. You can correct them in conversation or remove them here.</p>}</section>
         <section><p className="coach-eyebrow">Practice over time</p><h2>Revisit & retain</h2><p>Independent attempts, hints, and later game evidence tell different parts of your progress story.</p>{practice.length ? practice.map((item) => <article className="coach-memory-card" key={item.exercise_id}><h3>{item.skill}</h3><p>{item.prompt}</p><p>{item.hint_count} hints · {item.events.filter((event) => ["move", "predict", "explain"].includes(event.action)).length} recorded attempts{item.revealed ? " · board revealed" : ""}</p><p>Revisit: {item.due_at.slice(0, 10)}</p><button onClick={() => { setExerciseOverride(item); setTab("coach") }}>Open practice</button></article>) : <p>Your saved exercises and revisit dates will appear here.</p>}</section>
       </div>}
+      </TutorSidebar>
       <VersionStamp />
     </main>
   )
