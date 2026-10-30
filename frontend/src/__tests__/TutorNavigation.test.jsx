@@ -38,6 +38,7 @@ it("docks_compact_navigation_on_wide_screens_and_allows_collapsing_without_losin
   fireEvent.click(screen.getByRole("button", { name: "Show learning navigation" }))
   fireEvent.click(screen.getByRole("button", { name: "Close learning navigation" }))
   expect(screen.getByRole("button", { name: "Show learning navigation" })).toHaveAttribute("aria-expanded", "false")
+  expect(screen.getByRole("button", { name: "Show learning navigation" })).toHaveFocus()
 })
 
 it("uses_a_native_modal_drawer_on_narrow_screens_with_cancel_backdrop_selection_and_resize_cleanup", () => {

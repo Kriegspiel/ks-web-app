@@ -39,7 +39,7 @@ export default function TutorSidebar({ sessions, sessionId, gameCode, history, h
     if (!wide) setOpen(false)
   }
   const navigation = <>
-    <header className="coach-sidebar-heading"><strong>Learning</strong><TutorIconButton icon="cancel" label="Close learning navigation" onClick={() => setOpen(false)} /></header>
+    <header className="coach-sidebar-heading"><strong>Learning</strong><TutorIconButton icon="cancel" label="Close learning navigation" onClick={() => { setOpen(false); trigger.current.querySelector("button").focus() }} /></header>
     <button className="coach-new-session" onClick={() => navigate(onNew)}><TutorIcon name="new" />New session</button>
     <section className="coach-learning">
       <h2>Continue learning</h2>
