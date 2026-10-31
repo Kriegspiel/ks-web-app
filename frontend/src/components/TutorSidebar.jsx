@@ -39,7 +39,7 @@ export default function TutorSidebar({ sessions, sessionId, gameCode, history, h
     if (!wide) setOpen(false)
   }
   const navigation = <>
-    <header className="coach-sidebar-heading"><strong>Learning</strong><TutorIconButton icon="cancel" label="Close learning navigation" onClick={() => { setOpen(false); trigger.current.querySelector("button").focus() }} /></header>
+    <header className="coach-sidebar-heading"><strong>Learning</strong><TutorIconButton icon="sidebar" label="Hide menu" aria-expanded={open} aria-controls={id} onClick={() => { setOpen(!open); trigger.current.querySelector("button").focus() }} /></header>
     <button className="coach-new-session" onClick={() => navigate(onNew)}><TutorIcon name="new" />New session</button>
     <section className="coach-learning">
       <h2>Continue learning</h2>
@@ -64,7 +64,7 @@ export default function TutorSidebar({ sessions, sessionId, gameCode, history, h
       <dialog id={id} ref={dialog} className="coach-sidebar-dialog" aria-label="Learning navigation" onCancel={(event) => { event.preventDefault(); setOpen(false) }} onClick={(event) => { if (event.target === event.currentTarget) setOpen(false) }}>
         {open ? <div className="coach-sidebar">{navigation}</div> : null}
       </dialog>}
-    <div className="coach-workspace-bar"><span ref={trigger} tabIndex={-1}><TutorIconButton icon="sidebar" label={open ? "Hide learning navigation" : "Show learning navigation"} aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)} /></span>{title}</div>
+    <div className="coach-workspace-bar"><span ref={trigger} tabIndex={-1}><TutorIconButton icon="sidebar" label={open ? "Hide menu" : "Show menu"} aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)} /></span>{title}</div>
     <div className="coach-workspace-main">{children}</div>
   </div>
 }
