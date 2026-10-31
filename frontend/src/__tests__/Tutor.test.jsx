@@ -83,6 +83,40 @@ it("opens_game_context_and_requests_an_interactive_lesson", async () => {
   expect(screen.getByRole("heading", { name: "Discuss game ABC234" })).toBeInTheDocument()
 })
 
+it("sends_with_command_enter_only_and_keeps_other_enter_combinations_and_ime_untouched", async () => {
+  mount("/game/ABC234/review/tutor")
+  await ready()
+  const field = screen.getByRole("textbox", { name: "Message your tutor" })
+  fireEvent.change(field, { target: { value: "Any earlier chance for mate?" } })
+  for (const keys of [{ key: "Enter" }, { key: "Enter", shiftKey: true }, { key: "Enter", ctrlKey: true }, { key: "a", metaKey: true }, { key: "Enter", metaKey: true, repeat: true }, { key: "Enter", metaKey: true, isComposing: true }]) {
+    expect(fireEvent.keyDown(field, keys)).toBe(true)
+  }
+  expect(api.sendTutorMessage).not.toHaveBeenCalled()
+  expect(screen.getByRole("button", { name: "Send" })).toHaveAttribute("aria-keyshortcuts", "Meta+Enter")
+  expect(fireEvent.keyDown(field, { key: "Enter", metaKey: true })).toBe(false)
+  await waitFor(() => expect(api.sendTutorMessage).toHaveBeenCalledTimes(1))
+  expect(api.createTutorSession).toHaveBeenCalledWith({ game_code: "ABC234" })
+  expect(api.sendTutorMessage).toHaveBeenCalledWith("s1", { request_id: expect.any(String), text: "Any earlier chance for mate?" })
+  await waitFor(() => expect(field).toHaveValue(""))
+})
+
+it.each(["empty", "disconnected", "running", "pending"])("command_enter_preserves_the_%s_send_guard", async (guard) => {
+  if (guard === "disconnected") api.getTutorWorkspace.mockResolvedValue(workspace({ connection: { connected: false } }))
+  if (guard === "running") api.getTutorSession.mockResolvedValue(session({ status: "running" }))
+  let resolve
+  if (guard === "pending") api.sendTutorMessage.mockImplementation(() => new Promise((done) => { resolve = done }))
+  mount("/tutor?session=s1")
+  await ready()
+  await screen.findByRole("heading", { name: "Learning session" })
+  const field = screen.getByRole("textbox", { name: "Message your tutor" })
+  fireEvent.change(field, { target: { value: guard === "empty" ? "   " : "Explain this move" } })
+  if (guard === "pending") fireEvent.keyDown(field, { key: "Enter", metaKey: true })
+  fireEvent.keyDown(field, { key: "Enter", metaKey: true })
+  expect(api.createTutorSession).not.toHaveBeenCalled()
+  expect(api.sendTutorMessage).toHaveBeenCalledTimes(guard === "pending" ? 1 : 0)
+  if (resolve) await act(async () => resolve(session()))
+})
+
 it("starts_a_short_lesson_from_a_conversation_prompt", async () => {
   mount()
   await ready()
