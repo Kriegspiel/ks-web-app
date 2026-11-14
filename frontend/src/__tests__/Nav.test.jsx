@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { MemoryRouter } from "react-router"
+import { Link, MemoryRouter, useNavigate } from "react-router"
 import AppHeader from "../components/AppHeader"
 import { ThemeProvider } from "../context/ThemeContext"
 
@@ -41,6 +41,53 @@ afterEach(() => {
 })
 
 describe("Nav", () => {
+  it("closes mobile navigation on selection, Escape and desktop resize", () => {
+    vi.stubGlobal("innerWidth", 390)
+    render(<ThemeProvider><MemoryRouter><AppHeader /></MemoryRouter></ThemeProvider>)
+    const menu = screen.getByRole("button", { name: "Menu" })
+    const nav = screen.getByRole("navigation")
+    expect(menu).toHaveAttribute("aria-controls", nav.id)
+    expect(menu).toHaveAttribute("aria-expanded", "false")
+    fireEvent.keyDown(document, { key: "Escape" })
+    fireEvent.click(menu)
+    expect(nav).toHaveAttribute("data-open", "true")
+    fireEvent.keyDown(document, { key: "Tab" })
+    expect(menu).toHaveAttribute("aria-expanded", "true")
+    fireEvent.resize(window)
+    expect(menu).toHaveAttribute("aria-expanded", "true")
+    fireEvent.keyDown(document, { key: "Escape" })
+    expect(menu).toHaveFocus()
+    expect(menu).toHaveAttribute("aria-expanded", "false")
+    fireEvent.click(menu)
+    fireEvent.click(screen.getByRole("link", { name: "Login" }))
+    expect(menu).toHaveAttribute("aria-expanded", "false")
+    fireEvent.click(menu)
+    fireEvent.click(screen.getByRole("link", { name: "Kriegspiel" }))
+    expect(menu).toHaveAttribute("aria-expanded", "false")
+    fireEvent.click(menu)
+    fireEvent.click(menu)
+    expect(menu).toHaveAttribute("aria-expanded", "false")
+    fireEvent.click(menu)
+    vi.stubGlobal("innerWidth", 1440)
+    fireEvent.resize(window)
+    expect(menu).toHaveAttribute("aria-expanded", "false")
+  })
+
+  it("closes navigation after external route changes and browser history", () => {
+    function RouteControls() {
+      const navigate = useNavigate()
+      return <><Link to="/settings">Outside route</Link><button onClick={() => navigate(-1)}>Back</button></>
+    }
+    render(<ThemeProvider><MemoryRouter><AppHeader /><RouteControls /></MemoryRouter></ThemeProvider>)
+    const menu = screen.getByRole("button", { name: "Menu" })
+    fireEvent.click(menu)
+    fireEvent.click(screen.getByRole("link", { name: "Outside route" }))
+    expect(menu).toHaveAttribute("aria-expanded", "false")
+    fireEvent.click(menu)
+    fireEvent.click(screen.getByRole("button", { name: "Back" }))
+    expect(menu).toHaveAttribute("aria-expanded", "false")
+  })
+
   it("keeps_the_table_offset_in_sync_with_the_rendered_header_height", () => {
     let height = 65.8
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(() => ({ height }))
@@ -111,7 +158,7 @@ describe("Nav", () => {
     )
 
     expect(screen.getByRole("link", { name: "Kriegspiel" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /toggle color theme/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /switch to (light|dark) theme/i })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Lobby" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Login" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Register" })).toBeInTheDocument()
@@ -153,8 +200,8 @@ describe("Nav", () => {
       </ThemeProvider>,
     )
 
-    const trigger = screen.getByText("Profile")
-    const menu = trigger.closest("details")
+    let trigger = screen.getByText("Profile")
+    let menu = trigger.closest("details")
     fireEvent.click(trigger)
     await waitFor(() => expect(menu).toHaveAttribute("open"))
     expect(screen.getByRole("link", { name: "User" })).toBeInTheDocument()
@@ -170,6 +217,8 @@ describe("Nav", () => {
     await waitFor(() => expect(menu).toHaveAttribute("open"))
     const userLink = screen.getByRole("link", { name: "User" })
     fireEvent.click(userLink)
+    trigger = screen.getByText("Profile")
+    menu = trigger.closest("details")
     await waitFor(() => expect(menu).not.toHaveAttribute("open"))
 
     fireEvent.click(trigger)
@@ -225,7 +274,7 @@ describe("theme toggle", () => {
       </ThemeProvider>,
     )
 
-    expect(screen.getByRole("button", { name: /toggle color theme/i })).toHaveAttribute("aria-pressed", "false")
+    expect(screen.getByRole("button", { name: /switch to (light|dark) theme/i })).toHaveAttribute("aria-pressed", "false")
     expect(window.localStorage.getItem("kriegspiel-theme")).toBe("light")
   })
 
@@ -238,9 +287,9 @@ describe("theme toggle", () => {
       </ThemeProvider>,
     )
 
-    const toggle = screen.getByRole("button", { name: /toggle color theme/i })
+    const toggle = screen.getByRole("button", { name: /switch to (light|dark) theme/i })
     fireEvent.click(toggle)
 
-    expect(screen.getByRole("button", { name: /toggle color theme/i })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: /switch to (light|dark) theme/i })).toHaveAttribute("aria-pressed", "true")
   })
 })

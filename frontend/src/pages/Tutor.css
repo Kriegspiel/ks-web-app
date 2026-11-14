@@ -1,40 +1,40 @@
-.coach-page { max-width: 1640px; margin-inline: auto; padding-bottom: 3rem; }
+.coach-page { max-width: var(--page-width); margin-inline: auto; padding-bottom: 3rem; }
 .coach-heading { display: flex; justify-content: space-between; align-items: start; gap: 2rem; margin-bottom: 1.5rem; }
 .coach-heading h1 { margin: .3rem 0; }
-.coach-eyebrow { text-transform: uppercase; font-size: .75rem; font-weight: 750; letter-spacing: .12em; color: var(--color-muted, #77644f); }
-.coach-plan { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font-size: .85rem; padding: .75rem 1rem; border: 1px solid currentColor; border-radius: 12px; }
+.coach-eyebrow { text-transform: uppercase; font-size: .75rem; font-weight: 750; letter-spacing: .12em; color: var(--muted-soft); }
+.coach-plan { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font-size: .85rem; padding: .75rem 1rem; border: 1px solid currentColor; border-radius: 2px; }
 .coach-plan a { width: 100%; }
 .coach-dot { width: 8px; height: 8px; border-radius: 50%; background: #ba7651; }
 .coach-dot.is-connected { background: #4a875d; }
-.coach-tabs { display: flex; gap: .5rem; border-bottom: 1px solid #997e6033; padding-bottom: .75rem; margin-bottom: 1.25rem; }
-.coach-tabs button[aria-selected=true] { border-bottom: 3px solid #9e653b; font-weight: 750; }
+.coach-tabs { display: flex; flex-wrap: wrap; gap: .5rem; border-bottom: 1px solid var(--border); padding-bottom: .75rem; margin-bottom: 1.25rem; }
+.coach-tabs button[aria-selected=true] { border-bottom: 3px solid var(--accent); font-weight: 750; }
 .coach-current-session { margin: 0 0 1.25rem; min-width: 0; }
 .coach-current-session > p { margin: 0 0 .25rem; }
 .coach-current-session h2 { margin: 0; }
-.coach-page .coach-session-title { display: inline-flex; align-items: center; gap: .65rem; max-width: 100%; padding: .2rem 0; border: 0; border-radius: 3px; background: transparent; box-shadow: none; color: inherit; font: inherit; font-weight: 700; text-align: left; overflow-wrap: anywhere; }
+.coach-page .coach-session-title { display: inline-flex; align-items: center; gap: .65rem; max-width: 100%; padding: .2rem 0; border: 0; border-radius: 2px; background: transparent; box-shadow: none; color: inherit; font: inherit; font-weight: 700; text-align: left; overflow-wrap: anywhere; }
 .coach-session-title svg { flex: 0 0 auto; opacity: .6; }
 .coach-current-session form { display: flex; align-items: end; flex-wrap: wrap; gap: .5rem; }
 .coach-current-session label { display: grid; gap: .3rem; max-width: 100%; font-size: .8rem; }
-.coach-current-session input { box-sizing: border-box; width: min(32rem, 100%); min-width: 0; padding: .5rem .65rem; font: inherit; font-size: 1rem; color: inherit; background: transparent; border: 1px solid #997e6070; border-radius: 8px; }
-.coach-current-session [role=alert] { flex-basis: 100%; color: var(--danger, #a33b31); margin: .25rem 0; }
-.coach-page .coach-icon-button { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; min-width: 2.25rem; min-height: 2.25rem; padding: 0; border-radius: 8px; flex: 0 0 auto; }
-.coach-page .coach-icon-button:focus-visible, .coach-session-title:focus-visible { outline: 2px solid #9e653b; outline-offset: 3px; }
+.coach-current-session input { box-sizing: border-box; width: min(32rem, 100%); min-width: 0; padding: .5rem .65rem; font: inherit; font-size: 1rem; color: inherit; background: transparent; border: 1px solid var(--border-strong); border-radius: 2px; }
+.coach-current-session [role=alert] { flex-basis: 100%; color: var(--danger); margin: .25rem 0; }
+.coach-page .coach-icon-button { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; min-width: 44px; min-height: 44px; padding: 0; border-radius: 2px; flex: 0 0 auto; }
+.coach-page .coach-icon-button:focus-visible, .coach-session-title:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .coach-icon-control { display: inline-flex; flex: 0 0 auto; }
-.coach-icon-tooltip { position: fixed; z-index: 1100; width: max-content; max-width: min(208px, calc(100vw - 16px)); box-sizing: border-box; padding: .4rem .6rem; border-radius: 6px; background: #2d251d; color: #fff9f0; box-shadow: 0 3px 12px #0003; font-size: .75rem; line-height: 1.4; pointer-events: none; }
-@media (pointer: coarse) { .coach-page .coach-icon-button { width: 2.75rem; height: 2.75rem; } }
+.coach-icon-tooltip { position: fixed; z-index: 1100; width: max-content; max-width: min(208px, calc(100vw - 16px)); box-sizing: border-box; padding: .4rem .6rem; border-radius: 2px; background: var(--accent); color: var(--on-accent); box-shadow: none; font-size: .75rem; line-height: 1.4; pointer-events: none; }
 .coach-workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; align-items: start; }
 .coach-workspace.has-sidebar { grid-template-columns: 260px minmax(0, 1fr); column-gap: 1.25rem; }
 .coach-workspace-bar { display: flex; gap: .75rem; align-items: start; min-width: 0; }
 .coach-workspace-bar .coach-current-session { margin: 0; flex: 1; }
 .coach-workspace-main { min-width: 0; }
-.has-sidebar > .coach-sidebar { grid-column: 1; grid-row: 1 / 3; position: sticky; top: 6rem; height: calc(100dvh - 7rem); }
+.coach-workspace > *, .coach-layout > * { min-width: 0; max-width: 100%; }
+.has-sidebar > .coach-sidebar { grid-column: 1; grid-row: 1 / 3; position: sticky; top: calc(var(--app-header-height, 57px) + 1rem); height: calc(100dvh - var(--app-header-height, 57px) - 2rem); }
 .has-sidebar > .coach-workspace-bar, .has-sidebar > .coach-workspace-main { grid-column: 2; }
 .coach-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 1.2rem; align-items: start; }
 .coach-layout h2, .coach-progress h2 { font-size: 1.2rem; }
 .coach-sidebar, .coach-board-area, .coach-conversation, .coach-progress > section { min-width: 0; }
-.coach-sidebar { display: flex; flex-direction: column; gap: .6rem; min-height: 0; padding: .65rem; box-sizing: border-box; background: var(--color-surface, #fff8ef); border: 1px solid #997e6033; border-radius: 12px; }
+.coach-sidebar { display: flex; flex-direction: column; gap: .6rem; min-height: 0; padding: .65rem; box-sizing: border-box; background: var(--surface-strong); border: 1px solid var(--border); border-radius: 2px; }
 .coach-sidebar-heading { display: flex; justify-content: space-between; align-items: center; }
-.coach-sidebar h2 { margin: .3rem 0 .4rem; font-size: .8rem; color: var(--color-muted, #77644f); }
+.coach-sidebar h2 { margin: .3rem 0 .4rem; font-size: .8rem; color: var(--muted-soft); }
 .coach-sidebar h2 small { float: right; font-size: inherit; font-weight: 400; }
 .coach-sidebar p { font-size: .8rem; }
 .coach-sidebar section { min-width: 0; min-height: 0; }
@@ -42,33 +42,33 @@
 .coach-page .coach-new-session { display: flex; align-items: center; gap: .5rem; padding: .5rem; text-align: left; border: 0; background: transparent; color: inherit; }
 .coach-sessions { display: grid; grid-template-columns: minmax(0, 1fr); gap: .15rem; max-height: 26dvh; overflow-y: auto; overscroll-behavior: contain; }
 .coach-games { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: .15rem; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding: .15rem; }
-.coach-games:focus-visible { outline: 2px solid #9e653b; outline-offset: 2px; }
+.coach-games:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .coach-game-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: .4rem; }
 .coach-game-top strong { overflow-wrap: anywhere; font-size: .8rem; }
 .coach-game-outcome { font-size: .65rem; font-weight: 700; }
 .coach-game-code { display: block; margin-top: .15rem; font-size: .6rem; opacity: .65; letter-spacing: .04em; }
-.coach-game[aria-current=page] { border-color: #9e653b; background: #aa784414; }
-.coach-page .coach-session, .coach-game { padding: .5rem; border: 1px solid transparent; border-radius: 7px; text-align: left; background: transparent; text-decoration: none; color: inherit; }
-.coach-page .coach-session:hover, .coach-game:hover { background: #aa784414; }
-.coach-session.is-selected { border-color: #9e653b; background: #aa784414; }
+.coach-game[aria-current=page] { border-color: var(--accent); background: var(--accent-soft); }
+.coach-page .coach-session, .coach-game { padding: .5rem; border: 1px solid transparent; border-radius: 2px; text-align: left; background: transparent; text-decoration: none; color: inherit; }
+.coach-page .coach-session:hover, .coach-game:hover { background: var(--accent-soft); }
+.coach-session.is-selected { border-color: var(--accent); background: var(--accent-soft); }
 .coach-page .coach-session { display: flex; align-items: baseline; gap: .5rem; justify-content: space-between; width: 100%; min-width: 0; box-sizing: border-box; font-size: .8rem; }
 .coach-session > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .coach-session small, .coach-game small { display: block; font-size: .65rem; opacity: .7; padding-top: .15rem; }
 .coach-session small { flex: 0 0 auto; }
 .coach-sidebar-dialog { position: fixed; inset: 0 auto 0 0; width: min(300px, calc(100vw - 2rem)); height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: transparent; color: inherit; overflow: visible; }
 .coach-sidebar-dialog::backdrop { background: #211a1466; }
-.coach-sidebar-dialog > .coach-sidebar { height: 100%; border-radius: 0 12px 12px 0; }
-.coach-board-area, .coach-conversation { border: 1px solid #997e6033; padding: 1.15rem; border-radius: 16px; background: #fff5; }
+.coach-sidebar-dialog > .coach-sidebar { height: 100%; border-radius: 0; }
+.coach-board-area, .coach-conversation { border: 0; border-top: 1px solid var(--border); padding: 1rem 0; border-radius: 0; background: transparent; }
 .coach-board-area .chess-board { width: 100%; max-width: 580px; margin-inline: auto; }
 .coach-exercise-heading { margin-bottom: 1rem; }
 .coach-exercise-heading p { line-height: 1.5; }
-.coach-board-empty { min-height: 490px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; background: repeating-conic-gradient(#aa784407 0% 25%, transparent 0% 50%) 50% / 64px 64px; border-radius: 12px; }
+.coach-board-empty { min-height: 490px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; background: var(--surface-alt); border-radius: 2px; }
 .coach-board-empty > span { font-size: 4rem; }
 .coach-board-empty p { max-width: 32ch; line-height: 1.6; }
 .coach-conversation { display: flex; flex-direction: column; gap: .7rem; }
 .coach-messages { max-height: 660px; overflow-y: auto; display: grid; gap: .8rem; }
-.coach-message { padding: .85rem; border-radius: 12px; background: #aa78440a; }
-.coach-message.is-user { margin-left: 1.25rem; background: #aa78441a; }
+.coach-message { padding: .85rem; border-radius: 2px; background: var(--surface-alt); }
+.coach-message.is-user { margin-left: 1.25rem; background: var(--accent-soft); }
 .coach-message > span { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 750; }
 .coach-markdown { overflow-wrap: anywhere; line-height: 1.6; }
 .coach-markdown p { margin-block: .65rem; }
@@ -77,55 +77,55 @@
 .coach-markdown li + li { margin-top: .4rem; }
 .coach-markdown > :first-child { margin-top: .5rem; }
 .coach-markdown > :last-child { margin-bottom: 0; }
-.coach-markdown code, .coach-referee-attempt code { font-size: .85em; padding: .12em .35em; border: 1px solid #997e6033; border-radius: 4px; background: #aa784415; white-space: nowrap; }
-.coach-markdown pre { overflow-x: auto; padding: .7rem; background: #aa784415; border-radius: 6px; }
+.coach-markdown code, .coach-referee-attempt code { font-size: .85em; padding: .12em .35em; border: 1px solid var(--border); border-radius: 2px; background: var(--surface-alt); white-space: nowrap; }
+.coach-markdown pre { overflow-x: auto; padding: .7rem; background: var(--surface-alt); border-radius: 2px; }
 .coach-markdown pre code { white-space: pre; border: 0; padding: 0; background: transparent; }
-.coach-markdown blockquote { margin-inline: 0; padding-left: .8rem; border-left: 3px solid #9e653b; }
-.coach-attempt-reference { text-decoration-style: dotted; text-underline-offset: .2em; }
-.coach-attempt-preview { position: fixed; z-index: 1000; width: min(320px, calc(100vw - 24px)); box-sizing: border-box; padding: .75rem; border: 1px solid #997e6070; border-radius: 12px; background: var(--color-surface, #fff8ef); color: var(--color-text, #211a14); box-shadow: 0 12px 35px #0004; pointer-events: none; font-size: .8rem; }
+.coach-markdown blockquote { margin-inline: 0; padding-left: .8rem; border-left: 3px solid var(--accent); }
+.coach-attempt-reference { text-decoration: none; font-weight: 600; }
+.coach-attempt-preview { position: fixed; z-index: 1000; width: min(320px, calc(100vw - 24px)); box-sizing: border-box; padding: .75rem; border: 1px solid var(--border-strong); border-radius: 2px; background: var(--surface-strong); color: var(--text); box-shadow: none; pointer-events: none; font-size: .8rem; }
 .coach-attempt-preview .chess-board { width: 100%; }
 .coach-attempt-preview small { display: block; line-height: 1.4; margin-top: .5rem; }
 .coach-preview-caption { display: flex; justify-content: space-between; gap: .5rem; margin-block: .5rem; }
 .coach-practice-inputs { border: 0; padding: 0; margin: 0; min-width: 0; }
 .coach-practice-inputs:disabled { opacity: .55; }
-.coach-replay-notice { margin-block: .5rem; padding: .6rem; border-left: 3px solid #9e653b; display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.coach-replay-notice { margin-block: .5rem; padding: .6rem; border-left: 3px solid var(--accent); display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
 .coach-composer label, .coach-board-area form label { display: grid; gap: .4rem; width: 100%; }
-.coach-composer textarea, .coach-board-area textarea { box-sizing: border-box; width: 100%; min-height: 96px; resize: vertical; font: inherit; padding: .75rem; background: transparent; color: inherit; border: 1px solid #997e6070; border-radius: 10px; }
+.coach-composer textarea, .coach-board-area textarea { box-sizing: border-box; width: 100%; min-height: 96px; resize: vertical; font: inherit; padding: .75rem; background: transparent; color: inherit; border: 1px solid var(--border-strong); border-radius: 2px; }
 .coach-composer button { margin-top: .5rem; }
-.coach-primary { background: #2d251d; color: #fff9f0; border: 1px solid #2d251d; border-radius: 9px; padding: .7rem 1rem; }
+.coach-primary { min-height: 44px; background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); border-radius: 2px; padding: .7rem 1rem; }
 .coach-starters, .coach-practice-actions, .coach-predictions { display: flex; flex-wrap: wrap; gap: .5rem; }
 .coach-starters button { text-align: left; }
 .coach-activity, .coach-conversation > small { font-size: .8rem; opacity: .75; }
-.coach-alert, .coach-connection { border: 1px solid #b46b3f70; background: #b46b3f0d; padding: 1rem; border-radius: 10px; }
+.coach-alert, .coach-connection { border: 1px solid var(--danger-border); background: var(--danger-bg); color: var(--danger); padding: 1rem; border-radius: 2px; }
 .coach-connection { margin-bottom: 1rem; }
-.coach-mark-toggle { display: flex; align-items: center; gap: .5rem; margin-block: .75rem; }
+.coach-mark-toggle { min-height: 44px; display: flex; align-items: center; gap: .5rem; margin-block: .75rem; }
 .coach-mark-toggle input { width: auto; flex: 0 0 auto; margin: 0; }
 .coach-move-form { display: flex; gap: .5rem; flex-wrap: wrap; align-items: end; margin-block: 1rem; }
-.coach-move-form input { padding: .6rem; font: inherit; color: inherit; background: transparent; border: 1px solid #997e6070; border-radius: 8px; }
+.coach-move-form input { padding: .6rem; font: inherit; color: inherit; background: transparent; border: 1px solid var(--border-strong); border-radius: 2px; }
 .coach-practice-actions { margin-block: 1rem; }
-.coach-hint { border-left: 3px solid #9e653b; padding: .5rem .75rem; }
+.coach-hint { border-left: 3px solid var(--accent); padding: .5rem .75rem; }
 .coach-events { font-size: .85rem; max-height: 180px; overflow-y: auto; padding-left: 1.3rem; }
 .coach-events li { padding-block: .3rem; }
 .coach-progress { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; }
-.coach-memory-card { border: 1px solid #997e6033; border-radius: 12px; padding: 1rem; margin-bottom: .8rem; overflow-wrap: anywhere; }
+.coach-memory-card { border: 0; border-top: 1px solid var(--border); border-radius: 0; padding: 1rem 0; margin-bottom: .8rem; overflow-wrap: anywhere; }
 .coach-memory-card h3 { font-size: 1rem; }
 .coach-memory-card p { line-height: 1.5; }
 .coach-evidence { font-size: .8rem; }
-.coach-referee-history { font-size: .8rem; margin-top: .7rem; padding: .7rem; border: 1px solid #997e6033; border-radius: 8px; }
+.coach-referee-history { font-size: .8rem; margin-top: .7rem; padding: .7rem; border: 1px solid var(--border); border-radius: 2px; }
 .coach-referee-history p { line-height: 1.5; }
-.coach-referee-history summary, .coach-usage summary { cursor: pointer; font-weight: 650; }
+.coach-referee-history summary, .coach-usage summary { min-height: 44px; padding-block: .7rem; cursor: pointer; font-weight: 650; }
 .coach-replay-controls { display: flex; flex-wrap: wrap; gap: .35rem; }
 .coach-referee-turns { list-style: none; padding: 0; max-height: 340px; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: .6rem; }
-.coach-referee-turns > li { border: 1px solid #997e6045; border-radius: 8px; overflow: hidden; }
-.coach-referee-turns h3 { margin: 0; padding: .4rem .6rem; font-size: .8rem; background: #aa784415; }
-.coach-referee-sides { display: grid; grid-template-columns: 1fr 1fr; }
+.coach-referee-turns > li { border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+.coach-referee-turns h3 { margin: 0; padding: .4rem .6rem; font-size: .8rem; background: var(--surface-alt); }
+.coach-referee-sides { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .coach-referee-side { min-width: 0; padding: .5rem; }
-.coach-referee-side + .coach-referee-side { border-left: 1px solid #997e6033; }
+.coach-referee-side + .coach-referee-side { border-left: 1px solid var(--border); }
 .coach-referee-side > strong { font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; }
 .coach-referee-attempt { display: grid; gap: .25rem; width: 100%; text-align: left; font-size: .75rem; font-weight: 400; padding: .5rem; margin-top: .35rem; overflow-wrap: anywhere; }
 .coach-referee-attempt > span:first-child { font-weight: 650; }
-.coach-referee-attempt[aria-pressed=true] { border-color: #9e653b; background: #aa784425; }
-.coach-usage { font-size: .8rem; border-top: 1px solid #997e6033; padding-top: .8rem; }
+.coach-referee-attempt[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); }
+.coach-usage { font-size: .8rem; border-top: 1px solid var(--border); padding-top: .8rem; }
 .coach-usage dl { display: grid; grid-template-columns: 1fr auto; gap: .35rem .75rem; }
 .coach-usage dl > div { display: contents; }
 .coach-usage dd { margin: 0; font-variant-numeric: tabular-nums; }
@@ -133,8 +133,6 @@
 .coach-usage ol { padding-left: 1.2rem; max-height: 220px; overflow-y: auto; }
 .coach-usage li { margin-block: .5rem; }
 .coach-usage li span { display: block; }
-[data-theme=dark] .coach-board-area, [data-theme=dark] .coach-conversation { background: #ffffff04; }
-[data-theme=dark] .coach-attempt-preview { background: #29231e; color: #fff1dc; }
-[data-theme=dark] .coach-sidebar { background: #29231e; }
-[data-theme=dark] .coach-sidebar h2 { color: #d2bba4; }
-@media (max-width: 700px) { .coach-heading { flex-direction: column; gap: .75rem; } .coach-layout, .coach-progress { grid-template-columns: 1fr; } .coach-board-empty { min-height: 250px; } .coach-messages { max-height: 480px; } .coach-board-area, .coach-conversation { padding: .8rem; } }
+@media (max-width: 700px) { .coach-heading { flex-direction: column; gap: .75rem; } .coach-progress { grid-template-columns: 1fr; } .coach-board-empty { min-height: 250px; } .coach-messages { max-height: 480px; } .coach-board-area, .coach-conversation { padding: .8rem 0; } }
+
+@media (max-width: 900px) { .coach-layout { grid-template-columns: 1fr; } }

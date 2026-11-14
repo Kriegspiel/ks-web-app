@@ -67,15 +67,18 @@ describe("PromotionModal", () => {
     expect(onCancel).not.toHaveBeenCalled()
   })
 
-  it("keeps_dialog_text_legible_when_page_theme_is_dark", () => {
+  it("pairs_dialog_and_action_colors_with_the_current_theme", () => {
     const modalRule = blockFor(promotionModalCss, ".promotion-modal {")
     const headingRule = blockFor(promotionModalCss, ".promotion-modal h2")
     const buttonRule = blockFor(promotionModalCss, ".promotion-modal button {")
 
-    expect(modalRule).toMatch(/color-scheme:\s*light;/)
-    expect(modalRule).toMatch(/--promotion-modal-text:\s*#1e1611;/)
+    expect(modalRule).toMatch(/--promotion-modal-background:\s*var\(--surface-strong\);/)
+    expect(modalRule).toMatch(/--promotion-modal-text:\s*var\(--text\);/)
+    expect(modalRule).toMatch(/--promotion-modal-button-bg:\s*var\(--accent\);/)
+    expect(modalRule).toMatch(/--promotion-modal-button-text:\s*var\(--on-accent\);/)
     expect(modalRule).toMatch(/background:\s*var\(--promotion-modal-background\);/)
     expect(headingRule).toMatch(/color:\s*var\(--promotion-modal-text\);/)
     expect(buttonRule).toMatch(/color:\s*var\(--promotion-modal-button-text\);/)
+    expect(buttonRule).toMatch(/min-height:\s*44px;/)
   })
 })

@@ -9,7 +9,7 @@ afterEach(() => { cleanup(); toggleTheme.mockClear() })
 
 it("keeps the header logo within its transfer budget and preserves theme switching", () => {
   render(<ThemeToggle />)
-  const button = screen.getByRole("button", { name: "Toggle color theme" })
+  const button = screen.getByRole("button", { name: "Switch to dark theme" })
   const logo = button.querySelector("img")
   expect(logo).toHaveAttribute("src", "/logo-theme-toggle-96.webp")
   expect(logo).toHaveAttribute("width", "96")

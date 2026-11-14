@@ -1,9 +1,9 @@
 .settings-page {
-  max-width: 38rem;
+  max-width: var(--page-width);
 }
 
 .settings-form select {
-  background: #fff;
+  background: var(--surface-strong);
 }
 
 .settings-toggle {
@@ -13,7 +13,7 @@
   padding: 0.8rem 0.9rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: rgba(248, 250, 252, 0.72);
+  background: var(--bg-soft);
 }
 
 .settings-toggle input {

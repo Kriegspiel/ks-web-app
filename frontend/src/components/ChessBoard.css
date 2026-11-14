@@ -1,4 +1,12 @@
 .chess-board {
+  /* Board colors are independent of the surrounding page theme. */
+  --board-light: #f7fafc;
+  --board-dark: #d9e4ed;
+  --board-edge: #c2d0dc;
+  --board-highlight: #bbcfdc;
+  --board-muted: #526576;
+  --board-bg: #fafcfe;
+  --board-text: #18242f;
   position: relative;
   width: min(100%, 38rem);
   margin-inline: auto;
@@ -14,14 +22,13 @@
   aspect-ratio: 1 / 1;
   padding: 0;
   gap: 0;
-  border: 1px solid rgba(15, 23, 42, 0.18);
-  border-radius: 1.1rem;
+  color-scheme: light;
+  color: var(--board-text);
+  border: 1px solid var(--board-edge);
+  border-radius: 0;
   overflow: hidden;
-  background: #7b5a3d;
-  box-shadow:
-    0 20px 42px rgba(15, 23, 42, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.32),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  background: var(--board-bg);
+  box-shadow: none;
   touch-action: none;
 }
 
@@ -78,11 +85,10 @@
   font-weight: 800;
 }
 
-.square {
+.board-grid .square {
   --square-hover-overlay: transparent;
   --square-capture-overlay: transparent;
   --square-ring-highlight: inset 0 0 0 0 rgba(0, 0, 0, 0);
-  --square-ring-last-move: inset 0 0 0 0 rgba(0, 0, 0, 0);
   --square-ring-capture: inset 0 0 0 0 rgba(0, 0, 0, 0);
   --square-ring-illegal: inset 0 0 0 0 rgba(0, 0, 0, 0);
   --square-ring-suggested: inset 0 0 0 0 rgba(0, 0, 0, 0);
@@ -104,7 +110,9 @@
   outline: none;
   outline-offset: 0;
   cursor: pointer;
-  transition: filter 120ms ease;
+  opacity: 1;
+  box-shadow: none;
+  transition: none;
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -113,7 +121,7 @@
   content: "";
   position: absolute;
   inset: 0.18rem;
-  border-radius: 0.18rem;
+  border-radius: 0;
   background:
     linear-gradient(0deg, var(--square-hover-overlay), var(--square-hover-overlay)),
     linear-gradient(0deg, var(--square-capture-overlay), var(--square-capture-overlay));
@@ -131,7 +139,6 @@
   z-index: 4;
   box-shadow:
     var(--square-ring-highlight),
-    var(--square-ring-last-move),
     var(--square-ring-capture),
     var(--square-ring-illegal),
     var(--square-ring-suggested);
@@ -142,9 +149,16 @@
 .board-grid .square:focus-visible:not(:disabled),
 .board-grid .square:active:not(:disabled) {
   border-color: transparent;
+  opacity: 1;
+  box-shadow: none;
   transform: none;
   outline: none;
   filter: none;
+}
+
+.board-grid .square:focus-visible:not(:disabled) {
+  outline: 2px solid var(--board-muted);
+  outline-offset: -2px;
 }
 
 .board-grid .square:hover:not(:disabled)::before,
@@ -155,52 +169,52 @@
 
 .board-grid .square:hover:not(:disabled) .piece__image,
 .board-grid .square:focus-visible:not(:disabled) .piece__image {
-  filter: brightness(1.06) saturate(1.06);
+  filter: none;
 }
 
 
-.square.light {
-  background: linear-gradient(180deg, #f3e7d4 0%, #e7d6bb 100%);
+.board-grid .square.light {
+  background: var(--board-light);
 }
 
-.square.dark {
-  background: linear-gradient(180deg, #b3875f 0%, #936942 100%);
+.board-grid .square.dark {
+  background: var(--board-dark);
 }
 
 .board-grid .square.light:hover:not(:disabled),
 .board-grid .square.light:focus-visible:not(:disabled),
 .board-grid .square.light:active:not(:disabled) {
-  --square-hover-overlay: rgba(106, 69, 29, 0.1);
+  --square-hover-overlay: rgba(82, 101, 118, 0.08);
 }
 
 .board-grid .square.dark:hover:not(:disabled),
 .board-grid .square.dark:focus-visible:not(:disabled),
 .board-grid .square.dark:active:not(:disabled) {
-  --square-hover-overlay: rgba(255, 248, 235, 0.13);
+  --square-hover-overlay: rgba(82, 101, 118, 0.08);
 }
 
-.square:disabled {
+.board-grid .square:disabled {
   cursor: not-allowed;
 }
 
-.square--highlighted {
-  --square-ring-highlight: inset 0 0 0 0.24rem rgba(255, 205, 0, 0.96);
+.board-grid .square--highlighted {
+  --square-ring-highlight: inset 0 0 0 0.24rem var(--board-muted);
 }
 
-.square--last-move {
-  --square-ring-last-move: inset 0 0 0 0.22rem rgba(45, 212, 191, 0.92);
+.board-grid .square.square--last-move {
+  background: var(--board-highlight);
 }
 
-.square--illegal {
+.board-grid .square--illegal {
   --square-ring-illegal: inset 0 0 0 0.22rem rgba(220, 38, 38, 0.95);
 }
 
-.square--capture {
+.board-grid .square--capture {
   --square-capture-overlay: rgba(185, 28, 28, 0.34);
   --square-ring-capture: inset 0 0 0 0.18rem rgba(185, 28, 28, 0.74);
 }
 
-.square--suggested {
+.board-grid .square--suggested {
   --square-ring-suggested: inset 0 0 0 0.16rem rgba(34, 197, 94, 0.78);
 }
 
@@ -208,7 +222,7 @@
   content: "";
   position: absolute;
   inset: 14%;
-  border-radius: 1rem;
+  border-radius: 2px;
   background: rgba(86, 156, 255, 0.08);
   box-shadow: inset 0 0 0 1px rgba(86, 156, 255, 0.18);
   pointer-events: none;
@@ -222,18 +236,13 @@
   min-width: 0.72rem;
   min-height: 0.72rem;
   border-radius: 999px;
-  background: rgba(30, 22, 17, 0.24);
+  background: rgba(82, 101, 118, 0.32);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.24);
   pointer-events: none;
 }
 
 .square--suggested .square__move-dot {
   opacity: 1;
-}
-
-:root[data-theme="dark"] .square__move-dot {
-  background: rgba(244, 237, 228, 0.24);
-  box-shadow: 0 0 0 1px rgba(16, 13, 10, 0.32);
 }
 
 .phantom-piece-on-board {
@@ -258,15 +267,15 @@
   -webkit-user-drag: none;
 }
 
-.piece {
+.board-grid .piece {
   position: relative;
   z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: min(82%, 3.9rem);
-  height: min(82%, 3.9rem);
-  padding: 0.08rem;
+  width: 85%;
+  height: 85%;
+  padding: 0;
   transform: none;
   filter: none;
 }
@@ -282,50 +291,40 @@
   -webkit-user-drag: none;
 }
 
-.coord {
+.board-grid .coord {
   position: absolute;
-  font-size: clamp(0.44rem, 1.25vw, 0.64rem);
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  opacity: 0.82;
+  z-index: 5;
+  color: var(--board-muted);
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 500;
+  opacity: 1;
   pointer-events: none;
 }
 
 .coord.file {
-  right: 0.22rem;
-  bottom: 0.14rem;
+  right: 4px;
+  bottom: 3px;
 }
 
 .coord.rank {
-  left: 0.22rem;
-  top: 0.14rem;
+  left: 4px;
+  top: 4px;
 }
 
-.square.light .coord {
-  color: rgba(88, 59, 27, 0.82);
-}
-
-.square.dark .coord {
-  color: rgba(255, 244, 224, 0.84);
-}
-
-@media (max-width: 640px) {
-  .chess-board {
-    width: min(100%, 30rem);
+@media (max-width: 480px) {
+  .board-grid .piece {
+    width: 78%;
+    height: 78%;
   }
 
-  .board-grid {
-    border-radius: 0.95rem;
-    box-shadow:
-      0 16px 30px rgba(15, 23, 42, 0.16),
-      inset 0 1px 0 rgba(255, 255, 255, 0.28),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  .board-grid .coord {
+    font-size: 10px;
   }
 
-  .piece {
-    width: min(86%, 4rem);
-    height: min(86%, 4rem);
-    padding: 0.04rem;
+  .coord.file {
+    right: 2px;
+    bottom: 2px;
   }
 }
 

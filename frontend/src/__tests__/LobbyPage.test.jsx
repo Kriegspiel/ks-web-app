@@ -154,10 +154,12 @@ describe("LobbyPage", () => {
     expect(h.isOwnOpenGame({ created_by: " Fil " }, "fil")).toBe(true)
   })
 
-  it("uses_theme_surface_tokens_for_lobby_list_cards", () => {
+  it("uses_flat_theme_boundaries_for_lobby_lists", () => {
     const css = readFileSync(resolve(process.cwd(), "src/pages/Lobby.css"), "utf8")
 
-    expect(css).toContain("background: color-mix(in srgb, var(--surface-strong) 92%, var(--surface) 8%);")
+    const listRule = css.match(/\.lobby-list li\s*\{([^}]+)\}/)[1]
+    expect(listRule).toContain("background: transparent;")
+    expect(listRule).toContain("border-top: 1px solid var(--border);")
     expect(css).toContain(".lobby-open-games-list")
     expect(css).toContain(".lobby-open-games-list--scrollable")
     expect(css).toContain("max-height: calc((var(--lobby-open-game-row-visible-height) * 4) + (0.75rem * 3));")

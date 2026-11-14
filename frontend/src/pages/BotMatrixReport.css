@@ -125,7 +125,7 @@
 
 .bot-matrix-bot-filter__button {
   display: inline-flex;
-  min-height: 2.35rem;
+  min-height: 44px;
   align-items: center;
   gap: 0.55rem;
   padding: 0.42rem 0.7rem;
@@ -286,7 +286,7 @@
 .bot-matrix-total-column-title-button:hover:not(:disabled),
 .bot-matrix-total-column-title-button:focus-visible {
   box-shadow: none;
-  text-decoration: underline;
+  text-decoration: none;
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.14em;
 }
@@ -298,7 +298,7 @@
   min-width: 1.15rem;
   min-height: 1.15rem;
   padding: 0 0.28rem;
-  border-radius: 999px;
+  border-radius: 2px;
   background: var(--accent);
   color: var(--surface-strong);
   font-size: 0.72rem;
@@ -391,7 +391,7 @@
   align-items: center;
   gap: 0.45rem;
   padding: 0.4rem 0.35rem;
-  border-radius: 0.55rem;
+  border-radius: 2px;
   color: var(--text);
   cursor: pointer;
   white-space: nowrap;
@@ -402,7 +402,7 @@
   align-items: center;
   gap: 0.45rem;
   padding: 0.4rem 0.35rem;
-  border-radius: 0.55rem;
+  border-radius: 2px;
   color: var(--text);
   cursor: pointer;
   white-space: nowrap;
@@ -442,7 +442,7 @@
 
 .bot-matrix-total-filter-menu__clear {
   width: 100%;
-  min-height: 2.4rem;
+  min-height: 44px;
   margin-top: 0.4rem;
   padding: 0.48rem 0.72rem;
 }
@@ -456,6 +456,6 @@
 
 .bot-matrix-filter-menu__actions button {
   flex: 1 1 6.75rem;
-  min-height: 2.35rem;
+  min-height: 44px;
   padding: 0.48rem 0.6rem;
 }
