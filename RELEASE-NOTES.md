@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.6.7
+
+- Keep a pawn's previous light square distinct from surrounding dark squares after a move or capture. Use a lighter last-move tint while preserving the fixed board palette, piece colors, and other move indicators.
+
 ## 1.6.6
 
 - Preserve the light/dark distinction between last-move squares with a translucent highlight, so adjacent squares on a rook move no longer merge into one solid block. Keep the board palette, pieces, and other move indicators unchanged in both page themes.

@@ -210,8 +210,8 @@
 
 .board-grid .square.square--last-move {
   background-image: linear-gradient(
-    color-mix(in srgb, var(--board-highlight) 50%, transparent),
-    color-mix(in srgb, var(--board-highlight) 50%, transparent)
+    color-mix(in srgb, var(--board-highlight) 25%, transparent),
+    color-mix(in srgb, var(--board-highlight) 25%, transparent)
   );
 }
 
