@@ -127,7 +127,8 @@
 .profile-card--accent-teal::before {
   content: "";
   position: absolute;
-  inset: 0;
+  /* Cover the next card's 1rem margin through its top divider. */
+  inset: 0 0 -1rem;
   z-index: -1;
   background: var(--profile-section-bg);
   box-shadow: 0 0 0 100vmax var(--profile-section-bg);

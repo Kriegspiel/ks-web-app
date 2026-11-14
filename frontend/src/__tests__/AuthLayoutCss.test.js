@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest"
 
 const appCssPath = resolve(dirname(fileURLToPath(import.meta.url)), "../App.css")
 const appCss = readFileSync(appCssPath, "utf8")
+const baseCss = readFileSync(resolve(dirname(appCssPath), "index.css"), "utf8")
 
 function blockFor(source, token) {
   const start = source.indexOf(token)
@@ -30,6 +31,18 @@ function blockFor(source, token) {
 }
 
 describe("Auth layout CSS", () => {
+  it("exempts header and footer links while retaining body underlines and keyboard focus", () => {
+    for (const landmark of [".app-header", ".app-footer"]) {
+      for (const state of ["", ":hover", ":focus-visible"]) {
+        const linkRule = blockFor(appCss, `${landmark} a[href]${state}`)
+        expect(linkRule).toMatch(/text-decoration-line:\s*none;/)
+        expect(linkRule).not.toMatch(/outline\s*:/)
+      }
+    }
+    expect(blockFor(baseCss, "a[href] {")).toMatch(/text-decoration-line:\s*underline;/)
+    expect(blockFor(baseCss, "a:focus-visible,")).toMatch(/outline:\s*2px solid var\(--text\);/)
+  })
+
   it("aligns the page to the site shell and bounds its forms", () => {
     const authPageRule = blockFor(appCss, ".page-shell.auth-page")
     expect(authPageRule).toMatch(/max-width:\s*var\(--page-width\);/)

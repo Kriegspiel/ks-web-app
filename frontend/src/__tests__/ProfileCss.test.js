@@ -59,6 +59,7 @@ describe("Profile bot metrics CSS", () => {
     expect(blockFor(profileCss, ".profile-card--accent-blue {")).toContain("var(--lobby-open-bg)")
     expect(blockFor(profileCss, ".profile-card--accent-teal {")).toContain("var(--lobby-stats-bg)")
     const paint = blockFor(profileCss, ".profile-card--accent-blue::before,")
+    expect(paint).toContain("inset: 0 0 -1rem;")
     expect(paint).toContain("box-shadow: 0 0 0 100vmax var(--profile-section-bg)")
     expect(paint).toContain("clip-path: inset(0 -100vmax)")
     expect(paint).toContain("pointer-events: none")

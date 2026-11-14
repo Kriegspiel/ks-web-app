@@ -95,6 +95,16 @@
   letter-spacing: -0.8px;
 }
 
+/* Shared navigation is distinct from underlined links within page content. */
+.app-header a[href],
+.app-header a[href]:hover,
+.app-header a[href]:focus-visible,
+.app-footer a[href],
+.app-footer a[href]:hover,
+.app-footer a[href]:focus-visible {
+  text-decoration-line: none;
+}
+
 button.theme-toggle {
   width: 44px;
   min-height: 44px;

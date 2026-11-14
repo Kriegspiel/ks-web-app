@@ -1,5 +1,11 @@
 # Release Notes
 
+## 1.6.2
+
+- Keep all header and footer links free of underlines, including on hover and keyboard focus, while preserving focus outlines and underlined links within page content.
+- Extend profile section accents to the following divider, removing the narrow background gaps below bot information, user metrics, and challenges.
+- Inset Open games text and controls from row edges and make each hover background meet the next divider without a gap.
+
 ## 1.6.1
 
 - Underline links to other pages, including player names, navigation, footer links, and calls to action; keep in-page controls distinct.
