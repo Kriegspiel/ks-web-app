@@ -1,5 +1,10 @@
 # Release Notes
 
+## 1.6.3
+
+- Keep button-style navigation links free of underlines at rest, on hover, and on keyboard focus, including Lobby quick actions; ordinary text links remain underlined and focus outlines stay visible.
+- Extend the Open games accent to the Join by code divider, removing the remaining neutral strip between sections.
+
 ## 1.6.2
 
 - Keep all header and footer links free of underlines, including on hover and keyboard focus, while preserving focus outlines and underlined links within page content.

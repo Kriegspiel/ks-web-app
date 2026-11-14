@@ -92,7 +92,7 @@ a {
   color: inherit;
 }
 
-/* Navigation stays recognizable at rest, including links styled as buttons. */
+/* Ordinary text links remain recognizable at rest. */
 a[href] {
   text-decoration-line: underline;
   text-decoration-thickness: 1px;
@@ -100,6 +100,19 @@ a[href] {
 }
 
 a[href^="#"] {
+  text-decoration-line: none;
+}
+
+/* Button surfaces already distinguish navigation actions from ordinary text. */
+a.button-link[href],
+a.button-link[href]:hover,
+a.button-link[href]:focus-visible,
+.inline-links a[href],
+.inline-links a[href]:hover,
+.inline-links a[href]:focus-visible,
+a.lobby-toast__action[href],
+a.lobby-toast__action[href]:hover,
+a.lobby-toast__action[href]:focus-visible {
   text-decoration-line: none;
 }
 
