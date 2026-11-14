@@ -305,6 +305,10 @@ describe("LobbyPage", () => {
       "Join by code",
       "Lobby stats",
     ])
+    expect(screen.getByRole("region", { name: "Open games" })).toHaveClass("lobby-card--open-games")
+    expect(screen.getByRole("region", { name: "Lobby stats" })).toHaveClass("lobby-card--stats")
+    expect(screen.getByRole("region", { name: "Create game" })).not.toHaveClass("lobby-card--open-games", "lobby-card--stats")
+    expect(screen.getByRole("region", { name: "Join by code" })).not.toHaveClass("lobby-card--open-games", "lobby-card--stats")
   })
 
   it("shows_a_message_when_there_are_no_open_games", async () => {
@@ -451,8 +455,7 @@ describe("LobbyPage", () => {
 
     renderPage()
 
-    fireEvent.click(await screen.findByRole("button", { name: "Open" }))
-    expect(mockNavigate).toHaveBeenCalledWith("/game/g-owned-only")
+    expect(await screen.findByRole("link", { name: "Open" })).toHaveAttribute("href", "/game/g-owned-only")
 
     fireEvent.click(await screen.findByRole("button", { name: "Close" }))
     await waitFor(() => {
@@ -474,9 +477,7 @@ describe("LobbyPage", () => {
 
     renderPage()
 
-    fireEvent.click(await screen.findByRole("button", { name: "Open" }))
-
-    expect(mockNavigate).toHaveBeenCalledWith("/game/OWN123")
+    expect(await screen.findByRole("link", { name: "Open" })).toHaveAttribute("href", "/game/OWN123")
 
     fireEvent.click(await screen.findByRole("button", { name: "Close" }))
 
@@ -515,7 +516,7 @@ describe("LobbyPage", () => {
 
     const openGames = await screen.findAllByRole("listitem")
     expect(within(openGames[0]).getByText("OWN123")).toBeInTheDocument()
-    expect(within(openGames[0]).getByRole("button", { name: "Open" })).toBeInTheDocument()
+    expect(within(openGames[0]).getByRole("link", { name: "Open" })).toBeInTheDocument()
     expect(within(openGames[0]).getByRole("button", { name: "Close" })).toBeInTheDocument()
     expect(within(openGames[1]).getByText("ZZZ999")).toBeInTheDocument()
     expect(within(openGames[1]).getByRole("button", { name: "Join" })).toBeInTheDocument()

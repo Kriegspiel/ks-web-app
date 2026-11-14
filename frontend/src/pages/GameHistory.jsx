@@ -899,7 +899,7 @@ export default function GameHistoryPage() {
                           <td>
                             {game.opponent ? <Link className="history-opponent-link" to={`/user/${game.opponent}`}>{opponentLabel(game)}</Link> : "—"}
                           </td>
-                          <td>{displayValue(game.result)}</td>
+                          <td>{path ? <Link to={path}>{displayValue(game.result)}</Link> : displayValue(game.result)}</td>
                           <td>{formatReason(game.reason)}</td>
                           <td>{turnCount(game)}</td>
                           <td>{formatDate(game.played_at)}</td>

@@ -32,15 +32,15 @@
   box-shadow: var(--shadow-soft);
 }
 
-.profile-tier-card__link {
+.profile-tier-card__link::after {
+  content: "";
   position: absolute;
   inset: 0;
   z-index: 1;
   border-radius: inherit;
-  text-decoration: none;
 }
 
-.profile-tier-card__link:focus-visible {
+.profile-tier-card__link:focus-visible::after {
   outline: 2px solid var(--text);
   outline-offset: 3px;
 }
@@ -96,9 +96,6 @@
 
 .profile-tier-card__body {
   min-width: 0;
-  position: relative;
-  z-index: 2;
-  pointer-events: none;
 }
 
 .profile-tier-card__body h2 {
@@ -110,6 +107,32 @@
   margin: 0.2rem 0 0;
   color: var(--muted);
   font-weight: 700;
+}
+
+.profile-card--accent-blue {
+  --profile-section-bg: var(--lobby-open-bg);
+}
+
+.profile-card--accent-teal {
+  --profile-section-bg: var(--lobby-stats-bg);
+}
+
+.profile-card--accent-blue,
+.profile-card--accent-teal {
+  position: relative;
+  isolation: isolate;
+}
+
+.profile-card--accent-blue::before,
+.profile-card--accent-teal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--profile-section-bg);
+  box-shadow: 0 0 0 100vmax var(--profile-section-bg);
+  clip-path: inset(0 -100vmax);
+  pointer-events: none;
 }
 
 .profile-card--bot-note {
@@ -238,9 +261,6 @@
 
 .profile-bot-row-link {
   font-weight: 400;
-  text-decoration-line: none;
-  text-decoration-thickness: 0.08em;
-  text-underline-offset: 0.14em;
 }
 
 .profile-bot-row-link:hover,
@@ -386,15 +406,7 @@
   color: var(--text);
   font-weight: 800;
   line-height: 1;
-  text-decoration: none;
   vertical-align: middle;
-}
-
-.profile-challenge-upgrade__tier-link:hover .profile-challenge-upgrade__tier-name,
-.profile-challenge-upgrade__tier-link:focus-visible .profile-challenge-upgrade__tier-name {
-  text-decoration: none;
-  text-decoration-thickness: 0.08em;
-  text-underline-offset: 0.14em;
 }
 
 .profile-challenge-upgrade__tier-code {

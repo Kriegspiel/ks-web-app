@@ -168,6 +168,7 @@ describe("GameHistoryPage", () => {
 
     expect(await screen.findByRole("link", { name: "Back to user" })).toHaveAttribute("href", "/user/fil")
     expect(await screen.findByRole("link", { name: "amy (bot)" })).toHaveAttribute("href", "/user/amy")
+    expect(screen.getByRole("link", { name: "win" })).toHaveAttribute("href", "/game/A7K2M9/review")
     expect(screen.getByText("Berkeley + Any")).toBeInTheDocument()
     expect(screen.queryByRole("columnheader", { name: /Review/ })).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Open" })).not.toBeInTheDocument()

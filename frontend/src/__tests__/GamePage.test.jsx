@@ -1,11 +1,14 @@
 import { Component } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, render as renderWithTestingLibrary, screen, waitFor, within } from "@testing-library/react"
+import { MemoryRouter } from "react-router"
 import GamePage from "../pages/GamePage"
 import { TEST_VERSION_STAMP } from "../version"
 
 const mockNavigate = vi.hoisted(() => vi.fn())
 const mockParams = vi.hoisted(() => ({ gameId: "g-123" }))
+
+const render = (ui) => renderWithTestingLibrary(ui, { wrapper: MemoryRouter })
 
 const mockApi = vi.hoisted(() => ({
   getGame: vi.fn(),
@@ -1578,8 +1581,9 @@ describe("GamePage", () => {
     expect(within(summary).getByText("1333 → 1333 (no change)")).toBeInTheDocument()
     expect(mockNavigate).not.toHaveBeenCalled()
 
-    fireEvent.click(within(summary).getByRole("button", { name: "Watch review" }))
-    expect(mockNavigate).toHaveBeenCalledWith("/game/ABC123/review")
+    for (const link of screen.getAllByRole("link", { name: "Watch review" })) {
+      expect(link).toHaveAttribute("href", "/game/ABC123/review")
+    }
   })
 
   it("shows_close_for_waiting_games_and_returns_to_lobby", async () => {

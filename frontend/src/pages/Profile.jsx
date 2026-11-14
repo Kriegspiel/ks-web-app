@@ -910,10 +910,13 @@ export default function ProfilePage() {
       <p>Member since {formatDate(profile?.member_since)}.</p>
       {profileTier ? (
         <section className={`profile-card profile-tier-card ${profileTier.className}`} aria-label={profileTierLabel}>
-          <Link className="profile-tier-card__link" to="/subscription" aria-label={`${profileTierLabel}: Tier ${profileTier.code} ${profileTier.name}. View subscription options`} />
           <TierBadge code={profileTier.code} className="profile-tier-card__code" />
           <div className="profile-tier-card__body">
-            <h2>Tier {profileTier.code} {profileTier.name}</h2>
+            <h2 aria-label={`Tier ${profileTier.code} ${profileTier.name}`}>
+              <Link className="profile-tier-card__link" to="/subscription" aria-label={`${profileTierLabel}: Tier ${profileTier.code} ${profileTier.name}. View subscription options`}>
+                Tier {profileTier.code} {profileTier.name}
+              </Link>
+            </h2>
             {profileTier.limit ? <p>{profileTier.limit}</p> : null}
           </div>
         </section>
@@ -956,7 +959,7 @@ export default function ProfilePage() {
         </section>
       ) : null}
       {isBotProfile ? (
-        <section className="profile-card profile-card--bot-note" aria-label="Bot information">
+        <section className="profile-card profile-card--bot-note profile-card--accent-blue" aria-label="Bot information">
           <h2>This user is bot</h2>
           <p>
             On Kriegspiel.org we allow bots. To understand the bots better, read our{" "}
@@ -971,7 +974,7 @@ export default function ProfilePage() {
       ) : null}
       {isBotProfile && profile?.author_note?.trim() ? <BotAuthorNote note={profile.author_note} /> : null}
       {userMetrics ? (
-        <section className="profile-card profile-card--user-metrics profile-card--bot-metrics" aria-label="User metrics">
+        <section className="profile-card profile-card--user-metrics profile-card--bot-metrics profile-card--accent-teal" aria-label="User metrics">
           <h2>User metrics</h2>
           {userMetrics.completedGames ? (
             <>
@@ -1070,7 +1073,7 @@ export default function ProfilePage() {
       </section>
 
       {isBotProfile ? (
-        <section className="profile-card profile-challenge-card" aria-label="Challenge this bot">
+        <section className="profile-card profile-challenge-card profile-card--accent-blue" aria-label="Challenge this bot">
           <h2>Challenge this bot</h2>
           {inactiveBotProfile ? (
             <p>This bot is inactive. Its profile, game history, and completed-game reviews remain available.</p>

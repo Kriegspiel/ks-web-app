@@ -57,6 +57,11 @@
   padding: 1rem 0;
 }
 
+.review-page .review-page__log-column {
+  padding: 1rem;
+  background: var(--referee-log-bg);
+}
+
 .review-page__board-column {
   display: grid;
   align-content: start;
@@ -439,7 +444,7 @@
   align-content: start;
   border: 1px solid var(--border-strong);
   border-radius: 2px;
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  background: transparent;
   padding: 0.95rem 1rem;
   box-shadow: none;
 }
@@ -530,7 +535,7 @@
   border: 1px solid var(--border);
   border-bottom: 0;
   border-radius: 2px 2px 0 0;
-  background: var(--surface);
+  background: var(--referee-log-bg);
   box-shadow: none;
 }
 
@@ -638,12 +643,6 @@
 
 .review-page__player-link {
   color: var(--text);
-  text-decoration: none;
-}
-
-.review-page__player-link:hover,
-.review-page__player-link:focus-visible {
-  text-decoration: none;
 }
 
 .review-page__rating-columns {

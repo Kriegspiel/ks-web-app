@@ -1,5 +1,19 @@
 # Release Notes
 
+## 1.6.1
+
+- Underline links to other pages, including player names, navigation, footer links, and calls to action; keep in-page controls distinct.
+- Give the full referee log a warm accent in game, review, and Tutor views, including mobile log drawers, while retaining active-move and message feedback.
+- Make profile rating and chart-axis selectors connected toggles with a clear active option, and alternate subtle accents across bot information, user metrics, and challenge sections.
+- Match the website's thinner sticky header: a 48px row plus its 1px divider on desktop and mobile, preserving 44px touch targets and shared page alignment.
+- Distinguish Open games with a pale blue section band and Lobby stats with muted teal, with corresponding dark-theme accents.
+- Keep adjacent move highlights joined at fractional board sizes by sizing squares from shared grid tracks, preserving board and piece colors in both themes.
+
+## 1.6.0
+
+- Apply the shared website design system across the app: aligned page widths, a compact sticky header, flat controls, and light/dark page themes.
+- Keep game, review, and Tutor chessboards on the same fixed cool palette, with accessible controls and existing move feedback.
+
 ## 1.5.22
 
 - Unlock game sounds on completed mobile taps and resume interrupted iPhone Safari audio on the next interaction.

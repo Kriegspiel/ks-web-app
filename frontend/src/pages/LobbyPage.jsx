@@ -941,7 +941,7 @@ export default function LobbyPage() {
         ) : null}
       </section>
 
-      <section className="lobby-card" aria-labelledby="open-games-heading">
+      <section className="lobby-card lobby-card--open-games" aria-labelledby="open-games-heading">
         <h2 id="open-games-heading">Open games</h2>
         {openGamesError ? <p role="alert">{openGamesError}</p> : null}
         {openGamesLoading ? <p>Loading…</p> : null}
@@ -983,7 +983,7 @@ export default function LobbyPage() {
                   <div className="lobby-list__actions">
                     {ownOpenGame ? (
                       <>
-                        <button type="button" onClick={() => navigate(gamePagePath(game))}>Open</button>
+                        <Link className="button-link" to={gamePagePath(game)}>Open</Link>
                         <button
                           type="button"
                           className="game-danger-button"
@@ -1021,7 +1021,7 @@ export default function LobbyPage() {
         </form>
       </section>
 
-      <section className="lobby-card" aria-labelledby="lobby-stats-heading">
+      <section className="lobby-card lobby-card--stats" aria-labelledby="lobby-stats-heading">
         <h2 id="lobby-stats-heading">Lobby stats</h2>
         {lobbyStatsError ? <p role="alert">{lobbyStatsError}</p> : null}
         {lobbyStatsLoading ? <p>Loading…</p> : null}
