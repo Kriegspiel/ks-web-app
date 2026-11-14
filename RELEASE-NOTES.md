@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.6.8
+
+- Use warm beige and brown chessboard squares in dark mode across game, review, and Tutor views. Keep the light-mode palette, piece artwork, and move indicators unchanged, with distinct last-move squares and readable coordinates in both themes.
+
 ## 1.6.7
 
 - Keep a pawn's previous light square distinct from surrounding dark squares after a move or capture. Use a lighter last-move tint while preserving the fixed board palette, piece colors, and other move indicators.

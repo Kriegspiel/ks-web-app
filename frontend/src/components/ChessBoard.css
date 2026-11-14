@@ -1,5 +1,5 @@
 .chess-board {
-  /* Board colors are independent of the surrounding page theme. */
+  /* Explicit board palettes keep pieces and move feedback independent of page colors. */
   --board-light: #f7fafc;
   --board-dark: #d9e4ed;
   --board-edge: #c2d0dc;
@@ -13,6 +13,16 @@
   margin-inline: auto;
   user-select: none;
   -webkit-user-select: none;
+}
+
+:root[data-theme="dark"] .chess-board {
+  --board-light: #dac5a6;
+  --board-dark: #a47c59;
+  --board-edge: #8c6849;
+  --board-highlight: #c5ae78;
+  --board-muted: #241b13;
+  --board-bg: #dac5a6;
+  --board-text: #241b13;
 }
 
 .board-grid {
