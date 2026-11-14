@@ -79,7 +79,7 @@
 
 .leaderboard-column-title-button,
 .leaderboard-sort-toggle {
-  min-height: 0;
+  min-height: 44px;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -95,7 +95,7 @@
 .leaderboard-column-title-button:hover:not(:disabled),
 .leaderboard-column-title-button:focus-visible {
   box-shadow: none;
-  text-decoration: underline;
+  text-decoration: none;
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.14em;
 }
@@ -107,16 +107,17 @@
   min-width: 1.15rem;
   min-height: 1.15rem;
   padding: 0 0.28rem;
-  border-radius: 999px;
+  border-radius: 2px;
   background: var(--accent);
-  color: var(--surface-strong);
+  color: var(--on-accent);
   font-size: 0.72rem;
   line-height: 1;
 }
 
 .leaderboard-sort-toggle {
-  width: 1.1rem;
-  height: 1.1rem;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
   align-items: center;
   justify-content: center;
   color: var(--text);
@@ -208,7 +209,7 @@
   width: auto;
   min-width: 7.1rem;
   padding: 0.48rem 2.3rem 0.48rem 0.72rem;
-  border-radius: 0.75rem;
+  border-radius: 2px;
 }
 
 .leaderboard-filter-menu__panel {
@@ -238,11 +239,12 @@
 }
 
 .leaderboard-filter-menu__option {
+  min-height: 44px;
   display: flex;
   align-items: center;
   gap: 0.45rem;
   padding: 0.4rem 0.35rem;
-  border-radius: 0.55rem;
+  border-radius: 2px;
   color: var(--text);
   cursor: pointer;
   white-space: nowrap;
@@ -276,7 +278,7 @@
 
 .leaderboard-filter-menu__clear,
 .leaderboard-clear-filters {
-  min-height: 2.4rem;
+  min-height: 44px;
   padding: 0.48rem 0.72rem;
 }
 

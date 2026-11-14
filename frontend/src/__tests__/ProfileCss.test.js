@@ -30,15 +30,16 @@ function blockFor(source, token) {
 }
 
 describe("Profile bot metrics CSS", () => {
-  it("styles the user metrics card as a designed metrics module", () => {
+  it("keeps user metrics flat with aligned values and theme boundaries", () => {
     const metricsCardRule = blockFor(profileCss, ".profile-card--user-metrics")
     expect(metricsCardRule).toMatch(/border-color:\s*color-mix/)
-    expect(metricsCardRule).toMatch(/box-shadow:\s*inset 0 0\.18rem 0/)
+    expect(metricsCardRule).toMatch(/box-shadow:\s*none;/)
 
     const metricsTileRule = blockFor(profileCss, ".profile-card--user-metrics .profile-stats-grid > div")
     expect(metricsTileRule).toMatch(/display:\s*grid;/)
     expect(metricsTileRule).toMatch(/grid-template-rows:\s*auto 1fr;/)
-    expect(metricsTileRule).toMatch(/background:\s*[\s\S]*linear-gradient/)
+    expect(metricsTileRule).toMatch(/background:\s*transparent;/)
+    expect(metricsTileRule).toMatch(/border-top:\s*1px solid var\(--border\);/)
     expect(metricsTileRule).not.toMatch(/--metric-accent/)
 
     const metricsLabelRule = blockFor(profileCss, ".profile-card--user-metrics .profile-stats-grid dt")
@@ -50,7 +51,7 @@ describe("Profile bot metrics CSS", () => {
     expect(profileCss).not.toMatch(/\.profile-card--user-metrics \.profile-stats-grid > div::before/)
 
     expect(profileCss).toMatch(
-      /\n\.profile-bot-row-link\s*\{\s*font-weight:\s*400;\s*text-decoration-line:\s*underline;/,
+      /\n\.profile-bot-row-link\s*\{\s*font-weight:\s*400;\s*text-decoration-line:\s*none;/,
     )
   })
 

@@ -1,5 +1,5 @@
 .profile-page {
-  max-width: var(--content-width);
+  max-width: var(--page-width);
 }
 
 .profile-author-note__attribution {
@@ -22,8 +22,7 @@
   margin-top: 1rem;
   cursor: pointer;
   border-color: color-mix(in srgb, var(--profile-tier-color) 38%, var(--border));
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--surface) 90%, var(--profile-tier-color) 10%), var(--surface));
+  background: transparent;
   transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
@@ -127,9 +126,8 @@
 
 .profile-card--user-metrics {
   border-color: color-mix(in srgb, var(--text) 22%, var(--border));
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-alt) 72%, transparent), var(--surface));
-  box-shadow: inset 0 0.18rem 0 color-mix(in srgb, var(--text) 34%, var(--border));
+  background: transparent;
+  box-shadow: none;
 }
 
 .profile-card--user-metrics h2,
@@ -148,8 +146,10 @@
   align-items: start;
   min-height: 6.25rem;
   border-color: color-mix(in srgb, var(--text) 16%, var(--border));
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-alt) 92%, var(--surface) 8%), var(--surface-alt));
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--border);
+  padding: 16px 0;
 }
 
 .profile-card--user-metrics .profile-stats-grid dt {
@@ -238,7 +238,7 @@
 
 .profile-bot-row-link {
   font-weight: 400;
-  text-decoration-line: underline;
+  text-decoration-line: none;
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.14em;
 }
@@ -269,8 +269,7 @@
 .profile-card--guest-conversion {
   margin-top: 1rem;
   border-color: color-mix(in srgb, var(--text) 28%, var(--border));
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--surface) 88%, var(--text) 12%), var(--surface));
+  background: transparent;
 }
 
 .profile-card--guest-conversion h2 {
@@ -281,6 +280,7 @@
   display: grid;
   gap: 0.85rem;
   margin-top: 1rem;
+  max-width: 42rem;
 }
 
 .guest-conversion-form label {
@@ -371,7 +371,7 @@
   min-height: 1.55rem;
   padding: 0.08rem 0.42rem;
   border: 1px solid var(--border);
-  border-radius: 0.55rem;
+  border-radius: 2px;
   background: color-mix(in srgb, var(--surface-strong) 92%, var(--accent-soft) 8%);
   color: var(--text);
   font-weight: 700;
@@ -392,7 +392,7 @@
 
 .profile-challenge-upgrade__tier-link:hover .profile-challenge-upgrade__tier-name,
 .profile-challenge-upgrade__tier-link:focus-visible .profile-challenge-upgrade__tier-name {
-  text-decoration: underline;
+  text-decoration: none;
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.14em;
 }
@@ -448,10 +448,11 @@
   justify-content: space-between;
   gap: 0.75rem;
   align-items: center;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius-sm);
-  padding: 0.7rem 0.8rem;
-  background: color-mix(in srgb, var(--surface-alt) 86%, transparent);
+  padding: 16px 0;
+  background: transparent;
+  border-top: 1px solid var(--border);
 }
 
 .profile-recent-list li span {

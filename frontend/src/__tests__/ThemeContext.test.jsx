@@ -54,7 +54,7 @@ describe("ThemeProvider", () => {
     expect(screen.getByTestId("theme")).toHaveTextContent("light")
     expect(screen.getByTestId("is-dark")).toHaveTextContent("false")
     expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("light")
-    expect(metaThemeColor).toHaveAttribute("content", "#f7efe3")
+    expect(metaThemeColor).toHaveAttribute("content", "#fafcfe")
 
     fireEvent.click(screen.getByRole("button", { name: "set-invalid" }))
     expect(screen.getByTestId("theme")).toHaveTextContent("light")

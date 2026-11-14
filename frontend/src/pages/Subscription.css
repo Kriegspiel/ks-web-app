@@ -1,5 +1,5 @@
 .subscription-page {
-  max-width: 84rem;
+  max-width: var(--page-width);
 }
 
 .subscription-page__header {
@@ -45,10 +45,11 @@
   gap: 0.8rem;
   align-items: center;
   margin: 1rem 0 1.25rem;
-  padding: 0.85rem;
-  border: 1px solid var(--border);
+  padding: 20px 0;
+  border: 0;
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--surface-strong) 94%, var(--surface) 6%);
+  background: transparent;
+  border-top: 1px solid var(--border);
 }
 
 .subscription-controls__plan {
@@ -78,16 +79,16 @@
 .subscription-interval-toggle {
   display: inline-flex;
   gap: 0.25rem;
-  padding: 0.25rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface-alt);
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
 }
 
 .subscription-interval-toggle button {
-  min-height: 2.35rem;
+  min-height: 44px;
   padding: 0.5rem 0.85rem;
-  border-radius: 999px;
+  border-radius: 2px;
   border-color: transparent;
   background: transparent;
   box-shadow: none;
@@ -104,9 +105,7 @@
   border-color: #050505;
   color: #ffffff;
   font-weight: 800;
-  box-shadow:
-    0 0.18rem 0.36rem color-mix(in srgb, #050505 22%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: none;
 }
 
 .subscription-payment-button:hover:not(:disabled),
@@ -114,9 +113,7 @@
   background: #000000;
   border-color: #000000;
   color: #ffffff;
-  box-shadow:
-    0 0.22rem 0.48rem color-mix(in srgb, #050505 30%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  box-shadow: none;
 }
 
 .subscription-payment-button:disabled {
@@ -145,30 +142,23 @@
   gap: 1rem;
   margin: 0.85rem 0 1.25rem;
   padding: 1rem 1.1rem;
-  border: 2px solid color-mix(in srgb, #d97706 78%, var(--border-strong) 22%);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, #facc15 40%, var(--surface-strong) 60%),
-      color-mix(in srgb, #f59e0b 24%, var(--surface) 76%)
-    );
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, #f59e0b 24%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  background: var(--bg-soft);
+  box-shadow: none;
 }
 
 .subscription-public-invite h2 {
   margin: 0 0 0.35rem;
   font-size: 1.15rem;
   letter-spacing: 0;
-  color: color-mix(in srgb, #1f170f 88%, var(--text) 12%);
+  color: var(--text);
 }
 
 .subscription-public-invite p {
   max-width: 62rem;
   margin: 0;
-  color: color-mix(in srgb, #3e2b13 88%, var(--text) 12%);
+  color: var(--muted);
   font-weight: 650;
 }
 
@@ -177,45 +167,6 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.65rem;
-}
-
-.subscription-public-invite .button-link--primary {
-  background: #1e1611;
-  border-color: #1e1611;
-  color: #fff;
-}
-
-.subscription-public-invite .button-link--secondary {
-  background: rgba(255, 248, 240, 0.7);
-  border-color: rgba(85, 58, 34, 0.3);
-  color: #1e1611;
-}
-
-:root[data-theme="dark"] .subscription-public-invite {
-  border-color: color-mix(in srgb, #facc15 82%, var(--border-strong) 18%);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, #facc15 28%, var(--surface-strong) 72%),
-      color-mix(in srgb, #d97706 24%, var(--surface) 76%)
-    );
-}
-
-:root[data-theme="dark"] .subscription-public-invite h2,
-:root[data-theme="dark"] .subscription-public-invite p {
-  color: #fff4c2;
-}
-
-:root[data-theme="dark"] .subscription-public-invite .button-link--primary {
-  background: #f4ede4;
-  border-color: #f4ede4;
-  color: #100d0a;
-}
-
-:root[data-theme="dark"] .subscription-public-invite .button-link--secondary {
-  background: rgba(28, 23, 18, 0.82);
-  border-color: rgba(244, 237, 228, 0.28);
-  color: #f4ede4;
 }
 
 .subscription-notice {
@@ -228,15 +179,8 @@
 
 .subscription-notice--warning {
   border: 2px solid color-mix(in srgb, #d97706 82%, var(--border-strong) 18%);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, #facc15 34%, var(--surface-strong) 66%),
-      color-mix(in srgb, #f59e0b 22%, var(--surface) 78%)
-    );
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, #f59e0b 28%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  background: color-mix(in srgb, #facc15 20%, var(--surface-strong));
+  box-shadow: none;
 }
 
 .subscription-notice--warning p {
@@ -252,12 +196,7 @@
 
 :root[data-theme="dark"] .subscription-notice--warning {
   border-color: color-mix(in srgb, #facc15 82%, var(--border-strong) 18%);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, #facc15 26%, var(--surface-strong) 74%),
-      color-mix(in srgb, #d97706 24%, var(--surface) 76%)
-    );
+  background: color-mix(in srgb, #facc15 16%, var(--surface-strong));
 }
 
 :root[data-theme="dark"] .subscription-notice--warning p {
@@ -289,11 +228,11 @@
 }
 
 .subscription-tier-table__feature-col {
-  width: 12rem;
+  width: 8.5rem;
 }
 
 .subscription-tier-table__tier-col {
-  width: calc((100% - 12rem) / 7);
+  width: calc((100% - 8.5rem) / 7);
 }
 
 .subscription-tier-table th,
@@ -317,12 +256,16 @@
   text-align: center;
 }
 
+.subscription-tier-table thead th:first-child {
+  background: var(--bg-soft);
+}
+
 .subscription-tier-table tbody th {
   position: sticky;
   left: 0;
   z-index: 2;
   text-align: left;
-  background: var(--surface-strong);
+  background: var(--bg-soft);
 }
 
 .subscription-tier-table th:first-child {
@@ -382,12 +325,10 @@
   min-height: 1.45rem;
   padding: 0.2rem 0.58rem;
   border: 1px solid color-mix(in srgb, var(--success) 70%, var(--text) 30%);
-  border-radius: 999px;
+  border-radius: 2px;
   background: color-mix(in srgb, var(--success) 16%, var(--surface-strong) 84%);
   color: var(--success);
-  box-shadow:
-    0 0 0 2px var(--surface-strong),
-    0 0 0 4px color-mix(in srgb, var(--success) 22%, transparent);
+  box-shadow: none;
   font-size: 0.72rem;
   font-weight: 800;
   white-space: nowrap;
@@ -604,11 +545,11 @@
   }
 
   .subscription-tier-table__feature-col {
-    width: 10.5rem;
+    width: 8.5rem;
   }
 
   .subscription-tier-table__tier-col {
-    width: calc((100% - 10.5rem) / 7);
+    width: calc((100% - 8.5rem) / 7);
   }
 
   .subscription-tier-table th,

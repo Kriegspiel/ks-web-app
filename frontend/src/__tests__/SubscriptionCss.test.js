@@ -38,9 +38,9 @@ describe("Subscription CSS", () => {
   it("makes the guest subscription notice a prominent yellow warning", () => {
     const warningRule = blockFor(subscriptionCss, ".subscription-notice--warning")
     expect(warningRule).toMatch(/border:\s*2px solid color-mix\(in srgb, #d97706/)
-    expect(warningRule).toMatch(/background:\s*linear-gradient/)
+    expect(warningRule).toMatch(/background:\s*color-mix/)
     expect(warningRule).toMatch(/#facc15/)
-    expect(warningRule).toMatch(/box-shadow:/)
+    expect(warningRule).toMatch(/box-shadow:\s*none;/)
 
     const warningParagraphRule = blockFor(subscriptionCss, ".subscription-notice--warning p")
     expect(warningParagraphRule).toMatch(/color:\s*color-mix\(in srgb, #3b2500/)
@@ -50,12 +50,12 @@ describe("Subscription CSS", () => {
     expect(warningLinkRule).toMatch(/font-weight:\s*850;/)
   })
 
-  it("makes the public subscription invite a prominent yellow callout", () => {
+  it("uses a neutral public invite while retaining a semantic guest warning", () => {
     const inviteRule = blockFor(subscriptionCss, ".subscription-public-invite")
     expect(inviteRule).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\) auto;/)
-    expect(inviteRule).toMatch(/border:\s*2px solid color-mix\(in srgb, #d97706/)
-    expect(inviteRule).toMatch(/background:\s*linear-gradient/)
-    expect(inviteRule).toMatch(/#facc15/)
+    expect(inviteRule).toMatch(/border:\s*1px solid var\(--border\);/)
+    expect(inviteRule).toMatch(/background:\s*var\(--bg-soft\);/)
+    expect(inviteRule).not.toMatch(/#facc15/)
 
     const actionsRule = blockFor(subscriptionCss, ".subscription-public-invite__actions")
     expect(actionsRule).toMatch(/display:\s*flex;/)
@@ -67,7 +67,7 @@ describe("Subscription CSS", () => {
     expect(tableRule).toMatch(/min-width:\s*64rem;/)
 
     const featureColumnRule = blockFor(subscriptionCss, ".subscription-tier-table__feature-col")
-    expect(featureColumnRule).toMatch(/width:\s*12rem;/)
+    expect(featureColumnRule).toMatch(/width:\s*8\.5rem;/)
 
     const botItemsRule = blockFor(subscriptionCss, ".subscription-bot-list__items")
     expect(botItemsRule).toMatch(/display:\s*flex;/)
@@ -98,7 +98,7 @@ describe("Subscription CSS", () => {
     expect(currentLabelRule).toMatch(/border:\s*1px solid color-mix\(in srgb, var\(--success\)/)
     expect(currentLabelRule).toMatch(/background:\s*color-mix\(in srgb, var\(--success\)/)
     expect(currentLabelRule).toMatch(/color:\s*var\(--success\);/)
-    expect(currentLabelRule).toMatch(/box-shadow:/)
+    expect(currentLabelRule).toMatch(/box-shadow:\s*none;/)
     expect(currentLabelRule).toMatch(/font-weight:\s*800;/)
   })
 

@@ -28,6 +28,7 @@ function AuthLinks() {
     function closeOnEscape(event) {
       if (event.key === "Escape") {
         setProfileMenuOpen(false)
+        profileMenuRef.current.querySelector("summary").focus()
       }
     }
 
@@ -108,6 +109,33 @@ function AuthLinks() {
 export default function AppHeader() {
   const location = useLocation()
   const headerRef = useRef(null)
+  const menuButtonRef = useRef(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuPath, setMenuPath] = useState(location.pathname)
+
+  // Reset even when navigation originates outside this header or from history.
+  if (menuPath !== location.pathname) {
+    setMenuPath(location.pathname)
+    setMenuOpen(false)
+  }
+
+  useEffect(() => {
+    function closeOnResize() {
+      if (window.innerWidth > 760) setMenuOpen(false)
+    }
+    function closeOnEscape(event) {
+      if (event.key === "Escape" && menuOpen) {
+        setMenuOpen(false)
+        menuButtonRef.current.focus()
+      }
+    }
+    window.addEventListener("resize", closeOnResize)
+    document.addEventListener("keydown", closeOnEscape)
+    return () => {
+      window.removeEventListener("resize", closeOnResize)
+      document.removeEventListener("keydown", closeOnEscape)
+    }
+  }, [menuOpen])
 
   useLayoutEffect(() => {
     const header = headerRef.current
@@ -132,13 +160,31 @@ export default function AppHeader() {
     <header className="app-header" ref={headerRef}>
       <div className="app-header__inner">
         <div className="app-header__brand-group">
-          <Link className="app-header__brand" to="/" aria-current={location.pathname === "/" ? "page" : undefined}>
+          <ThemeToggle />
+          <Link className="app-header__brand" to="/" onClick={() => setMenuOpen(false)} aria-current={location.pathname === "/" ? "page" : undefined}>
             Kriegspiel
           </Link>
-          <ThemeToggle />
         </div>
-        <nav className="app-header__nav" aria-label="Primary navigation">
-          <AuthLinks />
+        <button
+          className="app-header__menu-toggle"
+          type="button"
+          ref={menuButtonRef}
+          aria-expanded={menuOpen}
+          aria-controls="app-primary-navigation"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          {menuOpen ? "Close" : "Menu"}
+        </button>
+        <nav
+          id="app-primary-navigation"
+          className="app-header__nav"
+          aria-label="Primary navigation"
+          data-open={menuOpen}
+          onClick={(event) => {
+            if (event.target.closest("a, button")) setMenuOpen(false)
+          }}
+        >
+          <AuthLinks key={location.pathname} />
         </nav>
       </div>
     </header>

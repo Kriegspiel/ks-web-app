@@ -30,12 +30,13 @@ function blockFor(source, token) {
 }
 
 describe("Auth layout CSS", () => {
-  it("keeps auth pages in one aligned column", () => {
+  it("aligns the page to the site shell and bounds its forms", () => {
     const authPageRule = blockFor(appCss, ".page-shell.auth-page")
-    expect(authPageRule).toMatch(/42rem/)
+    expect(authPageRule).toMatch(/max-width:\s*var\(--page-width\);/)
 
     const authFormRule = blockFor(appCss, ".auth-form {")
     expect(authFormRule).toMatch(/padding:\s*0;/)
+    expect(authFormRule).toMatch(/max-width:\s*42rem;/)
     expect(authFormRule).not.toMatch(/padding:\s*[^;]*1\.25rem/)
 
     const authPromptLinkRule = blockFor(appCss, ".auth-switch-prompt a")
@@ -43,6 +44,6 @@ describe("Auth layout CSS", () => {
     expect(authPromptLinkRule).toMatch(/font-weight:\s*inherit;/)
 
     const legalNoticeRule = blockFor(appCss, ".auth-legal-notice")
-    expect(legalNoticeRule).toMatch(/max-width:\s*none;/)
+    expect(legalNoticeRule).toMatch(/max-width:\s*42rem;/)
   })
 })

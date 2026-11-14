@@ -8,10 +8,10 @@ export default function ThemeToggle() {
       type="button"
       className="theme-toggle"
       onClick={toggleTheme}
-      aria-label="Toggle color theme"
+      aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
       aria-pressed={isDark}
     >
-      <img className="theme-toggle__logo" src="/logo-theme-toggle-96.webp" width="96" height="96" alt="" />
+      <img className="theme-toggle__logo" src="/logo-theme-toggle-96.webp" width="96" height="96" alt="" draggable={false} />
     </button>
   )
 }
