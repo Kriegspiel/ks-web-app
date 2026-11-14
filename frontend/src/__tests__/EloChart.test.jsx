@@ -76,6 +76,8 @@ describe("EloChart", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: "Game number" }))
     expect(screen.getByRole("tab", { name: "Game number" })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByRole("tab", { name: "Game number" })).toHaveClass("is-active")
+    expect(screen.getByRole("tab", { name: "Date" })).not.toHaveClass("is-active")
     expect(screen.getByText("Game 1")).toBeInTheDocument()
     expect(screen.getByText("Game 3")).toBeInTheDocument()
 

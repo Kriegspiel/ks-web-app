@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest"
 
 const profileCssPath = resolve(dirname(fileURLToPath(import.meta.url)), "../pages/Profile.css")
 const profileCss = readFileSync(profileCssPath, "utf8")
+const appCss = readFileSync(resolve(dirname(profileCssPath), "../App.css"), "utf8")
 
 function blockFor(source, token) {
   const start = source.indexOf(token)
@@ -50,9 +51,33 @@ describe("Profile bot metrics CSS", () => {
     expect(profileCss).not.toMatch(/\.profile-metric-tile--/)
     expect(profileCss).not.toMatch(/\.profile-card--user-metrics \.profile-stats-grid > div::before/)
 
-    expect(profileCss).toMatch(
-      /\n\.profile-bot-row-link\s*\{\s*font-weight:\s*400;\s*text-decoration-line:\s*none;/,
-    )
+    expect(profileCss).toMatch(/\n\.profile-bot-row-link\s*\{\s*font-weight:\s*400;/)
+    expect(profileCss).not.toMatch(/text-decoration(?:-line)?:\s*none;/)
+  })
+
+  it("keeps profile accents full width without widening or clipping section content", () => {
+    expect(blockFor(profileCss, ".profile-card--accent-blue {")).toContain("var(--lobby-open-bg)")
+    expect(blockFor(profileCss, ".profile-card--accent-teal {")).toContain("var(--lobby-stats-bg)")
+    const paint = blockFor(profileCss, ".profile-card--accent-blue::before,")
+    expect(paint).toContain("box-shadow: 0 0 0 100vmax var(--profile-section-bg)")
+    expect(paint).toContain("clip-path: inset(0 -100vmax)")
+    expect(paint).toContain("pointer-events: none")
+    expect(paint).not.toContain("100vw")
+    expect(blockFor(profileCss, ".profile-tier-card__link::after {")).toContain("inset: 0")
+    expect(blockFor(profileCss, ".profile-tier-card__body {")).not.toContain("pointer-events: none")
+  })
+
+  it("keeps Elo controls connected with visible selection and touch targets", () => {
+    const group = blockFor(appCss, ".elo-chart__track-toggle {")
+    expect(group).toMatch(/gap:\s*0;/)
+    expect(group).toContain("flex-wrap: nowrap")
+    expect(group).toContain("max-width: 100%")
+    expect(group).toContain("border: 1px solid var(--border-strong)")
+    expect(blockFor(appCss, ".elo-chart__track-pill {")).toContain("min-height: 44px")
+    expect(blockFor(appCss, ".elo-chart__track-pill + .elo-chart__track-pill {")).toContain("border-left: 1px solid var(--border-strong)")
+    const selected = blockFor(appCss, ".elo-chart__track-pill.is-active {")
+    expect(selected).toContain("background: var(--accent)")
+    expect(selected).toContain("color: var(--on-accent)")
   })
 
   it("lets color split labels wrap as whole words", () => {

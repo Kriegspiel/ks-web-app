@@ -57,6 +57,18 @@ describe("shared board design", () => {
     expect(rule(boardCss, ".board-grid .square:focus-visible:not(:disabled)")).toContain("outline: 2px solid var(--board-muted);")
   })
 
+  it("fills shared grid tracks so fractional sizes cannot leave seams between move rings", () => {
+    const grid = rule(boardCss, ".board-grid")
+    expect(grid).toContain("grid-template-columns: repeat(8, minmax(0, 1fr));")
+    expect(grid).toContain("grid-template-rows: repeat(8, minmax(0, 1fr));")
+    expect(grid).toContain("aspect-ratio: 1 / 1;")
+    expect(grid).toContain("gap: 0;")
+    const square = rule(boardCss, ".board-grid .square")
+    expect(square).toContain("height: 100%;")
+    expect(square).toContain("aspect-ratio: auto;")
+    expect(rule(boardCss, ".square::after")).toContain("inset: 0;")
+  })
+
   it("retains reachable action targets beside the board at narrow widths", () => {
     const game = readCss("pages/GamePage.css")
     const review = readCss("pages/Review.css")
@@ -73,7 +85,7 @@ describe("shared board design", () => {
     }
     expect(rule(game, ".game-reserve-pieces")).toContain("repeat(auto-fit, minmax(44px, 1fr))")
     expect(rule(review, ".review-page__segmented-control")).toContain("flex-wrap: wrap;")
-    expect(rule(tutor, ".has-sidebar > .coach-sidebar")).toContain("var(--app-header-height, 57px)")
+    expect(rule(tutor, ".has-sidebar > .coach-sidebar")).toContain("var(--app-header-height, 49px)")
   })
 
   it("keeps black reserve and phantom thumbnails visible on dark controls", () => {

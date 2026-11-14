@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { useNavigate, useParams } from "react-router"
+import { Link, useNavigate, useParams } from "react-router"
 import ChessBoard from "../components/ChessBoard.jsx"
 import PromotionModal from "../components/PromotionModal"
 import VersionStamp from "../components/VersionStamp"
@@ -3812,13 +3812,12 @@ export default function GamePage() {
                   <h2>{completedHeading}</h2>
                   <p>{completedSummary}</p>
                 </div>
-                <button
-                  type="button"
+                <Link
                   className="button-link button-link--primary game-complete-summary__review-button"
-                  onClick={() => navigate(`/game/${gameMeta?.game_code ?? gameRef}/review`)}
+                  to={`/game/${gameMeta?.game_code ?? gameRef}/review`}
                 >
                   Watch review
-                </button>
+                </Link>
               </div>
 
               <div className="game-complete-summary__meta">
@@ -4135,9 +4134,9 @@ export default function GamePage() {
                   </button>
 
                   {isCompleted ? (
-                    <button type="button" className="button-link button-link--primary" onClick={() => navigate(`/game/${gameMeta?.game_code ?? gameRef}/review`)}>
+                    <Link className="button-link button-link--primary" to={`/game/${gameMeta?.game_code ?? gameRef}/review`}>
                       Watch review
-                    </button>
+                    </Link>
                   ) : canCloseWaitingGame ? (
                     <button type="button" className="game-danger-button" onClick={handleCloseWaitingGame} disabled={!canCloseWaitingGame}>
                       Close

@@ -1,4 +1,23 @@
 .lobby-page { max-width: var(--page-width); }
+.lobby-card--open-games { --lobby-section-bg: var(--lobby-open-bg); }
+.lobby-card--stats { --lobby-section-bg: var(--lobby-stats-bg); }
+.lobby-card--open-games,
+.lobby-card--stats {
+  position: relative;
+  isolation: isolate;
+}
+.lobby-card--open-games::before,
+.lobby-card--stats::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--lobby-section-bg);
+  /* Paint to the viewport edges without widening layout or clipping controls. */
+  box-shadow: 0 0 0 100vmax var(--lobby-section-bg);
+  clip-path: inset(0 -100vmax);
+  pointer-events: none;
+}
 .lobby-toast-region {
   position: fixed;
   z-index: 80;
@@ -51,7 +70,6 @@
   border: 1px solid currentColor;
   border-radius: 2px;
   color: inherit;
-  text-decoration: none;
   font-weight: 800;
 }
 .lobby-toast__action:hover,

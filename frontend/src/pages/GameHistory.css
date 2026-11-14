@@ -12,7 +12,6 @@ body:has(.history-page) .app-header {
 
 .history-page__back-link {
   color: var(--text);
-  text-decoration: none;
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.14em;
 }
@@ -287,7 +286,6 @@ body:has(.history-page) .app-header {
 
 .history-opponent-link {
   color: var(--text);
-  text-decoration: none;
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.14em;
 }

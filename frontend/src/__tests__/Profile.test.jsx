@@ -268,6 +268,7 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("region", { name: "Player tier" })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Player tier" })).getByRole("link", { name: "Player tier: Tier T2 Club. View subscription options" })).toHaveAttribute("href", "/subscription")
     expect(screen.getByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
+    expect(within(screen.getByRole("heading", { name: "Tier T2 Club" })).getByRole("link")).toHaveTextContent("Tier T2 Club")
     expect(within(screen.getByRole("region", { name: "Player tier" })).getByText("T2")).toHaveClass("tier-badge", "tier-badge--t2", "profile-tier-card__code")
     expect(screen.queryByText(/language-model bot games/i)).not.toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Overall rating." })).toBeInTheDocument()
@@ -288,6 +289,9 @@ describe("ProfilePage", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Game number" }))
     expect(screen.getAllByText("Game 2").length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole("tab", { name: "vs Humans" }))
+    expect(screen.getByRole("tab", { name: "vs Humans" })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByRole("tab", { name: "vs Humans" })).toHaveClass("is-active")
+    expect(screen.getByRole("tab", { name: "Overall" })).not.toHaveClass("is-active")
     await waitFor(() => expect(mockApi.userApi.getRatingHistory).toHaveBeenCalledWith("fil", "vs_humans", 100))
     expect(screen.getByRole("heading", { name: "vs Humans rating." })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "vs Humans results." })).toBeInTheDocument()
@@ -322,6 +326,7 @@ describe("ProfilePage", () => {
       role: "bot",
       llm_bot_tier: "tier4",
       owner_email: "bot-gpt-oss@kriegspiel.org",
+      author_note: "A bot author description.",
       member_since: "2026-04-03T01:10:41Z",
       stats: {
         elo: 1200,
@@ -363,9 +368,16 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("region", { name: "Bot tier" })).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByRole("link", { name: "Bot tier: Tier T2 Club. View subscription options" })).toHaveAttribute("href", "/subscription")
     expect(screen.getByRole("heading", { name: "Tier T2 Club" })).toBeInTheDocument()
+    expect(within(screen.getByRole("heading", { name: "Tier T2 Club" })).getByRole("link")).toHaveTextContent("Tier T2 Club")
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T2")).toHaveClass("tier-badge", "tier-badge--t2", "profile-tier-card__code")
     expect(screen.getByText("GPT-OSS 120B model bot for T2 Club (reasoning: medium).")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "This user is bot" })).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "Bot information" })).toHaveClass("profile-card--accent-blue")
+    expect(screen.getByRole("region", { name: "User metrics" })).toHaveClass("profile-card--accent-teal")
+    expect(screen.getByRole("region", { name: "Challenge this bot" })).toHaveClass("profile-card--accent-blue")
+    for (const name of ["About this bot", "User stats", "Recent games"]) {
+      expect(screen.getByRole("region", { name })).not.toHaveClass("profile-card--accent-blue", "profile-card--accent-teal")
+    }
     expect(screen.getByText(/On Kriegspiel\.org we allow bots\./i)).toBeInTheDocument()
     expect(screen.getByText(/You also can create your own bot – more bots, more fun\./i)).toBeInTheDocument()
     expect(screen.getByText(/Email address of this bot owner is bot-gpt-oss@kriegspiel\.org\./i)).toBeInTheDocument()
@@ -642,6 +654,7 @@ describe("ProfilePage", () => {
     await screen.findByRole("heading", { name: "fil" })
     expect(screen.getByRole("heading", { name: "User metrics" })).toBeInTheDocument()
     expect(screen.queryByRole("heading", { name: "This user is bot" })).not.toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "User metrics" })).toHaveClass("profile-card--accent-teal")
     expect(screen.getByText("Average turns count")).toBeInTheDocument()
     expect(screen.getByText("12.5")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "White" })).toHaveAttribute("href", "/user/fil/games?color=white")
