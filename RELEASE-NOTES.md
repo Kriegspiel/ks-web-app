@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.6.9
+
+- Refresh shared-link previews to match the homepage's typography and hidden-information board, with descriptive alternative text for Open Graph and Twitter. Keep the previous preview image available at its existing URL.
+
 ## 1.6.8
 
 - Use warm beige and brown chessboard squares in dark mode across game, review, and Tutor views. Keep the light-mode palette, piece artwork, and move indicators unchanged, with distinct last-move squares and readable coordinates in both themes.
