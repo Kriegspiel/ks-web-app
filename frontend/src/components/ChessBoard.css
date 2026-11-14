@@ -209,7 +209,10 @@
 }
 
 .board-grid .square.square--last-move {
-  background: var(--board-highlight);
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--board-highlight) 50%, transparent),
+    color-mix(in srgb, var(--board-highlight) 50%, transparent)
+  );
 }
 
 .board-grid .square--illegal {

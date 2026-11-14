@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.6.6
+
+- Preserve the light/dark distinction between last-move squares with a translucent highlight, so adjacent squares on a rook move no longer merge into one solid block. Keep the board palette, pieces, and other move indicators unchanged in both page themes.
+
 ## 1.6.5
 
 - Show review arrows above pieces and square highlights while retaining their existing transparency and successful/illegal move colors. Keep the overlay within the board's stacking context and let board interactions pass through it.

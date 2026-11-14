@@ -19,7 +19,7 @@ afterEach(() => {
 
 describe("VersionStamp", () => {
   it("uses_the_current_frontend_and_backend_release_versions", () => {
-    expect(FRONTEND_VERSION).toBe("1.6.5")
+    expect(FRONTEND_VERSION).toBe("1.6.6")
     expect(BACKEND_VERSION_FALLBACK).toBe("1.5.16")
   })
 

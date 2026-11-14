@@ -42,11 +42,14 @@ describe("shared board design", () => {
     expect(rule(boardCss, ".board-grid .square:disabled")).not.toMatch(/opacity|filter|background/)
   })
 
-  it("lets last-move fills win over both square colors without erasing semantic rings", () => {
+  it("tints last-move squares without replacing their checkerboard colors or semantic rings", () => {
     // These equally specific selectors must follow the base square colors.
     const lastMoveSelector = ".board-grid .square.square--last-move"
     expect(boardCss.indexOf(lastMoveSelector)).toBeGreaterThan(boardCss.indexOf(".board-grid .square.dark"))
-    expect(rule(boardCss, lastMoveSelector)).toContain("background: var(--board-highlight);")
+    const lastMove = rule(boardCss, lastMoveSelector)
+    expect(lastMove).not.toMatch(/(?:^|[;\n])\s*(?:background|background-color|opacity|filter)\s*:/)
+    expect(lastMove).toContain("background-image: linear-gradient(")
+    expect(lastMove).toContain("color-mix(in srgb, var(--board-highlight) 50%, transparent)")
     const rings = rule(boardCss, ".square::after")
     for (const state of ["highlight", "capture", "illegal", "suggested"]) {
       expect(rings).toContain(`var(--square-ring-${state})`)
