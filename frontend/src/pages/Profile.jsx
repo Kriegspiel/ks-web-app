@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router"
 import EloChart from "../components/EloChart"
 import BotAuthorNote from "../components/BotAuthorNote"
+import ProfileSections from "../components/ProfileSections"
 import { ELO_TRACKS } from "../components/eloChartConstants"
 import TierBadge from "../components/TierBadge"
 import VersionStamp from "../components/VersionStamp"
@@ -908,235 +909,237 @@ export default function ProfilePage() {
     <main className="page-shell profile-page">
       <h1>{profile?.username}</h1>
       <p>Member since {formatDate(profile?.member_since)}.</p>
-      {profileTier ? (
-        <section className={`profile-card profile-tier-card ${profileTier.className}`} aria-label={profileTierLabel}>
-          <TierBadge code={profileTier.code} className="profile-tier-card__code" />
-          <div className="profile-tier-card__body">
-            <h2 aria-label={`Tier ${profileTier.code} ${profileTier.name}`}>
-              <Link className="profile-tier-card__link" to="/subscription" aria-label={`${profileTierLabel}: Tier ${profileTier.code} ${profileTier.name}. View subscription options`}>
-                Tier {profileTier.code} {profileTier.name}
-              </Link>
-            </h2>
-            {profileTier.limit ? <p>{profileTier.limit}</p> : null}
-          </div>
-        </section>
-      ) : null}
-      {isOwnGuestProfile ? (
-        <section className="profile-card profile-card--guest-conversion" aria-label="Convert guest account">
-          <h2>Keep this account.</h2>
-          <p>
-            You are currently playing Kriegspiel as a guest. We want everyone to have easy access,
-            so you can keep playing as a guest while this browser session lasts. To make sure you can
-            always get back to your games, convert this guest account to a regular account.
-          </p>
-          <p>Your username will become <strong>{convertedUsername}</strong>.</p>
-          <form className="guest-conversion-form" onSubmit={onConvertGuest}>
-            <label>
-              Email
-              <input
-                type="email"
-                value={conversionForm.email}
-                autoComplete="email"
-                onChange={(event) => setConversionForm((current) => ({ ...current, email: event.target.value }))}
-                required
-              />
-            </label>
-            <label>
-              Password
-              <input
-                type="password"
-                value={conversionForm.password}
-                autoComplete="new-password"
-                onChange={(event) => setConversionForm((current) => ({ ...current, password: event.target.value }))}
-                required
-              />
-            </label>
-            {conversionError ? <p role="alert" className="auth-error">{conversionError}</p> : null}
-            <button type="submit" className="guest-conversion-button" disabled={actionLoading}>
-              {actionLoading ? "Converting…" : "Convert to regular account"}
-            </button>
-          </form>
-        </section>
-      ) : null}
-      {isBotProfile ? (
-        <section className="profile-card profile-card--bot-note profile-card--accent-blue" aria-label="Bot information">
-          <h2>This user is bot</h2>
-          <p>
-            On Kriegspiel.org we allow bots. To understand the bots better, read our{" "}
-            <a href={BOT_BLOG_URL} target="_blank" rel="noreferrer noopener">
-              blog post about bots ↗
-            </a>
-            .
-          </p>
-          <p>You also can create your own bot – more bots, more fun.</p>
-          <p>Email address of this bot owner is {profile?.owner_email ?? "unknown"}.</p>
-        </section>
-      ) : null}
-      {isBotProfile && profile?.author_note?.trim() ? <BotAuthorNote note={profile.author_note} /> : null}
-      {userMetrics ? (
-        <section className="profile-card profile-card--user-metrics profile-card--bot-metrics profile-card--accent-teal" aria-label="User metrics">
-          <h2>User metrics</h2>
-          {userMetrics.completedGames ? (
-            <>
-              <dl className="profile-stats-grid profile-bot-metrics-summary">
-                <div className="profile-metric-tile profile-metric-tile--games"><dt>Completed games</dt><dd>{formatCount(userMetrics.completedGames)}</dd></div>
-                <div className="profile-metric-tile profile-metric-tile--bots"><dt>vs Bots win rate</dt><dd>{formatWinRate(userMetrics.vsBots.winRate)}</dd></div>
-                <div className="profile-metric-tile profile-metric-tile--humans"><dt>vs Humans win rate</dt><dd>{formatWinRate(userMetrics.vsHumans.winRate)}</dd></div>
-                <div className="profile-metric-tile profile-metric-tile--turns"><dt>Average turns count</dt><dd>{userMetrics.averageTurnCount.toFixed(1)}</dd></div>
-                <div className="profile-metric-tile profile-metric-tile--duration"><dt>Average duration</dt><dd>{formatDuration(userMetrics.averageDurationSeconds)}</dd></div>
-              </dl>
-              <div className="profile-bot-metrics-panels">
-                <section className="profile-bot-metrics-panel" aria-labelledby="profile-bot-color-heading">
-                  <h3 id="profile-bot-color-heading">Color split</h3>
-                  <dl className="profile-bot-mini-list">
-                    <div>
-                      <dt><Link className="profile-bot-row-link profile-bot-color-link" to={profileGamesFilterPath(profileUsername, "color", "white")}>White</Link></dt>
-                      <dd>{formatMetricRecord(userMetrics.asWhite)} · {formatWinRate(userMetrics.asWhite.winRate)}</dd>
-                    </div>
-                    <div>
-                      <dt><Link className="profile-bot-row-link profile-bot-color-link" to={profileGamesFilterPath(profileUsername, "color", "black")}>Black</Link></dt>
-                      <dd>{formatMetricRecord(userMetrics.asBlack)} · {formatWinRate(userMetrics.asBlack.winRate)}</dd>
-                    </div>
-                  </dl>
-                </section>
-                <section className="profile-bot-metrics-panel" aria-labelledby="profile-bot-opponents-heading">
-                  <h3 id="profile-bot-opponents-heading">Top opponents</h3>
-                  {userOpponentRows.length ? (
-                    <ul className="profile-bot-row-list">
-                      {userOpponentRows.map((row) => (
-                        <li key={`${row.role}-${row.username}`}>
-                          <Link className="profile-bot-row-link profile-bot-opponent-link" to={profileGamesFilterPath(profileUsername, "opponent", opponentFilterValue(row))}>
-                            {row.username}{row.role === "bot" ? " (bot)" : ""}
-                          </Link>
-                          <strong>{formatMetricRecord(row)} · {formatWinRate(row.winRate)}</strong>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : <p>No opponent rows yet.</p>}
-                </section>
-                <section className="profile-bot-metrics-panel" aria-labelledby="profile-bot-rulesets-heading">
-                  <h3 id="profile-bot-rulesets-heading">Rulesets</h3>
-                  {userRulesetRows.length ? (
-                    <ul className="profile-bot-row-list">
-                      {userRulesetRows.map((row) => (
-                        <li key={row.ruleVariant}>
-                          <Link className="profile-bot-row-link profile-bot-ruleset-link" to={profileGamesFilterPath(profileUsername, "rule_set", row.ruleVariant)}>
-                            {formatRuleVariant(row.ruleVariant)}
-                          </Link>
-                          <strong>{formatCount(row.totalGames)} · {formatWinRate(row.winRate)}</strong>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : <p>No ruleset rows yet.</p>}
-                </section>
-              </div>
-            </>
-          ) : <p>No completed games yet.</p>}
-        </section>
-      ) : null}
-
-      <section className="profile-card" aria-label="User stats">
-        <h2>Stats</h2>
-        <div className="elo-chart__track-toggle" role="tablist" aria-label="Elo track">
-          {ELO_TRACKS.map((track) => (
-            <button
-              key={track.key}
-              type="button"
-              role="tab"
-              aria-selected={ratingTrack === track.key}
-              className={`elo-chart__track-pill${ratingTrack === track.key ? " is-active" : ""}`}
-              onClick={() => setRatingTrack(track.key)}
-            >
-              {track.label}
-            </button>
-          ))}
-        </div>
-        <div className="stats-group-grid">
-          <section className="stats-group-card" aria-labelledby="profile-ratings-heading">
-            <h3 id="profile-ratings-heading">{selectedTrack.label} rating.</h3>
-            <dl className="profile-stats-grid">
-              <div><dt>{selectedTrack.label} Elo</dt><dd>{selectedRating.elo}</dd></div>
-              <div><dt>Peak {selectedTrack.label.toLowerCase()}</dt><dd>{selectedRating.peak}</dd></div>
-            </dl>
-          </section>
-          <section className="stats-group-card" aria-labelledby="profile-results-heading">
-            <h3 id="profile-results-heading">{selectedTrack.label} results.</h3>
-            <dl className="profile-stats-grid">
-              <div><dt>Games played</dt><dd>{selectedHistoryStats.gamesPlayed}</dd></div>
-              <div><dt>Wins</dt><dd>{selectedHistoryStats.winsLabel}</dd></div>
-              <div><dt>Losses</dt><dd>{selectedHistoryStats.lossesLabel}</dd></div>
-              <div><dt>Draws</dt><dd>{selectedHistoryStats.drawsLabel}</dd></div>
-            </dl>
-          </section>
-        </div>
-        <EloChart seriesByMode={ratingSeries} emptyText="No finished games with rating history yet." ratingTrack={ratingTrack} showTrackToggle={false} />
-      </section>
-
-      {isBotProfile ? (
-        <section className="profile-card profile-challenge-card profile-card--accent-blue" aria-label="Challenge this bot">
-          <h2>Challenge this bot</h2>
-          {inactiveBotProfile ? (
-            <p>This bot is inactive. Its profile, game history, and completed-game reviews remain available.</p>
-          ) : challengeBotsLoading || !challengeAvailabilityReady ? (
-            <p>Checking challenge availability…</p>
-          ) : challengeBotsError ? (
-            <p role="alert" className="auth-error">{challengeBotsError}</p>
-          ) : challengeBotAvailable ? (
-            <form className="profile-challenge-form" onSubmit={onChallengeBot}>
-              <label>
-                Ruleset
-                <select value={challengeRuleVariant} onChange={(event) => setChallengeRuleVariant(event.target.value)}>
-                  {challengeRuleVariants.map((ruleVariant) => (
-                    <option key={ruleVariant} value={ruleVariant}>{challengeRuleLabel(ruleVariant)}</option>
-                  ))}
-                </select>
-              </label>
-              <button type="submit" disabled={challengeCreating}>
-                {challengeCreating ? "Starting…" : "Play game"}
-              </button>
-              {challengeError ? <p role="alert" className="auth-error">{challengeError}</p> : null}
-            </form>
-          ) : (
-            <div className="profile-challenge-upgrade">
-              <p>
-                {profileTier ? (
-                  <>
-                    <span className="profile-challenge-upgrade__bot-name">{profileUsername}</span>{" "}
-                    is available from{" "}
-                    <Link
-                      className="profile-challenge-upgrade__tier-link"
-                      to={profileTierSubscriptionPath}
-                      aria-label={`View ${subscriptionTierLabel(profileTier.code)} subscription tier`}
-                    >
-                      <TierBadge code={profileTier.code} className="profile-challenge-upgrade__tier-code" />
-                      <span className="profile-challenge-upgrade__tier-name">{subscriptionTierName(profileTier.code)}</span>
-                    </Link>
-                    . Upgrade your tier to challenge this bot.
-                  </>
-                ) : (
-                  "This bot is not available for your current tier. Upgrade your tier to challenge it."
-                )}
-              </p>
-              <Link className="button-link button-link--primary" to={profileTierSubscriptionPath}>View tiers</Link>
+      <ProfileSections>
+        {profileTier ? (
+          <section className={`profile-card profile-tier-card ${profileTier.className}`} aria-label={profileTierLabel}>
+            <TierBadge code={profileTier.code} className="profile-tier-card__code" />
+            <div className="profile-tier-card__body">
+              <h2 aria-label={`Tier ${profileTier.code} ${profileTier.name}`}>
+                <Link className="profile-tier-card__link" to="/subscription" aria-label={`${profileTierLabel}: Tier ${profileTier.code} ${profileTier.name}. View subscription options`}>
+                  Tier {profileTier.code} {profileTier.name}
+                </Link>
+              </h2>
+              {profileTier.limit ? <p>{profileTier.limit}</p> : null}
             </div>
-          )}
-        </section>
-      ) : null}
+          </section>
+        ) : null}
+        {isOwnGuestProfile ? (
+          <section className="profile-card profile-card--guest-conversion" aria-label="Convert guest account">
+            <h2>Keep this account.</h2>
+            <p>
+              You are currently playing Kriegspiel as a guest. We want everyone to have easy access,
+              so you can keep playing as a guest while this browser session lasts. To make sure you can
+              always get back to your games, convert this guest account to a regular account.
+            </p>
+            <p>Your username will become <strong>{convertedUsername}</strong>.</p>
+            <form className="guest-conversion-form" onSubmit={onConvertGuest}>
+              <label>
+                Email
+                <input
+                  type="email"
+                  value={conversionForm.email}
+                  autoComplete="email"
+                  onChange={(event) => setConversionForm((current) => ({ ...current, email: event.target.value }))}
+                  required
+                />
+              </label>
+              <label>
+                Password
+                <input
+                  type="password"
+                  value={conversionForm.password}
+                  autoComplete="new-password"
+                  onChange={(event) => setConversionForm((current) => ({ ...current, password: event.target.value }))}
+                  required
+                />
+              </label>
+              {conversionError ? <p role="alert" className="auth-error">{conversionError}</p> : null}
+              <button type="submit" className="guest-conversion-button" disabled={actionLoading}>
+                {actionLoading ? "Converting…" : "Convert to regular account"}
+              </button>
+            </form>
+          </section>
+        ) : null}
+        {isBotProfile ? (
+          <section className="profile-card profile-card--bot-note" aria-label="Bot information">
+            <h2>This user is bot</h2>
+            <p>
+              On Kriegspiel.org we allow bots. To understand the bots better, read our{" "}
+              <a href={BOT_BLOG_URL} target="_blank" rel="noreferrer noopener">
+                blog post about bots ↗
+              </a>
+              .
+            </p>
+            <p>You also can create your own bot – more bots, more fun.</p>
+            <p>Email address of this bot owner is {profile?.owner_email ?? "unknown"}.</p>
+          </section>
+        ) : null}
+        {isBotProfile && profile?.author_note?.trim() ? <BotAuthorNote note={profile.author_note} /> : null}
+        {userMetrics ? (
+          <section className="profile-card profile-card--user-metrics profile-card--bot-metrics" aria-label="User metrics">
+            <h2>User metrics</h2>
+            {userMetrics.completedGames ? (
+              <>
+                <dl className="profile-stats-grid profile-bot-metrics-summary">
+                  <div className="profile-metric-tile profile-metric-tile--games"><dt>Completed games</dt><dd>{formatCount(userMetrics.completedGames)}</dd></div>
+                  <div className="profile-metric-tile profile-metric-tile--bots"><dt>vs Bots win rate</dt><dd>{formatWinRate(userMetrics.vsBots.winRate)}</dd></div>
+                  <div className="profile-metric-tile profile-metric-tile--humans"><dt>vs Humans win rate</dt><dd>{formatWinRate(userMetrics.vsHumans.winRate)}</dd></div>
+                  <div className="profile-metric-tile profile-metric-tile--turns"><dt>Average turns count</dt><dd>{userMetrics.averageTurnCount.toFixed(1)}</dd></div>
+                  <div className="profile-metric-tile profile-metric-tile--duration"><dt>Average duration</dt><dd>{formatDuration(userMetrics.averageDurationSeconds)}</dd></div>
+                </dl>
+                <div className="profile-bot-metrics-panels">
+                  <section className="profile-bot-metrics-panel" aria-labelledby="profile-bot-color-heading">
+                    <h3 id="profile-bot-color-heading">Color split</h3>
+                    <dl className="profile-bot-mini-list">
+                      <div>
+                        <dt><Link className="profile-bot-row-link profile-bot-color-link" to={profileGamesFilterPath(profileUsername, "color", "white")}>White</Link></dt>
+                        <dd>{formatMetricRecord(userMetrics.asWhite)} · {formatWinRate(userMetrics.asWhite.winRate)}</dd>
+                      </div>
+                      <div>
+                        <dt><Link className="profile-bot-row-link profile-bot-color-link" to={profileGamesFilterPath(profileUsername, "color", "black")}>Black</Link></dt>
+                        <dd>{formatMetricRecord(userMetrics.asBlack)} · {formatWinRate(userMetrics.asBlack.winRate)}</dd>
+                      </div>
+                    </dl>
+                  </section>
+                  <section className="profile-bot-metrics-panel" aria-labelledby="profile-bot-opponents-heading">
+                    <h3 id="profile-bot-opponents-heading">Top opponents</h3>
+                    {userOpponentRows.length ? (
+                      <ul className="profile-bot-row-list">
+                        {userOpponentRows.map((row) => (
+                          <li key={`${row.role}-${row.username}`}>
+                            <Link className="profile-bot-row-link profile-bot-opponent-link" to={profileGamesFilterPath(profileUsername, "opponent", opponentFilterValue(row))}>
+                              {row.username}{row.role === "bot" ? " (bot)" : ""}
+                            </Link>
+                            <strong>{formatMetricRecord(row)} · {formatWinRate(row.winRate)}</strong>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : <p>No opponent rows yet.</p>}
+                  </section>
+                  <section className="profile-bot-metrics-panel" aria-labelledby="profile-bot-rulesets-heading">
+                    <h3 id="profile-bot-rulesets-heading">Rulesets</h3>
+                    {userRulesetRows.length ? (
+                      <ul className="profile-bot-row-list">
+                        {userRulesetRows.map((row) => (
+                          <li key={row.ruleVariant}>
+                            <Link className="profile-bot-row-link profile-bot-ruleset-link" to={profileGamesFilterPath(profileUsername, "rule_set", row.ruleVariant)}>
+                              {formatRuleVariant(row.ruleVariant)}
+                            </Link>
+                            <strong>{formatCount(row.totalGames)} · {formatWinRate(row.winRate)}</strong>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : <p>No ruleset rows yet.</p>}
+                  </section>
+                </div>
+              </>
+            ) : <p>No completed games yet.</p>}
+          </section>
+        ) : null}
 
-      <section className="profile-card" aria-label="Recent games">
-        <h2>Recent games</h2>
-        {recentGames.length === 0 ? <p>No completed games yet.</p> : (
-          <ul className="profile-recent-list">
-            {recentGames.slice(0, 5).map((game) => (
-              <li key={game.game_id}>
-                <span>{game.result} vs {game.opponent ?? "unknown"} · {formatRuleVariant(game.rule_variant)}</span>
-                <Link to={`/game/${game.game_code ?? game.game_id}/review`}>Review</Link>
-              </li>
+        <section className="profile-card" data-profile-section="stats" aria-label="User stats">
+          <h2>Stats</h2>
+          <div className="elo-chart__track-toggle" role="tablist" aria-label="Elo track">
+            {ELO_TRACKS.map((track) => (
+              <button
+                key={track.key}
+                type="button"
+                role="tab"
+                aria-selected={ratingTrack === track.key}
+                className={`elo-chart__track-pill${ratingTrack === track.key ? " is-active" : ""}`}
+                onClick={() => setRatingTrack(track.key)}
+              >
+                {track.label}
+              </button>
             ))}
-          </ul>
-        )}
-        <Link to={`/user/${profile?.username}/games`} className="profile-all-games-link">View all games</Link>
-      </section>
+          </div>
+          <div className="stats-group-grid">
+            <section className="stats-group-card" aria-labelledby="profile-ratings-heading">
+              <h3 id="profile-ratings-heading">{selectedTrack.label} rating.</h3>
+              <dl className="profile-stats-grid">
+                <div><dt>{selectedTrack.label} Elo</dt><dd>{selectedRating.elo}</dd></div>
+                <div><dt>Peak {selectedTrack.label.toLowerCase()}</dt><dd>{selectedRating.peak}</dd></div>
+              </dl>
+            </section>
+            <section className="stats-group-card" aria-labelledby="profile-results-heading">
+              <h3 id="profile-results-heading">{selectedTrack.label} results.</h3>
+              <dl className="profile-stats-grid">
+                <div><dt>Games played</dt><dd>{selectedHistoryStats.gamesPlayed}</dd></div>
+                <div><dt>Wins</dt><dd>{selectedHistoryStats.winsLabel}</dd></div>
+                <div><dt>Losses</dt><dd>{selectedHistoryStats.lossesLabel}</dd></div>
+                <div><dt>Draws</dt><dd>{selectedHistoryStats.drawsLabel}</dd></div>
+              </dl>
+            </section>
+          </div>
+          <EloChart seriesByMode={ratingSeries} emptyText="No finished games with rating history yet." ratingTrack={ratingTrack} showTrackToggle={false} />
+        </section>
+
+        {isBotProfile ? (
+          <section className="profile-card profile-challenge-card" aria-label="Challenge this bot">
+            <h2>Challenge this bot</h2>
+            {inactiveBotProfile ? (
+              <p>This bot is inactive. Its profile, game history, and completed-game reviews remain available.</p>
+            ) : challengeBotsLoading || !challengeAvailabilityReady ? (
+              <p>Checking challenge availability…</p>
+            ) : challengeBotsError ? (
+              <p role="alert" className="auth-error">{challengeBotsError}</p>
+            ) : challengeBotAvailable ? (
+              <form className="profile-challenge-form" onSubmit={onChallengeBot}>
+                <label>
+                  Ruleset
+                  <select value={challengeRuleVariant} onChange={(event) => setChallengeRuleVariant(event.target.value)}>
+                    {challengeRuleVariants.map((ruleVariant) => (
+                      <option key={ruleVariant} value={ruleVariant}>{challengeRuleLabel(ruleVariant)}</option>
+                    ))}
+                  </select>
+                </label>
+                <button type="submit" disabled={challengeCreating}>
+                  {challengeCreating ? "Starting…" : "Play game"}
+                </button>
+                {challengeError ? <p role="alert" className="auth-error">{challengeError}</p> : null}
+              </form>
+            ) : (
+              <div className="profile-challenge-upgrade">
+                <p>
+                  {profileTier ? (
+                    <>
+                      <span className="profile-challenge-upgrade__bot-name">{profileUsername}</span>{" "}
+                      is available from{" "}
+                      <Link
+                        className="profile-challenge-upgrade__tier-link"
+                        to={profileTierSubscriptionPath}
+                        aria-label={`View ${subscriptionTierLabel(profileTier.code)} subscription tier`}
+                      >
+                        <TierBadge code={profileTier.code} className="profile-challenge-upgrade__tier-code" />
+                        <span className="profile-challenge-upgrade__tier-name">{subscriptionTierName(profileTier.code)}</span>
+                      </Link>
+                      . Upgrade your tier to challenge this bot.
+                    </>
+                  ) : (
+                    "This bot is not available for your current tier. Upgrade your tier to challenge it."
+                  )}
+                </p>
+                <Link className="button-link button-link--primary" to={profileTierSubscriptionPath}>View tiers</Link>
+              </div>
+            )}
+          </section>
+        ) : null}
+
+        <section className="profile-card" aria-label="Recent games">
+          <h2>Recent games</h2>
+          {recentGames.length === 0 ? <p>No completed games yet.</p> : (
+            <ul className="profile-recent-list">
+              {recentGames.slice(0, 5).map((game) => (
+                <li key={game.game_id}>
+                  <span>{game.result} vs {game.opponent ?? "unknown"} · {formatRuleVariant(game.rule_variant)}</span>
+                  <Link to={`/game/${game.game_code ?? game.game_id}/review`}>Review</Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Link to={`/user/${profile?.username}/games`} className="profile-all-games-link">View all games</Link>
+        </section>
+      </ProfileSections>
 
       <VersionStamp />
     </main>

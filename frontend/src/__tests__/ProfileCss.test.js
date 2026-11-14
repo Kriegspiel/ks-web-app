@@ -56,14 +56,14 @@ describe("Profile bot metrics CSS", () => {
   })
 
   it("keeps profile accents full width without widening or clipping section content", () => {
-    expect(blockFor(profileCss, ".profile-card--accent-blue {")).toContain("var(--lobby-open-bg)")
-    expect(blockFor(profileCss, ".profile-card--accent-teal {")).toContain("var(--lobby-stats-bg)")
-    const paint = blockFor(profileCss, ".profile-card--accent-blue::before,")
+    expect(blockFor(profileCss, ".profile-card--accent {")).toContain("var(--lobby-open-bg)")
+    const paint = blockFor(profileCss, ".profile-card--accent::before {")
     expect(paint).toContain("inset: 0 0 -1rem;")
     expect(paint).toContain("box-shadow: 0 0 0 100vmax var(--profile-section-bg)")
     expect(paint).toContain("clip-path: inset(0 -100vmax)")
     expect(paint).toContain("pointer-events: none")
     expect(paint).not.toContain("100vw")
+    expect(blockFor(profileCss, ".profile-page > .profile-card--accent:last-of-type::before {")).toContain("bottom: 0")
     expect(blockFor(profileCss, ".profile-tier-card__link::after {")).toContain("inset: 0")
     expect(blockFor(profileCss, ".profile-tier-card__body {")).not.toContain("pointer-events: none")
   })

@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.6.4
+
+- Automatically alternate profile section accents around Stats, which always stays accented. Optional bot notes, metrics, tier information, and guest conversion sections now determine the visible sequence without leaving gaps between bands.
+
 ## 1.6.3
 
 - Keep button-style navigation links free of underlines at rest, on hover, and on keyboard focus, including Lobby quick actions; ordinary text links remain underlined and focus outlines stay visible.

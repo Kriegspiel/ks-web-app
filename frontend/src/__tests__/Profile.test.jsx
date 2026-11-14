@@ -56,6 +56,40 @@ function renderProfile(path = "/user/fil") {
 
 describe("ProfilePage", () => {
   it.each([
+    ["full bot", { username: "stockfishwild", role: "bot", author_note: "Author details", user_metrics: {} }, false,
+      ["Bot tier", "Bot information", "About this bot", "User metrics", "User stats", "Challenge this bot", "Recent games"], [true, false, true, false, true, false, true]],
+    ["bot without note", { username: "stockfishwild", role: "bot", user_metrics: {} }, false,
+      ["Bot tier", "Bot information", "User metrics", "User stats", "Challenge this bot", "Recent games"], [false, true, false, true, false, true]],
+    ["bot without metrics", { username: "stockfishwild", role: "bot", author_note: "Author details" }, false,
+      ["Bot tier", "Bot information", "About this bot", "User stats", "Challenge this bot", "Recent games"], [false, true, false, true, false, true]],
+    ["bot without tier, note or metrics", { username: "custom_bot", role: "bot" }, false,
+      ["Bot information", "User stats", "Challenge this bot", "Recent games"], [false, true, false, true]],
+    ["human with metrics", { username: "fil", role: "user", llm_bot_tier: "tier1", user_metrics: {} }, false,
+      ["Player tier", "User metrics", "User stats", "Recent games"], [true, false, true, false]],
+    ["human without metrics", { username: "fil", role: "user", llm_bot_tier: "tier1" }, false,
+      ["Player tier", "User stats", "Recent games"], [false, true, false]],
+    ["own guest", { username: "guest_example", role: "guest", llm_bot_tier: "guest", user_metrics: {} }, true,
+      ["Player tier", "Convert guest account", "User metrics", "User stats", "Recent games"], [false, true, false, true, false]],
+    ["public guest", { username: "guest_example", role: "guest", llm_bot_tier: "guest", user_metrics: {} }, false,
+      ["Player tier", "User metrics", "User stats", "Recent games"], [true, false, true, false]],
+  ])("alternates visible sections around accented Stats: %s", async (_name, profile, ownGuest, sectionNames, accents) => {
+    mockApi.userApi.getProfile.mockResolvedValueOnce({ ...profile, stats: {} })
+    mockApi.userApi.getGameHistory.mockResolvedValueOnce({ games: [] })
+    mockApi.userApi.getRatingHistory.mockResolvedValueOnce({ series: { game: [], date: [] } })
+    if (ownGuest) mockAuthState.value.user = { username: profile.username, is_guest: true }
+    renderProfile(`/user/${profile.username}`)
+    await screen.findByRole("heading", { name: profile.username })
+
+    const sections = [...screen.getByRole("main").querySelectorAll(":scope > .profile-card")]
+    expect(sections).toEqual(sectionNames.map((name) => screen.getByRole("region", { name })))
+    const accented = () => sections.map((section) => section.classList.contains("profile-card--accent"))
+    expect(accented()).toEqual(accents)
+    fireEvent.click(screen.getByRole("tab", { name: "vs Bots" }))
+    expect(accented()).toEqual(accents)
+    expect(screen.getByRole("region", { name: "User stats" })).toHaveClass("profile-card--accent")
+  })
+
+  it.each([
     ["bot", "Model: exact-model\nSource: https://github.com/Kriegspiel/bot-openai-compatible", true],
     ["bot", "", false],
     ["bot", "   ", false],
@@ -372,11 +406,11 @@ describe("ProfilePage", () => {
     expect(within(screen.getByRole("region", { name: "Bot tier" })).getByText("T2")).toHaveClass("tier-badge", "tier-badge--t2", "profile-tier-card__code")
     expect(screen.getByText("GPT-OSS 120B model bot for T2 Club (reasoning: medium).")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "This user is bot" })).toBeInTheDocument()
-    expect(screen.getByRole("region", { name: "Bot information" })).toHaveClass("profile-card--accent-blue")
-    expect(screen.getByRole("region", { name: "User metrics" })).toHaveClass("profile-card--accent-teal")
-    expect(screen.getByRole("region", { name: "Challenge this bot" })).toHaveClass("profile-card--accent-blue")
-    for (const name of ["About this bot", "User stats", "Recent games"]) {
-      expect(screen.getByRole("region", { name })).not.toHaveClass("profile-card--accent-blue", "profile-card--accent-teal")
+    for (const name of ["Bot tier", "About this bot", "User stats", "Recent games"]) {
+      expect(screen.getByRole("region", { name })).toHaveClass("profile-card--accent")
+    }
+    for (const name of ["Bot information", "User metrics", "Challenge this bot"]) {
+      expect(screen.getByRole("region", { name })).not.toHaveClass("profile-card--accent")
     }
     expect(screen.getByText(/On Kriegspiel\.org we allow bots\./i)).toBeInTheDocument()
     expect(screen.getByText(/You also can create your own bot – more bots, more fun\./i)).toBeInTheDocument()
@@ -654,7 +688,7 @@ describe("ProfilePage", () => {
     await screen.findByRole("heading", { name: "fil" })
     expect(screen.getByRole("heading", { name: "User metrics" })).toBeInTheDocument()
     expect(screen.queryByRole("heading", { name: "This user is bot" })).not.toBeInTheDocument()
-    expect(screen.getByRole("region", { name: "User metrics" })).toHaveClass("profile-card--accent-teal")
+    expect(screen.getByRole("region", { name: "User metrics" })).not.toHaveClass("profile-card--accent")
     expect(screen.getByText("Average turns count")).toBeInTheDocument()
     expect(screen.getByText("12.5")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "White" })).toHaveAttribute("href", "/user/fil/games?color=white")

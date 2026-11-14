@@ -109,22 +109,13 @@
   font-weight: 700;
 }
 
-.profile-card--accent-blue {
+.profile-card--accent {
   --profile-section-bg: var(--lobby-open-bg);
-}
-
-.profile-card--accent-teal {
-  --profile-section-bg: var(--lobby-stats-bg);
-}
-
-.profile-card--accent-blue,
-.profile-card--accent-teal {
   position: relative;
   isolation: isolate;
 }
 
-.profile-card--accent-blue::before,
-.profile-card--accent-teal::before {
+.profile-card--accent::before {
   content: "";
   position: absolute;
   /* Cover the next card's 1rem margin through its top divider. */
@@ -134,6 +125,11 @@
   box-shadow: 0 0 0 100vmax var(--profile-section-bg);
   clip-path: inset(0 -100vmax);
   pointer-events: none;
+}
+
+/* The final section ends before the separate version stamp. */
+.profile-page > .profile-card--accent:last-of-type::before {
+  bottom: 0;
 }
 
 .profile-card--bot-note {

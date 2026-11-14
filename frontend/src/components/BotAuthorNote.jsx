@@ -1,8 +1,8 @@
-export default function BotAuthorNote({ note }) {
+export default function BotAuthorNote({ note, className = "" }) {
   const parts = note.split(/(https?:\/\/[^\s<>"']+)/gi)
 
   return (
-    <section className="profile-card profile-card--author-note" aria-labelledby="bot-author-note-title">
+    <section className={`profile-card profile-card--author-note ${className}`} aria-labelledby="bot-author-note-title">
       <h2 id="bot-author-note-title">About this bot</h2>
       <p className="profile-author-note__attribution">Provided by the bot author.</p>
       <p className="profile-author-note__text">
