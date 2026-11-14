@@ -8,6 +8,7 @@
   --board-bg: #fafcfe;
   --board-text: #18242f;
   position: relative;
+  isolation: isolate;
   width: min(100%, 38rem);
   margin-inline: auto;
   user-select: none;
@@ -35,6 +36,8 @@
 
 .board-overlay {
   position: absolute;
+  /* Keep review annotations above pieces, rings, and coordinates within the board. */
+  z-index: 6;
   inset: 0;
   width: 100%;
   height: 100%;
