@@ -11,8 +11,14 @@ function rule(css, selector) {
   return css.slice(css.indexOf("{", start) + 1, css.indexOf("}", start))
 }
 
+function rgbToken(palette, token) {
+  const match = palette.match(new RegExp(`--board-${token}:\\s*#([\\da-f]{6});`, "i"))
+  expect(match, `Missing board color: ${token}`).not.toBeNull()
+  return match[1].match(/../g).map(channel => Number.parseInt(channel, 16))
+}
+
 describe("shared board design", () => {
-  it("keeps board colors independent of the surrounding theme", () => {
+  it("preserves the light board palette and native light rendering", () => {
     const palette = rule(boardCss, ".chess-board")
     for (const [token, color] of Object.entries({
       light: "#f7fafc",
@@ -25,9 +31,28 @@ describe("shared board design", () => {
     })) {
       expect(palette).toContain(`--board-${token}: ${color};`)
     }
-    expect(boardCss).not.toMatch(/data-theme|prefers-color-scheme/)
+    expect(boardCss).not.toContain("prefers-color-scheme")
     expect(rule(boardCss, ".board-grid")).toContain("color-scheme: light;")
     expect(rule(boardCss, ".board-grid .coord")).toContain("color: var(--board-muted);")
+  })
+
+  it("uses the warm board palette only when the page's dark theme is selected", () => {
+    const palette = rule(boardCss, ':root[data-theme="dark"] .chess-board')
+    for (const [token, color] of Object.entries({
+      light: "#dac5a6",
+      dark: "#a47c59",
+      edge: "#8c6849",
+      highlight: "#c5ae78",
+      muted: "#241b13",
+      bg: "#dac5a6",
+      text: "#241b13",
+    })) {
+      expect(palette).toContain(`--board-${token}: ${color};`)
+    }
+    // Theme changes alter board tokens, never opacity or filters on its pieces.
+    expect(palette).not.toMatch(/(?:^|[;\n])\s*(?:opacity|filter|background)\s*:/)
+    expect(rule(boardCss, ".board-grid .piece")).toContain("filter: none;")
+    expect(rule(boardCss, ".piece__image")).toContain("filter: none;")
   })
 
   it("preserves square geometry and color when generic buttons are enlarged or disabled", () => {
@@ -60,15 +85,14 @@ describe("shared board design", () => {
     expect(rule(boardCss, ".board-grid .square:focus-visible:not(:disabled)")).toContain("outline: 2px solid var(--board-muted);")
   })
 
-  it("keeps a pawn's vacated light square lighter than plain and highlighted dark neighbors", () => {
-    const palette = rule(boardCss, ".chess-board")
-    const rgb = (token) => {
-      const hex = palette.match(new RegExp(`--board-${token}:\\s*#([\\da-f]{6});`, "i"))[1]
-      return hex.match(/../g).map(channel => Number.parseInt(channel, 16))
-    }
+  it.each([
+    ["light", ".chess-board"],
+    ["dark", ':root[data-theme="dark"] .chess-board'],
+  ])("keeps a pawn's vacated light square distinct from dark neighbors in the %s theme", (_theme, selector) => {
+    const palette = rule(boardCss, selector)
     const lastMove = rule(boardCss, ".board-grid .square.square--last-move")
     const opacity = Number(lastMove.match(/var\(--board-highlight\)\s+([\d.]+)%/)[1]) / 100
-    const light = rgb("light"), dark = rgb("dark"), highlight = rgb("highlight")
+    const light = rgbToken(palette, "light"), dark = rgbToken(palette, "dark"), highlight = rgbToken(palette, "highlight")
     const tint = (color) => color.map((channel, i) => channel * (1 - opacity) + highlight[i] * opacity)
     const luminance = (color) => color.reduce((total, channel, i) => total + channel * [0.2126, 0.7152, 0.0722][i], 0)
     const plainGap = luminance(light) - luminance(dark)
@@ -78,7 +102,27 @@ describe("shared board design", () => {
     expect(luminance(tint(light)) - luminance(tint(dark))).toBeGreaterThan(plainGap * 0.4)
     // Both base colors must still receive a visible cue.
     for (const color of [light, dark]) {
-      expect(luminance(color) - luminance(tint(color))).toBeGreaterThan(4)
+      expect(Math.abs(luminance(color) - luminance(tint(color)))).toBeGreaterThan(4)
+    }
+  })
+
+  it("keeps dark-theme coordinates legible on plain and last-move squares", () => {
+    const palette = rule(boardCss, ':root[data-theme="dark"] .chess-board')
+    const lastMove = rule(boardCss, ".board-grid .square.square--last-move")
+    const opacity = Number(lastMove.match(/var\(--board-highlight\)\s+([\d.]+)%/)[1]) / 100
+    const highlight = rgbToken(palette, "highlight")
+    const luminance = (color) => color.reduce((total, channel, i) => {
+      const srgb = channel / 255
+      const linear = srgb <= 0.04045 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4
+      return total + linear * [0.2126, 0.7152, 0.0722][i]
+    }, 0)
+    const textLuminance = luminance(rgbToken(palette, "muted"))
+    for (const token of ["light", "dark"]) {
+      const color = rgbToken(palette, token)
+      const tinted = color.map((channel, i) => channel * (1 - opacity) + highlight[i] * opacity)
+      for (const background of [color, tinted]) {
+        expect((luminance(background) + 0.05) / (textLuminance + 0.05)).toBeGreaterThanOrEqual(4.5)
+      }
     }
   })
 
