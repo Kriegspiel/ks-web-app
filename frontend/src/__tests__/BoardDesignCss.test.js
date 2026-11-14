@@ -49,7 +49,7 @@ describe("shared board design", () => {
     const lastMove = rule(boardCss, lastMoveSelector)
     expect(lastMove).not.toMatch(/(?:^|[;\n])\s*(?:background|background-color|opacity|filter)\s*:/)
     expect(lastMove).toContain("background-image: linear-gradient(")
-    expect(lastMove).toContain("color-mix(in srgb, var(--board-highlight) 50%, transparent)")
+    expect(lastMove).toContain("color-mix(in srgb, var(--board-highlight) 25%, transparent)")
     const rings = rule(boardCss, ".square::after")
     for (const state of ["highlight", "capture", "illegal", "suggested"]) {
       expect(rings).toContain(`var(--square-ring-${state})`)
@@ -58,6 +58,28 @@ describe("shared board design", () => {
     expect(rule(boardCss, ".board-grid .square--illegal")).toContain("rgba(220, 38, 38, 0.95)")
     expect(rule(boardCss, ".board-grid .square--suggested")).toContain("rgba(34, 197, 94, 0.78)")
     expect(rule(boardCss, ".board-grid .square:focus-visible:not(:disabled)")).toContain("outline: 2px solid var(--board-muted);")
+  })
+
+  it("keeps a pawn's vacated light square lighter than plain and highlighted dark neighbors", () => {
+    const palette = rule(boardCss, ".chess-board")
+    const rgb = (token) => {
+      const hex = palette.match(new RegExp(`--board-${token}:\\s*#([\\da-f]{6});`, "i"))[1]
+      return hex.match(/../g).map(channel => Number.parseInt(channel, 16))
+    }
+    const lastMove = rule(boardCss, ".board-grid .square.square--last-move")
+    const opacity = Number(lastMove.match(/var\(--board-highlight\)\s+([\d.]+)%/)[1]) / 100
+    const light = rgb("light"), dark = rgb("dark"), highlight = rgb("highlight")
+    const tint = (color) => color.map((channel, i) => channel * (1 - opacity) + highlight[i] * opacity)
+    const luminance = (color) => color.reduce((total, channel, i) => total + channel * [0.2126, 0.7152, 0.0722][i], 0)
+    const plainGap = luminance(light) - luminance(dark)
+    // d5-e4 leaves a highlighted light origin surrounded by plain dark squares.
+    // The former 50% tint retained two highlighted colors, but erased this edge.
+    expect(luminance(tint(light)) - luminance(dark)).toBeGreaterThan(plainGap * 0.4)
+    expect(luminance(tint(light)) - luminance(tint(dark))).toBeGreaterThan(plainGap * 0.4)
+    // Both base colors must still receive a visible cue.
+    for (const color of [light, dark]) {
+      expect(luminance(color) - luminance(tint(color))).toBeGreaterThan(4)
+    }
   })
 
   it("fills shared grid tracks so fractional sizes cannot leave seams between move rings", () => {
