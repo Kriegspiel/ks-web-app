@@ -167,6 +167,9 @@ describe("LobbyPage", () => {
     expect(openListRule).toContain("gap: 0;")
     expect(openRowRule).toContain("padding: 16px 12px;")
     expect(openRowRule).toContain("border-radius: 0;")
+    const openBandExtension = css.match(/\.lobby-card--open-games::before\s*\{([^}]+)\}/)[1]
+    expect(openBandExtension).toContain("bottom: -1rem;")
+    expect(openBandExtension).not.toMatch(/(?:margin|padding)(?:-[a-z]+)?:/)
     expect(css).toContain("max-height: calc(var(--lobby-open-game-row-visible-height) * 4);")
     expect(css).toContain("overflow-y: auto;")
     expect(css).toContain("scrollbar-gutter: stable;")

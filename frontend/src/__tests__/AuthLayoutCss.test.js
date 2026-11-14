@@ -31,6 +31,18 @@ function blockFor(source, token) {
 }
 
 describe("Auth layout CSS", () => {
+  it("keeps button-style navigation plain in every interaction state without removing focus", () => {
+    for (const selector of ["a.button-link[href]", ".inline-links a[href]", "a.lobby-toast__action[href]"]) {
+      for (const state of ["", ":hover", ":focus-visible"]) {
+        const linkRule = blockFor(baseCss, `${selector}${state}`)
+        expect(linkRule).toMatch(/text-decoration-line:\s*none;/)
+        expect(linkRule).not.toMatch(/outline\s*:/)
+      }
+    }
+    expect(blockFor(baseCss, "a[href] {")).toMatch(/text-decoration-line:\s*underline;/)
+    expect(blockFor(baseCss, "a:focus-visible,")).toMatch(/outline:\s*2px solid var\(--text\);/)
+  })
+
   it("exempts header and footer links while retaining body underlines and keyboard focus", () => {
     for (const landmark of [".app-header", ".app-footer"]) {
       for (const state of ["", ":hover", ":focus-visible"]) {

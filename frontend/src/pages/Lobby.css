@@ -18,6 +18,10 @@
   clip-path: inset(0 -100vmax);
   pointer-events: none;
 }
+.lobby-card--open-games::before {
+  /* Cover the following Join by code card's 1rem margin through its divider. */
+  bottom: -1rem;
+}
 .lobby-toast-region {
   position: fixed;
   z-index: 80;
