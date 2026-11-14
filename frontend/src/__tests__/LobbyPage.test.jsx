@@ -162,7 +162,12 @@ describe("LobbyPage", () => {
     expect(listRule).toContain("border-top: 1px solid var(--border);")
     expect(css).toContain(".lobby-open-games-list")
     expect(css).toContain(".lobby-open-games-list--scrollable")
-    expect(css).toContain("max-height: calc((var(--lobby-open-game-row-visible-height) * 4) + (0.75rem * 3));")
+    const openListRule = css.match(/\.lobby-open-games-list\s*\{([^}]+)\}/)[1]
+    const openRowRule = css.match(/\.lobby-open-games-list li\s*\{([^}]+)\}/)[1]
+    expect(openListRule).toContain("gap: 0;")
+    expect(openRowRule).toContain("padding: 16px 12px;")
+    expect(openRowRule).toContain("border-radius: 0;")
+    expect(css).toContain("max-height: calc(var(--lobby-open-game-row-visible-height) * 4);")
     expect(css).toContain("overflow-y: auto;")
     expect(css).toContain("scrollbar-gutter: stable;")
     expect(css).toContain(".lobby-open-games-list li.is-joinable")

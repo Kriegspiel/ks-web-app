@@ -95,10 +95,13 @@
   letter-spacing: -0.8px;
 }
 
-/* The header wordmark is the sole branding exception to page-link underlines. */
-.app-header__brand[href],
-.app-header__brand[href]:hover,
-.app-header__brand[href]:focus-visible {
+/* Shared navigation is distinct from underlined links within page content. */
+.app-header a[href],
+.app-header a[href]:hover,
+.app-header a[href]:focus-visible,
+.app-footer a[href],
+.app-footer a[href]:hover,
+.app-footer a[href]:focus-visible {
   text-decoration-line: none;
 }
 

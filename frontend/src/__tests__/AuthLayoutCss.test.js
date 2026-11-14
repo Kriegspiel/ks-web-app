@@ -31,15 +31,16 @@ function blockFor(source, token) {
 }
 
 describe("Auth layout CSS", () => {
-  it("exempts only the header wordmark from page-link underlines and retains keyboard focus", () => {
-    const brandRule = blockFor(appCss, ".app-header__brand[href],")
-    expect(brandRule).toMatch(/text-decoration-line:\s*none;/)
-    expect(appCss).toContain(".app-header__brand[href]:hover,")
-    expect(appCss).toContain(".app-header__brand[href]:focus-visible {")
-    expect(brandRule).not.toMatch(/outline\s*:/)
+  it("exempts header and footer links while retaining body underlines and keyboard focus", () => {
+    for (const landmark of [".app-header", ".app-footer"]) {
+      for (const state of ["", ":hover", ":focus-visible"]) {
+        const linkRule = blockFor(appCss, `${landmark} a[href]${state}`)
+        expect(linkRule).toMatch(/text-decoration-line:\s*none;/)
+        expect(linkRule).not.toMatch(/outline\s*:/)
+      }
+    }
     expect(blockFor(baseCss, "a[href] {")).toMatch(/text-decoration-line:\s*underline;/)
     expect(blockFor(baseCss, "a:focus-visible,")).toMatch(/outline:\s*2px solid var\(--text\);/)
-    expect(blockFor(appCss, ".app-footer__brand {")).not.toMatch(/text-decoration/)
   })
 
   it("aligns the page to the site shell and bounds its forms", () => {
