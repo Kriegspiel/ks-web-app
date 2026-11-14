@@ -95,6 +95,13 @@
   letter-spacing: -0.8px;
 }
 
+/* The header wordmark is the sole branding exception to page-link underlines. */
+.app-header__brand[href],
+.app-header__brand[href]:hover,
+.app-header__brand[href]:focus-visible {
+  text-decoration-line: none;
+}
+
 button.theme-toggle {
   width: 44px;
   min-height: 44px;

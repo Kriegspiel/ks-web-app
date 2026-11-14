@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.6.2
+
+- Keep the header Kriegspiel wordmark free of underlines, including on hover and keyboard focus, while preserving its focus outline and underlining other page links.
+
 ## 1.6.1
 
 - Underline links to other pages, including player names, navigation, footer links, and calls to action; keep in-page controls distinct.
