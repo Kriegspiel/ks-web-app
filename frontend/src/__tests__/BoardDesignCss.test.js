@@ -69,6 +69,28 @@ describe("shared board design", () => {
     expect(rule(boardCss, ".square::after")).toContain("inset: 0;")
   })
 
+  it("paints review arrows above occupied squares while containing their layers within the board", () => {
+    expect(rule(boardCss, ".chess-board")).toContain("isolation: isolate;")
+    const layer = (selector) => {
+      const value = rule(boardCss, selector).match(/z-index:\s*(\d+)\s*;/)
+      expect(value, `Missing layer: ${selector}`).not.toBeNull()
+      return Number(value[1])
+    }
+    const overlayLayer = layer(".board-overlay")
+    for (const selector of [".phantom-piece-on-board", ".board-grid .piece", ".square::after", ".board-grid .coord"]) {
+      expect(overlayLayer).toBeGreaterThan(layer(selector))
+    }
+    expect(rule(boardCss, ".board-overlay")).toContain("pointer-events: none;")
+  })
+
+  it("retains translucent arrows and their successful and illegal move colors", () => {
+    expect(rule(boardCss, ".board-overlay__arrow")).toContain("opacity: 0.62;")
+    for (const [tone, color] of [["illegal", "rgba(220, 38, 38, 0.9)"], ["success", "rgba(34, 197, 94, 0.88)"]]) {
+      expect(rule(boardCss, `.board-overlay__arrow--${tone}`)).toContain(`stroke: ${color};`)
+      expect(rule(boardCss, `.board-overlay__marker--${tone}`)).toContain(`fill: ${color};`)
+    }
+  })
+
   it("retains reachable action targets beside the board at narrow widths", () => {
     const game = readCss("pages/GamePage.css")
     const review = readCss("pages/Review.css")

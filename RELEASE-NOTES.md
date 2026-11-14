@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.6.5
+
+- Show review arrows above pieces and square highlights while retaining their existing transparency and successful/illegal move colors. Keep the overlay within the board's stacking context and let board interactions pass through it.
+
 ## 1.6.4
 
 - Automatically alternate profile section accents around Stats, which always stays accented. Optional bot notes, metrics, tier information, and guest conversion sections now determine the visible sequence without leaving gaps between bands.
