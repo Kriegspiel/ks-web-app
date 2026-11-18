@@ -188,6 +188,14 @@ describe("GamePage", () => {
     expect(screen.queryByText(/Cloudflare/)).not.toBeInTheDocument()
   })
 
+  it("shows_the_game_load_fallback_if_the_request_has_no_error_details", async () => {
+    mockApi.getGameState.mockRejectedValueOnce(undefined)
+
+    render(<GamePage />)
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Unable to load this game right now.")
+  })
+
   it("shows_current_message_above_the_referee_log", async () => {
     render(<GamePage />)
 
