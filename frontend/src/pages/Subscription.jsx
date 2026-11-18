@@ -61,7 +61,7 @@ const T3_BOTS = [
 const T4_BOTS = [
   ["xAI", [subscriptionBot("llm_grok", "Grok")]],
   ["Anthropic", [subscriptionBot("llm_opus", "Claude Opus")]],
-  ["OpenAI", [subscriptionBot("llm_gpt_sol", "GPT Sol")]],
+  ["OpenAI", [subscriptionBot("llm_gpt_sol", "GPT Sol"), subscriptionBot("agent_gpt_sol", "GPT Sol Agent")]],
   ["Google", [subscriptionBot("llm_gemini31_pro_preview", "Gemini 3.1 Pro Preview")]],
 ]
 
