@@ -40,7 +40,7 @@ function isGameAccessDeniedError(error) {
 }
 
 function gameRequestErrorMessage(error, fallback) {
-  if (error?.status >= 500 && error.status < 600) {
+  if (error?.status >= 500) {
     return "The game server didn’t respond as expected. Refresh the page to see the latest game state."
   }
   return error?.message ?? fallback
