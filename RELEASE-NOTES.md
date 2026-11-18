@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.6.10
+
+- Display GPT Sol Agent as a T4 Expert bot on its profile. The pilot uses an unlisted account.
+
 ## 1.6.9
 
 - Refresh shared-link previews to match the homepage's typography and hidden-information board, with descriptive alternative text for Open Graph and Twitter. Keep the previous preview image available at its existing URL.

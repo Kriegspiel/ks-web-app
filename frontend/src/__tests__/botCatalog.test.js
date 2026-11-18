@@ -93,6 +93,9 @@ describe("botCatalog", () => {
     expect(botAvailableForViewer({ username: "llm_gpt_sol" }, "tier3")).toBe(false)
     expect(botAvailableForViewer({ username: "llm_gpt_sol" }, "tier4")).toBe(true)
     expect(subscriptionPathForBot({ username: "llm_gpt_sol" })).toBe("/subscription?tier=tier4")
+    expect(botTierCode({ username: "agent_gpt_sol" })).toBe("T4")
+    expect(botAvailableForViewer({ username: "agent_gpt_sol" }, "tier3")).toBe(false)
+    expect(botAvailableForViewer({ username: "agent_gpt_sol" }, "tier4")).toBe(true)
   })
 
   it.each([
