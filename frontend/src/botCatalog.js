@@ -83,6 +83,7 @@ const BOT_TIER_BY_USERNAME = {
   llm_qwen_flash: "T3",
   llm_opus: "T4",
   llm_gpt_sol: "T4",
+  agent_gpt_sol: "T4",
   llm_grok: "T4",
   llm_muse_glimmer: "T2",
   llm_muse_spark: "T3",

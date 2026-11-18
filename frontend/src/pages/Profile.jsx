@@ -462,6 +462,12 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     reasoningLevel: "xhigh",
     className: "profile-tier-card--tier4",
   },
+  agent_gpt_sol: {
+    code: "T4",
+    tierName: "Expert",
+    limit: "GPT Sol Agent for T4 Expert.",
+    className: "profile-tier-card--tier4",
+  },
   llm_gpt55_pro: {
     code: "T5",
     model: "GPT-5.5 Pro",
