@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.6.11
+
+- List GPT Sol Agent in the T4 Expert subscription catalogue for its public launch.
+
 ## 1.6.10
 
 - Display GPT Sol Agent as a T4 Expert bot on its profile. The pilot uses an unlisted account.
