@@ -39,6 +39,13 @@ function isGameAccessDeniedError(error) {
   return error?.status === 401 || error?.status === 403
 }
 
+function gameRequestErrorMessage(error, fallback) {
+  if (error?.status >= 500) {
+    return "The game server didn’t respond as expected. Refresh the page to see the latest game state."
+  }
+  return error?.message ?? fallback
+}
+
 async function writeClipboardText(text) {
   /* v8 ignore next 4 -- @preserve browsers without Clipboard API are covered by the defensive fallback below. */
   if (navigator.clipboard?.writeText) {
@@ -2256,7 +2263,7 @@ export default function GamePage() {
           // Keep the original access error when public status cannot be loaded.
         }
       }
-      setError(requestError?.message ?? "Unable to load this game right now.")
+      setError(gameRequestErrorMessage(requestError, "Unable to load this game right now."))
     } finally {
       if (statePollInFlightRef.current === requestId) {
         statePollInFlightRef.current = null
@@ -3644,7 +3651,7 @@ export default function GamePage() {
         return
       }
 
-      setActionError(requestError?.message ?? "Unable to submit move right now.")
+      setActionError(gameRequestErrorMessage(requestError, "Unable to submit move right now."))
     } finally {
       if (isCurrentSubmitAttempt()) {
         submitMoveContextRef.current = null
@@ -3690,7 +3697,7 @@ export default function GamePage() {
       await askAny(gameRef)
       await pollState({ silent: true, preserveViewport: true, force: true })
     } catch (requestError) {
-      setActionError(requestError?.message ?? "Unable to ask the referee right now.")
+      setActionError(gameRequestErrorMessage(requestError, "Unable to ask the referee right now."))
     } finally {
       setSubmittingAction(false)
     }
@@ -3711,7 +3718,7 @@ export default function GamePage() {
       await resignGame(gameRef)
       await pollState({ silent: true, preserveViewport: true, force: true })
     } catch (requestError) {
-      setActionError(requestError?.message ?? "Unable to resign right now.")
+      setActionError(gameRequestErrorMessage(requestError, "Unable to resign right now."))
     } finally {
       setSubmittingAction(false)
     }
@@ -3731,7 +3738,7 @@ export default function GamePage() {
       await deleteWaitingGame(gameRef)
       navigate("/lobby")
     } catch (requestError) {
-      setActionError(requestError?.message ?? "Unable to close this waiting game right now.")
+      setActionError(gameRequestErrorMessage(requestError, "Unable to close this waiting game right now."))
     } finally {
       setSubmittingAction(false)
     }

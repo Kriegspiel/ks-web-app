@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.6.12
+
+- Suggest refreshing the page when a server error interrupts a game-state request or game action.
+
 ## 1.6.11
 
 - List GPT Sol Agent in the T4 Expert subscription catalogue for its public launch.
