@@ -165,6 +165,29 @@ describe("GamePage", () => {
     expect(mockNavigate).not.toHaveBeenCalled()
   })
 
+  it("suggests_refreshing_in_both_game_error_surfaces_after_server_failures", async () => {
+    const serverError = {
+      status: 520,
+      message: "The origin web server returned an invalid or incomplete response to Cloudflare.",
+    }
+    const refreshGuidance = "The game server didn’t respond as expected. Refresh the page to see the latest game state."
+    mockApi.submitMove.mockRejectedValueOnce(serverError)
+
+    const { container } = render(<GamePage />)
+    fireEvent.click(await screen.findByRole("button", { name: "Square e2" }))
+    fireEvent.click(screen.getByRole("button", { name: "Square e4" }))
+
+    const currentMessage = within(screen.getByLabelText("Current message"))
+    expect(await currentMessage.findByRole("alert")).toHaveTextContent(refreshGuidance)
+
+    mockApi.getGameState.mockRejectedValue(serverError)
+    fireEvent.focus(window)
+
+    await waitFor(() => expect(container.querySelector(".game-page > .auth-error")).toHaveTextContent(refreshGuidance))
+    expect(currentMessage.getByRole("alert")).toHaveTextContent(refreshGuidance)
+    expect(screen.queryByText(/Cloudflare/)).not.toBeInTheDocument()
+  })
+
   it("shows_current_message_above_the_referee_log", async () => {
     render(<GamePage />)
 
