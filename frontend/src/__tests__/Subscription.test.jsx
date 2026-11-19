@@ -149,7 +149,7 @@ describe("SubscriptionPage", () => {
     const cells = within(row).getAllByRole("cell")
     expect(cells.map((cell) => Array.from(cell.querySelectorAll(".subscription-bot-list__label"), (label) => label.textContent))).toEqual([
       ["Kriegspiel:"],
-      ["Kriegspiel:"],
+      ["Kriegspiel:", "OpenAI:"],
       ["Anthropic:", "Google:", "Meta:", "OpenAI:"],
       ["Anthropic:", "Google:", "Meta:", "OpenAI:"],
       ["Anthropic:", "Google:", "OpenAI:", "xAI:"],
@@ -182,7 +182,7 @@ describe("SubscriptionPage", () => {
   it.each([false, true])("keeps_all_newly_inactive_accounts_out_of_subscription_for_signed_in_%s", async (signedIn) => {
     const retired = ["llm_nemotron_super", "llm_nemotron_nano", "llm_qwen_plus", "llm_qwen37_plus", "llm_minimax_m3", "llm_phi4", "llm_mistral_large3", "llm_mistral_medium35", "llm_nemotron_ultra", "llm_qwen_flash", "llm_hermes3_70b", "llm_hermes4_405b", "llm_gpt55", "llm_gpt55_pro", "llm_gemini31_lite"]
     const retained = [
-      ["llm_gpt_luna", 2], ["llm_gptoss120b", 2], ["llm_haiku", 2], ["llm_llama4_maverick", 2], ["llm_gemma4_31b", 2],
+      ["agent_gpt_sol", 1], ["llm_gpt_luna", 2], ["llm_gptoss120b", 2], ["llm_haiku", 2], ["llm_llama4_maverick", 2], ["llm_gemma4_31b", 2],
       ["llm_sonnet", 3], ["llm_muse_glimmer", 2], ["llm_muse_spark", 3], ["llm_gemini_flash", 3],
       ["llm_opus", 4], ["llm_gpt_sol", 4], ["llm_gpt_terra", 3], ["llm_gemini31_pro_preview", 4],
       ["llm_grok", 4], ["llm_fable", 5], ["llm_gpt_astra", 5],
@@ -373,6 +373,7 @@ describe("SubscriptionPage", () => {
     expect(within(botCells[0]).queryByRole("link", { name: "Darkboard MCTS" })).not.toBeInTheDocument()
     expect(within(botCells[0]).queryByText("Lower-tier bots included.")).not.toBeInTheDocument()
     expect(within(botCells[1]).getByText("Lower-tier bots included.")).toBeInTheDocument()
+    expect(within(botCells[1]).getByRole("link", { name: "GPT Sol Agent" })).toHaveAttribute("href", "/user/agent_gpt_sol")
     expect(within(botCells[1]).getByRole("link", { name: "Darkboard MCTS" })).toHaveAttribute("href", "/user/darkboardmcts")
     expect(within(botCells[1]).getByRole("link", { name: "Simple Heuristics Bot" })).toHaveAttribute("href", "/user/simpleheuristics")
     expect(within(botCells[1]).getByRole("link", { name: "Stockfish Wild 16" })).toHaveAttribute("href", "/user/stockfishwild")
@@ -444,7 +445,7 @@ describe("SubscriptionPage", () => {
     expect(screen.queryByRole("link", { name: "Hermes 4 405B" })).not.toBeInTheDocument()
     expect(within(botCells[5]).getByText("Lower-tier bots included.")).toBeInTheDocument()
     expect(within(botCells[4]).getByRole("link", { name: "GPT Sol" })).toHaveAttribute("href", "/user/llm_gpt_sol")
-    expect(within(botCells[4]).getByRole("link", { name: "GPT Sol Agent" })).toHaveAttribute("href", "/user/agent_gpt_sol")
+    expect(within(botCells[4]).queryByRole("link", { name: "GPT Sol Agent" })).not.toBeInTheDocument()
     expect(within(botCells[5]).getByRole("link", { name: "Claude Fable" })).toHaveAttribute("href", "/user/llm_fable")
     expect(screen.queryByRole("link", { name: "GPT-5.5" })).not.toBeInTheDocument()
     expect(within(botCells[5]).getByRole("link", { name: "GPT Astra" })).toHaveAttribute("href", "/user/llm_gpt_astra")

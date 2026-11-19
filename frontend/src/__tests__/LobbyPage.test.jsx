@@ -138,6 +138,10 @@ describe("LobbyPage", () => {
     expect(h.preferredBotId([{ bot_id: "first" }])).toBe("first")
     expect(h.preferredBotId([{ username: "none" }])).toBe("")
     expect(h.preferredBotId([{ bot_id: "first" }, { bot_id: "random", display_name: "Random Bot" }])).toBe("random")
+    expect(h.preferredBotId([
+      { username: "agent_gpt_sol" },
+      { bot_id: "random", username: "randobot" },
+    ])).toBe("random")
     expect(h.botRating({ elo: "bad" })).toBe(1200)
     expect(h.formatBotPickerLabel({ elo: "bad" })).toBe("1200 - Unknown bot")
     expect(h.botSupportsRuleVariant({}, "berkeley_any")).toBe(true)
@@ -745,6 +749,59 @@ describe("LobbyPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create bot game" }))
     await waitFor(() => expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({ opponent_type: "bot", bot_id: "bot-1" })))
     expect(mockNavigate).toHaveBeenCalledWith("/game/BOT123")
+  })
+
+  it("creates_a_game_against_gpt_sol_agent_by_default_for_a_t1_player", async () => {
+    mockAuth.user = { username: "playerone", llm_bot_tier: "tier1" }
+    mockApi.getBots.mockResolvedValue({ bots: [
+      { bot_id: "random", username: "randobot", display_name: "Random Bot", elo: 1201 },
+      { bot_id: "sol-agent", username: "agent_gpt_sol", display_name: "GPT Sol Agent", elo: 1200, llm_backed: true, required_tier: "tier1", available_for_viewer: true },
+    ] })
+    mockApi.createGame.mockResolvedValue({ game_id: "g-sol", game_code: "SOL123", state: "active" })
+    renderPage()
+
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    const picker = await screen.findByRole("combobox", { name: "Bot opponent" })
+    await waitFor(() => expect(picker).toHaveTextContent("GPT Sol Agent"))
+    expect(within(picker).getByText("T1")).toHaveClass("tier-badge--t1")
+    fireEvent.click(screen.getByRole("button", { name: "Create bot game" }))
+
+    await waitFor(() => expect(mockApi.createGame).toHaveBeenCalledWith(expect.objectContaining({
+      rule_variant: "berkeley_any", opponent_type: "bot", bot_id: "sol-agent",
+    })))
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/game/SOL123"))
+  })
+
+  it("keeps_an_eligible_explicit_choice_when_switching_opponent_types", async () => {
+    mockAuth.user = { username: "playerone", llm_bot_tier: "tier4" }
+    mockApi.getBots.mockResolvedValue({ bots: [
+      { bot_id: "random", username: "randobot", display_name: "Random Bot", elo: 1201 },
+      { bot_id: "sol-agent", username: "agent_gpt_sol", display_name: "GPT Sol Agent", elo: 1200 },
+    ] })
+    renderPage()
+
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    const picker = await openBotPicker()
+    expect(picker).toHaveTextContent("GPT Sol Agent")
+    fireEvent.click(screen.getByRole("option", { name: "1201 - Random Bot" }))
+    fireEvent.click(screen.getByLabelText("Human"))
+    fireEvent.click(screen.getByLabelText("Bot"))
+
+    expect(screen.getByRole("combobox", { name: "Bot opponent" })).toHaveTextContent("Random Bot")
+  })
+
+  it("falls_back_to_random_bot_when_gpt_sol_agent_is_unavailable_to_the_viewer", async () => {
+    mockAuth.user = { username: "guest_player", is_guest: true }
+    mockApi.getBots.mockResolvedValue({ bots: [
+      { bot_id: "random", username: "randobot", display_name: "Random Bot", elo: 1201 },
+      { bot_id: "sol-agent", username: "agent_gpt_sol", display_name: "GPT Sol Agent", elo: 1200, required_tier: "tier1", available_for_viewer: false },
+    ] })
+    renderPage()
+
+    fireEvent.click(await screen.findByLabelText("Bot"))
+    const picker = await openBotPicker()
+    expect(picker).toHaveTextContent("Random Bot")
+    expect(screen.getByRole("option", { name: "1200 - GPT Sol Agent" })).toHaveAttribute("aria-disabled", "true")
   })
 
   it("keeps_higher_tier_bots_visible_and_routes_unavailable_choices_to_subscription", async () => {

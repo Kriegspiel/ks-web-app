@@ -39,6 +39,7 @@ const SUBSCRIPTION_TIER_BY_BOT_TIER_CODE = {
 }
 
 const BOT_TIER_BY_USERNAME = {
+  agent_gpt_sol: "T1",
   darkboardmcts: "T1",
   simpleheuristics: "T1",
   stockfishwild: "T1",
@@ -83,7 +84,6 @@ const BOT_TIER_BY_USERNAME = {
   llm_qwen_flash: "T3",
   llm_opus: "T4",
   llm_gpt_sol: "T4",
-  agent_gpt_sol: "T4",
   llm_grok: "T4",
   llm_muse_glimmer: "T2",
   llm_muse_spark: "T3",

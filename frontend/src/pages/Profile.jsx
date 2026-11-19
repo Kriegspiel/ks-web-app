@@ -463,10 +463,10 @@ const BOT_LLM_TIER_DETAILS_BY_USERNAME = {
     className: "profile-tier-card--tier4",
   },
   agent_gpt_sol: {
-    code: "T4",
-    tierName: "Expert",
-    limit: "GPT Sol Agent for T4 Expert.",
-    className: "profile-tier-card--tier4",
+    code: "T1",
+    tierName: "Casual",
+    limit: "GPT Sol Agent for T1 Casual.",
+    className: "profile-tier-card--tier1",
   },
   llm_gpt55_pro: {
     code: "T5",

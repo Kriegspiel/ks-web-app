@@ -85,6 +85,11 @@ function preferredBotId(bots) {
     return ""
   }
 
+  const solAgent = bots.find((bot) => String(bot?.username || "").trim().toLowerCase() === "agent_gpt_sol")
+  if (solAgent?.bot_id) {
+    return solAgent.bot_id
+  }
+
   const randomBot = bots.find((bot) => {
     const username = String(bot?.username || "").trim().toLowerCase()
     const displayName = String(bot?.display_name || "").trim().toLowerCase()
