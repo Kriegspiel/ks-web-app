@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.6.13
+
+- Make GPT Sol Agent the default bot opponent for eligible players and show it in the T1 Casual catalogue and profile.
+
 ## 1.6.12
 
 - Suggest refreshing the page when a server error interrupts a game-state request or game action.
