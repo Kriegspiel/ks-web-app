@@ -226,9 +226,11 @@ button.theme-toggle:active {
   .app-header__brand-group { gap: 9px; }
   .theme-toggle__logo { width: 35px; height: 35px; }
   .app-header__menu-toggle { display: inline-flex; margin-left: auto; font-size: 13px; }
-  .app-header__nav { display: none; order: 3; width: 100%; padding: 4px 0 12px; justify-content: flex-start; gap: 12px; }
-  .app-header__nav[data-open="true"] { display: flex; }
-  .header-profile-menu__panel { left: 0; right: auto; }
+  .app-header__nav { gap: 4px; }
+  .app-header__nav > a,
+  .header-profile-menu__trigger { padding-inline: 8px; }
+  .app-header__nav--collapsible { display: none; order: 3; width: 100%; padding: 4px 0 12px; justify-content: flex-start; gap: 12px; }
+  .app-header__nav--collapsible[data-open="true"] { display: flex; }
 }
 
 @media (max-width: 370px) {
