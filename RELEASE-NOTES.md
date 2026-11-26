@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.6.14
+
+- Show Lobby and Profile directly in the signed-in mobile header. Use the Menu button when there are three or more primary navigation items.
+
 ## 1.6.13
 
 - Make GPT Sol Agent the default bot opponent for eligible players and show it in the T1 Casual catalogue and profile.

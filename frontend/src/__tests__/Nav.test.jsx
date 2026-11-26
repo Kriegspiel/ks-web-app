@@ -46,6 +46,8 @@ describe("Nav", () => {
     render(<ThemeProvider><MemoryRouter><AppHeader /></MemoryRouter></ThemeProvider>)
     const menu = screen.getByRole("button", { name: "Menu" })
     const nav = screen.getByRole("navigation")
+    expect(nav).toHaveClass("app-header__nav--collapsible")
+    expect(nav.children).toHaveLength(3)
     expect(menu).toHaveAttribute("aria-controls", nav.id)
     expect(menu).toHaveAttribute("aria-expanded", "false")
     fireEvent.keyDown(document, { key: "Escape" })
@@ -166,6 +168,7 @@ describe("Nav", () => {
   })
 
   it("shows_authenticated_lobby_and_profile_menu_without_header_clutter", () => {
+    vi.stubGlobal("innerWidth", 320)
     mockAuth.isAuthenticated = true
     mockAuth.user = { username: "fil" }
 
@@ -177,7 +180,11 @@ describe("Nav", () => {
       </ThemeProvider>,
     )
 
-    expect(screen.getByRole("link", { name: "Lobby" })).toBeInTheDocument()
+    const nav = screen.getByRole("navigation", { name: "Primary navigation" })
+    expect(nav).not.toHaveClass("app-header__nav--collapsible")
+    expect(nav.children).toHaveLength(2)
+    expect(screen.queryByRole("button", { name: "Menu" })).not.toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Lobby" })).toHaveAttribute("aria-current", "page")
     fireEvent.click(screen.getByText("Profile"))
 
     expect(screen.getByRole("link", { name: "User" })).toHaveAttribute("href", "/user/fil")
@@ -186,6 +193,23 @@ describe("Nav", () => {
     expect(screen.queryByRole("link", { name: "Home" })).not.toBeInTheDocument()
     expect(screen.queryByText(/signed in as/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/active game/i)).not.toBeInTheDocument()
+  })
+
+  it("resets the mobile menu when authentication changes on the same route", () => {
+    vi.stubGlobal("innerWidth", 390)
+    const header = () => <ThemeProvider><MemoryRouter><AppHeader /></MemoryRouter></ThemeProvider>
+    const { rerender } = render(header())
+    fireEvent.click(screen.getByRole("button", { name: "Menu" }))
+    expect(screen.getByRole("button", { name: "Close" })).toHaveAttribute("aria-expanded", "true")
+
+    mockAuth.isAuthenticated = true
+    rerender(header())
+    expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument()
+    expect(screen.getByText("Profile")).toBeInTheDocument()
+
+    mockAuth.isAuthenticated = false
+    rerender(header())
+    expect(screen.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "false")
   })
 
   it("dismisses_the_profile_menu_after_outside_and_menu_clicks", async () => {

@@ -3,12 +3,10 @@ import { Link, useLocation } from "react-router"
 import { useAuth } from "../hooks/useAuth"
 import ThemeToggle from "./ThemeToggle"
 
-function AuthLinks() {
-  const { isAuthenticated, actionLoading, logout, user } = useAuth()
+function ProfileMenu({ actionLoading, logout, user }) {
   const location = useLocation()
   const profileMenuRef = useRef(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-  const lobbyCurrent = location.pathname === "/" || location.pathname === "/lobby"
   const username = typeof user?.username === "string" ? user.username : ""
   const userProfilePath = username ? `/user/${encodeURIComponent(username)}` : "/settings"
   const userCurrent = username ? location.pathname === userProfilePath : location.pathname === "/settings"
@@ -50,71 +48,70 @@ function AuthLinks() {
     }
   }
 
-  if (isAuthenticated) {
-    return (
-      <>
-        <Link to="/lobby" aria-current={lobbyCurrent ? "page" : undefined}>Lobby</Link>
-        <details
-          className="header-profile-menu"
-          ref={profileMenuRef}
-          open={profileMenuOpen}
-          onToggle={(event) => setProfileMenuOpen(event.currentTarget.open)}
-        >
-          <summary className="header-profile-menu__trigger">Profile</summary>
-          <div className="header-profile-menu__panel" onClick={() => setProfileMenuOpen(false)}>
-            <Link
-              className="header-profile-menu__item"
-              to={userProfilePath}
-              aria-current={userCurrent ? "page" : undefined}
-            >
-              User
-            </Link>
-            {user?.can_use_tutor === true ? (
-              <Link
-                className="header-profile-menu__item"
-                to="/tutor"
-                aria-current={location.pathname === "/tutor" || /^\/game\/[^/]+\/review\/tutor$/.test(location.pathname) ? "page" : undefined}
-              >Tutor</Link>
-            ) : null}
-            <Link
-              className="header-profile-menu__item"
-              to="/subscription"
-              aria-current={subscriptionCurrent ? "page" : undefined}
-            >
-              Subscription
-            </Link>
-            <button
-              type="button"
-              className="header-profile-menu__item header-profile-menu__item--button"
-              onClick={onLogout}
-              disabled={actionLoading}
-            >
-              {actionLoading ? "Logging out…" : "Logout"}
-            </button>
-          </div>
-        </details>
-      </>
-    )
-  }
-
   return (
-    <>
-      <Link to="/lobby" aria-current={lobbyCurrent ? "page" : undefined}>Lobby</Link>
-      <Link to="/auth/login" aria-current={location.pathname === "/auth/login" ? "page" : undefined}>Login</Link>
-      <Link to="/auth/register" aria-current={location.pathname === "/auth/register" ? "page" : undefined}>Register</Link>
-    </>
+    <details
+      className="header-profile-menu"
+      ref={profileMenuRef}
+      open={profileMenuOpen}
+      onToggle={(event) => setProfileMenuOpen(event.currentTarget.open)}
+    >
+      <summary className="header-profile-menu__trigger">Profile</summary>
+      <div className="header-profile-menu__panel" onClick={() => setProfileMenuOpen(false)}>
+        <Link
+          className="header-profile-menu__item"
+          to={userProfilePath}
+          aria-current={userCurrent ? "page" : undefined}
+        >
+          User
+        </Link>
+        {user?.can_use_tutor === true ? (
+          <Link
+            className="header-profile-menu__item"
+            to="/tutor"
+            aria-current={location.pathname === "/tutor" || /^\/game\/[^/]+\/review\/tutor$/.test(location.pathname) ? "page" : undefined}
+          >Tutor</Link>
+        ) : null}
+        <Link
+          className="header-profile-menu__item"
+          to="/subscription"
+          aria-current={subscriptionCurrent ? "page" : undefined}
+        >
+          Subscription
+        </Link>
+        <button
+          type="button"
+          className="header-profile-menu__item header-profile-menu__item--button"
+          onClick={onLogout}
+          disabled={actionLoading}
+        >
+          {actionLoading ? "Logging out…" : "Logout"}
+        </button>
+      </div>
+    </details>
   )
 }
 
 export default function AppHeader() {
+  const { isAuthenticated, actionLoading, logout, user } = useAuth()
   const location = useLocation()
   const headerRef = useRef(null)
   const menuButtonRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuPath, setMenuPath] = useState(location.pathname)
+  const lobbyCurrent = location.pathname === "/" || location.pathname === "/lobby"
+  const navigationItems = [
+    <Link key="lobby" to="/lobby" aria-current={lobbyCurrent ? "page" : undefined}>Lobby</Link>,
+    ...(isAuthenticated ? [
+      <ProfileMenu key={location.pathname} actionLoading={actionLoading} logout={logout} user={user} />,
+    ] : [
+      <Link key="login" to="/auth/login" aria-current={location.pathname === "/auth/login" ? "page" : undefined}>Login</Link>,
+      <Link key="register" to="/auth/register" aria-current={location.pathname === "/auth/register" ? "page" : undefined}>Register</Link>,
+    ]),
+  ]
+  const collapsible = navigationItems.length >= 3
 
-  // Reset even when navigation originates outside this header or from history.
-  if (menuPath !== location.pathname) {
+  // Reset on outside navigation, history changes, or when the toggle is removed.
+  if (menuPath !== location.pathname || (menuOpen && !collapsible)) {
     setMenuPath(location.pathname)
     setMenuOpen(false)
   }
@@ -165,26 +162,28 @@ export default function AppHeader() {
             Kriegspiel
           </Link>
         </div>
-        <button
-          className="app-header__menu-toggle"
-          type="button"
-          ref={menuButtonRef}
-          aria-expanded={menuOpen}
-          aria-controls="app-primary-navigation"
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          {menuOpen ? "Close" : "Menu"}
-        </button>
+        {collapsible && (
+          <button
+            className="app-header__menu-toggle"
+            type="button"
+            ref={menuButtonRef}
+            aria-expanded={menuOpen}
+            aria-controls="app-primary-navigation"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            {menuOpen ? "Close" : "Menu"}
+          </button>
+        )}
         <nav
           id="app-primary-navigation"
-          className="app-header__nav"
+          className={collapsible ? "app-header__nav app-header__nav--collapsible" : "app-header__nav"}
           aria-label="Primary navigation"
           data-open={menuOpen}
           onClick={(event) => {
             if (event.target.closest("a, button")) setMenuOpen(false)
           }}
         >
-          <AuthLinks key={location.pathname} />
+          {navigationItems}
         </nav>
       </div>
     </header>
