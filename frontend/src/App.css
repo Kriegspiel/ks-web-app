@@ -234,8 +234,12 @@ button.theme-toggle:active {
 }
 
 @media (max-width: 370px) {
+  .app-header__inner { column-gap: 8px; }
   .app-header__brand { font-size: 18px; }
   .theme-toggle__logo { width: 30px; height: 30px; }
+  .app-header__nav:not(.app-header__nav--collapsible) { gap: 2px; font-size: 13px; }
+  .app-header__nav:not(.app-header__nav--collapsible) > a,
+  .header-profile-menu__trigger { padding-inline: 5px; }
 }
 
 .page-shell {
