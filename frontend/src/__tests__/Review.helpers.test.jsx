@@ -17,7 +17,7 @@ describe("ReviewPage helper functions", () => {
     expect(h.moveAnnouncements(null)).toEqual([])
     expect(h.moveAnnouncements({ uci: "e2e4", answer: { main: "NONSENSE" } })).toEqual([])
     expect(h.moveAnnouncements({ uci: "e2e4", answer: {} })).toEqual(["[e2e4]"])
-    expect(h.moveAnnouncements({ uci: "", answer: { main: "REGULAR_MOVE", special: "CHECK_DOUBLE", checks: ["CHECK_FILE", "CHECK_RANK"] } })).toEqual(["Move complete", "Double check", "Check on file", "Check on rank"])
+    expect(h.moveAnnouncements({ uci: "", answer: { main: "REGULAR_MOVE", special: "CHECK_DOUBLE", checks: ["CHECK_RANK", "CHECK_FILE"] } })).toEqual(["Move complete", "Double check", "Check on rank", "Check on file"])
     expect(h.moveAnnouncements({ uci: "e2e4", answer: { main: "REGULAR_MOVE" } })).toEqual(["[e2e4] Move complete"])
     expect(h.moveAnnouncements({ question_type: "ASK_ANY", answer: { main: "HAS_ANY" } })).toEqual(["Has pawn captures"])
     expect(h.moveTurnStartAnnouncement({ move_done: false })).toBe("")

@@ -1106,7 +1106,7 @@ describe("ReviewPage", () => {
             main: null,
             capture_square: null,
             special: "CHECK_DOUBLE",
-            checks: ["CHECK_KNIGHT", "CHECK_FILE"],
+            checks: ["CHECK_FILE", "CHECK_KNIGHT"],
           },
           move_done: false,
           timestamp: "2026-04-05T12:01:10Z",
@@ -1135,7 +1135,7 @@ describe("ReviewPage", () => {
     renderReviewPage()
 
     await screen.findByText(/Referee log/i)
-    expect(screen.getByRole("button", { name: /Black Double check.*Check by knight.*Check on file/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Black Double check.*Check on file.*Check by knight/i })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /White \[\?\?\] Move complete/i })).toBeInTheDocument()
     expect(screen.getByText("2m 20s")).toBeInTheDocument()
     const gameDetails = screen.getByRole("heading", { name: "Game details" }).closest(".review-page__stats-card")

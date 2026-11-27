@@ -2563,7 +2563,7 @@ describe("GamePage", () => {
           turn: 1,
           color: "white",
           announcement: "CHECK_DOUBLE",
-          checks: ["CHECK_KNIGHT", "CHECK_LONG_DIAGONAL"],
+          checks: ["CHECK_LONG_DIAGONAL", "CHECK_KNIGHT"],
         },
       ],
     })
@@ -2571,9 +2571,7 @@ describe("GamePage", () => {
     render(<GamePage />)
 
     const refereeLog = await screen.findByRole("log", { name: "Referee log by turn" })
-    expect(within(refereeLog).getByText("Double check")).toBeInTheDocument()
-    expect(within(refereeLog).getByText("Check by knight")).toBeInTheDocument()
-    expect(within(refereeLog).getByText("Check on long diagonal")).toBeInTheDocument()
+    expect(refereeLog).toHaveTextContent(/Double check.*Check on long diagonal.*Check by knight/)
   })
 
   it("formats_cincinnati_false_pawn_capture_metadata_as_no_pawn_captures", async () => {
