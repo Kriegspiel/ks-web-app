@@ -2717,6 +2717,34 @@ describe("GamePage", () => {
     expect(screen.getByRole("button", { name: "Square e5" })).not.toHaveClass("square--suggested")
   })
 
+  it.each(["cincinnati", "wild16", "rand"])("shows only the supplied pawn destinations in %s", async (ruleVariant) => {
+    mockApi.getGame.mockResolvedValue({
+      game_id: "g-123",
+      game_code: "ABC123",
+      rule_variant: ruleVariant,
+      state: "active",
+      opponent_type: "user",
+      white: { username: "fil", role: "user", connected: true },
+      black: { username: "opponent", role: "user", connected: true },
+      turn: "white",
+      move_number: 5,
+    })
+    mockApi.getGameState.mockResolvedValue({
+      ...activeState,
+      move_number: 5,
+      your_fen: "8/8/8/4P3/8/P4N2/1PPP1PPP/RNBQKB1R w - - 0 1",
+      allowed_moves: ["e5e6", "f3g1"],
+      possible_actions: ["move"],
+    })
+
+    render(<GamePage />)
+    fireEvent.click(await screen.findByRole("button", { name: "Square e5" }))
+    expect(screen.getByRole("button", { name: "Square e6" })).toHaveClass("square--suggested")
+    for (const square of ["d6", "f6"]) {
+      expect(screen.getByRole("button", { name: `Square ${square}` })).not.toHaveClass("square--suggested")
+    }
+  })
+
   it("renders_all_backend_allowed_moves_even_when_referee_log_says_no_any", async () => {
     mockApi.getGameState.mockResolvedValue({
       ...activeState,
